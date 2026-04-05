@@ -1,2 +1,7 @@
 # Dev dependencies
 pytest>=8.0
+
+# Translation (optional — notifications work in English without these)
+transformers>=4.30.0
+torch>=2.0.0
+sentencepiece>=0.1.99

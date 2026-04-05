@@ -42,6 +42,7 @@ class ClaudePlannerCli(BaseAdapter):
         cmd.extend(self.extra_flags)
 
         logger.info("Calling Claude CLI (model=%s, timeout=%ds)", self.model, timeout)
+        logger.debug("Claude CLI command: %s (prompt: %d chars)", cmd[:2], len(prompt))
         start = time.monotonic()
 
         try:

@@ -2,13 +2,12 @@
 Entry point for the orchestrator.
 
 Usage:
-    python main.py              # Production mode (reads config.json)
+    python main.py              # Production mode (reads config.toml)
     python main.py --demo       # Demo mode with fake adapters
 """
 
 from __future__ import annotations
 
-import json
 import logging
 import os
 import sys
@@ -62,6 +61,25 @@ def create_real_orchestrator(config: OrchestratorConfig) -> Orchestrator:
             cli_path=wa.cli_path,
             extra_flags=wa.extra_flags,
         )
+
+    # Check adapter availability before starting
+    planner_ok = planner_adapter.is_available()
+    worker_ok = worker_adapter.is_available()
+    if not planner_ok:
+        logger.error(
+            "Planner adapter '%s' is NOT available (cli_path='%s')",
+            planner_adapter.name(), config.planner_adapter.cli_path,
+        )
+    else:
+        logger.info("Planner adapter '%s' available (cli_path='%s')", planner_adapter.name(), config.planner_adapter.cli_path)
+
+    if not worker_ok:
+        logger.error(
+            "Worker adapter '%s' is NOT available (cli_path='%s')",
+            worker_adapter.name(), config.worker_adapter.cli_path or config.worker_adapter.base_url,
+        )
+    else:
+        logger.info("Worker adapter '%s' available (cli_path='%s')", worker_adapter.name(), config.worker_adapter.cli_path or config.worker_adapter.base_url)
 
     state_store = StateStore(config.state_path)
     notification_service = NotificationService(config.notifications)
@@ -150,21 +168,33 @@ def main() -> None:
         run_demo()
         return
 
-    # Production mode
+    # Production mode: initial logging before config is loaded
     setup_logging(log_level="INFO")
     logger.info("Orchestrator starting...")
 
-    config_path = Path(__file__).parent / "config.json"
+    # Load config
+    import tomllib
+
+    config_path = Path(__file__).parent / "config.toml"
     if config_path.exists():
-        with open(config_path, "r", encoding="utf-8") as f:
-            config_data = json.load(f)
+        with open(config_path, "rb") as f:
+            config_data = tomllib.load(f)
         config = load_config_from_dict(config_data)
-        logger.info("Config loaded from config.json")
+        logger.info("Config loaded from config.toml")
     else:
         config = OrchestratorConfig()
-        logger.info("Using default config (no config.json found)")
+        logger.info("Using default config (no config.toml found)")
+
+    # Reconfigure logging with config values (log_level, log_dir, log_file)
+    setup_logging(log_level=config.log_level, log_dir=config.log_dir, log_file=config.log_file)
+    logger.info("Logging configured: level=%s, dir=%s, file=%s", config.log_level, config.log_dir, config.log_file)
 
     orch = create_real_orchestrator(config)
+
+    # Load translation model at startup if enabled
+    if config.notifications.translate_to_russian:
+        logger.info("Loading translation model...")
+        orch.notification_service.init_translation()
 
     # Load research context if MCP integration is configured
     if config.research_config:

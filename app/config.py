@@ -19,6 +19,8 @@ class NotificationConfig:
     """Telegram notification settings."""
     enabled: bool = False
     min_interval_seconds: int = 30  # rate limit between messages
+    translate_to_russian: bool = False
+    translation_model_dir: str = "models/opus-mt-en-ru"
 
 
 @dataclass

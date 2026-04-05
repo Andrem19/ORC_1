@@ -43,6 +43,7 @@ class PlannerService:
             mcp_problem_summary=mcp_problem_summary,
         )
         logger.info("Calling planner (cycle %d)", state.current_cycle)
+        logger.debug("Planner prompt (%d chars):\n%s", len(prompt), prompt)
 
         response = self.adapter.invoke(prompt, timeout=self.timeout)
 
@@ -55,6 +56,11 @@ class PlannerService:
             )
 
         output = parse_planner_output(response.raw_output)
+        logger.debug(
+            "Planner raw output (%d chars):\n%s",
+            len(response.raw_output),
+            response.raw_output[:2000],
+        )
         logger.info(
             "Planner decided: %s (reason: %s)",
             output.decision.value,

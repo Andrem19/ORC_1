@@ -19,6 +19,7 @@ from http.client import HTTPSConnection
 
 from app.config import NotificationConfig
 from app.models import OrchestratorState, PlannerOutput, TaskResult
+from app.services.translation_service import TranslationService
 
 logger = logging.getLogger("orchestrator.notifications")
 
@@ -36,6 +37,10 @@ class NotificationService:
             and bool(self._bot_token)
             and bool(self._chat_id)
         )
+        self._translator = TranslationService(
+            translate_to_russian=self.config.translate_to_russian,
+            model_dir=self.config.translation_model_dir,
+        )
         if self._enabled:
             logger.info(
                 "Notifications enabled (chat_id=%s, min_interval=%ds)",
@@ -46,6 +51,10 @@ class NotificationService:
     def is_configured(self) -> bool:
         """Check if Telegram credentials are present."""
         return bool(self._bot_token) and bool(self._chat_id)
+
+    def init_translation(self) -> None:
+        """Load the translation model at startup."""
+        self._translator.load_model()
 
     # ---------------------------------------------------------------
     # Public notification methods
@@ -132,6 +141,8 @@ class NotificationService:
 
     def _send(self, text: str) -> bool:
         """Send a message to Telegram. Returns True if sent."""
+        # Translate if enabled
+        text = self._translator.translate(text)
         # Rate limiting
         now = time.monotonic()
         elapsed = now - self._last_send_time

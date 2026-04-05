@@ -39,9 +39,11 @@ class WorkerService:
     ) -> TaskResult:
         """Send a task to the worker adapter and return a parsed result."""
         # Auto-detect MCP-related tasks and inject tool instructions
-        mcp_instructions = MCP_WORKER_INSTRUCTIONS if is_mcp_task(task.description) else None
+        is_mcp = is_mcp_task(task.description)
+        mcp_instructions = MCP_WORKER_INSTRUCTIONS if is_mcp else None
         prompt = build_worker_prompt(task, memory_entries, mcp_instructions=mcp_instructions)
-        logger.info("Executing task %s via worker adapter", task.task_id)
+        logger.info("Executing task %s via worker adapter (mcp=%s)", task.task_id, is_mcp)
+        logger.debug("Worker prompt for task %s (%d chars):\n%s", task.task_id, len(prompt), prompt)
 
         response = self.adapter.invoke(prompt, timeout=self.timeout)
 
@@ -54,6 +56,11 @@ class WorkerService:
                 error=response.error[:500] if response.error else "Worker call failed",
                 raw_output=response.raw_output[:500],
             )
+
+        logger.debug(
+            "Worker raw output for task %s (%d chars):\n%s",
+            task.task_id, len(response.raw_output), response.raw_output[:2000],
+        )
 
         result = parse_worker_output(
             response.raw_output,

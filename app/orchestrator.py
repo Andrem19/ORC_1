@@ -9,6 +9,7 @@ when there is new information to act on.
 from __future__ import annotations
 
 import logging
+import time as _time
 from datetime import datetime, timezone
 from typing import Any
 
@@ -162,6 +163,7 @@ class Orchestrator:
         while True:
             # 1. Increment cycle
             self.state.current_cycle += 1
+            cycle_start = _time.monotonic()
             logger.info("=== Cycle %d ===", self.state.current_cycle)
 
             # 2. Collect new results from active tasks
@@ -212,6 +214,15 @@ class Orchestrator:
                 self.state.last_planner_decision = output.decision
                 self.state.last_planner_call_at = datetime.now(timezone.utc).isoformat()
                 self.memory_service.record_planner_decision(self.state, output)
+                logger.debug(
+                    "Planner full decision: decision=%s worker=%s instruction='%s' reason='%s' check_after=%ds memory='%s'",
+                    output.decision.value,
+                    output.target_worker_id or "N/A",
+                    output.task_instruction[:200] if output.task_instruction else "",
+                    output.reason[:200],
+                    output.check_after_seconds,
+                    output.memory_update[:100] if output.memory_update else "",
+                )
                 self._log_event(OrchestratorEvent.PLANNER_RESULT, output.decision.value)
                 self.notification_service.send_planner_decision(output, self.state.current_cycle)
 
@@ -239,6 +250,14 @@ class Orchestrator:
 
             # 5. Save state and sleep
             self.save_state()
+            cycle_elapsed = _time.monotonic() - cycle_start
+            logger.debug(
+                "Cycle %d completed in %.1fs — tasks=%d results=%d errors=%d memory=%d empty=%d",
+                self.state.current_cycle, cycle_elapsed,
+                len(self.state.tasks), len(self.state.results),
+                self.state.total_errors, len(self.state.memory),
+                self.state.empty_cycles,
+            )
             self._log_event(OrchestratorEvent.SLEEPING, f"{self.config.poll_interval_seconds}s")
             self.scheduler.sleep(seconds=self.config.poll_interval_seconds)
 
@@ -337,6 +356,11 @@ class Orchestrator:
             else:
                 logger.error("No workers available")
                 return
+
+        logger.debug(
+            "Launching worker '%s' with instruction: %s",
+            worker_id, output.task_instruction[:300],
+        )
 
         task = Task(
             description=output.task_instruction,

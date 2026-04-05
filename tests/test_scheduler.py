@@ -13,6 +13,7 @@ from app.scheduler import Scheduler
 def test_should_call_planner_first_cycle():
     s = Scheduler()
     state = OrchestratorState(goal="test")
+    state.current_cycle = 1  # Incremented before should_call_planner is called
     assert s.should_call_planner(state, [])
 
 

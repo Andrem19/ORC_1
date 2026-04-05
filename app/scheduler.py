@@ -44,8 +44,8 @@ class Scheduler:
         - All workers are idle (pending tasks but nothing running)
         - Error count crossed a threshold
         """
-        # First cycle ever
-        if state.current_cycle == 0:
+        # First cycle ever (cycle counter is incremented before this check)
+        if state.current_cycle == 1:
             logger.debug("Scheduler: first cycle, calling planner")
             return True
 

@@ -40,6 +40,7 @@ class QwenWorkerCli(BaseAdapter):
         cmd.extend(self.extra_flags)
 
         logger.info("Calling Qwen CLI (timeout=%ds)", timeout)
+        logger.debug("Qwen CLI command: %s (prompt: %d chars)", cmd[0], len(prompt))
         start = time.monotonic()
 
         try:

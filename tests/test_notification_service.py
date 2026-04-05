@@ -189,3 +189,49 @@ class TestConfigIntegration:
         d = cfg.to_dict()
         assert "notifications" in d
         assert d["notifications"]["enabled"] is False
+
+
+# ---------------------------------------------------------------------------
+# Tests: translation integration
+# ---------------------------------------------------------------------------
+
+
+class TestTranslationIntegration:
+    def test_translator_created_in_init(self):
+        with patch.dict(os.environ, {"ALGO_BOT": "tok", "CHAT_ID": "1"}):
+            cfg = NotificationConfig(enabled=True)
+            svc = NotificationService(cfg)
+            assert svc._translator is not None
+
+    def test_translate_to_russian_passed_to_translator(self):
+        with patch.dict(os.environ, {"ALGO_BOT": "tok", "CHAT_ID": "1"}):
+            cfg = NotificationConfig(enabled=True, translate_to_russian=True)
+            svc = NotificationService(cfg)
+            assert svc._translator.is_enabled is True
+
+    def test_translate_disabled_by_default(self):
+        with patch.dict(os.environ, {"ALGO_BOT": "tok", "CHAT_ID": "1"}):
+            cfg = NotificationConfig(enabled=True)
+            svc = NotificationService(cfg)
+            assert svc._translator.is_enabled is False
+
+    def test_send_calls_translate(self):
+        with patch.dict(os.environ, {"ALGO_BOT": "tok", "CHAT_ID": "1"}):
+            cfg = NotificationConfig(enabled=True, min_interval_seconds=0)
+            svc = NotificationService(cfg)
+            with patch.object(svc._translator, "translate", return_value="translated") as mock_tr:
+                with patch("app.services.notification_service.HTTPSConnection") as mock_conn:
+                    resp = type("R", (), {"status": 200, "read": lambda self: b'{"ok":true}'})()
+                    conn_instance = mock_conn.return_value
+                    conn_instance.getresponse.return_value = resp
+                    svc._last_send_time = 0
+                    svc.send_lifecycle("started")
+                    mock_tr.assert_called_once()
+
+    def test_init_translation_delegates(self):
+        with patch.dict(os.environ, {"ALGO_BOT": "tok", "CHAT_ID": "1"}):
+            cfg = NotificationConfig(enabled=True, translate_to_russian=True)
+            svc = NotificationService(cfg)
+            with patch.object(svc._translator, "load_model") as mock_load:
+                svc.init_translation()
+                mock_load.assert_called_once()
