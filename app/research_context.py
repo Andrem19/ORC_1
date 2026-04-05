@@ -115,6 +115,7 @@ You have access to MCP dev_space1 tools. Call them directly as structured tool i
 4. For features: use features_custom(action='validate') then features_custom(action='publish')
 5. For async operations: poll with action='status' or action='inspect' and job_id
 6. Report key metrics: Sharpe, return%, trade count, max drawdown, win rate, profit factor
+7. GOLD COLLECTION: When your task produces a breakthrough (new best snapshot, profitable new feature, milestone result), call gold_collection(action='add', entity_type='snapshot'|'feature', entity_id='...', reason='...') to preserve it
 
 ### Result Format
 Return your results in the standard JSON schema:

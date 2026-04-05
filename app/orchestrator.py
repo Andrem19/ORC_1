@@ -14,6 +14,8 @@ from typing import Any
 
 from app.adapters.base import BaseAdapter
 from app.config import OrchestratorConfig
+from app.mcp_problem_scanner import McpProblemScanner
+from app.mcp_problem_store import McpProblemStore
 from app.models import (
     MemoryEntry,
     OrchestratorState,
@@ -51,6 +53,7 @@ class Orchestrator:
         memory_service: MemoryService | None = None,
         task_supervisor: TaskSupervisor | None = None,
         notification_service: NotificationService | None = None,
+        mcp_problem_scanner: McpProblemScanner | None = None,
     ) -> None:
         self.config = config
         self.state_store = state_store
@@ -67,6 +70,21 @@ class Orchestrator:
             max_task_attempts=config.max_task_attempts,
             max_worker_timeout_count=config.max_worker_timeout_count,
         )
+
+        # MCP problem scanner (optional, created from config if enabled)
+        if mcp_problem_scanner:
+            self._mcp_scanner = mcp_problem_scanner
+        elif config.mcp_review.enabled:
+            problem_store = McpProblemStore(config.mcp_review.fixes_dir)
+            self._mcp_scanner = McpProblemScanner(
+                planner_adapter=planner_adapter,
+                problem_store=problem_store,
+                review_every_n_cycles=config.mcp_review.review_every_n_cycles,
+                review_after_n_errors=config.mcp_review.review_after_n_errors,
+                planner_timeout=config.mcp_review.planner_timeout,
+            )
+        else:
+            self._mcp_scanner = None
 
         self.state = OrchestratorState(goal=config.goal)
         self._worker_ids = [w.worker_id for w in config.workers]
@@ -149,6 +167,35 @@ class Orchestrator:
             # 2. Collect new results from active tasks
             new_results = self._collect_results()
 
+            # 2.5. MCP problem review
+            mcp_problem_summary = None
+            if self._mcp_scanner:
+                # Save worker-reported problems immediately
+                for r in new_results:
+                    worker_problems = self._mcp_scanner.extract_worker_problems(r)
+                    if worker_problems:
+                        for p in worker_problems:
+                            p.cycle = self.state.current_cycle
+                        self._mcp_scanner.problem_store.save_report(
+                            worker_problems, cycle=self.state.current_cycle,
+                        )
+
+                # Periodic planner review
+                if self._mcp_scanner.should_review(self.state, new_results):
+                    problems = self._mcp_scanner.run_review(
+                        self.state, self.state.results[-20:],
+                    )
+                    if problems:
+                        self._log_event(
+                            OrchestratorEvent.ERROR,
+                            f"mcp_review: {len(problems)} problems found",
+                        )
+
+                # Get summary for planner context
+                mcp_problem_summary = self._mcp_scanner.get_context_for_planner(
+                    max_items=self.config.mcp_review.max_problems_in_context,
+                )
+
             # 3. Check if planner should be called
             if self.scheduler.should_call_planner(self.state, new_results):
                 self._log_event(OrchestratorEvent.PLANNER_CALLED)
@@ -160,6 +207,7 @@ class Orchestrator:
                     new_results=new_results if new_results else None,
                     worker_ids=self._worker_ids,
                     research_context=self._research_context_text,
+                    mcp_problem_summary=mcp_problem_summary,
                 )
                 self.state.last_planner_decision = output.decision
                 self.state.last_planner_call_at = datetime.now(timezone.utc).isoformat()

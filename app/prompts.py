@@ -34,7 +34,8 @@ WORKER_JSON_SCHEMA = """{
   "artifacts": ["list of produced files or items"],
   "next_hint": "suggestion for next step",
   "confidence": 0.9,
-  "error": "error message if any, empty otherwise"
+  "error": "error message if any, empty otherwise",
+  "mcp_problems": [{"tool_name": "MCP tool name", "description": "what went wrong", "suggestion": "how to avoid", "severity": "low|medium|high"}]
 }"""
 
 
@@ -43,6 +44,7 @@ def build_planner_prompt(
     new_results: list[TaskResult] | None = None,
     worker_ids: list[str] | None = None,
     research_context: str | None = None,
+    mcp_problem_summary: str | None = None,
 ) -> str:
     """Build the full prompt for the planner model."""
     parts: list[str] = []
@@ -62,6 +64,12 @@ def build_planner_prompt(
         parts.append("## Recent Memory")
         for m in recent:
             parts.append(f"- [{m.source}] {m.content}")
+        parts.append("")
+
+    # Known MCP problems (from periodic review)
+    if mcp_problem_summary:
+        parts.append("## Known MCP Problems (avoid these mistakes)")
+        parts.append(mcp_problem_summary)
         parts.append("")
 
     # Current state summary

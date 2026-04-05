@@ -153,6 +153,7 @@ class TaskResult:
     confidence: float = 0.0
     error: str = ""
     raw_output: str = ""
+    mcp_problems: list[dict[str, str]] = field(default_factory=list)
     timestamp: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
     @property

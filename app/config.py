@@ -36,6 +36,17 @@ class AdapterConfig:
 
 
 @dataclass
+class McpReviewConfig:
+    """Configuration for MCP problem review and tracking."""
+    enabled: bool = True
+    review_every_n_cycles: int = 10
+    review_after_n_errors: int = 3
+    fixes_dir: str = "fixes"
+    planner_timeout: int = 180
+    max_problems_in_context: int = 10
+
+
+@dataclass
 class OrchestratorConfig:
     # --- Goal ---
     goal: str = "No goal specified"
@@ -96,6 +107,9 @@ class OrchestratorConfig:
     # --- Notifications ---
     notifications: NotificationConfig = field(default_factory=NotificationConfig)
 
+    # --- MCP problem review ---
+    mcp_review: McpReviewConfig = field(default_factory=McpReviewConfig)
+
     @property
     def state_path(self) -> Path:
         return Path(self.state_dir) / self.state_file
@@ -134,5 +148,8 @@ def load_config_from_dict(data: dict[str, Any]) -> OrchestratorConfig:
 
     if "notifications" in data:
         cfg.notifications = NotificationConfig(**data["notifications"])
+
+    if "mcp_review" in data:
+        cfg.mcp_review = McpReviewConfig(**data["mcp_review"])
 
     return cfg

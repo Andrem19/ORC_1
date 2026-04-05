@@ -130,6 +130,10 @@ def parse_worker_output(raw: str, task_id: str, worker_id: str) -> TaskResult:
         confidence=float(data.get("confidence", 0.0)),
         error=str(data.get("error", ""))[:500],
         raw_output=raw[:2000],
+        mcp_problems=[
+            p for p in data.get("mcp_problems", [])
+            if isinstance(p, dict)
+        ],
     )
 
 
