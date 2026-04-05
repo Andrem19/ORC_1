@@ -15,6 +15,13 @@ from app.models import WorkerConfig
 
 
 @dataclass
+class NotificationConfig:
+    """Telegram notification settings."""
+    enabled: bool = False
+    min_interval_seconds: int = 30  # rate limit between messages
+
+
+@dataclass
 class AdapterConfig:
     name: str
     cli_path: str = ""
@@ -83,6 +90,12 @@ class OrchestratorConfig:
     detect_duplicate_results: bool = True
     require_structured_output: bool = True
 
+    # --- Research (MCP integration) ---
+    research_config: dict[str, Any] = field(default_factory=dict)
+
+    # --- Notifications ---
+    notifications: NotificationConfig = field(default_factory=NotificationConfig)
+
     @property
     def state_path(self) -> Path:
         return Path(self.state_dir) / self.state_file
@@ -104,6 +117,7 @@ def load_config_from_dict(data: dict[str, Any]) -> OrchestratorConfig:
         "max_worker_timeout_count", "state_dir", "state_file",
         "log_level", "log_dir", "log_file",
         "detect_duplicate_results", "require_structured_output",
+        "research_config",
     }
     for key in simple_fields:
         if key in data:
@@ -117,5 +131,8 @@ def load_config_from_dict(data: dict[str, Any]) -> OrchestratorConfig:
 
     if "worker_adapter" in data:
         cfg.worker_adapter = AdapterConfig(**data["worker_adapter"])
+
+    if "notifications" in data:
+        cfg.notifications = NotificationConfig(**data["notifications"])
 
     return cfg

@@ -29,6 +29,7 @@ from app.models import (
 from app.result_parser import is_duplicate_result, is_useless_result
 from app.scheduler import Scheduler
 from app.services.memory_service import MemoryService
+from app.services.notification_service import NotificationService
 from app.services.planner_service import PlannerService
 from app.services.task_supervisor import TaskSupervisor
 from app.services.worker_service import WorkerService
@@ -49,6 +50,7 @@ class Orchestrator:
         scheduler: Scheduler | None = None,
         memory_service: MemoryService | None = None,
         task_supervisor: TaskSupervisor | None = None,
+        notification_service: NotificationService | None = None,
     ) -> None:
         self.config = config
         self.state_store = state_store
@@ -60,6 +62,7 @@ class Orchestrator:
             max_errors_total=config.max_errors_total,
         )
         self.memory_service = memory_service or MemoryService()
+        self.notification_service = notification_service or NotificationService()
         self.task_supervisor = task_supervisor or TaskSupervisor(
             max_task_attempts=config.max_task_attempts,
             max_worker_timeout_count=config.max_worker_timeout_count,
@@ -67,11 +70,31 @@ class Orchestrator:
 
         self.state = OrchestratorState(goal=config.goal)
         self._worker_ids = [w.worker_id for w in config.workers]
+        self._research_context_text: str | None = None
         self._log_event(OrchestratorEvent.STARTED)
 
     def _log_event(self, event: OrchestratorEvent, detail: str = "") -> None:
         msg = f"[{event.value}] {detail}" if detail else f"[{event.value}]"
         logger.info(msg)
+
+    # ---------------------------------------------------------------
+    # Research context (MCP dev_space1 integration)
+    # ---------------------------------------------------------------
+
+    def load_research_context(self) -> None:
+        """Load MCP research context from state/research_context.json."""
+        if not self.config.research_config:
+            return
+        try:
+            from app.research_context import format_research_context_for_planner, load_research_context
+            ctx = load_research_context(self.config.state_dir)
+            if ctx:
+                self._research_context_text = format_research_context_for_planner(ctx)
+                logger.info("Research context loaded (%d chars)", len(self._research_context_text))
+            else:
+                logger.warning("No research context file found")
+        except Exception as e:
+            logger.error("Failed to load research context: %s", e)
 
     # ---------------------------------------------------------------
     # State management
@@ -116,6 +139,7 @@ class Orchestrator:
         self.state.status = "running"
         self.save_state()
         self._log_event(OrchestratorEvent.CONFIG_LOADED, f"goal={self.config.goal[:80]}")
+        self.notification_service.send_lifecycle("started", f"Goal: {self.config.goal[:100]}")
 
         while True:
             # 1. Increment cycle
@@ -128,15 +152,20 @@ class Orchestrator:
             # 3. Check if planner should be called
             if self.scheduler.should_call_planner(self.state, new_results):
                 self._log_event(OrchestratorEvent.PLANNER_CALLED)
+                # Refresh research context every 10 cycles
+                if self.state.current_cycle % 10 == 0:
+                    self.load_research_context()
                 output = self.planner_service.consult(
                     self.state,
                     new_results=new_results if new_results else None,
                     worker_ids=self._worker_ids,
+                    research_context=self._research_context_text,
                 )
                 self.state.last_planner_decision = output.decision
                 self.state.last_planner_call_at = datetime.now(timezone.utc).isoformat()
                 self.memory_service.record_planner_decision(self.state, output)
                 self._log_event(OrchestratorEvent.PLANNER_RESULT, output.decision.value)
+                self.notification_service.send_planner_decision(output, self.state.current_cycle)
 
                 # Process planner decision
                 self._execute_planner_decision(output)
@@ -204,6 +233,7 @@ class Orchestrator:
         """Process a task result: complete, retry, or fail the task."""
         self.state.results.append(result)
         self.memory_service.record_worker_result(self.state, result)
+        self.notification_service.send_worker_result(result, self.state.current_cycle)
 
         if result.status == "success":
             task.mark_completed()
@@ -325,6 +355,9 @@ class Orchestrator:
         self.state.status = "finished"
         self.state.stop_reason = reason
         self.memory_service.record_event(self.state, f"Orchestrator finished: {reason.value}")
+        self.notification_service.send_lifecycle(
+            "finished", f"Reason: {reason.value}. {summary[:200]}"
+        )
         self.save_state()
         self._log_event(OrchestratorEvent.FINISHED, f"reason={reason.value} summary={summary[:100]}")
         logger.info("Orchestrator finished: %s. %s", reason.value, summary)

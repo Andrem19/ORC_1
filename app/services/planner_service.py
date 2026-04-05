@@ -33,9 +33,10 @@ class PlannerService:
         state: OrchestratorState,
         new_results: list[TaskResult] | None = None,
         worker_ids: list[str] | None = None,
+        research_context: str | None = None,
     ) -> PlannerOutput:
         """Call the planner with current state and get a decision."""
-        prompt = build_planner_prompt(state, new_results, worker_ids)
+        prompt = build_planner_prompt(state, new_results, worker_ids, research_context=research_context)
         logger.info("Calling planner (cycle %d)", state.current_cycle)
 
         response = self.adapter.invoke(prompt, timeout=self.timeout)

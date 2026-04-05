@@ -42,6 +42,7 @@ def build_planner_prompt(
     state: OrchestratorState,
     new_results: list[TaskResult] | None = None,
     worker_ids: list[str] | None = None,
+    research_context: str | None = None,
 ) -> str:
     """Build the full prompt for the planner model."""
     parts: list[str] = []
@@ -49,6 +50,11 @@ def build_planner_prompt(
     parts.append("## Global Goal")
     parts.append(state.goal)
     parts.append("")
+
+    # Research context (MCP dev_space1 state)
+    if research_context:
+        parts.append(research_context)
+        parts.append("")
 
     # Concise memory
     recent = state.get_recent_memory(limit=5)
@@ -120,6 +126,7 @@ def build_planner_prompt(
 def build_worker_prompt(
     task: Task,
     memory_entries: list[MemoryEntry] | None = None,
+    mcp_instructions: str | None = None,
 ) -> str:
     """Build the prompt for a worker agent."""
     parts: list[str] = []
@@ -133,6 +140,10 @@ def build_worker_prompt(
         parts.append("## Context")
         for m in memory_entries:
             parts.append(f"- {m.content}")
+        parts.append("")
+
+    if mcp_instructions:
+        parts.append(mcp_instructions)
         parts.append("")
 
     parts.append("## Required Output Format")
