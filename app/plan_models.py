@@ -13,6 +13,7 @@ from datetime import datetime, timezone
 from typing import Any
 
 from app.models import Task, TaskResult, TaskStatus
+from app.planner_contract import format_step_as_tool_call
 
 
 # ---------------------------------------------------------------------------
@@ -54,6 +55,7 @@ class PlanTask:
     stage_name: str = ""
     theory: str = ""
     depends_on: list[int] = field(default_factory=list)
+    steps: list["PlanStep"] = field(default_factory=list)
     agent_instructions: list[str] = field(default_factory=list)
     results_table_columns: list[str] = field(default_factory=list)
     results_table_rows: list[dict[str, Any]] = field(default_factory=list)
@@ -72,6 +74,38 @@ class PlanTask:
             TaskStatus.CANCELLED,
             TaskStatus.TIMED_OUT,
         )
+
+    def normalized_steps(self) -> list["PlanStep"]:
+        if self.steps:
+            return self.steps
+        return legacy_steps_from_agent_instructions(self.agent_instructions)
+
+
+@dataclass
+class PlanStep:
+    """One structured sub-step within a plan stage."""
+    step_id: str = ""
+    kind: str = "work"  # tool_call | work | decision | record
+    instruction: str = ""
+    tool_name: str | None = None
+    args: dict[str, Any] = field(default_factory=dict)
+    binds: list[str] = field(default_factory=list)
+    decision_outputs: list[str] = field(default_factory=list)
+    notes: str = ""
+
+    def render_prompt_block(self) -> list[str]:
+        lines = [f"[{self.step_id}] kind={self.kind}"]
+        if self.instruction:
+            lines.append(f"instruction: {self.instruction}")
+        if self.tool_name:
+            lines.append(f"tool: {format_step_as_tool_call(self.tool_name, self.args)}")
+        if self.binds:
+            lines.append(f"binds: {', '.join(self.binds)}")
+        if self.decision_outputs:
+            lines.append(f"decision_outputs: {', '.join(self.decision_outputs)}")
+        if self.notes:
+            lines.append(f"notes: {self.notes}")
+        return lines
 
 
 @dataclass
@@ -111,7 +145,7 @@ class TaskReport:
 class ResearchPlan:
     """A structured multi-task research plan — the primary planner artifact."""
     plan_id: str = field(default_factory=lambda: uuid.uuid4().hex[:12])
-    schema_version: int = 2
+    schema_version: int = 3
     version: int = 1
     created_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     frozen_base: str = ""
@@ -127,6 +161,7 @@ class ResearchPlan:
     status: str = "active"  # active | completed | superseded
     plan_markdown: str = ""  # Full markdown text from planner
     previous_version_id: str | None = None
+    planner_run_artifact: str | None = None
 
     def get_task_by_stage(self, stage_number: int) -> PlanTask | None:
         for t in self.tasks:
@@ -202,9 +237,11 @@ def plan_task_to_task(plan_task: PlanTask) -> Task:
         instruction_parts.append(f"## Theory")
         instruction_parts.append(plan_task.theory)
         instruction_parts.append("")
-    instruction_parts.append("## Instructions")
-    for i, step in enumerate(plan_task.agent_instructions, 1):
-        instruction_parts.append(f"{i}. {step}")
+    instruction_parts.append("## Steps")
+    for i, step in enumerate(plan_task.normalized_steps(), 1):
+        instruction_parts.append(f"{i}. [{step.step_id}] {step.kind}")
+        for line in step.render_prompt_block()[1:]:
+            instruction_parts.append(f"   - {line}")
     if plan_task.results_table_columns:
         instruction_parts.append("")
         instruction_parts.append("## Results table columns to fill")
@@ -235,3 +272,16 @@ def task_report_to_task_result(report: TaskReport) -> TaskResult:
         mcp_problems=report.mcp_problems,
         plan_report=report,
     )
+
+
+def legacy_steps_from_agent_instructions(instructions: list[str]) -> list[PlanStep]:
+    steps: list[PlanStep] = []
+    for idx, instruction in enumerate(instructions, 1):
+        steps.append(
+            PlanStep(
+                step_id=f"legacy_{idx}",
+                kind="work",
+                instruction=instruction,
+            )
+        )
+    return steps

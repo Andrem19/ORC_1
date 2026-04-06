@@ -6,7 +6,7 @@ import json
 from unittest.mock import MagicMock, patch
 
 from app.models import OrchestratorState, TaskStatus
-from app.plan_models import PlanTask, ResearchPlan
+from app.plan_models import PlanStep, PlanTask, ResearchPlan
 from app.plan_validation import validate_plan
 from app.result_parser import parse_plan_output
 
@@ -321,7 +321,89 @@ def test_validate_plan_rejects_symbolic_ref_without_dependency() -> None:
     validation = validate_plan(plan)
 
     assert not validation.is_valid
-    assert any(error.code == "unresolved_symbolic_reference" for error in validation.errors)
+    assert any(error.code == "stage_ref_invalid" for error in validation.errors)
+
+
+def test_validate_plan_accepts_step_ref_to_prior_step() -> None:
+    plan = ResearchPlan(
+        schema_version=3,
+        version=1,
+        goal="test",
+        tasks=[
+            PlanTask(
+                stage_number=0,
+                stage_name="Baseline",
+                steps=[
+                    PlanStep(
+                        step_id="baseline_run",
+                        kind="tool_call",
+                        instruction="Start baseline run",
+                        tool_name="backtests_runs",
+                        args={
+                            "action": "start",
+                            "snapshot_id": "active-signal-v1",
+                            "version": "1",
+                            "symbol": "BTCUSDT",
+                            "anchor_timeframe": "1h",
+                            "execution_timeframe": "5m",
+                        },
+                        binds=["run_id"],
+                    ),
+                    PlanStep(
+                        step_id="inspect",
+                        kind="tool_call",
+                        instruction="Inspect baseline",
+                        tool_name="backtests_runs",
+                        args={
+                            "action": "inspect",
+                            "run_id": "{{step:baseline_run.run_id}}",
+                            "view": "detail",
+                        },
+                    ),
+                ],
+            ),
+        ],
+    )
+
+    validation = validate_plan(plan)
+
+    assert validation.is_valid
+
+
+def test_validate_plan_rejects_invalid_tool_alias_and_action() -> None:
+    plan = ResearchPlan(
+        schema_version=3,
+        version=1,
+        goal="test",
+        tasks=[
+            PlanTask(
+                stage_number=0,
+                stage_name="Bad",
+                steps=[
+                    PlanStep(
+                        step_id="fork",
+                        kind="tool_call",
+                        instruction="Fork snapshot",
+                        tool_name="snapshots",
+                        args={"action": "fork"},
+                    ),
+                    PlanStep(
+                        step_id="run",
+                        kind="tool_call",
+                        instruction="Run backtest",
+                        tool_name="backtests_runs",
+                        args={"action": "run", "strategy": "x"},
+                    ),
+                ],
+            ),
+        ],
+    )
+
+    validation = validate_plan(plan)
+    codes = {error.code for error in validation.errors}
+
+    assert "tool_alias_invalid" in codes
+    assert "action_invalid" in codes
 
 
 def test_build_plan_repair_prompt_compacts_large_invalid_payload() -> None:
@@ -371,3 +453,13 @@ def test_build_plan_repair_prompt_compacts_large_invalid_payload() -> None:
     assert "Invalid Stage Fragments" in prompt
     assert "Valid 1" in prompt
     assert len(prompt) < 15000
+
+
+def test_build_plan_creation_prompt_includes_catalog_without_research_context() -> None:
+    from app.plan_prompts import build_plan_creation_prompt
+
+    prompt = build_plan_creation_prompt(goal="Improve BTCUSDT strategy")
+
+    assert "## MCP dev_space1 Tool Catalog" in prompt
+    assert '"schema_version": 3' in prompt
+    assert '"steps"' in prompt

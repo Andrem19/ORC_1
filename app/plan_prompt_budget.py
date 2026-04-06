@@ -111,15 +111,31 @@ def truncate_json(text: str, limit: int) -> str:
 
 def _compact_task(task: dict[str, Any]) -> dict[str, Any]:
     instructions = task.get("agent_instructions", [])
+    steps = task.get("steps", [])
     compact = {
         "stage_number": task.get("stage_number"),
         "stage_name": task.get("stage_name", ""),
         "depends_on": task.get("depends_on", []),
         "theory": truncate_text(str(task.get("theory", "")), 220),
-        "agent_instructions": [truncate_text(str(step), 220) for step in instructions[:4]],
         "results_table_columns": task.get("results_table_columns", []),
         "decision_gates": task.get("decision_gates", [])[:3],
     }
-    if len(instructions) > 4:
-        compact["agent_instructions"].append(f"... {len(instructions) - 4} more instructions omitted")
+    if steps:
+        compact["steps"] = []
+        for step in steps[:4]:
+            if not isinstance(step, dict):
+                continue
+            compact["steps"].append({
+                "step_id": step.get("step_id"),
+                "kind": step.get("kind"),
+                "instruction": truncate_text(str(step.get("instruction", "")), 180),
+                "tool_name": step.get("tool_name"),
+                "args": step.get("args", {}),
+            })
+        if len(steps) > 4:
+            compact["steps"].append({"omitted": len(steps) - 4})
+    else:
+        compact["agent_instructions"] = [truncate_text(str(step), 220) for step in instructions[:4]]
+        if len(instructions) > 4:
+            compact["agent_instructions"].append(f"... {len(instructions) - 4} more instructions omitted")
     return compact

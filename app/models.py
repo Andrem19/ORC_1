@@ -195,10 +195,16 @@ class ProcessInfo:
     worker_id: str
     pid: int | None = None
     started_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    first_output_at: str | None = None
+    last_output_at: str | None = None
     stdout_path: str | None = None
     stderr_path: str | None = None
     partial_output: str = ""
     partial_error_output: str = ""
+    stdout_bytes: int = 0
+    stderr_bytes: int = 0
+    monitor_state: str = ""
+    monitor_warning_sent: bool = False
     prompt: str = ""
     returncode: int | None = None
 

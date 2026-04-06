@@ -384,6 +384,34 @@ def parse_plan_output(raw: str) -> dict[str, Any]:
         if not isinstance(depends_on, list):
             depends_on = []
         task["depends_on"] = [int(dep) for dep in depends_on if isinstance(dep, int)]
+        steps = task.get("steps", [])
+        if isinstance(steps, list):
+            normalized_steps: list[dict[str, Any]] = []
+            for idx, step in enumerate(steps, 1):
+                if not isinstance(step, dict):
+                    continue
+                normalized_steps.append({
+                    "step_id": str(step.get("step_id", f"step_{idx}")),
+                    "kind": str(step.get("kind", "work")),
+                    "instruction": str(step.get("instruction", "")),
+                    "tool_name": step.get("tool_name"),
+                    "args": step.get("args", {}) if isinstance(step.get("args"), dict) else {},
+                    "binds": step.get("binds", []) if isinstance(step.get("binds"), list) else [],
+                    "decision_outputs": (
+                        step.get("decision_outputs", [])
+                        if isinstance(step.get("decision_outputs"), list) else []
+                    ),
+                    "notes": str(step.get("notes", "")),
+                })
+            task["steps"] = normalized_steps
+        else:
+            task["steps"] = []
+
+        instructions = task.get("agent_instructions", [])
+        if isinstance(instructions, list):
+            task["agent_instructions"] = [str(step) for step in instructions]
+        else:
+            task["agent_instructions"] = []
 
     # Legacy compatibility for old planner outputs
     dispatch = data.get("tasks_to_dispatch", [])

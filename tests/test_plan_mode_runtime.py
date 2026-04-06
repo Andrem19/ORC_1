@@ -21,6 +21,7 @@ def _make_service(*, worker_ids: list[str] | None = None) -> tuple[PlanOrchestra
     orch.config = SimpleNamespace(
         goal="test goal",
         max_concurrent_plan_tasks=2,
+        research_config={},
         mcp_review=SimpleNamespace(max_problems_in_context=10),
         plan_task_timeout_seconds=600,
         worker_adapter=SimpleNamespace(cli_path="qwen"),
@@ -339,6 +340,7 @@ def test_dispatch_plan_tasks_resolves_symbolic_refs_before_launch() -> None:
     assert kwargs["agent_instructions"] == [
         "backtests_runs(action='inspect', run_id='baseline-run', view='detail')",
     ]
+    assert kwargs["steps"][0].instruction == "backtests_runs(action='inspect', run_id='baseline-run', view='detail')"
 
 
 def test_dispatch_plan_tasks_marks_stage_failed_when_symbolic_field_missing() -> None:
@@ -521,6 +523,7 @@ def test_check_silent_workers_classifies_stderr_only() -> None:
             started_at=datetime(2026, 4, 6, 12, 0, tzinfo=timezone.utc).isoformat(),
             partial_output="",
             partial_error_output="auth warning",
+            stderr_bytes=len("auth warning".encode()),
         )
     )
     handle = MagicMock()
@@ -528,3 +531,5 @@ def test_check_silent_workers_classifies_stderr_only() -> None:
     svc.worker_service._active_handles = {"task-1": handle}
 
     svc._check_silent_workers()
+
+    assert svc.state.processes[0].monitor_state == "stderr_only"

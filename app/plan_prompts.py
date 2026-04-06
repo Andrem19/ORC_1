@@ -17,9 +17,9 @@ from app.plan_models import ResearchPlan, TaskReport
 from app.plan_prompt_budget import (
     compact_repair_context,
     compact_reports_for_revision,
-    summarize_plan_for_markdown,
     truncate_text,
 )
+from app.planner_context_builder import build_planner_context
 from app.plan_validation import PlanRepairRequest
 
 
@@ -28,7 +28,7 @@ from app.plan_validation import PlanRepairRequest
 # ---------------------------------------------------------------------------
 
 PLANNER_PLAN_SCHEMA = """{
-  "schema_version": 2,
+  "schema_version": 3,
   "plan_action": "create|update",
   "plan_version": 1,
   "reason": "why this plan or revision",
@@ -43,7 +43,41 @@ PLANNER_PLAN_SCHEMA = """{
       "stage_name": "Stage name",
       "theory": "2-5 sentences: why this hypothesis is worth testing",
       "depends_on": [],
-      "agent_instructions": ["specific step 1 with exact tool call", "specific step 2 using {{stage:0.run_id}} if needed"],
+      "steps": [
+        {
+          "step_id": "baseline_preflight",
+          "kind": "tool_call",
+          "instruction": "Validate readiness before starting the run",
+          "tool_name": "backtests_plan",
+          "args": {
+            "snapshot_id": "active-signal-v1",
+            "version": "1",
+            "symbol": "BTCUSDT",
+            "anchor_timeframe": "1h",
+            "execution_timeframe": "5m"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "baseline_run",
+          "kind": "tool_call",
+          "instruction": "Start the baseline run",
+          "tool_name": "backtests_runs",
+          "args": {
+            "action": "start",
+            "snapshot_id": "active-signal-v1",
+            "version": "1",
+            "symbol": "BTCUSDT",
+            "anchor_timeframe": "1h",
+            "execution_timeframe": "5m"
+          },
+          "binds": ["run_id"],
+          "decision_outputs": [],
+          "notes": "Later steps in this stage may use {{step:baseline_run.run_id}}"
+        }
+      ],
       "results_table_columns": ["run_id", "net_pnl", "trades", "PF", "WR", "max_DD", "verdict"],
       "decision_gates": [
         {"metric": "pnl", "threshold": 0, "comparator": "gt", "verdict_pass": "PROMOTE", "verdict_fail": "REJECT"}
@@ -78,6 +112,10 @@ WORKER_REPORT_SCHEMA = """{
 MAX_CREATE_TASKS = 5
 
 
+def _planner_context(research_context: str | None) -> str:
+    return build_planner_context(research_context=research_context, baseline_bootstrap=None)
+
+
 # ---------------------------------------------------------------------------
 # Planner prompts
 # ---------------------------------------------------------------------------
@@ -105,9 +143,10 @@ def build_plan_creation_prompt(
     parts.append(truncate_text(goal, 500))
     parts.append("")
 
-    if research_context:
+    context_text = _planner_context(research_context)
+    if context_text:
         parts.append("## Context")
-        parts.append(truncate_text(research_context, 2200))
+        parts.append(truncate_text(context_text, 4200))
         parts.append("")
 
     if cumulative_summary:
@@ -148,6 +187,7 @@ def build_plan_creation_prompt(
         "- Prefer fewer, higher-value stages over exhaustive plans.\n"
         "- Use `depends_on` as the only execution contract.\n"
         "- Each stage must be executable with exact MCP calls and parameters.\n"
+        "- Each stage must define `steps`, not `agent_instructions`.\n"
         "- `plan_markdown` must be concise and summarize the plan instead of duplicating every detail.\n"
         "- Stages with satisfied dependencies may run in parallel.\n"
     )
@@ -155,8 +195,10 @@ def build_plan_creation_prompt(
 
     parts.append("## Execution Rules")
     parts.append(
-        "- Use symbolic refs ONLY for future outputs: {{stage:N.run_id}}, {{stage:N.snapshot_ref}}, {{stage:N.results_table[0].column}}\n"
+        "- Use cross-stage refs ONLY for earlier stages in depends_on: {{stage:N.run_id}}, {{stage:N.snapshot_ref}}, {{stage:N.results_table[0].column}}\n"
+        "- Use intra-stage refs for outputs of previous steps in the same stage: {{step:step_id.run_id}}, {{step:step_id.snapshot_ref}}, {{step:step_id.results_table[0].column}}\n"
         "- NEVER emit placeholders like <best_snapshot_id>, <run_id>, <v>, ellipses, or incomplete tool calls.\n"
+        "- NEVER use tool aliases like snapshots(...), or backtests_runs(action='run').\n"
         "- Use concrete IDs only when already known from context.\n"
         "- Define clear verdict criteria: PROMOTE, WATCHLIST, REJECT.\n"
     )
@@ -170,16 +212,19 @@ def build_plan_creation_prompt(
     parts.append("")
     parts.append("## Symbolic Reference Contract")
     parts.append(
-        "- Allowed future-output syntax: {{stage:N.run_id}}, {{stage:N.snapshot_id}}, "
+        "- Allowed cross-stage syntax: {{stage:N.run_id}}, {{stage:N.snapshot_id}}, "
         "{{stage:N.version}}, {{stage:N.snapshot_ref}}, {{stage:N.results_table[0].column_name}}\n"
+        "- Allowed intra-stage syntax: {{step:step_id.run_id}}, {{step:step_id.snapshot_ref}}, "
+        "{{step:step_id.version}}, {{step:step_id.results_table[0].column_name}}\n"
         "- Symbolic refs MUST point to an earlier dependency listed in `depends_on`\n"
         "- Do NOT use <run_id>, <v>, <snapshot_id>, or `...`\n"
         "- Use concrete IDs only when they are already known from the provided context"
     )
     parts.append("")
     parts.append("## Examples")
-    parts.append("Valid: backtests_runs(action='inspect', run_id='{{stage:0.run_id}}', view='detail')")
-    parts.append("Invalid: backtests_runs(action='inspect', run_id='<run_id>', view='detail')")
+    parts.append("Valid stage ref: backtests_runs(action='inspect', run_id='{{stage:0.run_id}}', view='detail')")
+    parts.append("Valid step ref: backtests_runs(action='inspect', run_id='{{step:baseline_run.run_id}}', view='detail')")
+    parts.append("Invalid: snapshots(action='fork', snapshot_ref='<run_id>')")
 
     return "\n".join(parts)
 
@@ -211,9 +256,10 @@ def build_plan_revision_prompt(
     parts.append(goal)
     parts.append("")
 
-    if research_context:
+    context_text = _planner_context(research_context)
+    if context_text:
         parts.append("## Context")
-        parts.append(truncate_text(research_context, 1800))
+        parts.append(truncate_text(context_text, 3600))
         parts.append("")
 
     if current_plan.baseline_run_id or current_plan.baseline_metrics:
@@ -275,8 +321,8 @@ def build_plan_revision_prompt(
         "6. **Frozen base**: Keep the same frozen base — NEVER modify it\n"
         "7. **Dependencies**: Use `depends_on` as the only execution contract. "
         "Stages whose dependencies are resolved may run in parallel.\n"
-        "8. **Future outputs**: Use symbolic refs like {{stage:0.run_id}} instead of "
-        "inventing future run IDs or version placeholders.\n"
+        "8. **Future outputs**: Use {{stage:0.run_id}} only for earlier stages, and {{step:step_id.run_id}} for earlier steps within the same stage.\n"
+        "9. Emit schema v3 with `steps`, not free-form `agent_instructions`.\n"
     )
     parts.append("")
 
@@ -308,9 +354,10 @@ def build_plan_repair_prompt(
     parts.append(truncate_text(repair_request.goal, 500))
     parts.append("")
 
-    if research_context:
+    context_text = _planner_context(research_context)
+    if context_text:
         parts.append("## Context")
-        parts.append(truncate_text(research_context, 1600))
+        parts.append(truncate_text(context_text, 3200))
         parts.append("")
 
     if mcp_problem_summary:
@@ -330,11 +377,21 @@ def build_plan_repair_prompt(
         "- Preserve valid stages and the overall investigation direction\n"
         "- Only repair the invalid stages/instructions listed below\n"
         "- Use `depends_on` as the only dependency contract\n"
-        "- Use symbolic refs like {{stage:N.run_id}} for future outputs\n"
+        "- Re-emit the full plan in schema v3 with `steps`\n"
+        "- Use {{stage:N.run_id}} only for earlier stages in depends_on\n"
+        "- Use {{step:step_id.run_id}} for previous steps inside the same stage\n"
         "- NEVER emit <...> placeholders, ellipses, or incomplete tool calls\n"
+        "- Replace tool aliases with canonical facades from the MCP contract\n"
         f"- Keep the existing stage count; do not expand beyond {len(repair_request.invalid_plan_data.get('tasks', []))} stages\n"
         "- Respond with a COMPLETE corrected plan JSON, not a patch diff"
     )
+    parts.append("")
+
+    parts.append("## Canonical Repair Guidance")
+    parts.append("- Replace self stage refs with step refs inside the same stage")
+    parts.append("- Replace `snapshots(...)` with `backtests_strategy(action='clone', ...)`")
+    parts.append("- Replace `backtests_runs(action='run', ...)` with canonical `backtests_runs(action='start', ...)`")
+    parts.append("- Use only the tool names, actions, and arg shapes from the MCP contract in Context")
     parts.append("")
 
     parts.append("## Validation Errors To Fix")
@@ -375,6 +432,7 @@ def build_plan_task_prompt(
     stage_name: str,
     theory: str,
     agent_instructions: list[str],
+    steps: list[Any] | None = None,
     results_table_columns: list[str] | None = None,
     plan_version: int = 0,
     mcp_instructions: str | None = None,
@@ -396,11 +454,34 @@ def build_plan_task_prompt(
         parts.append(theory)
         parts.append("")
 
-    parts.append("## Instructions")
-    parts.append("Execute these steps in order:")
+    parts.append("## Workflow")
+    parts.append("Execute steps in order. Resolve `{{step:...}}` using outputs from earlier steps in this ETAP. Do not guess missing values.")
     parts.append("")
-    for i, step in enumerate(agent_instructions, 1):
-        parts.append(f"{i}. {step}")
+    if steps:
+        for i, step in enumerate(steps, 1):
+            step_id = getattr(step, "step_id", "") or step.get("step_id", f"step_{i}")
+            kind = getattr(step, "kind", "") or step.get("kind", "work")
+            instruction = getattr(step, "instruction", "") or step.get("instruction", "")
+            tool_name = getattr(step, "tool_name", None) if not isinstance(step, dict) else step.get("tool_name")
+            args = getattr(step, "args", {}) if not isinstance(step, dict) else step.get("args", {})
+            binds = getattr(step, "binds", []) if not isinstance(step, dict) else step.get("binds", [])
+            decision_outputs = getattr(step, "decision_outputs", []) if not isinstance(step, dict) else step.get("decision_outputs", [])
+            notes = getattr(step, "notes", "") if not isinstance(step, dict) else step.get("notes", "")
+            parts.append(f"{i}. [{step_id}] {kind}")
+            if instruction:
+                parts.append(f"   - instruction: {instruction}")
+            if tool_name:
+                parts.append(f"   - tool_name: {tool_name}")
+                parts.append(f"   - args: {json.dumps(args, ensure_ascii=False)}")
+            if binds:
+                parts.append(f"   - binds: {', '.join(str(x) for x in binds)}")
+            if decision_outputs:
+                parts.append(f"   - decision_outputs: {', '.join(str(x) for x in decision_outputs)}")
+            if notes:
+                parts.append(f"   - notes: {notes}")
+    else:
+        for i, step in enumerate(agent_instructions, 1):
+            parts.append(f"{i}. {step}")
     parts.append("")
 
     # Results table to fill

@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import logging
 import subprocess
+import time
 from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Any
 
@@ -21,10 +22,11 @@ from app.plan_models import (
     AntiPattern,
     DecisionGate,
     PlanTask,
+    PlanStep,
     ResearchPlan,
     plan_task_to_task,
 )
-from app.plan_symbolic_refs import resolve_symbolic_references
+from app.plan_symbolic_refs import resolve_stage_references_in_value
 from app.plan_validation import (
     PlanRepairRequest,
     PlanValidationError,
@@ -398,12 +400,7 @@ class PlanOrchestratorService:
     _SILENT_WARN_SECONDS = 300  # 5 min of zero output before warning
 
     def _check_silent_workers(self) -> None:
-        """Warn about workers that have produced no output for extended periods.
-
-        Unlike timeouts, this does NOT kill the worker — qwen CLI buffers
-        output internally, so long silent periods are normal when waiting
-        for MCP tool responses.
-        """
+        """Diagnose silent or stalled workers without killing them."""
         now = datetime.now(timezone.utc)
 
         for task in list(self.state.active_tasks()):
@@ -414,26 +411,50 @@ class PlanOrchestratorService:
                 continue
             try:
                 started = datetime.fromisoformat(pi.started_at)
-                silent_seconds = (now - started).total_seconds()
+                elapsed_seconds = (now - started).total_seconds()
             except (ValueError, TypeError):
                 continue
 
-            if silent_seconds >= self._SILENT_WARN_SECONDS:
-                # Check if process is actually alive
-                handle = self.worker_service._active_handles.get(task.task_id)
-                if handle and handle.process and handle.process.poll() is None:
-                    stdout_len = len((pi.partial_output or "").strip())
-                    stderr_len = len((pi.partial_error_output or "").strip())
-                    if stdout_len == 0 and stderr_len == 0:
-                        state = "no stdout/stderr"
-                    elif stdout_len == 0 and stderr_len > 0:
-                        state = "stderr only"
-                    else:
-                        continue
-                    logger.warning(
-                        "Task %s (pid=%s) quiet for %.0fs with %s — likely CLI buffering or backend stall",
-                        task.task_id, pi.pid, silent_seconds, state,
-                    )
+            handle = self.worker_service._active_handles.get(task.task_id)
+            if not (handle and handle.process and handle.process.poll() is None):
+                continue
+
+            stdout_len = len((pi.partial_output or "").strip())
+            stderr_len = len((pi.partial_error_output or "").strip())
+            last_output_age = None
+            if pi.last_output_at:
+                try:
+                    last_output_age = (now - datetime.fromisoformat(pi.last_output_at)).total_seconds()
+                except (TypeError, ValueError):
+                    last_output_age = None
+
+            state = ""
+            if pi.first_output_at is None and elapsed_seconds >= self._SILENT_WARN_SECONDS:
+                state = "stderr_only" if stderr_len > 0 else "no_output"
+            elif last_output_age is not None and last_output_age >= self._SILENT_WARN_SECONDS:
+                state = "stalled"
+            elif pi.first_output_at is not None and elapsed_seconds >= self._SILENT_WARN_SECONDS:
+                state = "slow_active"
+
+            if not state:
+                pi.monitor_state = ""
+                pi.monitor_warning_sent = False
+                continue
+            if pi.monitor_state == state and pi.monitor_warning_sent:
+                continue
+
+            pi.monitor_state = state
+            pi.monitor_warning_sent = True
+            logger.warning(
+                "worker_%s: task=%s pid=%s elapsed=%.0fs stdout=%d stderr=%d last_output_age=%s",
+                state,
+                task.task_id,
+                pi.pid,
+                elapsed_seconds,
+                pi.stdout_bytes,
+                pi.stderr_bytes,
+                f"{last_output_age:.0f}s" if last_output_age is not None else "n/a",
+            )
 
     # ---------------------------------------------------------------
     # MCP health check
@@ -526,7 +547,7 @@ class PlanOrchestratorService:
             )
         self.planner_service.start_plan_creation(
             goal=self.config.goal,
-            research_context=self.orch._research_context_text,
+            research_context=self._build_planner_context(),
             anti_patterns=anti_patterns if anti_patterns else None,
             cumulative_summary=cumulative,
             worker_ids=self._worker_ids,
@@ -568,7 +589,7 @@ class PlanOrchestratorService:
             )
         self.planner_service.start_plan_repair(
             repair_request=repair_request,
-            research_context=self.orch._research_context_text,
+            research_context=self._build_planner_context(),
             worker_ids=self._worker_ids,
             mcp_problem_summary=self._get_mcp_summary(),
         )
@@ -607,7 +628,7 @@ class PlanOrchestratorService:
             goal=self.config.goal,
             current_plan=self._current_plan,
             reports=reports,
-            research_context=self.orch._research_context_text,
+            research_context=self._build_planner_context(),
             anti_patterns=anti_patterns if anti_patterns else None,
             worker_ids=self._worker_ids,
             mcp_problem_summary=self._get_mcp_summary(),
@@ -632,6 +653,8 @@ class PlanOrchestratorService:
             plan_markdown=data.get("plan_markdown", ""),
             status="active",
         )
+        planner_run_artifact = self._persist_completed_planner_run()
+        plan.planner_run_artifact = planner_run_artifact
 
         for t_data in data.get("tasks", []):
             gates = []
@@ -641,12 +664,31 @@ class PlanOrchestratorService:
                 elif isinstance(g, DecisionGate):
                     gates.append(g)
 
+            steps = []
+            for idx, s_data in enumerate(t_data.get("steps", []), 1):
+                if not isinstance(s_data, dict):
+                    continue
+                steps.append(PlanStep(
+                    step_id=str(s_data.get("step_id", f"step_{idx}")),
+                    kind=str(s_data.get("kind", "work")),
+                    instruction=str(s_data.get("instruction", "")),
+                    tool_name=s_data.get("tool_name"),
+                    args=s_data.get("args", {}) if isinstance(s_data.get("args"), dict) else {},
+                    binds=s_data.get("binds", []) if isinstance(s_data.get("binds"), list) else [],
+                    decision_outputs=(
+                        s_data.get("decision_outputs", [])
+                        if isinstance(s_data.get("decision_outputs"), list) else []
+                    ),
+                    notes=str(s_data.get("notes", "")),
+                ))
+
             pt = PlanTask(
                 plan_version=version,
                 stage_number=t_data.get("stage_number", 0),
                 stage_name=t_data.get("stage_name", ""),
                 theory=t_data.get("theory", ""),
                 depends_on=t_data.get("depends_on", []),
+                steps=steps,
                 agent_instructions=t_data.get("agent_instructions", []),
                 results_table_columns=t_data.get("results_table_columns", []),
                 decision_gates=gates,
@@ -700,6 +742,7 @@ class PlanOrchestratorService:
                 parsed_data=data,
                 validation=validation,
                 raw_output=self.planner_service.last_plan_raw_output,
+                planner_run_artifact=planner_run_artifact,
             )
             return
 
@@ -710,6 +753,7 @@ class PlanOrchestratorService:
                 parsed_data=data,
                 validation=validation,
                 raw_output=self.planner_service.last_plan_raw_output,
+                planner_run_artifact=planner_run_artifact,
             )
             return
 
@@ -747,12 +791,15 @@ class PlanOrchestratorService:
         reports_by_stage = self._reports_by_stage()
 
         for pt in plan_tasks:
-            resolved_instructions = self._resolve_plan_task_instructions(pt, reports_by_stage)
-            if resolved_instructions is None:
+            resolved_steps = self._resolve_plan_task_steps(pt, reports_by_stage)
+            if resolved_steps is None:
                 continue
 
             # MCP health gate
-            instructions_text = " ".join(str(i) for i in resolved_instructions)
+            instructions_text = " ".join(
+                f"{step.instruction} {step.tool_name or ''} {step.args}"
+                for step in resolved_steps
+            )
             if self._is_mcp_instructions(instructions_text) and not self._mcp_healthy:
                 logger.warning(
                     "Skipping MCP-dependent stage %d — MCP unhealthy",
@@ -791,7 +838,8 @@ class PlanOrchestratorService:
                 stage_number=pt.stage_number,
                 stage_name=pt.stage_name,
                 theory=pt.theory,
-                agent_instructions=resolved_instructions,
+                agent_instructions=[step.instruction for step in resolved_steps],
+                steps=resolved_steps,
                 results_table_columns=pt.results_table_columns,
             )
             self.state.processes.append(process_info)
@@ -895,18 +943,30 @@ class PlanOrchestratorService:
                 reports_by_stage[stage_number] = report
         return reports_by_stage
 
-    def _resolve_plan_task_instructions(
+    def _resolve_plan_task_steps(
         self,
         plan_task: PlanTask,
         reports_by_stage: dict[int, Any],
-    ) -> list[str] | None:
-        resolved: list[str] = []
-        for instruction in plan_task.agent_instructions:
-            resolution = resolve_symbolic_references(instruction, reports_by_stage)
-            if not resolution.is_resolved:
+    ) -> list[PlanStep] | None:
+        resolved_steps: list[PlanStep] = []
+        for step in plan_task.normalized_steps():
+            resolved_instruction, instruction_errors = resolve_stage_references_in_value(
+                step.instruction,
+                reports_by_stage,
+            )
+            resolved_args, arg_errors = resolve_stage_references_in_value(
+                step.args,
+                reports_by_stage,
+            )
+            resolved_notes, note_errors = resolve_stage_references_in_value(
+                step.notes,
+                reports_by_stage,
+            )
+            unresolved = instruction_errors + arg_errors + note_errors
+            if unresolved:
                 blocking_errors = []
                 runtime_errors = []
-                for err in resolution.unresolved:
+                for err in unresolved:
                     if err.stage_number not in reports_by_stage:
                         blocking_errors.append(err)
                     else:
@@ -936,9 +996,40 @@ class PlanOrchestratorService:
                 )
                 return None
 
-            resolved.append(resolution.resolved_text)
+            resolved_steps.append(PlanStep(
+                step_id=step.step_id,
+                kind=step.kind,
+                instruction=str(resolved_instruction),
+                tool_name=step.tool_name,
+                args=resolved_args if isinstance(resolved_args, dict) else {},
+                binds=list(step.binds),
+                decision_outputs=list(step.decision_outputs),
+                notes=str(resolved_notes),
+            ))
 
-        return resolved
+        return resolved_steps
+
+    def _build_planner_context(self) -> str:
+        baseline_bootstrap = getattr(self.config, "research_config", None)
+        parts: list[str] = []
+        if isinstance(baseline_bootstrap, dict) and baseline_bootstrap:
+            parts.append("## Baseline Bootstrap")
+            for key in (
+                "baseline_snapshot_id",
+                "baseline_version",
+                "symbol",
+                "anchor_timeframe",
+                "execution_timeframe",
+            ):
+                value = baseline_bootstrap.get(key)
+                if value is not None:
+                    parts.append(f"- {key}: {value}")
+        if self.orch._research_context_text:
+            if parts:
+                parts.append("")
+            parts.append("## Live Research Context")
+            parts.append(self.orch._research_context_text)
+        return "\n".join(parts)
 
     def _pick_worker(self) -> str | None:
         active_workers = {t.assigned_worker_id for t in self.state.active_tasks()}
@@ -1076,35 +1167,60 @@ class PlanOrchestratorService:
                 snapshot.stderr_bytes,
             )
 
-        if elapsed >= soft_stall_seconds and not snapshot.soft_warning_sent:
-            snapshot.soft_warning_sent = True
-            stdout_state = "no stdout"
-            if snapshot.output_bytes > 0 and snapshot.stream_event_count > 0:
-                stdout_state = "stream events"
-            elif snapshot.output_bytes > 0:
-                stdout_state = "partial stdout"
-            elif snapshot.stderr_bytes > 0:
-                stdout_state = "stderr only"
+        last_output_age = None
+        if snapshot.last_output_at_monotonic is not None:
+            last_output_age = max(0.0, time.monotonic() - snapshot.last_output_at_monotonic)
 
+        if snapshot.has_any_output and elapsed >= soft_stall_seconds and (last_output_age is None or last_output_age < soft_stall_seconds):
+            if not snapshot.slow_active_warning_sent:
+                snapshot.slow_active_warning_sent = True
+                stdout_state = "stream events" if snapshot.stream_event_count > 0 else "partial stdout"
+                logger.warning(
+                    "planner_slow_active: type=%s version=%d attempt=%d elapsed=%.0fs state=%s stdout=%d stderr=%d prompt=%d",
+                    snapshot.request_type,
+                    snapshot.request_version,
+                    snapshot.attempt_number,
+                    elapsed,
+                    stdout_state,
+                    snapshot.output_bytes,
+                    snapshot.stderr_bytes,
+                    snapshot.prompt_length,
+                )
+                if not snapshot.slow_notification_sent:
+                    snapshot.slow_notification_sent = True
+                    self.notification_service.send_error(
+                        (
+                            f"Planner slow_active: {snapshot.request_type} v{snapshot.request_version} "
+                            f"attempt {snapshot.attempt_number}, elapsed {elapsed:.0f}s, "
+                            f"stdout={snapshot.output_bytes}B, stderr={snapshot.stderr_bytes}B, "
+                            f"prompt={snapshot.prompt_length} chars"
+                        ),
+                        context="plan_mode",
+                    )
+
+        if last_output_age is not None and last_output_age >= soft_stall_seconds and not snapshot.stalled_warning_sent:
+            snapshot.stalled_warning_sent = True
+            stdout_state = "stream events" if snapshot.stream_event_count > 0 else ("partial stdout" if snapshot.output_bytes > 0 else "stderr only")
             logger.warning(
-                "planner_soft_stall: type=%s version=%d attempt=%d elapsed=%.0fs state=%s stdout=%d stderr=%d prompt=%d",
+                "planner_stalled: type=%s version=%d attempt=%d elapsed=%.0fs last_output_age=%.0fs state=%s stdout=%d stderr=%d prompt=%d",
                 snapshot.request_type,
                 snapshot.request_version,
                 snapshot.attempt_number,
                 elapsed,
+                last_output_age,
                 stdout_state,
                 snapshot.output_bytes,
                 snapshot.stderr_bytes,
                 snapshot.prompt_length,
             )
-            if not snapshot.soft_notification_sent:
-                snapshot.soft_notification_sent = True
+            if not snapshot.stalled_notification_sent:
+                snapshot.stalled_notification_sent = True
                 self.notification_service.send_error(
                     (
-                        f"Planner slow: {snapshot.request_type} v{snapshot.request_version} "
+                        f"Planner stalled: {snapshot.request_type} v{snapshot.request_version} "
                         f"attempt {snapshot.attempt_number}, elapsed {elapsed:.0f}s, "
-                        f"stdout={snapshot.output_bytes}B, stderr={snapshot.stderr_bytes}B, "
-                        f"prompt={snapshot.prompt_length} chars"
+                        f"last_output={last_output_age:.0f}s ago, stdout={snapshot.output_bytes}B, "
+                        f"stderr={snapshot.stderr_bytes}B"
                     ),
                     context="plan_mode",
                 )
@@ -1161,6 +1277,7 @@ class PlanOrchestratorService:
         parsed_data: dict[str, Any],
         validation: PlanValidationResult,
         raw_output: str,
+        planner_run_artifact: str | None = None,
     ) -> None:
         """Persist rejection details and either trigger repair or stop."""
         attempt_number = max(1, self.state.current_plan_attempt or 1)
@@ -1186,6 +1303,7 @@ class PlanOrchestratorService:
                 raw_output=raw_output,
                 parsed_data=parsed_data,
                 validation_errors=validation.as_dicts(),
+                planner_run_artifact=planner_run_artifact,
             )
 
         self.state.current_plan_attempt = attempt_number
@@ -1228,6 +1346,20 @@ class PlanOrchestratorService:
         self.state.current_plan_attempt = next_attempt
         self.state.current_plan_attempt_type = "repair"
         self._repair_plan()
+
+    def _persist_completed_planner_run(self) -> str | None:
+        if not self._plan_store:
+            return None
+        snapshot = self.planner_service.consume_last_completed_plan_runtime()
+        if snapshot is None:
+            return None
+        path = self._plan_store.save_planner_run(
+            request_type=snapshot.request_type,
+            request_version=snapshot.request_version,
+            attempt_number=snapshot.attempt_number,
+            payload=snapshot.to_dict(),
+        )
+        return str(path)
 
     def _maybe_update_plan_baseline(self, plan_task: PlanTask, report: Any) -> None:
         """Capture the measured baseline from ETAP 0 so later plans use real metrics."""

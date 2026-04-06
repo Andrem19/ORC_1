@@ -7,6 +7,7 @@ Supports both synchronous execute_task() and asynchronous start_task/check_task.
 from __future__ import annotations
 
 import logging
+from datetime import datetime, timezone
 from typing import Any
 
 from app.adapters.base import BaseAdapter, ProcessHandle
@@ -138,9 +139,12 @@ class WorkerService:
                 error="Process handle lost (orchestrator may have restarted)",
             ), True
 
+        prev_stdout_len = len(process_info.partial_output or "")
+        prev_stderr_len = len(process_info.partial_error_output or "")
         new_output, is_finished = self.adapter.check(handle)
         process_info.partial_output = handle.partial_output
         process_info.partial_error_output = handle.partial_error_output
+        self._update_process_runtime(process_info, prev_stdout_len=prev_stdout_len, prev_stderr_len=prev_stderr_len)
 
         if new_output:
             logger.debug(
@@ -184,6 +188,26 @@ class WorkerService:
             task.task_id, result.status, result.confidence,
         )
         return result, True
+
+    def _update_process_runtime(
+        self,
+        process_info: ProcessInfo,
+        *,
+        prev_stdout_len: int,
+        prev_stderr_len: int,
+    ) -> None:
+        stdout_now = process_info.partial_output or ""
+        stderr_now = process_info.partial_error_output or ""
+        process_info.stdout_bytes = len(stdout_now.encode("utf-8", errors="replace"))
+        process_info.stderr_bytes = len(stderr_now.encode("utf-8", errors="replace"))
+
+        if len(stdout_now) > prev_stdout_len or len(stderr_now) > prev_stderr_len:
+            now_iso = datetime.now(timezone.utc).isoformat()
+            if process_info.first_output_at is None:
+                process_info.first_output_at = now_iso
+            process_info.last_output_at = now_iso
+            process_info.monitor_warning_sent = False
+            process_info.monitor_state = ""
 
     def _parse_task_output(self, task: Task, raw_output: str) -> TaskResult:
         """Parse output using the task-specific schema."""
@@ -284,6 +308,7 @@ class WorkerService:
         stage_name: str = "",
         theory: str = "",
         agent_instructions: list[str] | None = None,
+        steps: list[Any] | None = None,
         results_table_columns: list[str] | None = None,
     ) -> ProcessInfo:
         """Launch a worker for a structured plan task (plan-mode)."""
@@ -291,7 +316,8 @@ class WorkerService:
         from app.research_context import MCP_WORKER_INSTRUCTIONS, is_mcp_task
 
         instructions = agent_instructions or []
-        is_mcp = is_mcp_task(task.description) or is_mcp_task(" ".join(instructions))
+        step_text = " ".join(str(getattr(step, "instruction", "")) for step in (steps or []))
+        is_mcp = is_mcp_task(task.description) or is_mcp_task(" ".join(instructions)) or is_mcp_task(step_text)
         mcp_instructions = MCP_WORKER_INSTRUCTIONS if is_mcp else None
 
         prompt = build_plan_task_prompt(
@@ -299,6 +325,7 @@ class WorkerService:
             stage_name=stage_name,
             theory=theory,
             agent_instructions=instructions,
+            steps=steps,
             results_table_columns=results_table_columns,
             plan_version=plan_version,
             mcp_instructions=mcp_instructions,

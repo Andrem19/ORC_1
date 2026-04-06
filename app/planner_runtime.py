@@ -34,9 +34,11 @@ class PlannerRunSnapshot:
     exit_code: int | None = None
     completed: bool = False
     termination_reason: str = ""
-    soft_warning_sent: bool = False
+    slow_active_warning_sent: bool = False
+    stalled_warning_sent: bool = False
     no_first_byte_warning_sent: bool = False
-    soft_notification_sent: bool = False
+    slow_notification_sent: bool = False
+    stalled_notification_sent: bool = False
     timeout_retry_count: int = 0
 
     @property
@@ -82,4 +84,13 @@ class PlannerRunSnapshot:
     def to_dict(self) -> dict[str, Any]:
         data = asdict(self)
         data["elapsed_seconds"] = round(self.elapsed_seconds, 3)
+        data["raw_stream_transcript"] = data.pop("raw_stdout", "")
+        data["rendered_output_clean"] = data.get("rendered_output", "")
+        data["stderr"] = data.pop("raw_stderr", "")
+        data["timing_summary"] = {
+            "started_at": self.started_at_iso,
+            "first_output_at": self.first_output_at_iso,
+            "last_output_at": self.last_output_at_iso,
+            "elapsed_seconds": data["elapsed_seconds"],
+        }
         return data

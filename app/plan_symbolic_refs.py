@@ -14,6 +14,7 @@ from typing import Any, Mapping
 from app.plan_models import TaskReport
 
 SYMBOLIC_REF_PATTERN = re.compile(r"\{\{stage:(\d+)\.([A-Za-z0-9_\[\]\.-]+)\}\}")
+STEP_REF_PATTERN = re.compile(r"\{\{step:([A-Za-z_][A-Za-z0-9_-]*)\.([A-Za-z0-9_\[\]\.-]+)\}\}")
 LEGACY_PLACEHOLDER_PATTERN = re.compile(r"<[^>]+>")
 RESULTS_TABLE_FIELD_PATTERN = re.compile(r"results_table\[0\]\.([A-Za-z_][\w-]*)$")
 
@@ -31,6 +32,15 @@ class SymbolicReference:
 
     raw: str
     stage_number: int
+    field: str
+
+
+@dataclass(frozen=True)
+class StepReference:
+    """One intra-stage symbolic reference embedded in a task step."""
+
+    raw: str
+    step_id: str
     field: str
 
 
@@ -64,6 +74,19 @@ def extract_symbolic_references(text: str) -> list[SymbolicReference]:
             SymbolicReference(
                 raw=match.group(0),
                 stage_number=int(match.group(1)),
+                field=match.group(2),
+            )
+        )
+    return refs
+
+
+def extract_step_references(text: str) -> list[StepReference]:
+    refs: list[StepReference] = []
+    for match in STEP_REF_PATTERN.finditer(text):
+        refs.append(
+            StepReference(
+                raw=match.group(0),
+                step_id=match.group(1),
                 field=match.group(2),
             )
         )
@@ -126,6 +149,33 @@ def resolve_symbolic_references(
         resolved_text=resolved_text,
         unresolved=errors,
     )
+
+
+def resolve_stage_references_in_value(
+    value: Any,
+    reports_by_stage: Mapping[int, TaskReport],
+) -> tuple[Any, list[SymbolicResolutionError]]:
+    """Resolve only cross-stage refs within strings, lists, and dicts."""
+    if isinstance(value, str):
+        result = resolve_symbolic_references(value, reports_by_stage)
+        return result.resolved_text, result.unresolved
+    if isinstance(value, list):
+        resolved_items: list[Any] = []
+        errors: list[SymbolicResolutionError] = []
+        for item in value:
+            resolved_item, item_errors = resolve_stage_references_in_value(item, reports_by_stage)
+            resolved_items.append(resolved_item)
+            errors.extend(item_errors)
+        return resolved_items, errors
+    if isinstance(value, dict):
+        resolved_dict: dict[str, Any] = {}
+        errors: list[SymbolicResolutionError] = []
+        for key, item in value.items():
+            resolved_item, item_errors = resolve_stage_references_in_value(item, reports_by_stage)
+            resolved_dict[key] = resolved_item
+            errors.extend(item_errors)
+        return resolved_dict, errors
+    return value, []
 
 
 def _value_from_report(report: TaskReport, field: str) -> Any | None:

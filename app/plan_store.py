@@ -157,6 +157,7 @@ class PlanStore:
         raw_output: str,
         parsed_data: dict[str, Any],
         validation_errors: list[dict[str, Any]],
+        planner_run_artifact: str | None = None,
     ) -> Path:
         """Persist one invalid planner attempt for later debugging."""
         self.ensure_dirs()
@@ -169,6 +170,7 @@ class PlanStore:
             "raw_output": raw_output,
             "parsed_data": parsed_data,
             "validation_errors": validation_errors,
+            "planner_run_artifact": planner_run_artifact,
         }
         path.write_text(
             json.dumps(payload, ensure_ascii=False, indent=2),
@@ -301,6 +303,7 @@ def _plan_from_dict(data: dict[str, Any]) -> ResearchPlan:
         if not isinstance(depends_on, list):
             depends_on = []
         t_data["depends_on"] = [int(dep) for dep in depends_on if isinstance(dep, int)]
+        t_data["steps"] = t_data.get("steps", [])
         t_data["results_table_rows"] = t_data.get("results_table_rows", [])
         t_data["results_table_columns"] = t_data.get("results_table_columns", [])
         t_data["agent_instructions"] = t_data.get("agent_instructions", [])
@@ -335,16 +338,32 @@ def _plan_from_dict(data: dict[str, Any]) -> ResearchPlan:
 def _dict_to_dataclass(data: dict[str, Any], target_class_name: str = "") -> Any:
     """Best-effort dict → dataclass conversion."""
     if target_class_name == "PlanTask":
-        from app.plan_models import PlanTask, DecisionGate
+        from app.plan_models import PlanTask, DecisionGate, PlanStep
         gates = []
         for g in data.get("decision_gates", []):
             if isinstance(g, dict):
                 gates.append(DecisionGate(**g))
             elif isinstance(g, DecisionGate):
                 gates.append(g)
+        steps = []
+        for s in data.get("steps", []):
+            if isinstance(s, dict):
+                steps.append(PlanStep(**{
+                    "step_id": s.get("step_id", ""),
+                    "kind": s.get("kind", "work"),
+                    "instruction": s.get("instruction", ""),
+                    "tool_name": s.get("tool_name"),
+                    "args": s.get("args", {}) if isinstance(s.get("args"), dict) else {},
+                    "binds": s.get("binds", []) if isinstance(s.get("binds"), list) else [],
+                    "decision_outputs": s.get("decision_outputs", []) if isinstance(s.get("decision_outputs"), list) else [],
+                    "notes": s.get("notes", ""),
+                }))
+            elif isinstance(s, PlanStep):
+                steps.append(s)
         valid_keys = {f.name for f in __import__("dataclasses").fields(PlanTask)}
         filtered = {k: v for k, v in data.items() if k in valid_keys}
         filtered["decision_gates"] = gates
+        filtered["steps"] = steps
         return PlanTask(**filtered)
     elif target_class_name == "AntiPattern":
         from app.plan_models import AntiPattern
@@ -387,8 +406,10 @@ def _render_plan_markdown(plan: ResearchPlan) -> str:
             parts.append(task.theory)
             parts.append("")
         parts.append("### Instructions")
-        for i, step in enumerate(task.agent_instructions, 1):
-            parts.append(f"{i}. {step}")
+        for i, step in enumerate(task.normalized_steps(), 1):
+            parts.append(f"{i}. [{step.step_id}] {step.kind}")
+            for line in step.render_prompt_block()[1:]:
+                parts.append(f"   - {line}")
         if task.results_table_columns:
             parts.append("")
             parts.append("### Results")

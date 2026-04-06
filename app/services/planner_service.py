@@ -520,6 +520,11 @@ class PlannerService:
     def plan_runtime_snapshot(self) -> PlannerRunSnapshot | None:
         return self._plan_runtime
 
+    def consume_last_completed_plan_runtime(self) -> PlannerRunSnapshot | None:
+        snapshot = self._last_completed_plan_runtime
+        self._last_completed_plan_runtime = None
+        return snapshot
+
     @property
     def last_plan_raw_output(self) -> str:
         return self._last_plan_raw_output
