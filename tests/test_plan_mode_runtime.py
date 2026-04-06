@@ -7,6 +7,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import MagicMock
 
+from app.adapters.base import ProcessHandle
 from app.models import OrchestratorState, ProcessInfo, StopReason, Task, TaskResult, TaskStatus
 from app.plan_models import PlanTask, ResearchPlan, TaskReport
 from app.planner_runtime import PlannerRunSnapshot
@@ -415,6 +416,56 @@ def test_invalid_plan_loop_stops_after_max_attempts() -> None:
     orch.notification_service.send_error.assert_called()
 
 
+def test_transport_failure_retries_same_request_without_repair() -> None:
+    svc, orch = _make_service(worker_ids=["qwen-1"])
+    svc.planner_service.plan_transport_retry_count = 0
+    svc.planner_service.restart_plan_request.return_value = True
+
+    svc._process_plan_data(
+        {
+            "plan_action": "continue",
+            "plan_version": 0,
+            "_parse_failed": True,
+            "_failure_class": "transport_error",
+            "_request_type": "create",
+            "_request_version": 1,
+            "_attempt_number": 1,
+            "_transport_errors": ["StructuredOutput activity detected but no recoverable structured payload was found"],
+        }
+    )
+
+    svc.planner_service.restart_plan_request.assert_called_once_with(reason="transport_error")
+    svc.planner_service.start_plan_repair.assert_not_called()
+    svc._plan_store.save_rejected_plan_attempt.assert_called_once()
+    kwargs = svc._plan_store.save_rejected_plan_attempt.call_args.kwargs
+    assert kwargs["plan_version"] == 1
+    assert kwargs["failure_class"] == "transport_error"
+    assert svc._terminal_stop_reason is None
+
+
+def test_transport_failure_stops_after_retry_budget() -> None:
+    svc, orch = _make_service(worker_ids=["qwen-1"])
+    svc.planner_service.plan_transport_retry_count = 1
+
+    svc._process_plan_data(
+        {
+            "plan_action": "continue",
+            "plan_version": 0,
+            "_parse_failed": True,
+            "_failure_class": "transport_error",
+            "_request_type": "create",
+            "_request_version": 1,
+            "_attempt_number": 1,
+            "_transport_errors": ["lost StructuredOutput payload"],
+        }
+    )
+
+    assert svc._terminal_stop_reason == StopReason.INVALID_OUTPUT
+    svc.planner_service.restart_plan_request.assert_not_called()
+    svc.planner_service.start_plan_repair.assert_not_called()
+    orch.notification_service.send_error.assert_called()
+
+
 def test_build_plan_revision_prompt_includes_measured_baseline() -> None:
     plan = ResearchPlan(
         schema_version=2,
@@ -504,6 +555,48 @@ def test_handle_planner_timeout_stops_after_retry_budget() -> None:
 
     assert svc._terminal_stop_reason == StopReason.PLANNER_TIMEOUT
     orch.notification_service.send_error.assert_called_once()
+
+
+def test_planner_service_prefers_structured_payload_over_tool_result_text() -> None:
+    from app.services.planner_service import PlannerService
+
+    adapter = MagicMock()
+    service = PlannerService(adapter=adapter, timeout=180)
+    adapter.check.return_value = ("", True)
+
+    transcript = "\n".join([
+        '{"type":"stream_event","event":{"type":"content_block_start","content_block":{"type":"tool_use","name":"StructuredOutput","input":{}}}}',
+        '{"type":"assistant","message":{"content":[{"type":"tool_use","name":"StructuredOutput","input":{"schema_version":3,"plan_action":"create","plan_version":1,"tasks":[{"stage_number":0,"stage_name":"Baseline"}]}}]}}',
+        '{"type":"user","message":{"content":[{"type":"tool_result","content":"Structured output provided successfully"}]}}',
+    ])
+    process = MagicMock()
+    process.returncode = 0
+    handle = ProcessHandle(
+        process=process,
+        task_id="planner",
+        worker_id="planner",
+        partial_output="Structured output provided successfully",
+        metadata={"raw_stdout": transcript, "raw_stderr": "", "stream_event_count": 3},
+    )
+    service._active_handle = handle
+    service._plan_runtime = PlannerRunSnapshot(
+        request_type="create",
+        request_version=1,
+        attempt_number=1,
+        prompt_length=1000,
+        output_mode="stream-json",
+    )
+    service._plan_request_type = "create"
+    service._plan_request_version = 1
+    service._plan_request_attempt = 1
+
+    parsed, finished = service.check_plan_output()
+
+    assert finished is True
+    assert parsed is not None
+    assert parsed["plan_version"] == 1
+    assert parsed["_failure_class"] == "none"
+    assert service.last_plan_raw_output.startswith('{"schema_version": 3')
 
 
 def test_check_silent_workers_classifies_stderr_only() -> None:

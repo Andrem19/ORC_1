@@ -636,9 +636,30 @@ class PlanOrchestratorService:
 
     def _process_plan_data(self, data: dict) -> None:
         """Process parsed plan data from the planner."""
-        orch = self.orch
         action = data.get("plan_action", "create")
-        version = data.get("plan_version", self.state.current_plan_version + 1)
+        request_type = str(data.get("_request_type", self.state.current_plan_attempt_type or "create"))
+        request_version = int(data.get("_request_version", self.state.current_plan_version + 1) or (self.state.current_plan_version + 1))
+        attempt_number = int(data.get("_attempt_number", self.state.current_plan_attempt or 1) or 1)
+        failure_class = str(data.get("_failure_class", "none") or "none")
+        version = int(data.get("plan_version", request_version) or request_version)
+        if data.get("_parse_failed"):
+            version = request_version
+
+        planner_run_artifact = self._persist_completed_planner_run()
+        structured_payload = data.get("_structured_payload")
+        if failure_class in {"transport_error", "parse_error"}:
+            self._handle_planner_output_failure(
+                plan_version=request_version,
+                request_type=request_type,
+                attempt_number=attempt_number,
+                failure_class=failure_class,
+                parsed_data=data,
+                raw_output=self.planner_service.last_plan_raw_output,
+                planner_run_artifact=planner_run_artifact,
+                transport_errors=data.get("_transport_errors", []),
+                structured_payload=structured_payload if isinstance(structured_payload, dict) else None,
+            )
+            return
 
         plan = ResearchPlan(
             schema_version=int(data.get("schema_version", 1) or 1),
@@ -653,7 +674,6 @@ class PlanOrchestratorService:
             plan_markdown=data.get("plan_markdown", ""),
             status="active",
         )
-        planner_run_artifact = self._persist_completed_planner_run()
         plan.planner_run_artifact = planner_run_artifact
 
         for t_data in data.get("tasks", []):
@@ -739,10 +759,14 @@ class PlanOrchestratorService:
             ])
             self._handle_invalid_plan(
                 plan_version=version,
+                request_type=request_type,
+                attempt_number=attempt_number,
                 parsed_data=data,
                 validation=validation,
                 raw_output=self.planner_service.last_plan_raw_output,
                 planner_run_artifact=planner_run_artifact,
+                failure_class="invalid_content",
+                structured_payload=structured_payload if isinstance(structured_payload, dict) else None,
             )
             return
 
@@ -750,10 +774,14 @@ class PlanOrchestratorService:
         if not validation.is_valid:
             self._handle_invalid_plan(
                 plan_version=version,
+                request_type=request_type,
+                attempt_number=attempt_number,
                 parsed_data=data,
                 validation=validation,
                 raw_output=self.planner_service.last_plan_raw_output,
                 planner_run_artifact=planner_run_artifact,
+                failure_class="invalid_content",
+                structured_payload=structured_payload if isinstance(structured_payload, dict) else None,
             )
             return
 
@@ -1174,9 +1202,9 @@ class PlanOrchestratorService:
         if snapshot.has_any_output and elapsed >= soft_stall_seconds and (last_output_age is None or last_output_age < soft_stall_seconds):
             if not snapshot.slow_active_warning_sent:
                 snapshot.slow_active_warning_sent = True
-                stdout_state = "stream events" if snapshot.stream_event_count > 0 else "partial stdout"
+                stdout_state = self._planner_output_state(snapshot)
                 logger.warning(
-                    "planner_slow_active: type=%s version=%d attempt=%d elapsed=%.0fs state=%s stdout=%d stderr=%d prompt=%d",
+                    "planner_slow_active: type=%s version=%d attempt=%d elapsed=%.0fs state=%s stdout=%d stderr=%d prompt=%d structured=%dB delta=%dB",
                     snapshot.request_type,
                     snapshot.request_version,
                     snapshot.attempt_number,
@@ -1185,6 +1213,8 @@ class PlanOrchestratorService:
                     snapshot.output_bytes,
                     snapshot.stderr_bytes,
                     snapshot.prompt_length,
+                    snapshot.structured_payload_bytes,
+                    snapshot.structured_delta_bytes,
                 )
                 if not snapshot.slow_notification_sent:
                     snapshot.slow_notification_sent = True
@@ -1200,9 +1230,9 @@ class PlanOrchestratorService:
 
         if last_output_age is not None and last_output_age >= soft_stall_seconds and not snapshot.stalled_warning_sent:
             snapshot.stalled_warning_sent = True
-            stdout_state = "stream events" if snapshot.stream_event_count > 0 else ("partial stdout" if snapshot.output_bytes > 0 else "stderr only")
+            stdout_state = self._planner_output_state(snapshot)
             logger.warning(
-                "planner_stalled: type=%s version=%d attempt=%d elapsed=%.0fs last_output_age=%.0fs state=%s stdout=%d stderr=%d prompt=%d",
+                "planner_stalled: type=%s version=%d attempt=%d elapsed=%.0fs last_output_age=%.0fs state=%s stdout=%d stderr=%d prompt=%d structured=%dB delta=%dB",
                 snapshot.request_type,
                 snapshot.request_version,
                 snapshot.attempt_number,
@@ -1212,6 +1242,8 @@ class PlanOrchestratorService:
                 snapshot.output_bytes,
                 snapshot.stderr_bytes,
                 snapshot.prompt_length,
+                snapshot.structured_payload_bytes,
+                snapshot.structured_delta_bytes,
             )
             if not snapshot.stalled_notification_sent:
                 snapshot.stalled_notification_sent = True
@@ -1227,6 +1259,16 @@ class PlanOrchestratorService:
 
         if elapsed >= hard_stall_seconds:
             self._handle_planner_timeout(snapshot)
+
+    @staticmethod
+    def _planner_output_state(snapshot: Any) -> str:
+        if getattr(snapshot, "structured_payload_source", "none") in {"tool_use_input", "input_json_delta"} or getattr(snapshot, "structured_delta_bytes", 0) > 0:
+            return "structured_output_stream_active"
+        if getattr(snapshot, "output_bytes", 0) > 0:
+            return "text_stream_active"
+        if getattr(snapshot, "stderr_bytes", 0) > 0:
+            return "stderr_only"
+        return "no_output"
 
     def _handle_planner_timeout(self, snapshot: Any) -> None:
         final_snapshot = self.planner_service.terminate_plan_run("hard_timeout")
@@ -1274,14 +1316,18 @@ class PlanOrchestratorService:
     def _handle_invalid_plan(
         self,
         plan_version: int,
+        request_type: str,
+        attempt_number: int,
         parsed_data: dict[str, Any],
         validation: PlanValidationResult,
         raw_output: str,
+        failure_class: str = "invalid_content",
+        structured_payload: dict[str, Any] | None = None,
         planner_run_artifact: str | None = None,
     ) -> None:
         """Persist rejection details and either trigger repair or stop."""
-        attempt_number = max(1, self.state.current_plan_attempt or 1)
-        attempt_type = self.state.current_plan_attempt_type or "create"
+        attempt_number = max(1, attempt_number)
+        attempt_type = request_type or self.state.current_plan_attempt_type or "create"
         first_error = validation.errors[0] if validation.errors else None
         summary = validation.summary()
 
@@ -1303,6 +1349,9 @@ class PlanOrchestratorService:
                 raw_output=raw_output,
                 parsed_data=parsed_data,
                 validation_errors=validation.as_dicts(),
+                failure_class=failure_class,
+                request_type=request_type,
+                structured_payload=structured_payload,
                 planner_run_artifact=planner_run_artifact,
             )
 
@@ -1346,6 +1395,82 @@ class PlanOrchestratorService:
         self.state.current_plan_attempt = next_attempt
         self.state.current_plan_attempt_type = "repair"
         self._repair_plan()
+
+    def _handle_planner_output_failure(
+        self,
+        *,
+        plan_version: int,
+        request_type: str,
+        attempt_number: int,
+        failure_class: str,
+        parsed_data: dict[str, Any],
+        raw_output: str,
+        planner_run_artifact: str | None,
+        transport_errors: list[Any] | None = None,
+        structured_payload: dict[str, Any] | None = None,
+    ) -> None:
+        """Handle transport/parse failures without consuming the repair loop."""
+        attempt_number = max(1, attempt_number)
+        request_type = request_type or self.state.current_plan_attempt_type or "create"
+        transport_errors = [str(err) for err in (transport_errors or []) if str(err).strip()]
+        summary = "; ".join(transport_errors[:2]) or str(parsed_data.get("reason", "planner output could not be recovered"))
+
+        logger.warning(
+            "Planner %s failure on %s v%d attempt=%d: %s",
+            failure_class,
+            request_type,
+            plan_version,
+            attempt_number,
+            summary,
+        )
+
+        artifact_path = None
+        if self._plan_store:
+            artifact_path = self._plan_store.save_rejected_plan_attempt(
+                plan_version=plan_version,
+                attempt_number=attempt_number,
+                attempt_type=request_type,
+                raw_output=raw_output,
+                parsed_data=parsed_data,
+                validation_errors=[],
+                failure_class=failure_class,
+                request_type=request_type,
+                structured_payload=structured_payload,
+                planner_run_artifact=planner_run_artifact,
+            )
+
+        self.state.current_plan_attempt = attempt_number
+        self.state.current_plan_attempt_type = request_type
+        self.state.current_plan_validation_errors = []
+        self.state.last_rejected_plan_version = plan_version
+        self.state.last_rejected_plan_attempt_at = datetime.now(timezone.utc).isoformat()
+        self.state.last_rejected_plan_artifact = str(artifact_path) if artifact_path else None
+        self.state.empty_cycles = 0
+        self.state.last_change_at = datetime.now(timezone.utc).isoformat()
+
+        self.memory_service.record_event(
+            self.state,
+            f"Planner {failure_class} on {request_type} v{plan_version} attempt {attempt_number}: {summary}",
+        )
+
+        transport_retry_count = getattr(self.planner_service, "plan_transport_retry_count", 0)
+        if transport_retry_count < 1 and self.planner_service.restart_plan_request(reason="transport_error"):
+            self.notification_service.send_error(
+                (
+                    f"Planner {failure_class} on {request_type} v{plan_version} "
+                    f"attempt {attempt_number}. Retrying same request once. {summary}"
+                ),
+                context="plan_mode",
+            )
+            self._sync_planner_runtime_state()
+            return
+
+        final_message = (
+            f"Planner {failure_class} on {request_type} v{plan_version} attempt {attempt_number}: {summary}"
+        )
+        self.notification_service.send_error(final_message, context="plan_mode")
+        self._terminal_stop_reason = StopReason.INVALID_OUTPUT
+        self._terminal_stop_summary = final_message
 
     def _persist_completed_planner_run(self) -> str | None:
         if not self._plan_store:

@@ -31,6 +31,12 @@ class PlannerRunSnapshot:
     raw_stderr: str = ""
     rendered_output: str = ""
     stream_event_count: int = 0
+    structured_payload: dict[str, Any] | None = None
+    structured_payload_source: str = "none"
+    structured_payload_bytes: int = 0
+    structured_delta_bytes: int = 0
+    transport_errors: list[str] = field(default_factory=list)
+    parse_status: str = ""
     exit_code: int | None = None
     completed: bool = False
     termination_reason: str = ""
@@ -40,6 +46,7 @@ class PlannerRunSnapshot:
     slow_notification_sent: bool = False
     stalled_notification_sent: bool = False
     timeout_retry_count: int = 0
+    transport_retry_count: int = 0
 
     @property
     def elapsed_seconds(self) -> float:

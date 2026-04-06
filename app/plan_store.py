@@ -157,6 +157,9 @@ class PlanStore:
         raw_output: str,
         parsed_data: dict[str, Any],
         validation_errors: list[dict[str, Any]],
+        failure_class: str = "invalid_content",
+        request_type: str | None = None,
+        structured_payload: dict[str, Any] | None = None,
         planner_run_artifact: str | None = None,
     ) -> Path:
         """Persist one invalid planner attempt for later debugging."""
@@ -170,6 +173,9 @@ class PlanStore:
             "raw_output": raw_output,
             "parsed_data": parsed_data,
             "validation_errors": validation_errors,
+            "failure_class": failure_class,
+            "request_type": request_type or attempt_type,
+            "structured_payload": structured_payload,
             "planner_run_artifact": planner_run_artifact,
         }
         path.write_text(

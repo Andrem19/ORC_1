@@ -18,6 +18,7 @@ import time
 from typing import Any
 
 from app.adapters.base import AdapterResponse, BaseAdapter, ProcessHandle
+from app.planner_structured_output import extract_planner_structured_output
 from app.planner_stream import consume_stream_fragment
 
 logger = logging.getLogger("orchestrator.adapter.claude")
@@ -264,6 +265,9 @@ class ClaudePlannerCli(BaseAdapter):
     def _render_output(stdout: str, output_mode: str) -> str:
         if output_mode != "stream-json":
             return stdout.strip()
+        extraction = extract_planner_structured_output(stdout, rendered_text="")
+        if extraction.structured_payload is not None:
+            return json.dumps(extraction.structured_payload, ensure_ascii=False).strip()
         rendered, buffer, _event_count = consume_stream_fragment(stdout, "")
         if buffer.strip():
             rendered += buffer

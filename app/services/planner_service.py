@@ -7,6 +7,7 @@ If the adapter doesn't support async mode (start/check), falls back to synchrono
 
 from __future__ import annotations
 
+import json
 import logging
 import time as _time
 from typing import TYPE_CHECKING, Any
@@ -20,6 +21,7 @@ from app.models import (
 )
 from app.planner_json_schema import build_plan_json_schema
 from app.planner_runtime import PlannerRunSnapshot
+from app.planner_structured_output import extract_planner_structured_output
 from app.prompts import build_planner_prompt
 from app.result_parser import parse_plan_output, parse_planner_output
 
@@ -47,6 +49,7 @@ class PlannerService:
         self._plan_runtime: PlannerRunSnapshot | None = None
         self._last_completed_plan_runtime: PlannerRunSnapshot | None = None
         self._plan_timeout_retry_count: int = 0
+        self._plan_transport_retry_count: int = 0
 
     def _check_async_support(self) -> bool:
         """Check if the adapter supports async start/check."""
@@ -220,6 +223,7 @@ class PlannerService:
         from app.plan_prompts import build_plan_creation_prompt
 
         self._plan_timeout_retry_count = 0
+        self._plan_transport_retry_count = 0
         self._plan_request_payload = {
             "request_type": "create",
             "goal": goal,
@@ -252,6 +256,7 @@ class PlannerService:
             attempt_number=attempt_number,
             max_tasks=5,
             timeout_retry_count=0,
+            transport_retry_count=0,
             task_id=f"plan-create-v{plan_version}-a{attempt_number}",
         )
 
@@ -269,6 +274,7 @@ class PlannerService:
         from app.plan_prompts import build_plan_revision_prompt
 
         self._plan_timeout_retry_count = 0
+        self._plan_transport_retry_count = 0
         self._plan_request_payload = {
             "request_type": "revision",
             "goal": goal,
@@ -300,6 +306,7 @@ class PlannerService:
             attempt_number=1,
             max_tasks=None,
             timeout_retry_count=0,
+            transport_retry_count=0,
             task_id=f"plan-revise-v{current_plan.version}",
         )
 
@@ -314,6 +321,7 @@ class PlannerService:
         from app.plan_prompts import build_plan_repair_prompt
 
         self._plan_timeout_retry_count = 0
+        self._plan_transport_retry_count = 0
         self._plan_request_payload = {
             "request_type": "repair",
             "repair_request": repair_request,
@@ -341,17 +349,21 @@ class PlannerService:
             attempt_number=repair_request.attempt_number,
             max_tasks=max_tasks,
             timeout_retry_count=0,
+            transport_retry_count=0,
             task_id=f"plan-repair-v{repair_request.plan_version}-a{repair_request.attempt_number}",
         )
 
-    def restart_plan_request(self) -> bool:
-        """Restart the current create/repair/revision request after a timeout."""
+    def restart_plan_request(self, *, reason: str = "timeout") -> bool:
+        """Restart the current create/repair/revision request."""
         if not self._plan_request_payload:
             return False
 
         request = dict(self._plan_request_payload)
         request_type = request.pop("request_type", "")
-        self._plan_timeout_retry_count += 1
+        if reason == "transport_error":
+            self._plan_transport_retry_count += 1
+        else:
+            self._plan_timeout_retry_count += 1
 
         if request_type == "create":
             from app.plan_prompts import build_plan_creation_prompt
@@ -371,6 +383,7 @@ class PlannerService:
                 attempt_number=request["attempt_number"],
                 max_tasks=5,
                 timeout_retry_count=self._plan_timeout_retry_count,
+                transport_retry_count=self._plan_transport_retry_count,
                 task_id=f"plan-create-v{request['plan_version']}-a{request['attempt_number']}",
             )
             return True
@@ -392,6 +405,7 @@ class PlannerService:
                 attempt_number=repair_request.attempt_number,
                 max_tasks=max_tasks,
                 timeout_retry_count=self._plan_timeout_retry_count,
+                transport_retry_count=self._plan_transport_retry_count,
                 task_id=f"plan-repair-v{repair_request.plan_version}-a{repair_request.attempt_number}",
             )
             return True
@@ -415,6 +429,7 @@ class PlannerService:
                 attempt_number=1,
                 max_tasks=None,
                 timeout_retry_count=self._plan_timeout_retry_count,
+                transport_retry_count=self._plan_transport_retry_count,
                 task_id=f"plan-revise-v{current_plan.version}",
             )
             return True
@@ -449,21 +464,29 @@ class PlannerService:
 
         if not is_finished:
             if snapshot is not None:
+                stream_state = self._classify_plan_stream_state(snapshot)
                 logger.info(
-                    "Planner (plan) still running: type=%s version=%d attempt=%d elapsed=%.0fs output=%d chars stderr=%d chars events=%d retries=%d",
+                    "Planner (plan) still running: type=%s version=%d attempt=%d elapsed=%.0fs state=%s text=%d chars stderr=%d chars events=%d structured=%dB delta=%dB timeout_retries=%d transport_retries=%d",
                     snapshot.request_type,
                     snapshot.request_version,
                     snapshot.attempt_number,
                     snapshot.elapsed_seconds,
+                    stream_state,
                     len(handle.partial_output),
                     len(handle.partial_error_output),
                     snapshot.stream_event_count,
+                    snapshot.structured_payload_bytes,
+                    snapshot.structured_delta_bytes,
                     snapshot.timeout_retry_count,
+                    getattr(snapshot, "transport_retry_count", 0),
                 )
             return None, False
 
+        extraction = extract_planner_structured_output(
+            str(handle.metadata.get("raw_stdout", "")),
+            rendered_text=handle.partial_output,
+        )
         full_output = handle.partial_output
-        self._last_plan_raw_output = full_output
         self._active_handle = None
 
         proc = handle.process
@@ -474,6 +497,11 @@ class PlannerService:
                 rendered_output=full_output,
                 termination_reason="completed",
             )
+            snapshot.structured_payload = extraction.structured_payload
+            snapshot.structured_payload_source = extraction.structured_payload_source
+            snapshot.structured_payload_bytes = extraction.structured_payload_bytes
+            snapshot.structured_delta_bytes = extraction.structured_delta_bytes
+            snapshot.transport_errors = list(extraction.transport_errors)
             self._last_completed_plan_runtime = snapshot
 
         if exit_code is not None and exit_code != 0:
@@ -483,14 +511,53 @@ class PlannerService:
                 "reason": f"Planner process exited with code {exit_code}",
             }, True
 
-        parsed = parse_plan_output(full_output)
+        canonical_output = full_output
+        failure_class = "invalid_content"
+        parse_status = "parsed_from_rendered_text"
+        if extraction.structured_payload is not None:
+            canonical_output = json.dumps(extraction.structured_payload, ensure_ascii=False)
+            parsed = parse_plan_output(canonical_output)
+            if parsed.get("_parse_failed"):
+                failure_class = "invalid_content"
+                parse_status = "structured_payload_invalid_content"
+            else:
+                failure_class = "none"
+                parse_status = f"parsed_from_{extraction.structured_payload_source}"
+        else:
+            parsed = parse_plan_output(full_output)
+            if parsed.get("_parse_failed"):
+                if extraction.saw_structured_output_activity:
+                    failure_class = "transport_error"
+                    parse_status = "structured_output_transport_error"
+                else:
+                    failure_class = "parse_error"
+                    parse_status = "rendered_text_parse_error"
+            else:
+                failure_class = "none"
+                parse_status = "parsed_from_rendered_text"
+
+        self._last_plan_raw_output = canonical_output
+        parsed["_failure_class"] = failure_class
+        parsed["_request_type"] = self._plan_request_type
+        parsed["_request_version"] = self._plan_request_version
+        parsed["_attempt_number"] = self._plan_request_attempt
+        parsed["_transport_errors"] = list(extraction.transport_errors)
+        parsed["_structured_payload_source"] = extraction.structured_payload_source
+        parsed["_structured_payload"] = extraction.structured_payload
+        parsed["_parse_status"] = parse_status
+
+        if snapshot is not None:
+            snapshot.parse_status = parse_status
+
         logger.info(
-            "Planner (plan): type=%s attempt=%d action=%s version=%d tasks=%d",
+            "Planner (plan): type=%s attempt=%d action=%s version=%d tasks=%d failure_class=%s source=%s",
             self._plan_request_type,
             self._plan_request_attempt,
             parsed.get("plan_action"),
-            parsed.get("plan_version", 0),
+            parsed.get("_request_version", parsed.get("plan_version", 0)),
             len(parsed.get("tasks", [])),
+            failure_class,
+            extraction.structured_payload_source,
         )
         return parsed, True
 
@@ -538,6 +605,10 @@ class PlannerService:
                 runtime_summary = {}
         return runtime_summary
 
+    @property
+    def plan_transport_retry_count(self) -> int:
+        return self._plan_transport_retry_count
+
     # ---------------------------------------------------------------
     # Internal helpers
     # ---------------------------------------------------------------
@@ -551,6 +622,7 @@ class PlannerService:
         attempt_number: int,
         max_tasks: int | None,
         timeout_retry_count: int,
+        transport_retry_count: int,
         task_id: str,
     ) -> None:
         json_schema = build_plan_json_schema(max_tasks=max_tasks)
@@ -572,6 +644,7 @@ class PlannerService:
             prompt_length=len(prompt),
             output_mode=output_mode,
             timeout_retry_count=timeout_retry_count,
+            transport_retry_count=transport_retry_count,
         )
 
     def _refresh_plan_runtime_from_handle(self, handle: ProcessHandle) -> None:
@@ -594,3 +667,22 @@ class PlannerService:
             )
 
         snapshot.stream_event_count = int(handle.metadata.get("stream_event_count", 0))
+        extraction = extract_planner_structured_output(
+            raw_stdout,
+            rendered_text=handle.partial_output,
+        )
+        snapshot.structured_payload = extraction.structured_payload
+        snapshot.structured_payload_source = extraction.structured_payload_source
+        snapshot.structured_payload_bytes = extraction.structured_payload_bytes
+        snapshot.structured_delta_bytes = extraction.structured_delta_bytes
+        snapshot.transport_errors = list(extraction.transport_errors)
+
+    @staticmethod
+    def _classify_plan_stream_state(snapshot: PlannerRunSnapshot) -> str:
+        if snapshot.structured_payload_source in {"tool_use_input", "input_json_delta"} or snapshot.structured_delta_bytes > 0:
+            return "structured_output_stream_active"
+        if snapshot.output_bytes > 0:
+            return "text_stream_active"
+        if snapshot.stderr_bytes > 0:
+            return "stderr_only"
+        return "no_output"
