@@ -648,7 +648,7 @@ def test_planner_service_prefers_structured_payload_over_tool_result_text() -> N
         task_id="planner",
         worker_id="planner",
         partial_output="Structured output provided successfully",
-        metadata={"raw_stdout": transcript, "raw_stderr": "", "stream_event_count": 3},
+        metadata={"raw_stdout": transcript, "raw_stderr": "", "stream_event_count": 3, "output_mode": "stream-json"},
     )
     service._active_handle = handle
     service._plan_runtime = PlannerRunSnapshot(
@@ -689,7 +689,7 @@ def test_planner_service_sets_transport_error_when_structured_output_lost() -> N
         task_id="planner",
         worker_id="planner",
         partial_output="Structured output provided successfully",
-        metadata={"raw_stdout": transcript, "raw_stderr": "", "stream_event_count": 2},
+        metadata={"raw_stdout": transcript, "raw_stderr": "", "stream_event_count": 2, "output_mode": "stream-json"},
     )
     service._active_handle = handle
     service._plan_runtime = PlannerRunSnapshot(
@@ -895,8 +895,13 @@ def test_planner_output_state_classifies_structured_stream() -> None:
 
 
 def test_planner_output_state_classifies_text_stream() -> None:
-    snapshot = PlannerRunSnapshot(output_bytes=10)
+    snapshot = PlannerRunSnapshot(rendered_output="summary")
     assert PlanOrchestratorService._planner_output_state(snapshot) == "text_stream_active"
+
+
+def test_planner_output_state_classifies_raw_stream_only() -> None:
+    snapshot = PlannerRunSnapshot(output_bytes=10)
+    assert PlanOrchestratorService._planner_output_state(snapshot) == "raw_stream_only"
 
 
 def test_planner_output_state_classifies_stderr_only() -> None:
@@ -917,7 +922,7 @@ def test_check_planner_watchdog_soft_active_uses_recent_output() -> None:
     )
     svc.planner_service.plan_runtime_snapshot.return_value = snapshot
 
-    import app.services.plan_orchestrator_service as mod
+    import app.services.plan_orchestrator._planner_monitor as mod
     from unittest.mock import patch
     with patch.object(mod.time, "monotonic", return_value=1_000_010.0):
         snapshot.started_at_monotonic = 1_000_000.0 - 400.0
@@ -940,7 +945,7 @@ def test_check_planner_watchdog_stalled_uses_last_output_age() -> None:
     )
     svc.planner_service.plan_runtime_snapshot.return_value = snapshot
 
-    import app.services.plan_orchestrator_service as mod
+    import app.services.plan_orchestrator._planner_monitor as mod
     from unittest.mock import patch
     with patch.object(mod.time, "monotonic", return_value=1_000_400.0):
         snapshot.started_at_monotonic = 1_000_000.0 - 400.0
@@ -964,7 +969,7 @@ def test_check_planner_watchdog_hard_timeout_ignores_zero_rendered_text_when_act
     svc.planner_service.plan_runtime_snapshot.return_value = snapshot
     svc._handle_planner_timeout = MagicMock()
 
-    import app.services.plan_orchestrator_service as mod
+    import app.services.plan_orchestrator._planner_monitor as mod
     from unittest.mock import patch
     with patch.object(mod.time, "monotonic", return_value=1_000_100.0):
         snapshot.started_at_monotonic = 1_000_000.0 - 100.0

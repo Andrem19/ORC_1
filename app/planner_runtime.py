@@ -17,6 +17,7 @@ class PlannerRunSnapshot:
     request_type: str = "create"
     request_version: int = 0
     attempt_number: int = 0
+    execution_seq: int = 1
     prompt_length: int = 0
     output_mode: str = "text"
     started_at_monotonic: float = field(default_factory=time.monotonic)
@@ -37,6 +38,10 @@ class PlannerRunSnapshot:
     structured_delta_bytes: int = 0
     transport_errors: list[str] = field(default_factory=list)
     parse_status: str = ""
+    transcript_complete: bool = True
+    truncation_detected: bool = False
+    raw_stdout_tail: str = ""
+    raw_stderr_tail: str = ""
     exit_code: int | None = None
     completed: bool = False
     termination_reason: str = ""
@@ -94,6 +99,10 @@ class PlannerRunSnapshot:
         data["raw_stream_transcript"] = data.pop("raw_stdout", "")
         data["rendered_output_clean"] = data.get("rendered_output", "")
         data["stderr"] = data.pop("raw_stderr", "")
+        if not data.get("raw_stdout_tail"):
+            data["raw_stdout_tail"] = data["raw_stream_transcript"][-1000:]
+        if not data.get("raw_stderr_tail"):
+            data["raw_stderr_tail"] = data["stderr"][-1000:]
         data["timing_summary"] = {
             "started_at": self.started_at_iso,
             "first_output_at": self.first_output_at_iso,

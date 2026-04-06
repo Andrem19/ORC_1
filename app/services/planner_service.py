@@ -50,6 +50,7 @@ class PlannerService:
         self._last_completed_plan_runtime: PlannerRunSnapshot | None = None
         self._plan_timeout_retry_count: int = 0
         self._plan_transport_retry_count: int = 0
+        self._plan_execution_seq: int = 0
 
     def _check_async_support(self) -> bool:
         """Check if the adapter supports async start/check."""
@@ -224,6 +225,7 @@ class PlannerService:
 
         self._plan_timeout_retry_count = 0
         self._plan_transport_retry_count = 0
+        self._plan_execution_seq = 0
         self._plan_request_payload = {
             "request_type": "create",
             "goal": goal,
@@ -275,6 +277,7 @@ class PlannerService:
 
         self._plan_timeout_retry_count = 0
         self._plan_transport_retry_count = 0
+        self._plan_execution_seq = 0
         self._plan_request_payload = {
             "request_type": "revision",
             "goal": goal,
@@ -322,6 +325,7 @@ class PlannerService:
 
         self._plan_timeout_retry_count = 0
         self._plan_transport_retry_count = 0
+        self._plan_execution_seq = 0
         self._plan_request_payload = {
             "request_type": "repair",
             "repair_request": repair_request,
@@ -466,10 +470,11 @@ class PlannerService:
             if snapshot is not None:
                 stream_state = self._classify_plan_stream_state(snapshot)
                 logger.info(
-                    "Planner (plan) still running: type=%s version=%d attempt=%d elapsed=%.0fs state=%s text=%d chars stderr=%d chars events=%d structured=%dB delta=%dB timeout_retries=%d transport_retries=%d",
+                    "Planner (plan) still running: type=%s version=%d attempt=%d exec=%d elapsed=%.0fs state=%s text=%d chars stderr=%d chars events=%d structured=%dB delta=%dB timeout_retries=%d transport_retries=%d",
                     snapshot.request_type,
                     snapshot.request_version,
                     snapshot.attempt_number,
+                    snapshot.execution_seq,
                     snapshot.elapsed_seconds,
                     stream_state,
                     len(handle.partial_output),
@@ -502,6 +507,10 @@ class PlannerService:
             snapshot.structured_payload_bytes = extraction.structured_payload_bytes
             snapshot.structured_delta_bytes = extraction.structured_delta_bytes
             snapshot.transport_errors = list(extraction.transport_errors)
+            snapshot.transcript_complete = extraction.transcript_complete
+            snapshot.truncation_detected = extraction.truncation_detected
+            snapshot.raw_stdout_tail = extraction.raw_stream_transcript[-1000:]
+            snapshot.raw_stderr_tail = str(handle.metadata.get("raw_stderr", ""))[-1000:]
             self._last_completed_plan_runtime = snapshot
 
         if exit_code is not None and exit_code != 0:
@@ -510,6 +519,46 @@ class PlannerService:
                 "plan_action": "continue",
                 "reason": f"Planner process exited with code {exit_code}",
             }, True
+
+        # --- Text mode: skip structured output extraction, parse directly ---
+        output_mode = str(handle.metadata.get("output_mode", "text"))
+        if output_mode == "text":
+            full_output = handle.partial_output or str(handle.metadata.get("raw_stdout", ""))
+            parsed = parse_plan_output(full_output)
+            if parsed.get("_parse_failed"):
+                failure_class = "parse_error"
+                parse_status = "text_parse_error"
+            else:
+                failure_class = "none"
+                parse_status = "parsed_from_text"
+            # Populate snapshot fields even in text mode
+            if snapshot is not None:
+                snapshot.structured_payload = None
+                snapshot.structured_payload_source = "none"
+            parsed["_failure_class"] = failure_class
+            parsed["_request_type"] = self._plan_request_type
+            parsed["_request_version"] = self._plan_request_version
+            parsed["_attempt_number"] = self._plan_request_attempt
+            parsed["_execution_seq"] = self._plan_execution_seq
+            parsed["_transport_errors"] = []
+            parsed["_structured_payload_source"] = "none"
+            parsed["_structured_payload"] = None
+            parsed["_parse_status"] = parse_status
+            if snapshot is not None:
+                snapshot.parse_status = parse_status
+            logger.info(
+                "Planner (plan/text): type=%s attempt=%d exec=%d action=%s version=%d tasks=%d failure_class=%s parse_status=%s",
+                self._plan_request_type,
+                self._plan_request_attempt,
+                self._plan_execution_seq,
+                parsed.get("plan_action"),
+                parsed.get("_request_version", parsed.get("plan_version", 0)),
+                len(parsed.get("tasks", [])),
+                failure_class,
+                parse_status,
+            )
+            return parsed, True
+        # --- End text mode ---
 
         canonical_output = full_output
         failure_class = "invalid_content"
@@ -526,7 +575,10 @@ class PlannerService:
         else:
             parsed = parse_plan_output(full_output)
             if parsed.get("_parse_failed"):
-                if extraction.saw_structured_output_activity:
+                if extraction.truncation_detected:
+                    failure_class = "transport_error"
+                    parse_status = "stdout_truncated_mid_event"
+                elif extraction.saw_structured_output_activity:
                     failure_class = "transport_error"
                     parse_status = "structured_output_transport_error"
                 else:
@@ -536,11 +588,17 @@ class PlannerService:
                 failure_class = "none"
                 parse_status = "parsed_from_rendered_text"
 
-        self._last_plan_raw_output = canonical_output
+        self._last_plan_raw_output = (
+            canonical_output
+            if canonical_output.strip()
+            else extraction.rendered_text_clean
+            or extraction.raw_stream_transcript[-2000:]
+        )
         parsed["_failure_class"] = failure_class
         parsed["_request_type"] = self._plan_request_type
         parsed["_request_version"] = self._plan_request_version
         parsed["_attempt_number"] = self._plan_request_attempt
+        parsed["_execution_seq"] = self._plan_execution_seq
         parsed["_transport_errors"] = list(extraction.transport_errors)
         parsed["_structured_payload_source"] = extraction.structured_payload_source
         parsed["_structured_payload"] = extraction.structured_payload
@@ -550,9 +608,10 @@ class PlannerService:
             snapshot.parse_status = parse_status
 
         logger.info(
-            "Planner (plan): type=%s attempt=%d action=%s version=%d tasks=%d failure_class=%s source=%s",
+            "Planner (plan): type=%s attempt=%d exec=%d action=%s version=%d tasks=%d failure_class=%s source=%s",
             self._plan_request_type,
             self._plan_request_attempt,
+            self._plan_execution_seq,
             parsed.get("plan_action"),
             parsed.get("_request_version", parsed.get("plan_version", 0)),
             len(parsed.get("tasks", [])),
@@ -636,11 +695,14 @@ class PlannerService:
             worker_id="planner",
             json_schema=json_schema,
         )
+        self._plan_execution_seq += 1
+        self._active_handle.metadata["execution_seq"] = self._plan_execution_seq
         output_mode = str(self._active_handle.metadata.get("output_mode", "text"))
         self._plan_runtime = PlannerRunSnapshot(
             request_type=request_type,
             request_version=request_version,
             attempt_number=attempt_number,
+            execution_seq=self._plan_execution_seq,
             prompt_length=len(prompt),
             output_mode=output_mode,
             timeout_retry_count=timeout_retry_count,
@@ -676,13 +738,19 @@ class PlannerService:
         snapshot.structured_payload_bytes = extraction.structured_payload_bytes
         snapshot.structured_delta_bytes = extraction.structured_delta_bytes
         snapshot.transport_errors = list(extraction.transport_errors)
+        snapshot.transcript_complete = extraction.transcript_complete
+        snapshot.truncation_detected = extraction.truncation_detected
+        snapshot.raw_stdout_tail = raw_stdout[-1000:]
+        snapshot.raw_stderr_tail = raw_stderr[-1000:]
 
     @staticmethod
     def _classify_plan_stream_state(snapshot: PlannerRunSnapshot) -> str:
         if snapshot.structured_payload_source in {"tool_use_input", "input_json_delta"} or snapshot.structured_delta_bytes > 0:
             return "structured_output_stream_active"
-        if snapshot.output_bytes > 0:
+        if snapshot.rendered_output:
             return "text_stream_active"
+        if snapshot.output_bytes > 0:
+            return "raw_stream_only"
         if snapshot.stderr_bytes > 0:
             return "stderr_only"
         return "no_output"

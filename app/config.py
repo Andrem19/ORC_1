@@ -91,7 +91,7 @@ class OrchestratorConfig:
         name="claude_planner_cli",
         cli_path="claude",
         model="opus",
-        mode="batch_json",
+        mode="batch_text",
         use_bare=True,
         no_session_persistence=True,
         soft_timeout_seconds=300,

@@ -22,6 +22,9 @@ class PlannerStructuredOutput:
     structured_payload_bytes: int = 0
     saw_structured_output_activity: bool = False
     saw_tool_result_success: bool = False
+    transcript_complete: bool = True
+    truncation_detected: bool = False
+    failure_detail: str = ""
 
 
 def extract_planner_structured_output(
@@ -38,15 +41,7 @@ def extract_planner_structured_output(
         return _fallback_to_rendered_text(result)
 
     delta_fragments: list[str] = []
-
-    for line in raw_stream_transcript.splitlines():
-        line = line.strip()
-        if not line:
-            continue
-        try:
-            payload = json.loads(line)
-        except json.JSONDecodeError:
-            continue
+    for payload in _iter_stream_payloads(raw_stream_transcript, result):
         _consume_payload(payload, result, delta_fragments)
 
     if result.structured_payload is not None:
@@ -65,11 +60,43 @@ def extract_planner_structured_output(
             result.transport_errors.append("input_json_delta decoded to non-object payload")
 
     if result.saw_structured_output_activity:
-        result.transport_errors.append(
-            "StructuredOutput activity detected but no recoverable structured payload was found"
+        detail = (
+            result.failure_detail
+            or "StructuredOutput activity detected but no recoverable structured payload was found"
         )
+        result.transport_errors.append(detail)
 
     return _fallback_to_rendered_text(result)
+
+
+def _iter_stream_payloads(raw_stream_transcript: str, result: PlannerStructuredOutput) -> list[Any]:
+    decoder = json.JSONDecoder()
+    idx = 0
+    payloads: list[Any] = []
+    length = len(raw_stream_transcript)
+
+    while idx < length:
+        while idx < length and raw_stream_transcript[idx].isspace():
+            idx += 1
+        if idx >= length:
+            break
+        if idx == 0 and raw_stream_transcript[idx] not in "{[":
+            result.failure_detail = ""
+            break
+        try:
+            payload, end = decoder.raw_decode(raw_stream_transcript, idx)
+        except json.JSONDecodeError as exc:
+            result.transcript_complete = False
+            result.truncation_detected = True
+            tail = raw_stream_transcript[idx:idx + 240]
+            result.failure_detail = f"stdout_truncated_mid_event: {exc}"
+            result.transport_errors.append(result.failure_detail)
+            result.transport_errors.append(f"stdout_tail={tail!r}")
+            break
+        payloads.append(payload)
+        idx = end
+
+    return payloads
 
 
 def _consume_payload(

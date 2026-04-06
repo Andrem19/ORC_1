@@ -9,12 +9,20 @@ from typing import Any
 
 from app.plan_models import PlanStep, ResearchPlan
 from app.planner_contract import inspect_legacy_instruction, validate_tool_step
-from app.plan_symbolic_refs import (
-    extract_symbolic_references,
-    extract_step_references,
-    has_legacy_placeholder,
-    is_supported_symbolic_field,
-)
+from app.plan_symbolic_refs import has_legacy_placeholder
+
+
+# ---------------------------------------------------------------------------
+# Severity model: hard errors reject the plan, soft errors are warnings
+# ---------------------------------------------------------------------------
+
+HARD_ERROR_CODES = frozenset({
+    "empty_instructions",
+    "self_dependency",
+    "unknown_dependency",
+    "legacy_placeholder",
+    "ellipsis_instruction",
+})
 
 
 @dataclass
@@ -26,6 +34,11 @@ class PlanValidationError:
     message: str
     offending_text: str = ""
     instruction_index: int | None = None
+    severity: str = ""  # set by validate_plan based on HARD_ERROR_CODES
+
+    def __post_init__(self) -> None:
+        if not self.severity:
+            self.severity = "hard" if self.code in HARD_ERROR_CODES else "soft"
 
 
 @dataclass
@@ -37,6 +50,19 @@ class PlanValidationResult:
     @property
     def is_valid(self) -> bool:
         return len(self.errors) == 0
+
+    @property
+    def has_hard_errors(self) -> bool:
+        return any(err.severity == "hard" for err in self.errors)
+
+    @property
+    def is_acceptable(self) -> bool:
+        """True if no hard errors (soft errors are warnings only)."""
+        return not self.has_hard_errors
+
+    @property
+    def soft_errors(self) -> list[PlanValidationError]:
+        return [err for err in self.errors if err.severity == "soft"]
 
     def summary(self, max_items: int = 3) -> str:
         if not self.errors:
@@ -59,6 +85,7 @@ class PlanValidationResult:
                 "code": err.code,
                 "message": err.message,
                 "offending_text": err.offending_text,
+                "severity": err.severity,
             }
             for err in self.errors
         ]
@@ -119,8 +146,6 @@ def validate_plan(plan: ResearchPlan) -> PlanValidationResult:
                 task=task,
                 step=step,
                 step_index=idx,
-                known_stages=known_stages,
-                dependencies=dependencies,
                 step_ids_seen=step_ids_seen,
             )
             step_ids_seen.append(step.step_id)
@@ -185,18 +210,6 @@ def validate_plan(plan: ResearchPlan) -> PlanValidationResult:
                     )
                 )
 
-            for ref in extract_symbolic_references(stripped):
-                _append_stage_ref_error(
-                    result=result,
-                    task_stage=task.stage_number,
-                    instruction_index=idx,
-                    ref_stage=ref.stage_number,
-                    ref_field=ref.field,
-                    ref_raw=ref.raw,
-                    known_stages=known_stages,
-                    dependencies=dependencies,
-                )
-
     return result
 
 
@@ -206,8 +219,6 @@ def _validate_step_contract(
     task: Any,
     step: PlanStep,
     step_index: int,
-    known_stages: set[int],
-    dependencies: set[int],
     step_ids_seen: list[str],
 ) -> None:
     if not step.step_id.strip():
@@ -306,39 +317,6 @@ def _validate_step_contract(
                     offending_text=text,
                 )
             )
-        for ref in extract_symbolic_references(text):
-            _append_stage_ref_error(
-                result=result,
-                task_stage=task.stage_number,
-                instruction_index=step_index,
-                ref_stage=ref.stage_number,
-                ref_field=ref.field,
-                ref_raw=ref.raw,
-                known_stages=known_stages,
-                dependencies=dependencies,
-            )
-        for ref in extract_step_references(text):
-            if not is_supported_symbolic_field(ref.field):
-                result.errors.append(
-                    PlanValidationError(
-                        stage_number=task.stage_number,
-                        instruction_index=step_index,
-                        code="step_ref_invalid",
-                        message=f"Unsupported step reference field '{ref.field}'",
-                        offending_text=ref.raw,
-                    )
-                )
-                continue
-            if ref.step_id not in step_ids_seen:
-                result.errors.append(
-                    PlanValidationError(
-                        stage_number=task.stage_number,
-                        instruction_index=step_index,
-                        code="step_ref_unknown",
-                        message=f"Step reference '{ref.step_id}' must point to an earlier step",
-                        offending_text=ref.raw,
-                    )
-                )
 
 
 def _step_text_surfaces(step: PlanStep) -> list[str]:
@@ -362,65 +340,6 @@ def _stringify_surface_values(value: Any) -> list[str]:
             out.extend(_stringify_surface_values(item))
         return out
     return []
-
-
-def _append_stage_ref_error(
-    *,
-    result: PlanValidationResult,
-    task_stage: int,
-    instruction_index: int,
-    ref_stage: int,
-    ref_field: str,
-    ref_raw: str,
-    known_stages: set[int],
-    dependencies: set[int],
-) -> None:
-    if not is_supported_symbolic_field(ref_field):
-        result.errors.append(
-            PlanValidationError(
-                stage_number=task_stage,
-                instruction_index=instruction_index,
-                code="stage_ref_invalid",
-                message=f"Unsupported symbolic reference field '{ref_field}'",
-                offending_text=ref_raw,
-            )
-        )
-        return
-
-    if ref_stage not in known_stages:
-        result.errors.append(
-            PlanValidationError(
-                stage_number=task_stage,
-                instruction_index=instruction_index,
-                code="stage_ref_invalid",
-                message=f"Symbolic reference points to unknown stage {ref_stage}",
-                offending_text=ref_raw,
-            )
-        )
-        return
-
-    if ref_stage == task_stage:
-        result.errors.append(
-            PlanValidationError(
-                stage_number=task_stage,
-                instruction_index=instruction_index,
-                code="stage_ref_invalid",
-                message="Stage cannot reference its own outputs",
-                offending_text=ref_raw,
-            )
-        )
-        return
-
-    if ref_stage not in dependencies:
-        result.errors.append(
-            PlanValidationError(
-                stage_number=task_stage,
-                instruction_index=instruction_index,
-                code="stage_ref_invalid",
-                message=f"Symbolic reference to stage {ref_stage} requires `depends_on: [{ref_stage}]`",
-                offending_text=ref_raw,
-            )
-        )
 
 
 def _looks_like_broken_tool_call(text: str) -> bool:

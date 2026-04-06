@@ -15,6 +15,7 @@ def test_planner_run_snapshot_to_dict_persists_structured_fields() -> None:
         request_type="create",
         request_version=1,
         attempt_number=1,
+        execution_seq=2,
         prompt_length=9000,
         output_mode="stream-json",
         raw_stdout='{"type":"stream_event"}',
@@ -26,6 +27,10 @@ def test_planner_run_snapshot_to_dict_persists_structured_fields() -> None:
         structured_delta_bytes=45,
         transport_errors=["transport issue"],
         parse_status="parsed_from_tool_use_input",
+        transcript_complete=False,
+        truncation_detected=True,
+        raw_stdout_tail="tail-out",
+        raw_stderr_tail="tail-err",
     )
 
     payload = snapshot.to_dict()
@@ -36,6 +41,11 @@ def test_planner_run_snapshot_to_dict_persists_structured_fields() -> None:
     assert payload["structured_payload_source"] == "tool_use_input"
     assert payload["transport_errors"] == ["transport issue"]
     assert payload["parse_status"] == "parsed_from_tool_use_input"
+    assert payload["execution_seq"] == 2
+    assert payload["transcript_complete"] is False
+    assert payload["truncation_detected"] is True
+    assert payload["raw_stdout_tail"] == "tail-out"
+    assert payload["raw_stderr_tail"] == "tail-err"
     assert "timing_summary" in payload
 
 
@@ -46,21 +56,42 @@ def test_save_rejected_plan_attempt_persists_failure_metadata(tmp_path: Path) ->
         plan_version=1,
         attempt_number=1,
         attempt_type="create",
+        execution_seq=2,
         raw_output="Structured output provided successfully",
         parsed_data={"plan_action": "continue"},
         validation_errors=[],
         failure_class="transport_error",
         request_type="create",
         structured_payload={"schema_version": 3, "plan_version": 1, "tasks": []},
-        planner_run_artifact="/tmp/create_v1_attempt_1.json",
+        failure_detail="stdout_truncated_mid_event",
+        planner_run_artifact="/tmp/create_v1_attempt_1_exec_2.json",
     )
 
     payload = json.loads(path.read_text(encoding="utf-8"))
+    assert path.name == "plan_v1_attempt_1_exec_2.json"
     assert payload["failure_class"] == "transport_error"
     assert payload["request_type"] == "create"
     assert payload["plan_version"] == 1
-    assert payload["planner_run_artifact"] == "/tmp/create_v1_attempt_1.json"
+    assert payload["execution_seq"] == 2
+    assert payload["failure_detail"] == "stdout_truncated_mid_event"
+    assert payload["planner_run_artifact"] == "/tmp/create_v1_attempt_1_exec_2.json"
     assert payload["structured_payload"]["plan_version"] == 1
+
+
+def test_save_planner_run_uses_execution_specific_filename(tmp_path: Path) -> None:
+    store = PlanStore(str(tmp_path / "plans"))
+
+    path = store.save_planner_run(
+        request_type="create",
+        request_version=1,
+        attempt_number=1,
+        execution_seq=2,
+        payload={"execution_seq": 2, "raw_stream_transcript": "x"},
+    )
+
+    assert path.name == "create_v1_attempt_1_exec_2.json"
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    assert payload["execution_seq"] == 2
 
 
 def test_plan_store_roundtrip_preserves_steps_baseline_and_gate_reason(tmp_path: Path) -> None:

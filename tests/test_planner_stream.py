@@ -148,6 +148,21 @@ def test_extract_structured_output_marks_transport_error_when_activity_has_no_pa
     assert "StructuredOutput activity detected" in extracted.transport_errors[-1]
 
 
+def test_extract_structured_output_detects_truncated_mid_event() -> None:
+    transcript = (
+        '{"type":"stream_event","event":{"type":"content_block_delta","delta":{"type":"thinking_delta","thinking":"x"}}}\n'
+        '{"type":"stream_event","event":{"type":"content_block_delta","delta":{"type":"input_json_delta","partial_json":"{\\"schema_version\\":3"}'
+    )
+
+    extracted = extract_planner_structured_output(transcript, rendered_text="")
+
+    assert extracted.structured_payload is None
+    assert extracted.transcript_complete is False
+    assert extracted.truncation_detected is True
+    assert any(err.startswith("stdout_truncated_mid_event:") for err in extracted.transport_errors)
+    assert any(err.startswith("stdout_tail=") for err in extracted.transport_errors)
+
+
 def test_extract_structured_output_falls_back_to_rendered_text_json() -> None:
     rendered_text = json.dumps({
         "schema_version": 3,

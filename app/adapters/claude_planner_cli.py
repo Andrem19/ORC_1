@@ -20,6 +20,7 @@ from typing import Any
 from app.adapters.base import AdapterResponse, BaseAdapter, ProcessHandle
 from app.planner_structured_output import extract_planner_structured_output
 from app.planner_stream import consume_stream_fragment
+from app.subprocess_io import drain_pipe_text, read_available_text
 
 logger = logging.getLogger("orchestrator.adapter.claude")
 
@@ -204,14 +205,14 @@ class ClaudePlannerCli(BaseAdapter):
         is_finished = proc.poll() is not None
 
         if is_finished:
-            final_stdout = self._read_remaining(proc.stdout)
-            final_stderr = self._read_remaining(proc.stderr)
+            proc.wait()
+            final_stdout = drain_pipe_text(proc.stdout)
+            final_stderr = drain_pipe_text(proc.stderr)
             if final_stdout:
                 rendered_fragment += self._consume_stdout_fragment(handle, final_stdout)
             if final_stderr:
                 handle.partial_error_output += final_stderr
                 handle.metadata["raw_stderr"] = handle.metadata.get("raw_stderr", "") + final_stderr
-            proc.wait()
             if proc.returncode and proc.returncode != 0:
                 logger.warning(
                     "Planner pid=%d exited %d: %s",
@@ -238,6 +239,9 @@ class ClaudePlannerCli(BaseAdapter):
             cmd.extend(["--output-format", "stream-json", "--include-partial-messages"])
             if json_schema:
                 cmd.extend(["--json-schema", json_schema])
+        elif self.mode == "batch_text":
+            output_mode = "text"
+            # Plain text output — no stream-json, no --json-schema
 
         cmd.extend(self._mandatory_flags)
         cmd.extend(self.extra_flags)
@@ -283,30 +287,11 @@ class ClaudePlannerCli(BaseAdapter):
 
     @staticmethod
     def _read_available(pipe: Any) -> str:
-        if pipe is None:
-            return ""
-        try:
-            chunk = os.read(pipe.fileno(), 65536)
-        except (BlockingIOError, OSError):
-            return ""
-        if not chunk:
-            return ""
-        return chunk.decode("utf-8", errors="replace")
+        return read_available_text(pipe)
 
     @staticmethod
     def _read_remaining(pipe: Any) -> str:
-        if pipe is None:
-            return ""
-        fragments: list[str] = []
-        while True:
-            try:
-                chunk = os.read(pipe.fileno(), 65536)
-            except OSError:
-                break
-            if not chunk:
-                break
-            fragments.append(chunk.decode("utf-8", errors="replace"))
-        return "".join(fragments)
+        return drain_pipe_text(pipe)
 
     @staticmethod
     def _settings_path() -> Path:

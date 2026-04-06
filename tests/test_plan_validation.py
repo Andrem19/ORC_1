@@ -421,7 +421,9 @@ def test_validate_plan_rejects_legacy_placeholder() -> None:
     assert validation.errors[0].code == "legacy_placeholder"
 
 
-def test_validate_plan_rejects_symbolic_ref_without_dependency() -> None:
+def test_validate_plan_accepts_symbolic_ref_in_instructions() -> None:
+    """Symbolic refs like {{stage:N.field}} are no longer validated —
+    resolved at dispatch time by the worker."""
     plan = ResearchPlan(
         schema_version=2,
         version=1,
@@ -430,7 +432,7 @@ def test_validate_plan_rejects_symbolic_ref_without_dependency() -> None:
             PlanTask(stage_number=0, stage_name="Baseline", agent_instructions=["run baseline"]),
             PlanTask(
                 stage_number=1,
-                stage_name="Bad",
+                stage_name="UsesRef",
                 agent_instructions=[
                     "backtests_runs(action='inspect', run_id='{{stage:0.run_id}}', view='detail')",
                 ],
@@ -440,8 +442,7 @@ def test_validate_plan_rejects_symbolic_ref_without_dependency() -> None:
 
     validation = validate_plan(plan)
 
-    assert not validation.is_valid
-    assert any(error.code == "stage_ref_invalid" for error in validation.errors)
+    assert validation.is_acceptable
 
 
 def test_validate_plan_accepts_step_ref_to_prior_step() -> None:

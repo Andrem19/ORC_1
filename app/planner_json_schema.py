@@ -16,8 +16,6 @@ def build_plan_json_schema(max_tasks: int | None = None) -> str:
             "stage_name",
             "depends_on",
             "steps",
-            "results_table_columns",
-            "decision_gates",
         ],
         "properties": {
             "stage_number": {"type": "integer"},

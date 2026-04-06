@@ -157,18 +157,21 @@ class PlanStore:
         raw_output: str,
         parsed_data: dict[str, Any],
         validation_errors: list[dict[str, Any]],
+        execution_seq: int = 1,
         failure_class: str = "invalid_content",
         request_type: str | None = None,
         structured_payload: dict[str, Any] | None = None,
+        failure_detail: str = "",
         planner_run_artifact: str | None = None,
     ) -> Path:
         """Persist one invalid planner attempt for later debugging."""
         self.ensure_dirs()
-        path = self.rejected_dir / f"plan_v{plan_version}_attempt_{attempt_number}.json"
+        path = self.rejected_dir / f"plan_v{plan_version}_attempt_{attempt_number}_exec_{execution_seq}.json"
         payload = {
             "plan_version": plan_version,
             "attempt_number": attempt_number,
             "attempt_type": attempt_type,
+            "execution_seq": execution_seq,
             "saved_at": datetime.now(timezone.utc).isoformat(),
             "raw_output": raw_output,
             "parsed_data": parsed_data,
@@ -176,6 +179,7 @@ class PlanStore:
             "failure_class": failure_class,
             "request_type": request_type or attempt_type,
             "structured_payload": structured_payload,
+            "failure_detail": failure_detail,
             "planner_run_artifact": planner_run_artifact,
         }
         path.write_text(
@@ -194,11 +198,12 @@ class PlanStore:
         request_type: str,
         request_version: int,
         attempt_number: int,
+        execution_seq: int,
         payload: dict[str, Any],
     ) -> Path:
         """Persist one planner execution trace for diagnostics."""
         self.ensure_dirs()
-        filename = f"{request_type}_v{request_version}_attempt_{attempt_number}.json"
+        filename = f"{request_type}_v{request_version}_attempt_{attempt_number}_exec_{execution_seq}.json"
         path = self.planner_runs_dir / filename
         path.write_text(
             json.dumps(payload, ensure_ascii=False, indent=2),
