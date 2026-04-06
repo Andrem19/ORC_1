@@ -1,1367 +1,1549 @@
 {
   "all_tests": [
     {
-      "call_seconds": 0.000993,
-      "nodeid": "tests/test_lmstudio_adapter.py::test_invoke_handles_http_error",
-      "setup_seconds": 0.000792,
-      "teardown_seconds": 0.500427,
-      "total_seconds": 0.502211
-    },
-    {
-      "call_seconds": 0.000738,
-      "nodeid": "tests/test_lmstudio_adapter.py::test_invoke_sends_correct_payload",
-      "setup_seconds": 0.000921,
-      "teardown_seconds": 0.500173,
-      "total_seconds": 0.501832
-    },
-    {
-      "call_seconds": 0.000698,
-      "nodeid": "tests/test_lmstudio_adapter.py::test_is_available_when_server_running",
-      "setup_seconds": 0.000605,
-      "teardown_seconds": 0.500529,
-      "total_seconds": 0.501832
-    },
-    {
-      "call_seconds": 0.00049,
-      "nodeid": "tests/test_lmstudio_adapter.py::test_invoke_returns_success",
-      "setup_seconds": 0.000468,
-      "teardown_seconds": 0.500609,
-      "total_seconds": 0.501567
-    },
-    {
-      "call_seconds": 0.000902,
-      "nodeid": "tests/test_lmstudio_adapter.py::test_invoke_with_custom_system_prompt",
-      "setup_seconds": 0.000519,
-      "teardown_seconds": 0.499809,
-      "total_seconds": 0.501231
-    },
-    {
-      "call_seconds": 0.004722,
-      "nodeid": "tests/test_plan_mode_runtime.py::test_transport_failure_retries_same_request_without_repair",
-      "setup_seconds": 7.4e-05,
-      "teardown_seconds": 0.000125,
-      "total_seconds": 0.004921
-    },
-    {
-      "call_seconds": 0.004444,
-      "nodeid": "tests/test_orchestrator_no_progress.py::test_empty_cycles_reset_on_new_task",
-      "setup_seconds": 7.1e-05,
-      "teardown_seconds": 7.9e-05,
-      "total_seconds": 0.004593
-    },
-    {
-      "call_seconds": 0.004344,
-      "nodeid": "tests/test_plan_mode_runtime.py::test_process_plan_data_rejects_placeholder_instructions",
-      "setup_seconds": 6.9e-05,
-      "teardown_seconds": 8.1e-05,
-      "total_seconds": 0.004495
-    },
-    {
-      "call_seconds": 0.00432,
-      "nodeid": "tests/test_plan_validation.py::test_process_plan_data_rejects_zero_tasks",
-      "setup_seconds": 5.6e-05,
-      "teardown_seconds": 7.8e-05,
-      "total_seconds": 0.004453
-    },
-    {
-      "call_seconds": 0.00402,
-      "nodeid": "tests/test_plan_validation.py::test_process_plan_data_rejects_parse_failure_fallback",
-      "setup_seconds": 7.1e-05,
-      "teardown_seconds": 7.6e-05,
-      "total_seconds": 0.004168
-    },
-    {
-      "call_seconds": 0.003983,
-      "nodeid": "tests/test_orchestrator_retry.py::test_max_attempts_exhausted",
-      "setup_seconds": 7.2e-05,
-      "teardown_seconds": 6.7e-05,
-      "total_seconds": 0.004122
-    },
-    {
-      "call_seconds": 0.003789,
-      "nodeid": "tests/test_plan_mode_runtime.py::test_dispatch_plan_tasks_uses_both_workers",
-      "setup_seconds": 0.000181,
-      "teardown_seconds": 7.5e-05,
-      "total_seconds": 0.004046
-    },
-    {
-      "call_seconds": 0.003666,
-      "nodeid": "tests/test_plan_mode_runtime.py::test_transport_failure_stops_after_retry_budget",
-      "setup_seconds": 0.000107,
-      "teardown_seconds": 7.4e-05,
-      "total_seconds": 0.003846
-    },
-    {
-      "call_seconds": 0.003659,
-      "nodeid": "tests/test_orchestrator_happy_path.py::test_happy_path_single_task",
-      "setup_seconds": 6.6e-05,
-      "teardown_seconds": 7.4e-05,
-      "total_seconds": 0.003799
-    },
-    {
-      "call_seconds": 0.003325,
-      "nodeid": "tests/test_plan_mode_runtime.py::test_invalid_plan_loop_stops_after_max_attempts",
-      "setup_seconds": 7.9e-05,
-      "teardown_seconds": 7e-05,
-      "total_seconds": 0.003474
-    },
-    {
-      "call_seconds": 0.003263,
-      "nodeid": "tests/test_plan_mode_runtime.py::test_handle_planner_timeout_retries_once",
-      "setup_seconds": 6.8e-05,
-      "teardown_seconds": 6.8e-05,
-      "total_seconds": 0.0034
-    },
-    {
-      "call_seconds": 0.00296,
-      "nodeid": "tests/test_plan_validation.py::test_process_plan_data_defaults_execution_order_when_missing",
-      "setup_seconds": 6.4e-05,
-      "teardown_seconds": 7.3e-05,
-      "total_seconds": 0.003097
-    },
-    {
-      "call_seconds": 0.002897,
-      "nodeid": "tests/test_orchestrator_retry.py::test_retry_on_worker_error",
-      "setup_seconds": 6.3e-05,
-      "teardown_seconds": 7.3e-05,
-      "total_seconds": 0.003034
-    },
-    {
-      "call_seconds": 0.002855,
-      "nodeid": "tests/test_orchestrator_retry.py::test_reassign_task_moves_to_different_worker",
-      "setup_seconds": 6.6e-05,
-      "teardown_seconds": 7.7e-05,
-      "total_seconds": 0.002998
-    },
-    {
-      "call_seconds": 0.002233,
-      "nodeid": "tests/test_plan_mode_runtime.py::test_reconcile_current_plan_state_restores_progress_and_baseline",
-      "setup_seconds": 0.000544,
-      "teardown_seconds": 8.8e-05,
-      "total_seconds": 0.002866
-    },
-    {
-      "call_seconds": 0.002597,
-      "nodeid": "tests/test_plan_validation.py::test_process_plan_data_accepts_valid_plan",
-      "setup_seconds": 7.6e-05,
-      "teardown_seconds": 6.6e-05,
-      "total_seconds": 0.002739
-    },
-    {
-      "call_seconds": 0.002575,
-      "nodeid": "tests/test_orchestrator_invalid_output.py::test_invalid_json_defaults_to_wait",
-      "setup_seconds": 7.2e-05,
-      "teardown_seconds": 6.2e-05,
-      "total_seconds": 0.002709
-    },
-    {
-      "call_seconds": 0.002551,
-      "nodeid": "tests/test_orchestrator_retry.py::test_stop_worker_cancels_tasks",
-      "setup_seconds": 6.9e-05,
-      "teardown_seconds": 7.6e-05,
-      "total_seconds": 0.002696
-    },
-    {
-      "call_seconds": 0.002442,
-      "nodeid": "tests/test_orchestrator_invalid_output.py::test_empty_output_handled",
-      "setup_seconds": 6e-05,
-      "teardown_seconds": 6.3e-05,
-      "total_seconds": 0.002566
-    },
-    {
-      "call_seconds": 0.002292,
-      "nodeid": "tests/test_plan_validation.py::test_revise_plan_proceeds_with_valid_plan",
-      "setup_seconds": 0.000182,
-      "teardown_seconds": 7.7e-05,
-      "total_seconds": 0.002551
-    },
-    {
-      "call_seconds": 0.002393,
-      "nodeid": "tests/test_plan_mode_runtime.py::test_dispatch_plan_tasks_marks_stage_failed_when_symbolic_field_missing",
-      "setup_seconds": 7.2e-05,
-      "teardown_seconds": 7.2e-05,
-      "total_seconds": 0.002537
-    },
-    {
-      "call_seconds": 0.002387,
-      "nodeid": "tests/test_plan_mode_runtime.py::test_handle_planner_timeout_stops_after_retry_budget",
-      "setup_seconds": 7.1e-05,
-      "teardown_seconds": 7.3e-05,
-      "total_seconds": 0.002531
-    },
-    {
-      "call_seconds": 0.002352,
-      "nodeid": "tests/test_orchestrator_invalid_output.py::test_failing_planner_handled",
-      "setup_seconds": 6.8e-05,
-      "teardown_seconds": 6.6e-05,
-      "total_seconds": 0.002486
-    },
-    {
-      "call_seconds": 0.002313,
-      "nodeid": "tests/test_orchestrator_happy_path.py::test_happy_path_multiple_tasks",
-      "setup_seconds": 7.3e-05,
-      "teardown_seconds": 7.3e-05,
-      "total_seconds": 0.002459
-    },
-    {
-      "call_seconds": 0.001997,
-      "nodeid": "tests/test_plan_mode_runtime.py::test_process_plan_results_uses_structured_plan_report_without_reparse",
-      "setup_seconds": 6.5e-05,
-      "teardown_seconds": 9.1e-05,
-      "total_seconds": 0.002153
-    },
-    {
-      "call_seconds": 0.000958,
-      "nodeid": "tests/test_reset_manager.py::TestResetManager::test_reset_clears_state_and_plans_preserves_research",
-      "setup_seconds": 0.0011,
-      "teardown_seconds": 8.6e-05,
-      "total_seconds": 0.002144
-    },
-    {
-      "call_seconds": 0.001994,
-      "nodeid": "tests/test_plan_mode_runtime.py::test_dispatch_plan_tasks_resolves_symbolic_refs_before_launch",
-      "setup_seconds": 7.2e-05,
-      "teardown_seconds": 6.8e-05,
-      "total_seconds": 0.002134
-    },
-    {
-      "call_seconds": 0.001962,
-      "nodeid": "tests/test_plan_mode_runtime.py::test_run_does_not_increment_empty_cycles_when_worker_active",
-      "setup_seconds": 7.1e-05,
-      "teardown_seconds": 7.1e-05,
-      "total_seconds": 0.002103
-    },
-    {
-      "call_seconds": 0.001807,
-      "nodeid": "tests/test_plan_mode_runtime.py::test_check_silent_workers_classifies_stderr_only",
-      "setup_seconds": 6.4e-05,
-      "teardown_seconds": 7e-05,
-      "total_seconds": 0.001941
-    },
-    {
-      "call_seconds": 0.001786,
-      "nodeid": "tests/test_plan_validation.py::test_claude_cli_builds_batch_json_command",
-      "setup_seconds": 7.2e-05,
-      "teardown_seconds": 7.9e-05,
-      "total_seconds": 0.001937
-    },
-    {
       "call_seconds": 0.000748,
-      "nodeid": "tests/test_reset_manager.py::TestResetManager::test_reset_all_clears_everything",
-      "setup_seconds": 0.001024,
-      "teardown_seconds": 8.7e-05,
-      "total_seconds": 0.00186
+      "nodeid": "tests/test_lmstudio_adapter.py::test_is_available_when_server_running",
+      "setup_seconds": 0.000645,
+      "teardown_seconds": 0.500754,
+      "total_seconds": 0.502147
     },
     {
-      "call_seconds": 0.000583,
-      "nodeid": "tests/test_reset_manager.py::TestPlanStoreClearAll::test_clears_plans_and_reports",
-      "setup_seconds": 0.001182,
-      "teardown_seconds": 8.1e-05,
-      "total_seconds": 0.001846
+      "call_seconds": 0.000811,
+      "nodeid": "tests/test_lmstudio_adapter.py::test_invoke_with_custom_system_prompt",
+      "setup_seconds": 0.000765,
+      "teardown_seconds": 0.50049,
+      "total_seconds": 0.502065
     },
     {
-      "call_seconds": 0.000729,
-      "nodeid": "tests/test_reset_manager.py::TestResetManager::test_archive_created_before_clear",
-      "setup_seconds": 0.000983,
-      "teardown_seconds": 9.4e-05,
-      "total_seconds": 0.001806
-    },
-    {
-      "call_seconds": 0.001652,
-      "nodeid": "tests/test_plan_mode_runtime.py::test_plan_sleep_shortens_while_planner_running",
-      "setup_seconds": 7.1e-05,
-      "teardown_seconds": 6.6e-05,
-      "total_seconds": 0.001789
-    },
-    {
-      "call_seconds": 0.001595,
-      "nodeid": "tests/test_notification_service.py::TestTranslationIntegration::test_send_calls_translate",
-      "setup_seconds": 9.4e-05,
-      "teardown_seconds": 7e-05,
-      "total_seconds": 0.001759
-    },
-    {
-      "call_seconds": 0.001577,
-      "nodeid": "tests/test_orchestrator_no_progress.py::test_stops_on_max_empty_cycles",
-      "setup_seconds": 7.3e-05,
-      "teardown_seconds": 6e-05,
-      "total_seconds": 0.00171
-    },
-    {
-      "call_seconds": 0.000526,
-      "nodeid": "tests/test_reset_manager.py::TestPlanStoreArchiveTo::test_copies_files",
-      "setup_seconds": 0.000978,
-      "teardown_seconds": 8e-05,
-      "total_seconds": 0.001585
-    },
-    {
-      "call_seconds": 0.000816,
+      "call_seconds": 0.000704,
       "nodeid": "tests/test_lmstudio_adapter.py::test_invoke_with_no_model_defaults_to_empty",
-      "setup_seconds": 0.000587,
-      "teardown_seconds": 0.000167,
-      "total_seconds": 0.001571
-    },
-    {
-      "call_seconds": 0.001418,
-      "nodeid": "tests/test_orchestrator_happy_path.py::test_planner_receives_new_results",
-      "setup_seconds": 6.1e-05,
-      "teardown_seconds": 7.5e-05,
-      "total_seconds": 0.001555
-    },
-    {
-      "call_seconds": 0.00041,
-      "nodeid": "tests/test_reset_manager.py::TestResetManager::test_reset_without_plan_store",
-      "setup_seconds": 0.000994,
-      "teardown_seconds": 9.5e-05,
-      "total_seconds": 0.001499
-    },
-    {
-      "call_seconds": 0.001332,
-      "nodeid": "tests/test_notification_service.py::TestMessageSending::test_send_worker_result_success",
-      "setup_seconds": 5.5e-05,
-      "teardown_seconds": 6.8e-05,
-      "total_seconds": 0.001456
+      "setup_seconds": 0.000506,
+      "teardown_seconds": 0.500721,
+      "total_seconds": 0.501931
     },
     {
       "call_seconds": 0.000574,
-      "nodeid": "tests/test_logging_setup.py::test_setup_logging_restarts_file_and_adds_session_id",
-      "setup_seconds": 0.000759,
-      "teardown_seconds": 9.3e-05,
-      "total_seconds": 0.001425
+      "nodeid": "tests/test_lmstudio_adapter.py::test_invoke_handles_http_error",
+      "setup_seconds": 0.000495,
+      "teardown_seconds": 0.500588,
+      "total_seconds": 0.501657
     },
     {
-      "call_seconds": 0.000187,
-      "nodeid": "tests/test_reset_manager.py::TestStateStoreArchiveTo::test_copies_state_file",
-      "setup_seconds": 0.001139,
-      "teardown_seconds": 9.3e-05,
-      "total_seconds": 0.00142
+      "call_seconds": 0.000876,
+      "nodeid": "tests/test_lmstudio_adapter.py::test_invoke_sends_correct_payload",
+      "setup_seconds": 0.00063,
+      "teardown_seconds": 0.499996,
+      "total_seconds": 0.501502
     },
     {
-      "call_seconds": 0.001216,
-      "nodeid": "tests/test_plan_mode_runtime.py::test_pick_worker_round_robins_idle_workers",
-      "setup_seconds": 5.9e-05,
-      "teardown_seconds": 6.8e-05,
-      "total_seconds": 0.001343
+      "call_seconds": 0.000476,
+      "nodeid": "tests/test_lmstudio_adapter.py::test_invoke_returns_success",
+      "setup_seconds": 0.000333,
+      "teardown_seconds": 0.500178,
+      "total_seconds": 0.500987
     },
     {
-      "call_seconds": 0.001143,
-      "nodeid": "tests/test_plan_validation.py::test_revise_plan_clears_empty_plan",
-      "setup_seconds": 6.9e-05,
-      "teardown_seconds": 6.6e-05,
-      "total_seconds": 0.001279
+      "call_seconds": 0.0051,
+      "nodeid": "tests/test_plan_mode_runtime.py::test_process_plan_data_accepts_decision_gate_reason_field",
+      "setup_seconds": 0.000106,
+      "teardown_seconds": 7.7e-05,
+      "total_seconds": 0.005282
     },
     {
-      "call_seconds": 0.001087,
-      "nodeid": "tests/test_notification_service.py::TestNotificationServiceBasics::test_disabled_without_token",
-      "setup_seconds": 6.1e-05,
-      "teardown_seconds": 6.4e-05,
-      "total_seconds": 0.001212
-    },
-    {
-      "call_seconds": 0.001046,
-      "nodeid": "tests/test_notification_service.py::TestNotificationServiceBasics::test_disabled_without_chat_id",
-      "setup_seconds": 6.2e-05,
-      "teardown_seconds": 5.5e-05,
-      "total_seconds": 0.001162
-    },
-    {
-      "call_seconds": 0.000173,
-      "nodeid": "tests/test_reset_manager.py::TestResetManager::test_invalid_mode_raises",
-      "setup_seconds": 0.000891,
-      "teardown_seconds": 8.9e-05,
-      "total_seconds": 0.001152
-    },
-    {
-      "call_seconds": 0.000806,
-      "nodeid": "tests/test_orchestrator_restart_recovery.py::test_state_persists_across_restart",
-      "setup_seconds": 7e-05,
-      "teardown_seconds": 6.4e-05,
-      "total_seconds": 0.00094
-    },
-    {
-      "call_seconds": 0.0008,
-      "nodeid": "tests/test_orchestrator_restart_recovery.py::test_running_tasks_stalled_after_restart",
-      "setup_seconds": 6.9e-05,
-      "teardown_seconds": 6.4e-05,
-      "total_seconds": 0.000932
-    },
-    {
-      "call_seconds": 0.000788,
-      "nodeid": "tests/test_notification_service.py::TestTranslationIntegration::test_init_translation_delegates",
-      "setup_seconds": 5.6e-05,
-      "teardown_seconds": 5.7e-05,
-      "total_seconds": 0.000901
-    },
-    {
-      "call_seconds": 0.000705,
-      "nodeid": "tests/test_plan_mode_runtime.py::test_planner_service_prefers_structured_payload_over_tool_result_text",
-      "setup_seconds": 6.7e-05,
-      "teardown_seconds": 6.7e-05,
-      "total_seconds": 0.000839
-    },
-    {
-      "call_seconds": 0.000526,
-      "nodeid": "tests/test_notification_service.py::TestRateLimiting::test_rate_limit_skips_message",
-      "setup_seconds": 0.000199,
-      "teardown_seconds": 6.4e-05,
-      "total_seconds": 0.000789
-    },
-    {
-      "call_seconds": 0.000665,
-      "nodeid": "tests/test_notification_service.py::TestRateLimiting::test_message_sent_after_interval",
-      "setup_seconds": 5.8e-05,
-      "teardown_seconds": 6.1e-05,
-      "total_seconds": 0.000784
-    },
-    {
-      "call_seconds": 0.000632,
-      "nodeid": "tests/test_notification_service.py::TestMessageSending::test_send_planner_decision",
-      "setup_seconds": 5.9e-05,
-      "teardown_seconds": 6.1e-05,
-      "total_seconds": 0.000752
-    },
-    {
-      "call_seconds": 0.000609,
-      "nodeid": "tests/test_notification_service.py::TestMessageSending::test_send_error",
+      "call_seconds": 0.005006,
+      "nodeid": "tests/test_plan_validation.py::test_process_plan_data_rejects_zero_tasks",
       "setup_seconds": 6.4e-05,
-      "teardown_seconds": 5.5e-05,
-      "total_seconds": 0.000727
+      "teardown_seconds": 7.7e-05,
+      "total_seconds": 0.005147
     },
     {
-      "call_seconds": 0.000296,
-      "nodeid": "tests/test_reset_manager.py::TestResetManager::test_reset_with_no_existing_state",
-      "setup_seconds": 0.000336,
-      "teardown_seconds": 6.6e-05,
-      "total_seconds": 0.000697
+      "call_seconds": 0.004386,
+      "nodeid": "tests/test_plan_validation.py::test_process_plan_data_rejects_parse_failure_fallback",
+      "setup_seconds": 6.6e-05,
+      "teardown_seconds": 7.3e-05,
+      "total_seconds": 0.004525
     },
     {
-      "call_seconds": 0.000517,
-      "nodeid": "tests/test_notification_service.py::TestTranslationIntegration::test_translate_disabled_by_default",
-      "setup_seconds": 9.5e-05,
-      "teardown_seconds": 8.4e-05,
-      "total_seconds": 0.000695
-    },
-    {
-      "call_seconds": 0.000479,
-      "nodeid": "tests/test_state_store.py::test_state_memory_persistence",
-      "setup_seconds": 9.8e-05,
-      "teardown_seconds": 7.1e-05,
-      "total_seconds": 0.000648
-    },
-    {
-      "call_seconds": 0.00053,
-      "nodeid": "tests/test_notification_service.py::TestNotificationServiceBasics::test_enabled_with_credentials",
-      "setup_seconds": 5.3e-05,
-      "teardown_seconds": 6.2e-05,
-      "total_seconds": 0.000645
-    },
-    {
-      "call_seconds": 0.000464,
-      "nodeid": "tests/test_state_store.py::test_state_process_info",
-      "setup_seconds": 8.4e-05,
-      "teardown_seconds": 6.9e-05,
-      "total_seconds": 0.000617
-    },
-    {
-      "call_seconds": 0.000482,
-      "nodeid": "tests/test_orchestrator_restart_recovery.py::test_memory_preserved_across_restart",
-      "setup_seconds": 6.3e-05,
-      "teardown_seconds": 6.6e-05,
-      "total_seconds": 0.000611
-    },
-    {
-      "call_seconds": 0.000447,
-      "nodeid": "tests/test_lmstudio_adapter.py::test_invoke_handles_connection_error",
-      "setup_seconds": 9.3e-05,
-      "teardown_seconds": 6.8e-05,
-      "total_seconds": 0.000609
-    },
-    {
-      "call_seconds": 0.000455,
-      "nodeid": "tests/test_state_store.py::test_save_and_load_with_tasks",
-      "setup_seconds": 7.3e-05,
-      "teardown_seconds": 6.8e-05,
-      "total_seconds": 0.000596
-    },
-    {
-      "call_seconds": 0.000438,
-      "nodeid": "tests/test_notification_service.py::TestNotificationServiceBasics::test_is_configured",
-      "setup_seconds": 8.5e-05,
-      "teardown_seconds": 6.6e-05,
-      "total_seconds": 0.000589
-    },
-    {
-      "call_seconds": 0.000177,
-      "nodeid": "tests/test_plan_validation.py::test_parse_plan_output_no_json_returns_sentinel",
-      "setup_seconds": 0.000346,
-      "teardown_seconds": 6.4e-05,
-      "total_seconds": 0.000588
-    },
-    {
-      "call_seconds": 0.000435,
-      "nodeid": "tests/test_state_store.py::test_save_and_load_empty",
-      "setup_seconds": 5.6e-05,
-      "teardown_seconds": 6.2e-05,
-      "total_seconds": 0.000553
-    },
-    {
-      "call_seconds": 0.000422,
-      "nodeid": "tests/test_notification_service.py::TestTranslationIntegration::test_translator_created_in_init",
-      "setup_seconds": 5.6e-05,
-      "teardown_seconds": 6.1e-05,
-      "total_seconds": 0.000539
-    },
-    {
-      "call_seconds": 0.000394,
-      "nodeid": "tests/test_plan_validation.py::test_claude_cli_includes_mandatory_flags",
-      "setup_seconds": 7.4e-05,
-      "teardown_seconds": 6.9e-05,
-      "total_seconds": 0.000537
-    },
-    {
-      "call_seconds": 0.000378,
-      "nodeid": "tests/test_state_store.py::test_load_corrupt_file",
-      "setup_seconds": 8.9e-05,
-      "teardown_seconds": 7e-05,
-      "total_seconds": 0.000537
-    },
-    {
-      "call_seconds": 0.000146,
-      "nodeid": "tests/test_planner_stream.py::test_consume_stream_fragment_ignores_thinking_and_metadata",
-      "setup_seconds": 0.000313,
-      "teardown_seconds": 5.7e-05,
-      "total_seconds": 0.000516
-    },
-    {
-      "call_seconds": 0.000143,
-      "nodeid": "tests/test_config.py::test_default_config",
-      "setup_seconds": 0.000296,
-      "teardown_seconds": 7.5e-05,
-      "total_seconds": 0.000514
-    },
-    {
-      "call_seconds": 0.000377,
-      "nodeid": "tests/test_notification_service.py::TestTranslationIntegration::test_translate_to_russian_passed_to_translator",
-      "setup_seconds": 6.2e-05,
-      "teardown_seconds": 4.9e-05,
-      "total_seconds": 0.000487
-    },
-    {
-      "call_seconds": 0.000107,
-      "nodeid": "tests/test_reset_manager.py::TestPlanStoreClearAll::test_noop_on_empty_dir",
-      "setup_seconds": 0.00031,
-      "teardown_seconds": 6.6e-05,
-      "total_seconds": 0.000483
-    },
-    {
-      "call_seconds": 0.000337,
-      "nodeid": "tests/test_state_store.py::test_clear",
-      "setup_seconds": 7e-05,
-      "teardown_seconds": 7.2e-05,
-      "total_seconds": 0.000479
-    },
-    {
-      "call_seconds": 0.000357,
-      "nodeid": "tests/test_state_store.py::test_state_stop_reason_persistence",
-      "setup_seconds": 6.1e-05,
-      "teardown_seconds": 5.8e-05,
-      "total_seconds": 0.000476
-    },
-    {
-      "call_seconds": 0.000102,
-      "nodeid": "tests/test_reset_manager.py::TestStateStoreArchiveTo::test_returns_false_when_no_file",
-      "setup_seconds": 0.000308,
-      "teardown_seconds": 6.4e-05,
-      "total_seconds": 0.000474
-    },
-    {
-      "call_seconds": 0.000222,
-      "nodeid": "tests/test_lmstudio_adapter.py::test_is_available_when_server_down",
-      "setup_seconds": 0.000153,
-      "teardown_seconds": 5.1e-05,
-      "total_seconds": 0.000426
-    },
-    {
-      "call_seconds": 0.000235,
-      "nodeid": "tests/test_plan_validation.py::test_build_plan_creation_prompt_includes_catalog_without_research_context",
-      "setup_seconds": 8.9e-05,
-      "teardown_seconds": 9.6e-05,
-      "total_seconds": 0.00042
-    },
-    {
-      "call_seconds": 0.000292,
-      "nodeid": "tests/test_plan_validation.py::test_claude_runtime_summary_reports_custom_backend",
-      "setup_seconds": 6e-05,
-      "teardown_seconds": 5.9e-05,
-      "total_seconds": 0.000411
-    },
-    {
-      "call_seconds": 0.000273,
-      "nodeid": "tests/test_plan_mode_runtime.py::test_build_plan_revision_prompt_includes_measured_baseline",
-      "setup_seconds": 7.4e-05,
-      "teardown_seconds": 6e-05,
-      "total_seconds": 0.000407
-    },
-    {
-      "call_seconds": 0.000277,
-      "nodeid": "tests/test_result_parser.py::test_parse_planner_unknown_decision",
+      "call_seconds": 0.004383,
+      "nodeid": "tests/test_plan_mode_runtime.py::test_transport_failure_retries_same_request_without_repair",
       "setup_seconds": 6.5e-05,
-      "teardown_seconds": 6.4e-05,
-      "total_seconds": 0.000406
+      "teardown_seconds": 6.7e-05,
+      "total_seconds": 0.004516
     },
     {
-      "call_seconds": 0.000226,
-      "nodeid": "tests/test_result_parser.py::test_parse_plan_task_report_rejects_truncated_nested_fragment",
-      "setup_seconds": 9.1e-05,
-      "teardown_seconds": 6.9e-05,
-      "total_seconds": 0.000386
+      "call_seconds": 0.004092,
+      "nodeid": "tests/test_orchestrator_no_progress.py::test_stops_on_max_empty_cycles",
+      "setup_seconds": 9.8e-05,
+      "teardown_seconds": 6.7e-05,
+      "total_seconds": 0.004256
     },
     {
-      "call_seconds": 0.000215,
-      "nodeid": "tests/test_config.py::test_config_to_dict",
-      "setup_seconds": 8.2e-05,
-      "teardown_seconds": 8.7e-05,
-      "total_seconds": 0.000384
+      "call_seconds": 0.003737,
+      "nodeid": "tests/test_plan_mode_runtime.py::test_process_plan_data_rejects_placeholder_instructions",
+      "setup_seconds": 6.7e-05,
+      "teardown_seconds": 0.000122,
+      "total_seconds": 0.003925
     },
     {
-      "call_seconds": 0.000157,
-      "nodeid": "tests/test_plan_validation.py::test_validate_plan_accepts_symbolic_ref_with_dependency",
-      "setup_seconds": 0.000169,
-      "teardown_seconds": 5.3e-05,
-      "total_seconds": 0.000379
+      "call_seconds": 0.003739,
+      "nodeid": "tests/test_plan_mode_runtime.py::test_transport_failure_stops_after_retry_budget",
+      "setup_seconds": 6.7e-05,
+      "teardown_seconds": 7.4e-05,
+      "total_seconds": 0.00388
     },
     {
-      "call_seconds": 0.000254,
-      "nodeid": "tests/test_translation_service.py::TestLoadModel::test_enabled_without_transformers_raises",
+      "call_seconds": 0.003419,
+      "nodeid": "tests/test_plan_mode_runtime.py::test_parse_error_does_not_enter_repair_flow",
       "setup_seconds": 6.2e-05,
-      "teardown_seconds": 6.2e-05,
-      "total_seconds": 0.000379
+      "teardown_seconds": 7.6e-05,
+      "total_seconds": 0.003557
     },
     {
-      "call_seconds": 0.000245,
-      "nodeid": "tests/test_result_parser.py::test_parse_plan_task_report_with_preamble_and_fenced_json",
-      "setup_seconds": 6e-05,
-      "teardown_seconds": 6e-05,
-      "total_seconds": 0.000364
-    },
-    {
-      "call_seconds": 0.000248,
-      "nodeid": "tests/test_result_parser.py::test_parse_worker_preserves_full_raw_output",
-      "setup_seconds": 5.5e-05,
-      "teardown_seconds": 5.7e-05,
-      "total_seconds": 0.00036
-    },
-    {
-      "call_seconds": 0.000131,
-      "nodeid": "tests/test_config.py::test_config_state_path",
-      "setup_seconds": 5.5e-05,
-      "teardown_seconds": 0.00017,
-      "total_seconds": 0.000356
-    },
-    {
-      "call_seconds": 0.000206,
-      "nodeid": "tests/test_plan_mode_runtime.py::test_dispatchable_tasks_use_explicit_dependencies",
-      "setup_seconds": 7.7e-05,
-      "teardown_seconds": 6.2e-05,
-      "total_seconds": 0.000344
-    },
-    {
-      "call_seconds": 0.000185,
-      "nodeid": "tests/test_plan_validation.py::test_build_plan_repair_prompt_compacts_large_invalid_payload",
-      "setup_seconds": 6.3e-05,
-      "teardown_seconds": 9.1e-05,
-      "total_seconds": 0.00034
-    },
-    {
-      "call_seconds": 0.000225,
-      "nodeid": "tests/test_notification_service.py::TestConfigIntegration::test_config_serialization",
-      "setup_seconds": 5.5e-05,
-      "teardown_seconds": 5.9e-05,
-      "total_seconds": 0.000339
-    },
-    {
-      "call_seconds": 0.000181,
-      "nodeid": "tests/test_plan_validation.py::test_validate_plan_rejects_invalid_tool_alias_and_action",
-      "setup_seconds": 6e-05,
+      "call_seconds": 0.003397,
+      "nodeid": "tests/test_plan_mode_runtime.py::test_invalid_plan_loop_stops_after_max_attempts",
+      "setup_seconds": 6.5e-05,
       "teardown_seconds": 8.1e-05,
-      "total_seconds": 0.000321
+      "total_seconds": 0.003543
+    },
+    {
+      "call_seconds": 0.002727,
+      "nodeid": "tests/test_plan_mode_runtime.py::test_reconcile_current_plan_state_restores_progress_and_baseline",
+      "setup_seconds": 0.000707,
+      "teardown_seconds": 0.0001,
+      "total_seconds": 0.003534
+    },
+    {
+      "call_seconds": 0.003283,
+      "nodeid": "tests/test_plan_validation.py::test_process_plan_data_accepts_valid_plan",
+      "setup_seconds": 6.3e-05,
+      "teardown_seconds": 7.2e-05,
+      "total_seconds": 0.003418
+    },
+    {
+      "call_seconds": 0.003163,
+      "nodeid": "tests/test_plan_validation.py::test_process_plan_data_defaults_execution_order_when_missing",
+      "setup_seconds": 6.8e-05,
+      "teardown_seconds": 6.9e-05,
+      "total_seconds": 0.003301
+    },
+    {
+      "call_seconds": 0.00302,
+      "nodeid": "tests/test_plan_validation.py::test_process_plan_data_uses_request_version_on_parse_failure",
+      "setup_seconds": 7.4e-05,
+      "teardown_seconds": 7e-05,
+      "total_seconds": 0.003164
+    },
+    {
+      "call_seconds": 0.002945,
+      "nodeid": "tests/test_orchestrator_retry.py::test_max_attempts_exhausted",
+      "setup_seconds": 5.6e-05,
+      "teardown_seconds": 6.4e-05,
+      "total_seconds": 0.003066
+    },
+    {
+      "call_seconds": 0.00283,
+      "nodeid": "tests/test_orchestrator_happy_path.py::test_happy_path_single_task",
+      "setup_seconds": 7.1e-05,
+      "teardown_seconds": 8.2e-05,
+      "total_seconds": 0.002983
+    },
+    {
+      "call_seconds": 0.00278,
+      "nodeid": "tests/test_orchestrator_invalid_output.py::test_empty_output_handled",
+      "setup_seconds": 6.6e-05,
+      "teardown_seconds": 6.9e-05,
+      "total_seconds": 0.002915
+    },
+    {
+      "call_seconds": 0.002766,
+      "nodeid": "tests/test_orchestrator_invalid_output.py::test_invalid_json_defaults_to_wait",
+      "setup_seconds": 7.5e-05,
+      "teardown_seconds": 7e-05,
+      "total_seconds": 0.002911
+    },
+    {
+      "call_seconds": 0.002661,
+      "nodeid": "tests/test_plan_mode_runtime.py::test_handle_planner_timeout_retries_once",
+      "setup_seconds": 9.6e-05,
+      "teardown_seconds": 7.7e-05,
+      "total_seconds": 0.002834
+    },
+    {
+      "call_seconds": 0.002608,
+      "nodeid": "tests/test_orchestrator_invalid_output.py::test_failing_planner_handled",
+      "setup_seconds": 6.4e-05,
+      "teardown_seconds": 7e-05,
+      "total_seconds": 0.002743
+    },
+    {
+      "call_seconds": 0.002566,
+      "nodeid": "tests/test_plan_validation.py::test_process_plan_data_accepts_steps_only_tasks",
+      "setup_seconds": 6.2e-05,
+      "teardown_seconds": 7.7e-05,
+      "total_seconds": 0.002704
+    },
+    {
+      "call_seconds": 0.002418,
+      "nodeid": "tests/test_plan_mode_runtime.py::test_dispatch_plan_tasks_marks_stage_failed_when_symbolic_field_missing",
+      "setup_seconds": 7.1e-05,
+      "teardown_seconds": 7.6e-05,
+      "total_seconds": 0.002565
+    },
+    {
+      "call_seconds": 0.002401,
+      "nodeid": "tests/test_orchestrator_happy_path.py::test_happy_path_multiple_tasks",
+      "setup_seconds": 6.5e-05,
+      "teardown_seconds": 6.8e-05,
+      "total_seconds": 0.002534
+    },
+    {
+      "call_seconds": 0.002302,
+      "nodeid": "tests/test_plan_mode_runtime.py::test_check_silent_workers_classifies_stalled",
+      "setup_seconds": 7.8e-05,
+      "teardown_seconds": 6.1e-05,
+      "total_seconds": 0.002441
+    },
+    {
+      "call_seconds": 0.002234,
+      "nodeid": "tests/test_orchestrator_retry.py::test_reassign_task_moves_to_different_worker",
+      "setup_seconds": 7.6e-05,
+      "teardown_seconds": 7.9e-05,
+      "total_seconds": 0.002389
+    },
+    {
+      "call_seconds": 0.000951,
+      "nodeid": "tests/test_reset_manager.py::TestResetManager::test_archive_created_before_clear",
+      "setup_seconds": 0.001307,
+      "teardown_seconds": 8.7e-05,
+      "total_seconds": 0.002345
+    },
+    {
+      "call_seconds": 0.002122,
+      "nodeid": "tests/test_plan_mode_runtime.py::test_process_plan_results_uses_structured_plan_report_without_reparse",
+      "setup_seconds": 0.000118,
+      "teardown_seconds": 6.8e-05,
+      "total_seconds": 0.002308
+    },
+    {
+      "call_seconds": 0.002101,
+      "nodeid": "tests/test_orchestrator_no_progress.py::test_empty_cycles_reset_on_new_task",
+      "setup_seconds": 8.4e-05,
+      "teardown_seconds": 5.9e-05,
+      "total_seconds": 0.002245
+    },
+    {
+      "call_seconds": 0.002063,
+      "nodeid": "tests/test_plan_mode_runtime.py::test_check_planner_watchdog_soft_active_uses_recent_output",
+      "setup_seconds": 6.5e-05,
+      "teardown_seconds": 6.3e-05,
+      "total_seconds": 0.002191
+    },
+    {
+      "call_seconds": 0.002043,
+      "nodeid": "tests/test_plan_mode_runtime.py::test_dispatch_plan_tasks_uses_both_workers",
+      "setup_seconds": 6.3e-05,
+      "teardown_seconds": 6.7e-05,
+      "total_seconds": 0.002174
+    },
+    {
+      "call_seconds": 0.001987,
+      "nodeid": "tests/test_plan_mode_runtime.py::test_handle_planner_timeout_stops_after_retry_budget",
+      "setup_seconds": 7e-05,
+      "teardown_seconds": 6.9e-05,
+      "total_seconds": 0.002126
+    },
+    {
+      "call_seconds": 0.001785,
+      "nodeid": "tests/test_plan_validation.py::test_revise_plan_proceeds_with_valid_plan",
+      "setup_seconds": 0.000248,
+      "teardown_seconds": 7.3e-05,
+      "total_seconds": 0.002105
+    },
+    {
+      "call_seconds": 0.001924,
+      "nodeid": "tests/test_orchestrator_retry.py::test_stop_worker_cancels_tasks",
+      "setup_seconds": 7.1e-05,
+      "teardown_seconds": 8.1e-05,
+      "total_seconds": 0.002077
+    },
+    {
+      "call_seconds": 0.001886,
+      "nodeid": "tests/test_plan_mode_runtime.py::test_run_does_not_increment_empty_cycles_when_worker_active",
+      "setup_seconds": 6.5e-05,
+      "teardown_seconds": 7.4e-05,
+      "total_seconds": 0.002025
+    },
+    {
+      "call_seconds": 0.0019,
+      "nodeid": "tests/test_orchestrator_retry.py::test_retry_on_worker_error",
+      "setup_seconds": 6e-05,
+      "teardown_seconds": 6.5e-05,
+      "total_seconds": 0.002025
+    },
+    {
+      "call_seconds": 0.001891,
+      "nodeid": "tests/test_plan_mode_runtime.py::test_plan_sleep_shortens_while_planner_running",
+      "setup_seconds": 6.5e-05,
+      "teardown_seconds": 6.8e-05,
+      "total_seconds": 0.002024
+    },
+    {
+      "call_seconds": 0.001642,
+      "nodeid": "tests/test_plan_mode_runtime.py::test_check_silent_workers_classifies_slow_active",
+      "setup_seconds": 0.000271,
+      "teardown_seconds": 7.6e-05,
+      "total_seconds": 0.00199
+    },
+    {
+      "call_seconds": 0.001809,
+      "nodeid": "tests/test_plan_mode_runtime.py::test_dispatch_plan_tasks_resolves_symbolic_refs_before_launch",
+      "setup_seconds": 6.6e-05,
+      "teardown_seconds": 8e-05,
+      "total_seconds": 0.001955
+    },
+    {
+      "call_seconds": 0.001713,
+      "nodeid": "tests/test_plan_mode_runtime.py::test_check_planner_watchdog_stalled_uses_last_output_age",
+      "setup_seconds": 7e-05,
+      "teardown_seconds": 6.4e-05,
+      "total_seconds": 0.001848
+    },
+    {
+      "call_seconds": 0.001712,
+      "nodeid": "tests/test_plan_validation.py::test_revise_plan_clears_empty_plan",
+      "setup_seconds": 5.8e-05,
+      "teardown_seconds": 7.2e-05,
+      "total_seconds": 0.001841
+    },
+    {
+      "call_seconds": 0.000708,
+      "nodeid": "tests/test_reset_manager.py::TestResetManager::test_reset_clears_state_and_plans_preserves_research",
+      "setup_seconds": 0.000995,
+      "teardown_seconds": 8.7e-05,
+      "total_seconds": 0.00179
+    },
+    {
+      "call_seconds": 0.00076,
+      "nodeid": "tests/test_reset_manager.py::TestResetManager::test_reset_all_clears_everything",
+      "setup_seconds": 0.00092,
+      "teardown_seconds": 8.2e-05,
+      "total_seconds": 0.001761
+    },
+    {
+      "call_seconds": 0.00163,
+      "nodeid": "tests/test_plan_mode_runtime.py::test_pick_worker_round_robins_idle_workers",
+      "setup_seconds": 5.5e-05,
+      "teardown_seconds": 6.7e-05,
+      "total_seconds": 0.001753
+    },
+    {
+      "call_seconds": 0.001564,
+      "nodeid": "tests/test_orchestrator_happy_path.py::test_planner_receives_new_results",
+      "setup_seconds": 7.5e-05,
+      "teardown_seconds": 6.5e-05,
+      "total_seconds": 0.001704
+    },
+    {
+      "call_seconds": 0.001551,
+      "nodeid": "tests/test_plan_mode_runtime.py::test_check_silent_workers_no_output_does_not_change_task_status",
+      "setup_seconds": 6.5e-05,
+      "teardown_seconds": 6.7e-05,
+      "total_seconds": 0.001682
+    },
+    {
+      "call_seconds": 0.001539,
+      "nodeid": "tests/test_notification_service.py::TestTranslationIntegration::test_send_calls_translate",
+      "setup_seconds": 5.8e-05,
+      "teardown_seconds": 6.9e-05,
+      "total_seconds": 0.001666
+    },
+    {
+      "call_seconds": 0.000857,
+      "nodeid": "tests/test_logging_setup.py::test_setup_logging_restarts_file_and_adds_session_id",
+      "setup_seconds": 0.000677,
+      "teardown_seconds": 0.000129,
+      "total_seconds": 0.001663
+    },
+    {
+      "call_seconds": 0.001505,
+      "nodeid": "tests/test_plan_mode_runtime.py::test_check_planner_watchdog_hard_timeout_ignores_zero_rendered_text_when_active",
+      "setup_seconds": 7.1e-05,
+      "teardown_seconds": 6.6e-05,
+      "total_seconds": 0.001642
+    },
+    {
+      "call_seconds": 0.001493,
+      "nodeid": "tests/test_plan_mode_runtime.py::test_check_silent_workers_classifies_stderr_only",
+      "setup_seconds": 6.7e-05,
+      "teardown_seconds": 7.1e-05,
+      "total_seconds": 0.00163
+    },
+    {
+      "call_seconds": 0.000336,
+      "nodeid": "tests/test_reset_manager.py::TestResetManager::test_reset_without_plan_store",
+      "setup_seconds": 0.001167,
+      "teardown_seconds": 0.000103,
+      "total_seconds": 0.001606
+    },
+    {
+      "call_seconds": 0.000439,
+      "nodeid": "tests/test_reset_manager.py::TestPlanStoreClearAll::test_clears_plans_and_reports",
+      "setup_seconds": 0.001017,
+      "teardown_seconds": 9.3e-05,
+      "total_seconds": 0.001549
+    },
+    {
+      "call_seconds": 0.001393,
+      "nodeid": "tests/test_notification_service.py::TestMessageSending::test_send_worker_result_success",
+      "setup_seconds": 6.6e-05,
+      "teardown_seconds": 7.5e-05,
+      "total_seconds": 0.001535
+    },
+    {
+      "call_seconds": 0.000489,
+      "nodeid": "tests/test_reset_manager.py::TestPlanStoreArchiveTo::test_copies_files",
+      "setup_seconds": 0.000923,
+      "teardown_seconds": 9.3e-05,
+      "total_seconds": 0.001505
+    },
+    {
+      "call_seconds": 0.001254,
+      "nodeid": "tests/test_plan_mode_runtime.py::test_planner_service_sets_transport_error_when_structured_output_lost",
+      "setup_seconds": 7.3e-05,
+      "teardown_seconds": 6.1e-05,
+      "total_seconds": 0.001388
     },
     {
       "call_seconds": 0.000197,
-      "nodeid": "tests/test_scheduler.py::test_should_call_planner_pending_no_active",
+      "nodeid": "tests/test_reset_manager.py::TestStateStoreArchiveTo::test_copies_state_file",
+      "setup_seconds": 0.001033,
+      "teardown_seconds": 9.5e-05,
+      "total_seconds": 0.001325
+    },
+    {
+      "call_seconds": 0.000166,
+      "nodeid": "tests/test_reset_manager.py::TestResetManager::test_invalid_mode_raises",
+      "setup_seconds": 0.001067,
+      "teardown_seconds": 9.2e-05,
+      "total_seconds": 0.001325
+    },
+    {
+      "call_seconds": 0.001178,
+      "nodeid": "tests/test_notification_service.py::TestNotificationServiceBasics::test_disabled_without_token",
+      "setup_seconds": 6.7e-05,
+      "teardown_seconds": 5.9e-05,
+      "total_seconds": 0.001304
+    },
+    {
+      "call_seconds": 0.001147,
+      "nodeid": "tests/test_notification_service.py::TestNotificationServiceBasics::test_disabled_without_chat_id",
+      "setup_seconds": 5.9e-05,
+      "teardown_seconds": 6e-05,
+      "total_seconds": 0.001265
+    },
+    {
+      "call_seconds": 0.001074,
+      "nodeid": "tests/test_state_store.py::test_save_and_load_with_tasks",
+      "setup_seconds": 6.3e-05,
+      "teardown_seconds": 6.9e-05,
+      "total_seconds": 0.001206
+    },
+    {
+      "call_seconds": 0.000717,
+      "nodeid": "tests/test_notification_service.py::TestMessageSending::test_send_planner_decision",
+      "setup_seconds": 0.000336,
+      "teardown_seconds": 6.8e-05,
+      "total_seconds": 0.001121
+    },
+    {
+      "call_seconds": 0.000848,
+      "nodeid": "tests/test_notification_service.py::TestTranslationIntegration::test_init_translation_delegates",
+      "setup_seconds": 6.5e-05,
+      "teardown_seconds": 7.3e-05,
+      "total_seconds": 0.000986
+    },
+    {
+      "call_seconds": 0.000531,
+      "nodeid": "tests/test_plan_store.py::test_plan_store_roundtrip_preserves_steps_baseline_and_gate_reason",
+      "setup_seconds": 0.000307,
+      "teardown_seconds": 7.5e-05,
+      "total_seconds": 0.000913
+    },
+    {
+      "call_seconds": 0.000556,
+      "nodeid": "tests/test_lmstudio_adapter.py::test_invoke_handles_connection_error",
+      "setup_seconds": 0.000247,
+      "teardown_seconds": 7.6e-05,
+      "total_seconds": 0.00088
+    },
+    {
+      "call_seconds": 0.000733,
+      "nodeid": "tests/test_notification_service.py::TestRateLimiting::test_message_sent_after_interval",
+      "setup_seconds": 5.6e-05,
+      "teardown_seconds": 6.9e-05,
+      "total_seconds": 0.000859
+    },
+    {
+      "call_seconds": 0.000714,
+      "nodeid": "tests/test_plan_mode_runtime.py::test_planner_service_prefers_structured_payload_over_tool_result_text",
+      "setup_seconds": 6.2e-05,
+      "teardown_seconds": 6.7e-05,
+      "total_seconds": 0.000842
+    },
+    {
+      "call_seconds": 0.000646,
+      "nodeid": "tests/test_orchestrator_restart_recovery.py::test_running_tasks_stalled_after_restart",
+      "setup_seconds": 5.5e-05,
+      "teardown_seconds": 5.6e-05,
+      "total_seconds": 0.000757
+    },
+    {
+      "call_seconds": 0.000633,
+      "nodeid": "tests/test_plan_mode_runtime.py::test_planner_service_sets_parse_error_when_no_structured_activity",
+      "setup_seconds": 5.8e-05,
+      "teardown_seconds": 6.4e-05,
+      "total_seconds": 0.000755
+    },
+    {
+      "call_seconds": 0.000345,
+      "nodeid": "tests/test_plan_store.py::test_load_plan_ignores_unknown_decision_gate_fields",
+      "setup_seconds": 0.00031,
+      "teardown_seconds": 7.4e-05,
+      "total_seconds": 0.000729
+    },
+    {
+      "call_seconds": 0.000584,
+      "nodeid": "tests/test_notification_service.py::TestMessageSending::test_send_error",
+      "setup_seconds": 6.6e-05,
+      "teardown_seconds": 6.1e-05,
+      "total_seconds": 0.000711
+    },
+    {
+      "call_seconds": 0.000241,
+      "nodeid": "tests/test_plan_store.py::test_save_rejected_plan_attempt_persists_failure_metadata",
+      "setup_seconds": 0.000393,
+      "teardown_seconds": 7.3e-05,
+      "total_seconds": 0.000706
+    },
+    {
+      "call_seconds": 0.000565,
+      "nodeid": "tests/test_orchestrator_restart_recovery.py::test_state_persists_across_restart",
+      "setup_seconds": 5.8e-05,
+      "teardown_seconds": 5.3e-05,
+      "total_seconds": 0.000676
+    },
+    {
+      "call_seconds": 0.000317,
+      "nodeid": "tests/test_plan_validation.py::test_parse_plan_output_schema_v3_steps_and_extra_fields",
+      "setup_seconds": 0.000294,
+      "teardown_seconds": 6.3e-05,
+      "total_seconds": 0.000674
+    },
+    {
+      "call_seconds": 0.000525,
+      "nodeid": "tests/test_notification_service.py::TestNotificationServiceBasics::test_enabled_with_credentials",
+      "setup_seconds": 6.2e-05,
+      "teardown_seconds": 6.6e-05,
+      "total_seconds": 0.000653
+    },
+    {
+      "call_seconds": 0.000281,
+      "nodeid": "tests/test_reset_manager.py::TestResetManager::test_reset_with_no_existing_state",
+      "setup_seconds": 0.000294,
+      "teardown_seconds": 7.1e-05,
+      "total_seconds": 0.000645
+    },
+    {
+      "call_seconds": 0.000408,
+      "nodeid": "tests/test_result_parser.py::test_parse_worker_preserves_full_raw_output",
+      "setup_seconds": 0.000134,
+      "teardown_seconds": 9.6e-05,
+      "total_seconds": 0.000638
+    },
+    {
+      "call_seconds": 0.000501,
+      "nodeid": "tests/test_notification_service.py::TestTranslationIntegration::test_translator_created_in_init",
+      "setup_seconds": 6e-05,
+      "teardown_seconds": 7e-05,
+      "total_seconds": 0.000631
+    },
+    {
+      "call_seconds": 0.000497,
+      "nodeid": "tests/test_orchestrator_restart_recovery.py::test_memory_preserved_across_restart",
+      "setup_seconds": 5.6e-05,
+      "teardown_seconds": 6e-05,
+      "total_seconds": 0.000613
+    },
+    {
+      "call_seconds": 0.000474,
+      "nodeid": "tests/test_plan_mode_runtime.py::test_restart_plan_request_transport_retry_does_not_touch_timeout_retry",
+      "setup_seconds": 7.8e-05,
+      "teardown_seconds": 5.9e-05,
+      "total_seconds": 0.00061
+    },
+    {
+      "call_seconds": 0.000439,
+      "nodeid": "tests/test_notification_service.py::TestTranslationIntegration::test_translate_to_russian_passed_to_translator",
+      "setup_seconds": 6.5e-05,
+      "teardown_seconds": 7.8e-05,
+      "total_seconds": 0.000582
+    },
+    {
+      "call_seconds": 0.00043,
+      "nodeid": "tests/test_plan_validation.py::test_claude_cli_includes_mandatory_flags",
+      "setup_seconds": 8.3e-05,
+      "teardown_seconds": 6.7e-05,
+      "total_seconds": 0.000579
+    },
+    {
+      "call_seconds": 0.000317,
+      "nodeid": "tests/test_lmstudio_adapter.py::test_is_available_when_server_down",
+      "setup_seconds": 0.000201,
+      "teardown_seconds": 6e-05,
+      "total_seconds": 0.000578
+    },
+    {
+      "call_seconds": 0.000459,
+      "nodeid": "tests/test_notification_service.py::TestRateLimiting::test_rate_limit_skips_message",
+      "setup_seconds": 5.7e-05,
+      "teardown_seconds": 5.7e-05,
+      "total_seconds": 0.000573
+    },
+    {
+      "call_seconds": 0.000425,
+      "nodeid": "tests/test_notification_service.py::TestTranslationIntegration::test_translate_disabled_by_default",
+      "setup_seconds": 5.7e-05,
+      "teardown_seconds": 8.1e-05,
+      "total_seconds": 0.000563
+    },
+    {
+      "call_seconds": 0.000437,
+      "nodeid": "tests/test_notification_service.py::TestNotificationServiceBasics::test_is_configured",
+      "setup_seconds": 5.7e-05,
+      "teardown_seconds": 6.2e-05,
+      "total_seconds": 0.000556
+    },
+    {
+      "call_seconds": 0.0004,
+      "nodeid": "tests/test_state_store.py::test_save_and_load_empty",
+      "setup_seconds": 7.2e-05,
+      "teardown_seconds": 5.3e-05,
+      "total_seconds": 0.000525
+    },
+    {
+      "call_seconds": 0.000127,
+      "nodeid": "tests/test_reset_manager.py::TestPlanStoreClearAll::test_noop_on_empty_dir",
+      "setup_seconds": 0.00032,
+      "teardown_seconds": 7.3e-05,
+      "total_seconds": 0.00052
+    },
+    {
+      "call_seconds": 0.000365,
+      "nodeid": "tests/test_state_store.py::test_state_stop_reason_persistence",
+      "setup_seconds": 8.6e-05,
+      "teardown_seconds": 6.4e-05,
+      "total_seconds": 0.000516
+    },
+    {
+      "call_seconds": 0.00012,
+      "nodeid": "tests/test_reset_manager.py::TestStateStoreArchiveTo::test_returns_false_when_no_file",
+      "setup_seconds": 0.000311,
+      "teardown_seconds": 8.1e-05,
+      "total_seconds": 0.000512
+    },
+    {
+      "call_seconds": 0.000381,
+      "nodeid": "tests/test_state_store.py::test_load_corrupt_file",
+      "setup_seconds": 6.6e-05,
+      "teardown_seconds": 6.4e-05,
+      "total_seconds": 0.000511
+    },
+    {
+      "call_seconds": 0.000355,
+      "nodeid": "tests/test_state_store.py::test_clear",
+      "setup_seconds": 9.2e-05,
+      "teardown_seconds": 6.3e-05,
+      "total_seconds": 0.00051
+    },
+    {
+      "call_seconds": 0.000376,
+      "nodeid": "tests/test_state_store.py::test_state_process_info",
+      "setup_seconds": 6.2e-05,
+      "teardown_seconds": 6.2e-05,
+      "total_seconds": 0.0005
+    },
+    {
+      "call_seconds": 0.000224,
+      "nodeid": "tests/test_notification_service.py::TestConfigIntegration::test_config_serialization",
+      "setup_seconds": 0.000211,
+      "teardown_seconds": 6.5e-05,
+      "total_seconds": 0.0005
+    },
+    {
+      "call_seconds": 0.000165,
+      "nodeid": "tests/test_plan_validation.py::test_validate_plan_rejects_legacy_placeholder",
+      "setup_seconds": 0.000264,
+      "teardown_seconds": 6.2e-05,
+      "total_seconds": 0.000492
+    },
+    {
+      "call_seconds": 0.000373,
+      "nodeid": "tests/test_state_store.py::test_state_memory_persistence",
+      "setup_seconds": 5.7e-05,
+      "teardown_seconds": 6.1e-05,
+      "total_seconds": 0.00049
+    },
+    {
+      "call_seconds": 0.000358,
+      "nodeid": "tests/test_result_parser.py::test_parse_planner_unknown_decision",
+      "setup_seconds": 5.7e-05,
+      "teardown_seconds": 7.1e-05,
+      "total_seconds": 0.000486
+    },
+    {
+      "call_seconds": 0.00011,
+      "nodeid": "tests/test_planner_stream.py::test_consume_stream_fragment_keeps_final_plain_text_when_not_json",
+      "setup_seconds": 0.000292,
+      "teardown_seconds": 6.1e-05,
+      "total_seconds": 0.000463
+    },
+    {
+      "call_seconds": 0.000124,
+      "nodeid": "tests/test_config.py::test_default_config",
+      "setup_seconds": 0.00027,
+      "teardown_seconds": 6.8e-05,
+      "total_seconds": 0.000462
+    },
+    {
+      "call_seconds": 0.000328,
+      "nodeid": "tests/test_plan_validation.py::test_claude_cli_builds_batch_json_command",
+      "setup_seconds": 6.9e-05,
+      "teardown_seconds": 5.5e-05,
+      "total_seconds": 0.000453
+    },
+    {
+      "call_seconds": 0.000286,
+      "nodeid": "tests/test_translation_service.py::TestLoadModel::test_enabled_without_transformers_raises",
+      "setup_seconds": 8.3e-05,
+      "teardown_seconds": 8.1e-05,
+      "total_seconds": 0.00045
+    },
+    {
+      "call_seconds": 0.000315,
+      "nodeid": "tests/test_plan_validation.py::test_claude_runtime_summary_reports_custom_backend",
+      "setup_seconds": 6.2e-05,
+      "teardown_seconds": 5.9e-05,
+      "total_seconds": 0.000435
+    },
+    {
+      "call_seconds": 0.000118,
+      "nodeid": "tests/test_notification_service.py::TestNotificationServiceBasics::test_disabled_by_default",
+      "setup_seconds": 0.000243,
+      "teardown_seconds": 6.1e-05,
+      "total_seconds": 0.000422
+    },
+    {
+      "call_seconds": 0.00016,
+      "nodeid": "tests/test_plan_mode_runtime.py::test_build_plan_revision_prompt_includes_measured_baseline",
+      "setup_seconds": 0.000199,
+      "teardown_seconds": 5.6e-05,
+      "total_seconds": 0.000415
+    },
+    {
+      "call_seconds": 0.00026,
+      "nodeid": "tests/test_plan_mode_runtime.py::test_dispatchable_tasks_use_explicit_dependencies",
+      "setup_seconds": 6.8e-05,
+      "teardown_seconds": 6.4e-05,
+      "total_seconds": 0.000392
+    },
+    {
+      "call_seconds": 0.000148,
+      "nodeid": "tests/test_result_parser.py::test_not_useless_has_content",
+      "setup_seconds": 0.000134,
+      "teardown_seconds": 9.8e-05,
+      "total_seconds": 0.00038
+    },
+    {
+      "call_seconds": 0.000142,
+      "nodeid": "tests/test_plan_store.py::test_planner_run_snapshot_to_dict_persists_structured_fields",
+      "setup_seconds": 0.000178,
+      "teardown_seconds": 5.9e-05,
+      "total_seconds": 0.000379
+    },
+    {
+      "call_seconds": 0.000181,
+      "nodeid": "tests/test_translation_service.py::TestTermProtection::test_dataset_paths_protected",
+      "setup_seconds": 0.000121,
+      "teardown_seconds": 6.6e-05,
+      "total_seconds": 0.000368
+    },
+    {
+      "call_seconds": 0.0001,
+      "nodeid": "tests/test_translation_service.py::TestProperties::test_is_ready_false_before_load",
+      "setup_seconds": 0.000103,
+      "teardown_seconds": 0.00016,
+      "total_seconds": 0.000362
+    },
+    {
+      "call_seconds": 0.000247,
+      "nodeid": "tests/test_result_parser.py::test_parse_plan_task_report_with_preamble_and_fenced_json",
+      "setup_seconds": 5.8e-05,
+      "teardown_seconds": 5.4e-05,
+      "total_seconds": 0.000359
+    },
+    {
+      "call_seconds": 0.00015,
+      "nodeid": "tests/test_lmstudio_adapter.py::test_extract_content_from_empty_choices",
+      "setup_seconds": 8.3e-05,
+      "teardown_seconds": 0.000122,
+      "total_seconds": 0.000355
+    },
+    {
+      "call_seconds": 0.000147,
+      "nodeid": "tests/test_scheduler.py::test_should_not_stop_normal",
+      "setup_seconds": 0.000117,
+      "teardown_seconds": 9e-05,
+      "total_seconds": 0.000354
+    },
+    {
+      "call_seconds": 0.000151,
+      "nodeid": "tests/test_scheduler.py::test_sleep_interval_default",
+      "setup_seconds": 0.000116,
+      "teardown_seconds": 8.6e-05,
+      "total_seconds": 0.000353
+    },
+    {
+      "call_seconds": 0.000227,
+      "nodeid": "tests/test_planner_stream.py::test_extract_structured_output_handles_real_regression_shape",
       "setup_seconds": 6.4e-05,
       "teardown_seconds": 5.9e-05,
+      "total_seconds": 0.000351
+    },
+    {
+      "call_seconds": 0.000119,
+      "nodeid": "tests/test_translation_service.py::TestTermProtection::test_trading_symbols_protected",
+      "setup_seconds": 0.000157,
+      "teardown_seconds": 6.2e-05,
+      "total_seconds": 0.000339
+    },
+    {
+      "call_seconds": 0.000127,
+      "nodeid": "tests/test_translation_service.py::TestTermProtection::test_snapshot_ids_protected",
+      "setup_seconds": 0.000144,
+      "teardown_seconds": 6.5e-05,
+      "total_seconds": 0.000336
+    },
+    {
+      "call_seconds": 0.000125,
+      "nodeid": "tests/test_lmstudio_adapter.py::test_extract_content_from_valid_response",
+      "setup_seconds": 0.000116,
+      "teardown_seconds": 8.6e-05,
+      "total_seconds": 0.000327
+    },
+    {
+      "call_seconds": 0.000134,
+      "nodeid": "tests/test_result_parser.py::test_not_duplicate_none_previous",
+      "setup_seconds": 9.7e-05,
+      "teardown_seconds": 9.3e-05,
+      "total_seconds": 0.000324
+    },
+    {
+      "call_seconds": 0.000204,
+      "nodeid": "tests/test_translation_service.py::TestSplitLongText::test_long_text_split_at_sentences",
+      "setup_seconds": 6e-05,
+      "teardown_seconds": 5.6e-05,
       "total_seconds": 0.00032
     },
     {
-      "call_seconds": 0.000143,
-      "nodeid": "tests/test_lmstudio_adapter.py::test_load_config_with_lmstudio",
-      "setup_seconds": 9.7e-05,
-      "teardown_seconds": 7.9e-05,
-      "total_seconds": 0.000319
+      "call_seconds": 0.000133,
+      "nodeid": "tests/test_result_parser.py::test_useless_result_empty",
+      "setup_seconds": 9.6e-05,
+      "teardown_seconds": 9e-05,
+      "total_seconds": 0.00032
+    },
+    {
+      "call_seconds": 0.000146,
+      "nodeid": "tests/test_scheduler.py::test_should_call_planner_all_tasks_settled",
+      "setup_seconds": 0.000109,
+      "teardown_seconds": 5.9e-05,
+      "total_seconds": 0.000314
+    },
+    {
+      "call_seconds": 0.000118,
+      "nodeid": "tests/test_result_parser.py::test_useless_result_error_no_message",
+      "setup_seconds": 9.4e-05,
+      "teardown_seconds": 0.0001,
+      "total_seconds": 0.000312
     },
     {
       "call_seconds": 0.000192,
-      "nodeid": "tests/test_translation_service.py::TestSplitLongText::test_long_text_split_at_sentences",
-      "setup_seconds": 5.6e-05,
+      "nodeid": "tests/test_planner_stream.py::test_extract_structured_output_ignores_tool_result_without_payload",
+      "setup_seconds": 5.7e-05,
       "teardown_seconds": 5.9e-05,
       "total_seconds": 0.000308
     },
     {
-      "call_seconds": 0.000137,
-      "nodeid": "tests/test_lmstudio_adapter.py::test_extract_content_from_valid_response",
-      "setup_seconds": 8.7e-05,
-      "teardown_seconds": 8.3e-05,
-      "total_seconds": 0.000306
+      "call_seconds": 0.000189,
+      "nodeid": "tests/test_config.py::test_config_to_dict",
+      "setup_seconds": 5.7e-05,
+      "teardown_seconds": 5.6e-05,
+      "total_seconds": 0.000303
     },
     {
-      "call_seconds": 0.000129,
-      "nodeid": "tests/test_lmstudio_adapter.py::test_adapter_config_fields",
-      "setup_seconds": 8.7e-05,
-      "teardown_seconds": 7.8e-05,
+      "call_seconds": 0.000173,
+      "nodeid": "tests/test_plan_validation.py::test_validate_plan_accepts_symbolic_ref_with_dependency",
+      "setup_seconds": 6.1e-05,
+      "teardown_seconds": 6.2e-05,
+      "total_seconds": 0.000297
+    },
+    {
+      "call_seconds": 0.000179,
+      "nodeid": "tests/test_result_parser.py::test_parse_plan_task_report_rejects_truncated_nested_fragment",
+      "setup_seconds": 6.3e-05,
+      "teardown_seconds": 5e-05,
       "total_seconds": 0.000293
     },
     {
-      "call_seconds": 0.000122,
-      "nodeid": "tests/test_config.py::test_config_from_dict",
-      "setup_seconds": 9.1e-05,
-      "teardown_seconds": 7.7e-05,
-      "total_seconds": 0.00029
+      "call_seconds": 0.00013,
+      "nodeid": "tests/test_lmstudio_adapter.py::test_load_config_with_lmstudio",
+      "setup_seconds": 7.7e-05,
+      "teardown_seconds": 7.8e-05,
+      "total_seconds": 0.000286
     },
     {
-      "call_seconds": 0.000154,
-      "nodeid": "tests/test_plan_validation.py::test_parse_plan_output_invalid_json_returns_sentinel",
-      "setup_seconds": 7.4e-05,
-      "teardown_seconds": 6.2e-05,
-      "total_seconds": 0.00029
-    },
-    {
-      "call_seconds": 8.5e-05,
-      "nodeid": "tests/test_translation_service.py::TestProperties::test_is_enabled_true",
-      "setup_seconds": 7.1e-05,
-      "teardown_seconds": 0.000126,
+      "call_seconds": 0.000168,
+      "nodeid": "tests/test_plan_validation.py::test_build_plan_creation_prompt_includes_catalog_without_research_context",
+      "setup_seconds": 5.6e-05,
+      "teardown_seconds": 5.8e-05,
       "total_seconds": 0.000282
     },
     {
-      "call_seconds": 7.9e-05,
-      "nodeid": "tests/test_translation_service.py::TestProperties::test_is_ready_false_before_load",
-      "setup_seconds": 6.7e-05,
-      "teardown_seconds": 0.000136,
-      "total_seconds": 0.000282
-    },
-    {
-      "call_seconds": 0.000124,
-      "nodeid": "tests/test_lmstudio_adapter.py::test_extract_content_from_malformed_response",
-      "setup_seconds": 8.6e-05,
-      "teardown_seconds": 7e-05,
+      "call_seconds": 0.000142,
+      "nodeid": "tests/test_result_parser.py::test_parse_planner_with_markdown_fences",
+      "setup_seconds": 8e-05,
+      "teardown_seconds": 5.8e-05,
       "total_seconds": 0.00028
     },
     {
-      "call_seconds": 0.000144,
-      "nodeid": "tests/test_result_parser.py::test_parse_valid_planner_json",
-      "setup_seconds": 7.5e-05,
-      "teardown_seconds": 5.6e-05,
-      "total_seconds": 0.000275
+      "call_seconds": 0.000114,
+      "nodeid": "tests/test_lmstudio_adapter.py::test_extract_content_from_malformed_response",
+      "setup_seconds": 8.4e-05,
+      "teardown_seconds": 7.9e-05,
+      "total_seconds": 0.000277
     },
     {
       "call_seconds": 0.000109,
-      "nodeid": "tests/test_lmstudio_adapter.py::test_extract_content_from_empty_choices",
-      "setup_seconds": 8.6e-05,
-      "teardown_seconds": 7.9e-05,
-      "total_seconds": 0.000274
-    },
-    {
-      "call_seconds": 0.000153,
-      "nodeid": "tests/test_result_parser.py::test_parse_planner_with_extra_text",
-      "setup_seconds": 6.5e-05,
+      "nodeid": "tests/test_notification_service.py::TestNotificationConfig::test_defaults",
+      "setup_seconds": 0.00011,
       "teardown_seconds": 5.5e-05,
-      "total_seconds": 0.000273
+      "total_seconds": 0.000275
     },
     {
-      "call_seconds": 0.000105,
-      "nodeid": "tests/test_result_parser.py::test_parse_worker_error_response",
-      "setup_seconds": 0.000107,
-      "teardown_seconds": 6e-05,
-      "total_seconds": 0.000272
-    },
-    {
-      "call_seconds": 0.000147,
-      "nodeid": "tests/test_result_parser.py::test_parse_planner_invalid_json",
-      "setup_seconds": 6.8e-05,
-      "teardown_seconds": 5.5e-05,
-      "total_seconds": 0.00027
-    },
-    {
-      "call_seconds": 0.000144,
-      "nodeid": "tests/test_planner_stream.py::test_extract_structured_output_from_input_json_delta",
-      "setup_seconds": 7.2e-05,
-      "teardown_seconds": 5.3e-05,
+      "call_seconds": 9.5e-05,
+      "nodeid": "tests/test_notification_service.py::TestNotificationConfig::test_missing_notifications_key",
+      "setup_seconds": 8.7e-05,
+      "teardown_seconds": 8.7e-05,
       "total_seconds": 0.000269
     },
     {
-      "call_seconds": 0.000101,
-      "nodeid": "tests/test_translation_service.py::TestTermProtection::test_decision_values_protected",
-      "setup_seconds": 9.7e-05,
-      "teardown_seconds": 6.3e-05,
-      "total_seconds": 0.000261
+      "call_seconds": 0.000127,
+      "nodeid": "tests/test_result_parser.py::test_parse_valid_planner_json",
+      "setup_seconds": 7.8e-05,
+      "teardown_seconds": 6.2e-05,
+      "total_seconds": 0.000267
     },
     {
-      "call_seconds": 0.000137,
-      "nodeid": "tests/test_planner_stream.py::test_extract_structured_output_from_tool_use_input",
-      "setup_seconds": 6.4e-05,
+      "call_seconds": 0.000134,
+      "nodeid": "tests/test_plan_mode_runtime.py::test_dispatchable_tasks_support_legacy_execution_order",
+      "setup_seconds": 7.3e-05,
       "teardown_seconds": 5.9e-05,
+      "total_seconds": 0.000266
+    },
+    {
+      "call_seconds": 8.2e-05,
+      "nodeid": "tests/test_translation_service.py::TestProperties::test_is_enabled_false",
+      "setup_seconds": 6e-05,
+      "teardown_seconds": 0.000119,
       "total_seconds": 0.000261
     },
     {
-      "call_seconds": 0.000142,
-      "nodeid": "tests/test_plan_validation.py::test_parse_plan_output_valid_json_no_sentinel",
-      "setup_seconds": 6.6e-05,
+      "call_seconds": 0.000141,
+      "nodeid": "tests/test_plan_validation.py::test_parse_plan_output_no_json_returns_sentinel",
+      "setup_seconds": 6.7e-05,
       "teardown_seconds": 5.2e-05,
+      "total_seconds": 0.000261
+    },
+    {
+      "call_seconds": 0.00015,
+      "nodeid": "tests/test_result_parser.py::test_parse_planner_invalid_json",
+      "setup_seconds": 5.8e-05,
+      "teardown_seconds": 5e-05,
       "total_seconds": 0.000259
     },
     {
-      "call_seconds": 0.000127,
-      "nodeid": "tests/test_plan_mode_runtime.py::test_build_plan_repair_prompt_includes_validation_errors",
-      "setup_seconds": 6.7e-05,
-      "teardown_seconds": 6.2e-05,
-      "total_seconds": 0.000256
-    },
-    {
-      "call_seconds": 0.000121,
-      "nodeid": "tests/test_translation_service.py::TestTermProtection::test_worker_ids_protected",
-      "setup_seconds": 7.7e-05,
-      "teardown_seconds": 5.8e-05,
-      "total_seconds": 0.000256
-    },
-    {
-      "call_seconds": 0.000142,
+      "call_seconds": 0.000143,
       "nodeid": "tests/test_result_parser.py::test_parse_worker_no_json",
-      "setup_seconds": 5.7e-05,
-      "teardown_seconds": 5.3e-05,
-      "total_seconds": 0.000251
+      "setup_seconds": 6.4e-05,
+      "teardown_seconds": 5e-05,
+      "total_seconds": 0.000257
     },
     {
-      "call_seconds": 0.000137,
-      "nodeid": "tests/test_plan_validation.py::test_validate_plan_accepts_step_ref_to_prior_step",
+      "call_seconds": 0.000133,
+      "nodeid": "tests/test_plan_validation.py::test_validate_plan_rejects_invalid_tool_alias_and_action",
       "setup_seconds": 6.1e-05,
+      "teardown_seconds": 6e-05,
+      "total_seconds": 0.000254
+    },
+    {
+      "call_seconds": 0.000143,
+      "nodeid": "tests/test_planner_stream.py::test_extract_structured_output_falls_back_to_rendered_text_json",
+      "setup_seconds": 5.9e-05,
+      "teardown_seconds": 5e-05,
+      "total_seconds": 0.000252
+    },
+    {
+      "call_seconds": 0.000139,
+      "nodeid": "tests/test_plan_validation.py::test_validate_plan_accepts_step_ref_to_prior_step",
+      "setup_seconds": 5.9e-05,
       "teardown_seconds": 5.4e-05,
       "total_seconds": 0.000251
     },
     {
-      "call_seconds": 0.000131,
-      "nodeid": "tests/test_result_parser.py::test_parse_valid_worker_json",
-      "setup_seconds": 6.2e-05,
-      "teardown_seconds": 5.7e-05,
-      "total_seconds": 0.000251
-    },
-    {
-      "call_seconds": 0.000103,
-      "nodeid": "tests/test_translation_service.py::TestTermProtection::test_trading_symbols_protected",
-      "setup_seconds": 8.9e-05,
-      "teardown_seconds": 5.5e-05,
-      "total_seconds": 0.000247
+      "call_seconds": 9.6e-05,
+      "nodeid": "tests/test_lmstudio_adapter.py::test_adapter_config_fields",
+      "setup_seconds": 8.8e-05,
+      "teardown_seconds": 6.5e-05,
+      "total_seconds": 0.00025
     },
     {
       "call_seconds": 9.6e-05,
-      "nodeid": "tests/test_scheduler.py::test_should_call_planner_with_new_results",
-      "setup_seconds": 9.1e-05,
-      "teardown_seconds": 5.7e-05,
-      "total_seconds": 0.000244
-    },
-    {
-      "call_seconds": 0.000131,
-      "nodeid": "tests/test_plan_validation.py::test_validate_plan_rejects_symbolic_ref_without_dependency",
-      "setup_seconds": 5.5e-05,
-      "teardown_seconds": 5.5e-05,
-      "total_seconds": 0.000241
-    },
-    {
-      "call_seconds": 0.000125,
-      "nodeid": "tests/test_plan_validation.py::test_validate_plan_rejects_legacy_placeholder",
-      "setup_seconds": 6.1e-05,
-      "teardown_seconds": 5e-05,
-      "total_seconds": 0.000235
-    },
-    {
-      "call_seconds": 0.000115,
-      "nodeid": "tests/test_plan_mode_runtime.py::test_dispatchable_tasks_support_legacy_execution_order",
-      "setup_seconds": 6.4e-05,
-      "teardown_seconds": 5.3e-05,
-      "total_seconds": 0.000232
-    },
-    {
-      "call_seconds": 0.000111,
-      "nodeid": "tests/test_result_parser.py::test_parse_planner_partial_json",
-      "setup_seconds": 6.2e-05,
-      "teardown_seconds": 5.7e-05,
-      "total_seconds": 0.00023
-    },
-    {
-      "call_seconds": 8.9e-05,
-      "nodeid": "tests/test_scheduler.py::test_sleep_interval_default",
-      "setup_seconds": 8.2e-05,
-      "teardown_seconds": 5.9e-05,
-      "total_seconds": 0.000229
-    },
-    {
-      "call_seconds": 0.000115,
-      "nodeid": "tests/test_result_parser.py::test_parse_planner_with_markdown_fences",
-      "setup_seconds": 5.7e-05,
-      "teardown_seconds": 5.6e-05,
-      "total_seconds": 0.000229
-    },
-    {
-      "call_seconds": 0.000114,
-      "nodeid": "tests/test_result_parser.py::test_parse_worker_invalid_status",
-      "setup_seconds": 5.7e-05,
+      "nodeid": "tests/test_translation_service.py::TestTermProtection::test_urls_protected",
+      "setup_seconds": 9e-05,
       "teardown_seconds": 5.8e-05,
-      "total_seconds": 0.000229
+      "total_seconds": 0.000245
     },
     {
-      "call_seconds": 9.1e-05,
-      "nodeid": "tests/test_config.py::test_config_defaults_for_missing_keys",
-      "setup_seconds": 7.8e-05,
-      "teardown_seconds": 5.6e-05,
-      "total_seconds": 0.000225
-    },
-    {
-      "call_seconds": 9.8e-05,
-      "nodeid": "tests/test_translation_service.py::TestTermProtection::test_dataset_paths_protected",
-      "setup_seconds": 6.7e-05,
-      "teardown_seconds": 5.9e-05,
-      "total_seconds": 0.000224
+      "call_seconds": 0.000127,
+      "nodeid": "tests/test_planner_stream.py::test_extract_structured_output_from_tool_use_input",
+      "setup_seconds": 6.3e-05,
+      "teardown_seconds": 5.2e-05,
+      "total_seconds": 0.000243
     },
     {
       "call_seconds": 0.00011,
-      "nodeid": "tests/test_scheduler.py::test_should_call_planner_all_tasks_settled",
+      "nodeid": "tests/test_result_parser.py::test_parse_planner_partial_json",
+      "setup_seconds": 8.4e-05,
+      "teardown_seconds": 4.9e-05,
+      "total_seconds": 0.000242
+    },
+    {
+      "call_seconds": 0.000129,
+      "nodeid": "tests/test_result_parser.py::test_parse_valid_worker_json",
       "setup_seconds": 6.1e-05,
-      "teardown_seconds": 5.2e-05,
-      "total_seconds": 0.000224
-    },
-    {
-      "call_seconds": 0.000117,
-      "nodeid": "tests/test_notification_service.py::TestNotificationConfig::test_from_dict",
-      "setup_seconds": 5.6e-05,
       "teardown_seconds": 5.1e-05,
-      "total_seconds": 0.000223
+      "total_seconds": 0.000241
     },
     {
-      "call_seconds": 9.5e-05,
-      "nodeid": "tests/test_scheduler.py::test_should_call_planner_first_cycle",
-      "setup_seconds": 6.7e-05,
-      "teardown_seconds": 6e-05,
-      "total_seconds": 0.000222
-    },
-    {
-      "call_seconds": 9.7e-05,
-      "nodeid": "tests/test_translation_service.py::TestTermProtection::test_no_technical_terms",
-      "setup_seconds": 6.4e-05,
-      "teardown_seconds": 5.8e-05,
-      "total_seconds": 0.000219
-    },
-    {
-      "call_seconds": 0.0001,
-      "nodeid": "tests/test_scheduler.py::test_should_not_call_planner_active_running",
-      "setup_seconds": 6e-05,
-      "teardown_seconds": 5.7e-05,
-      "total_seconds": 0.000217
-    },
-    {
-      "call_seconds": 0.0001,
-      "nodeid": "tests/test_translation_service.py::TestTermProtection::test_feature_names_protected",
-      "setup_seconds": 6.6e-05,
+      "call_seconds": 0.000132,
+      "nodeid": "tests/test_plan_validation.py::test_parse_plan_output_invalid_json_returns_sentinel",
+      "setup_seconds": 5.7e-05,
       "teardown_seconds": 5.1e-05,
-      "total_seconds": 0.000217
-    },
-    {
-      "call_seconds": 0.000101,
-      "nodeid": "tests/test_config.py::test_config_adapter_settings",
-      "setup_seconds": 5.9e-05,
-      "teardown_seconds": 5.6e-05,
-      "total_seconds": 0.000216
-    },
-    {
-      "call_seconds": 0.000101,
-      "nodeid": "tests/test_notification_service.py::TestConfigIntegration::test_full_config_with_notifications",
-      "setup_seconds": 5.8e-05,
-      "teardown_seconds": 5.7e-05,
-      "total_seconds": 0.000216
-    },
-    {
-      "call_seconds": 9e-05,
-      "nodeid": "tests/test_translation_service.py::TestProperties::test_is_enabled_false",
-      "setup_seconds": 6.5e-05,
-      "teardown_seconds": 5.7e-05,
-      "total_seconds": 0.000212
-    },
-    {
-      "call_seconds": 9.2e-05,
-      "nodeid": "tests/test_translation_service.py::TestTranslationConfig::test_missing_translate_key_defaults_false",
-      "setup_seconds": 6.8e-05,
-      "teardown_seconds": 5.1e-05,
-      "total_seconds": 0.000211
-    },
-    {
-      "call_seconds": 8.7e-05,
-      "nodeid": "tests/test_planner_stream.py::test_consume_stream_fragment_keeps_final_plain_text_when_not_json",
-      "setup_seconds": 5.6e-05,
-      "teardown_seconds": 6.9e-05,
-      "total_seconds": 0.000211
-    },
-    {
-      "call_seconds": 8.3e-05,
-      "nodeid": "tests/test_scheduler.py::test_should_stop_max_errors",
-      "setup_seconds": 6.5e-05,
-      "teardown_seconds": 6.2e-05,
-      "total_seconds": 0.000211
+      "total_seconds": 0.000241
     },
     {
       "call_seconds": 9.6e-05,
-      "nodeid": "tests/test_result_parser.py::test_duplicate_detection",
-      "setup_seconds": 5.7e-05,
-      "teardown_seconds": 5.8e-05,
-      "total_seconds": 0.000211
+      "nodeid": "tests/test_translation_service.py::TestTranslationConfig::test_from_dict",
+      "setup_seconds": 8.8e-05,
+      "teardown_seconds": 5.7e-05,
+      "total_seconds": 0.000241
+    },
+    {
+      "call_seconds": 0.000139,
+      "nodeid": "tests/test_plan_validation.py::test_build_plan_repair_prompt_compacts_large_invalid_payload",
+      "setup_seconds": 5.4e-05,
+      "teardown_seconds": 4.7e-05,
+      "total_seconds": 0.00024
+    },
+    {
+      "call_seconds": 0.000122,
+      "nodeid": "tests/test_planner_stream.py::test_extract_structured_output_from_input_json_delta",
+      "setup_seconds": 6.5e-05,
+      "teardown_seconds": 5.2e-05,
+      "total_seconds": 0.000238
     },
     {
       "call_seconds": 9.7e-05,
       "nodeid": "tests/test_state_store.py::test_load_nonexistent",
-      "setup_seconds": 6.3e-05,
-      "teardown_seconds": 5.1e-05,
-      "total_seconds": 0.000211
+      "setup_seconds": 8.3e-05,
+      "teardown_seconds": 5.8e-05,
+      "total_seconds": 0.000238
+    },
+    {
+      "call_seconds": 0.000125,
+      "nodeid": "tests/test_plan_validation.py::test_parse_plan_output_valid_json_no_sentinel",
+      "setup_seconds": 5.2e-05,
+      "teardown_seconds": 6e-05,
+      "total_seconds": 0.000238
+    },
+    {
+      "call_seconds": 0.00013,
+      "nodeid": "tests/test_plan_validation.py::test_validate_plan_rejects_symbolic_ref_without_dependency",
+      "setup_seconds": 6e-05,
+      "teardown_seconds": 4.8e-05,
+      "total_seconds": 0.000237
+    },
+    {
+      "call_seconds": 0.000118,
+      "nodeid": "tests/test_planner_stream.py::test_consume_stream_fragment_ignores_thinking_and_metadata",
+      "setup_seconds": 6.2e-05,
+      "teardown_seconds": 5.6e-05,
+      "total_seconds": 0.000236
+    },
+    {
+      "call_seconds": 0.00011,
+      "nodeid": "tests/test_result_parser.py::test_parse_planner_with_extra_text",
+      "setup_seconds": 6.2e-05,
+      "teardown_seconds": 6.2e-05,
+      "total_seconds": 0.000234
+    },
+    {
+      "call_seconds": 0.000103,
+      "nodeid": "tests/test_config.py::test_config_from_dict",
+      "setup_seconds": 6.6e-05,
+      "teardown_seconds": 6.5e-05,
+      "total_seconds": 0.000234
     },
     {
       "call_seconds": 8.7e-05,
-      "nodeid": "tests/test_notification_service.py::TestNotificationServiceBasics::test_disabled_by_default",
-      "setup_seconds": 6.5e-05,
+      "nodeid": "tests/test_result_parser.py::test_not_duplicate_different_summary",
+      "setup_seconds": 9.2e-05,
+      "teardown_seconds": 5.3e-05,
+      "total_seconds": 0.000233
+    },
+    {
+      "call_seconds": 9.8e-05,
+      "nodeid": "tests/test_translation_service.py::TestTermProtection::test_worker_ids_protected",
+      "setup_seconds": 7.3e-05,
+      "teardown_seconds": 6.1e-05,
+      "total_seconds": 0.000232
+    },
+    {
+      "call_seconds": 0.000116,
+      "nodeid": "tests/test_result_parser.py::test_parse_worker_invalid_status",
+      "setup_seconds": 5.9e-05,
+      "teardown_seconds": 5.6e-05,
+      "total_seconds": 0.000231
+    },
+    {
+      "call_seconds": 9.6e-05,
+      "nodeid": "tests/test_translation_service.py::TestTermProtection::test_decision_values_protected",
+      "setup_seconds": 6.8e-05,
+      "teardown_seconds": 6.5e-05,
+      "total_seconds": 0.00023
+    },
+    {
+      "call_seconds": 0.000113,
+      "nodeid": "tests/test_result_parser.py::test_parse_worker_error_response",
+      "setup_seconds": 6.1e-05,
+      "teardown_seconds": 5.5e-05,
+      "total_seconds": 0.000229
+    },
+    {
+      "call_seconds": 9.6e-05,
+      "nodeid": "tests/test_translation_service.py::TestTermProtection::test_no_technical_terms",
+      "setup_seconds": 6.8e-05,
+      "teardown_seconds": 6.2e-05,
+      "total_seconds": 0.000225
+    },
+    {
+      "call_seconds": 9e-05,
+      "nodeid": "tests/test_config.py::test_config_state_path",
+      "setup_seconds": 5.4e-05,
+      "teardown_seconds": 7.7e-05,
+      "total_seconds": 0.000222
+    },
+    {
+      "call_seconds": 9.8e-05,
+      "nodeid": "tests/test_plan_mode_runtime.py::test_planner_output_state_classifies_structured_stream",
+      "setup_seconds": 6.7e-05,
+      "teardown_seconds": 5.5e-05,
+      "total_seconds": 0.00022
+    },
+    {
+      "call_seconds": 0.000114,
+      "nodeid": "tests/test_plan_mode_runtime.py::test_build_plan_repair_prompt_includes_validation_errors",
+      "setup_seconds": 5.3e-05,
+      "teardown_seconds": 5.1e-05,
+      "total_seconds": 0.000219
+    },
+    {
+      "call_seconds": 9.1e-05,
+      "nodeid": "tests/test_plan_validation.py::test_decision_gate_from_dict_handles_full_partial_and_extra_fields",
+      "setup_seconds": 6.6e-05,
+      "teardown_seconds": 6e-05,
+      "total_seconds": 0.000218
+    },
+    {
+      "call_seconds": 8.7e-05,
+      "nodeid": "tests/test_translation_service.py::TestTranslate::test_model_not_loaded_returns_original",
+      "setup_seconds": 7.3e-05,
+      "teardown_seconds": 5.7e-05,
+      "total_seconds": 0.000217
+    },
+    {
+      "call_seconds": 9.2e-05,
+      "nodeid": "tests/test_translation_service.py::TestTermProtection::test_mixed_text_protection",
+      "setup_seconds": 6.4e-05,
       "teardown_seconds": 5.8e-05,
+      "total_seconds": 0.000214
+    },
+    {
+      "call_seconds": 8.8e-05,
+      "nodeid": "tests/test_translation_service.py::TestTranslate::test_disabled_returns_original",
+      "setup_seconds": 6.7e-05,
+      "teardown_seconds": 5.7e-05,
+      "total_seconds": 0.000211
+    },
+    {
+      "call_seconds": 9.5e-05,
+      "nodeid": "tests/test_translation_service.py::TestTranslationConfig::test_missing_translate_key_defaults_false",
+      "setup_seconds": 6.2e-05,
+      "teardown_seconds": 5.3e-05,
       "total_seconds": 0.00021
     },
     {
-      "call_seconds": 9.3e-05,
-      "nodeid": "tests/test_translation_service.py::TestTermProtection::test_snapshot_ids_protected",
-      "setup_seconds": 5.8e-05,
-      "teardown_seconds": 5.8e-05,
+      "call_seconds": 8.9e-05,
+      "nodeid": "tests/test_plan_mode_runtime.py::test_planner_output_state_classifies_stderr_only",
+      "setup_seconds": 6.5e-05,
+      "teardown_seconds": 5.5e-05,
       "total_seconds": 0.000209
     },
     {
-      "call_seconds": 8.3e-05,
-      "nodeid": "tests/test_result_parser.py::test_not_duplicate_none_previous",
-      "setup_seconds": 6.8e-05,
-      "teardown_seconds": 5.8e-05,
+      "call_seconds": 8.8e-05,
+      "nodeid": "tests/test_translation_service.py::TestTermProtection::test_uuid_protected",
+      "setup_seconds": 6.3e-05,
+      "teardown_seconds": 5.6e-05,
       "total_seconds": 0.000208
     },
     {
-      "call_seconds": 8.4e-05,
+      "call_seconds": 9.7e-05,
+      "nodeid": "tests/test_translation_service.py::TestTermProtection::test_feature_names_protected",
+      "setup_seconds": 6e-05,
+      "teardown_seconds": 5e-05,
+      "total_seconds": 0.000208
+    },
+    {
+      "call_seconds": 0.000103,
+      "nodeid": "tests/test_planner_stream.py::test_extract_structured_output_marks_transport_error_when_activity_has_no_payload",
+      "setup_seconds": 5.7e-05,
+      "teardown_seconds": 4.6e-05,
+      "total_seconds": 0.000207
+    },
+    {
+      "call_seconds": 9.9e-05,
+      "nodeid": "tests/test_scheduler.py::test_should_call_planner_pending_no_active",
+      "setup_seconds": 5.4e-05,
+      "teardown_seconds": 5.3e-05,
+      "total_seconds": 0.000207
+    },
+    {
+      "call_seconds": 8.1e-05,
       "nodeid": "tests/test_plan_validation.py::test_claude_cli_command_includes_tools_flag",
-      "setup_seconds": 6.5e-05,
-      "teardown_seconds": 6e-05,
-      "total_seconds": 0.000208
-    },
-    {
-      "call_seconds": 9.1e-05,
-      "nodeid": "tests/test_notification_service.py::TestNotificationServiceBasics::test_no_op_when_disabled",
-      "setup_seconds": 6.1e-05,
-      "teardown_seconds": 5.7e-05,
-      "total_seconds": 0.000208
-    },
-    {
-      "call_seconds": 8.3e-05,
-      "nodeid": "tests/test_result_parser.py::test_useless_result_empty",
-      "setup_seconds": 6.5e-05,
-      "teardown_seconds": 6e-05,
-      "total_seconds": 0.000208
-    },
-    {
-      "call_seconds": 9.1e-05,
-      "nodeid": "tests/test_translation_service.py::TestTranslationConfig::test_from_dict",
-      "setup_seconds": 6e-05,
-      "teardown_seconds": 5.6e-05,
-      "total_seconds": 0.000208
-    },
-    {
-      "call_seconds": 7.6e-05,
-      "nodeid": "tests/test_translation_service.py::TestTranslationConfig::test_translate_defaults_to_false",
-      "setup_seconds": 6.7e-05,
+      "setup_seconds": 6.4e-05,
       "teardown_seconds": 6.2e-05,
-      "total_seconds": 0.000205
+      "total_seconds": 0.000206
     },
     {
-      "call_seconds": 8.4e-05,
-      "nodeid": "tests/test_result_parser.py::test_not_duplicate_different_summary",
-      "setup_seconds": 6e-05,
-      "teardown_seconds": 6e-05,
-      "total_seconds": 0.000204
-    },
-    {
-      "call_seconds": 8e-05,
-      "nodeid": "tests/test_lmstudio_adapter.py::test_adapter_name",
-      "setup_seconds": 6.7e-05,
+      "call_seconds": 9.4e-05,
+      "nodeid": "tests/test_notification_service.py::TestConfigIntegration::test_full_config_with_notifications",
+      "setup_seconds": 5.7e-05,
       "teardown_seconds": 5.6e-05,
-      "total_seconds": 0.000203
+      "total_seconds": 0.000206
     },
     {
       "call_seconds": 8.1e-05,
       "nodeid": "tests/test_translation_service.py::TestTranslate::test_empty_text_returns_empty",
-      "setup_seconds": 6.8e-05,
-      "teardown_seconds": 5.3e-05,
+      "setup_seconds": 6.4e-05,
+      "teardown_seconds": 5.9e-05,
+      "total_seconds": 0.000204
+    },
+    {
+      "call_seconds": 8.6e-05,
+      "nodeid": "tests/test_config.py::test_config_defaults_for_missing_keys",
+      "setup_seconds": 6.1e-05,
+      "teardown_seconds": 5.7e-05,
+      "total_seconds": 0.000203
+    },
+    {
+      "call_seconds": 8.1e-05,
+      "nodeid": "tests/test_translation_service.py::TestTranslationConfig::test_model_dir_default",
+      "setup_seconds": 6.1e-05,
+      "teardown_seconds": 5.8e-05,
       "total_seconds": 0.000201
     },
     {
-      "call_seconds": 8.4e-05,
-      "nodeid": "tests/test_scheduler.py::test_should_stop_max_empty_cycles",
-      "setup_seconds": 6.3e-05,
-      "teardown_seconds": 5.4e-05,
+      "call_seconds": 8.3e-05,
+      "nodeid": "tests/test_translation_service.py::TestSplitLongText::test_short_text_not_split",
+      "setup_seconds": 6.4e-05,
+      "teardown_seconds": 5.2e-05,
       "total_seconds": 0.0002
     },
     {
-      "call_seconds": 8.7e-05,
-      "nodeid": "tests/test_translation_service.py::TestTermProtection::test_uuid_protected",
-      "setup_seconds": 5.8e-05,
-      "teardown_seconds": 5.5e-05,
-      "total_seconds": 0.000199
-    },
-    {
-      "call_seconds": 8.9e-05,
-      "nodeid": "tests/test_translation_service.py::TestTermProtection::test_mixed_text_protection",
-      "setup_seconds": 5.9e-05,
-      "teardown_seconds": 5.1e-05,
-      "total_seconds": 0.000199
-    },
-    {
-      "call_seconds": 7.9e-05,
-      "nodeid": "tests/test_translation_service.py::TestTranslate::test_disabled_returns_original",
-      "setup_seconds": 6.2e-05,
-      "teardown_seconds": 5.7e-05,
+      "call_seconds": 8.4e-05,
+      "nodeid": "tests/test_config.py::test_config_adapter_settings",
+      "setup_seconds": 6.3e-05,
+      "teardown_seconds": 5.2e-05,
       "total_seconds": 0.000199
     },
     {
       "call_seconds": 8.3e-05,
-      "nodeid": "tests/test_result_parser.py::test_useless_result_error_no_message",
-      "setup_seconds": 6.2e-05,
-      "teardown_seconds": 5.4e-05,
+      "nodeid": "tests/test_scheduler.py::test_should_not_call_planner_active_running",
+      "setup_seconds": 5.6e-05,
+      "teardown_seconds": 6e-05,
       "total_seconds": 0.000198
     },
     {
-      "call_seconds": 8.5e-05,
-      "nodeid": "tests/test_translation_service.py::TestTermProtection::test_urls_protected",
-      "setup_seconds": 5.9e-05,
-      "teardown_seconds": 5.4e-05,
+      "call_seconds": 8.4e-05,
+      "nodeid": "tests/test_notification_service.py::TestNotificationServiceBasics::test_no_op_when_disabled",
+      "setup_seconds": 6.1e-05,
+      "teardown_seconds": 5.3e-05,
       "total_seconds": 0.000198
+    },
+    {
+      "call_seconds": 8e-05,
+      "nodeid": "tests/test_translation_service.py::TestLoadModel::test_disabled_does_not_load",
+      "setup_seconds": 5.9e-05,
+      "teardown_seconds": 5.5e-05,
+      "total_seconds": 0.000195
+    },
+    {
+      "call_seconds": 8.6e-05,
+      "nodeid": "tests/test_result_parser.py::test_duplicate_detection",
+      "setup_seconds": 6e-05,
+      "teardown_seconds": 5e-05,
+      "total_seconds": 0.000195
     },
     {
       "call_seconds": 7.6e-05,
-      "nodeid": "tests/test_translation_service.py::TestTranslationConfig::test_model_dir_default",
-      "setup_seconds": 6.3e-05,
-      "teardown_seconds": 5.8e-05,
-      "total_seconds": 0.000197
-    },
-    {
-      "call_seconds": 7.8e-05,
-      "nodeid": "tests/test_scheduler.py::test_should_stop_planner_finish",
-      "setup_seconds": 6.3e-05,
-      "teardown_seconds": 5.5e-05,
-      "total_seconds": 0.000196
-    },
-    {
-      "call_seconds": 7.7e-05,
       "nodeid": "tests/test_translation_service.py::TestLoadModel::test_enabled_but_not_loaded_returns_original",
-      "setup_seconds": 6.5e-05,
-      "teardown_seconds": 5.1e-05,
-      "total_seconds": 0.000193
-    },
-    {
-      "call_seconds": 7.5e-05,
-      "nodeid": "tests/test_translation_service.py::TestTranslate::test_model_not_loaded_returns_original",
       "setup_seconds": 5.7e-05,
-      "teardown_seconds": 6.1e-05,
-      "total_seconds": 0.000193
-    },
-    {
-      "call_seconds": 7.7e-05,
-      "nodeid": "tests/test_result_parser.py::test_not_useless_has_content",
-      "setup_seconds": 6e-05,
-      "teardown_seconds": 5.5e-05,
-      "total_seconds": 0.000192
-    },
-    {
-      "call_seconds": 7.9e-05,
-      "nodeid": "tests/test_translation_service.py::TestSplitLongText::test_short_text_not_split",
-      "setup_seconds": 6.1e-05,
-      "teardown_seconds": 5e-05,
-      "total_seconds": 0.00019
-    },
-    {
-      "call_seconds": 7.3e-05,
-      "nodeid": "tests/test_notification_service.py::TestNotificationConfig::test_defaults",
-      "setup_seconds": 6.4e-05,
-      "teardown_seconds": 5e-05,
-      "total_seconds": 0.000188
-    },
-    {
-      "call_seconds": 7.3e-05,
-      "nodeid": "tests/test_scheduler.py::test_should_not_stop_normal",
-      "setup_seconds": 5.2e-05,
       "teardown_seconds": 5.9e-05,
-      "total_seconds": 0.000184
-    },
-    {
-      "call_seconds": 7.2e-05,
-      "nodeid": "tests/test_translation_service.py::TestLoadModel::test_disabled_does_not_load",
-      "setup_seconds": 5.8e-05,
-      "teardown_seconds": 5e-05,
-      "total_seconds": 0.00018
+      "total_seconds": 0.000193
     },
     {
       "call_seconds": 7.1e-05,
-      "nodeid": "tests/test_notification_service.py::TestNotificationConfig::test_missing_notifications_key",
-      "setup_seconds": 5e-05,
+      "nodeid": "tests/test_translation_service.py::TestTranslationConfig::test_translate_defaults_to_false",
+      "setup_seconds": 6.7e-05,
+      "teardown_seconds": 5.1e-05,
+      "total_seconds": 0.00019
+    },
+    {
+      "call_seconds": 8e-05,
+      "nodeid": "tests/test_scheduler.py::test_should_call_planner_first_cycle",
+      "setup_seconds": 5.9e-05,
       "teardown_seconds": 4.9e-05,
-      "total_seconds": 0.00017
+      "total_seconds": 0.000188
+    },
+    {
+      "call_seconds": 8.2e-05,
+      "nodeid": "tests/test_notification_service.py::TestNotificationConfig::test_from_dict",
+      "setup_seconds": 5.5e-05,
+      "teardown_seconds": 4.9e-05,
+      "total_seconds": 0.000186
+    },
+    {
+      "call_seconds": 7.9e-05,
+      "nodeid": "tests/test_scheduler.py::test_should_stop_planner_finish",
+      "setup_seconds": 5.8e-05,
+      "teardown_seconds": 4.8e-05,
+      "total_seconds": 0.000186
+    },
+    {
+      "call_seconds": 7.8e-05,
+      "nodeid": "tests/test_scheduler.py::test_should_stop_max_errors",
+      "setup_seconds": 5.4e-05,
+      "teardown_seconds": 5.3e-05,
+      "total_seconds": 0.000184
+    },
+    {
+      "call_seconds": 7e-05,
+      "nodeid": "tests/test_lmstudio_adapter.py::test_adapter_name",
+      "setup_seconds": 5.7e-05,
+      "teardown_seconds": 5.5e-05,
+      "total_seconds": 0.000182
+    },
+    {
+      "call_seconds": 7.2e-05,
+      "nodeid": "tests/test_scheduler.py::test_should_stop_max_empty_cycles",
+      "setup_seconds": 5.9e-05,
+      "teardown_seconds": 5e-05,
+      "total_seconds": 0.000181
+    },
+    {
+      "call_seconds": 7e-05,
+      "nodeid": "tests/test_plan_mode_runtime.py::test_planner_output_state_classifies_text_stream",
+      "setup_seconds": 5.2e-05,
+      "teardown_seconds": 5.7e-05,
+      "total_seconds": 0.000179
+    },
+    {
+      "call_seconds": 7.6e-05,
+      "nodeid": "tests/test_scheduler.py::test_should_call_planner_with_new_results",
+      "setup_seconds": 5.2e-05,
+      "teardown_seconds": 5e-05,
+      "total_seconds": 0.000178
+    },
+    {
+      "call_seconds": 6.9e-05,
+      "nodeid": "tests/test_translation_service.py::TestProperties::test_is_enabled_true",
+      "setup_seconds": 5.7e-05,
+      "teardown_seconds": 4.8e-05,
+      "total_seconds": 0.000174
     }
   ],
-  "session_total_seconds": 2.321797994998633,
-  "test_count": 174,
+  "session_total_seconds": 2.84379360100138,
+  "test_count": 200,
   "top_limit": 20,
   "top_slowest": [
     {
-      "call_seconds": 0.000993,
-      "nodeid": "tests/test_lmstudio_adapter.py::test_invoke_handles_http_error",
-      "setup_seconds": 0.000792,
-      "teardown_seconds": 0.500427,
-      "total_seconds": 0.502211
-    },
-    {
-      "call_seconds": 0.000738,
-      "nodeid": "tests/test_lmstudio_adapter.py::test_invoke_sends_correct_payload",
-      "setup_seconds": 0.000921,
-      "teardown_seconds": 0.500173,
-      "total_seconds": 0.501832
-    },
-    {
-      "call_seconds": 0.000698,
+      "call_seconds": 0.000748,
       "nodeid": "tests/test_lmstudio_adapter.py::test_is_available_when_server_running",
-      "setup_seconds": 0.000605,
-      "teardown_seconds": 0.500529,
-      "total_seconds": 0.501832
+      "setup_seconds": 0.000645,
+      "teardown_seconds": 0.500754,
+      "total_seconds": 0.502147
     },
     {
-      "call_seconds": 0.00049,
-      "nodeid": "tests/test_lmstudio_adapter.py::test_invoke_returns_success",
-      "setup_seconds": 0.000468,
-      "teardown_seconds": 0.500609,
-      "total_seconds": 0.501567
-    },
-    {
-      "call_seconds": 0.000902,
+      "call_seconds": 0.000811,
       "nodeid": "tests/test_lmstudio_adapter.py::test_invoke_with_custom_system_prompt",
-      "setup_seconds": 0.000519,
-      "teardown_seconds": 0.499809,
-      "total_seconds": 0.501231
+      "setup_seconds": 0.000765,
+      "teardown_seconds": 0.50049,
+      "total_seconds": 0.502065
     },
     {
-      "call_seconds": 0.004722,
-      "nodeid": "tests/test_plan_mode_runtime.py::test_transport_failure_retries_same_request_without_repair",
-      "setup_seconds": 7.4e-05,
-      "teardown_seconds": 0.000125,
-      "total_seconds": 0.004921
+      "call_seconds": 0.000704,
+      "nodeid": "tests/test_lmstudio_adapter.py::test_invoke_with_no_model_defaults_to_empty",
+      "setup_seconds": 0.000506,
+      "teardown_seconds": 0.500721,
+      "total_seconds": 0.501931
     },
     {
-      "call_seconds": 0.004444,
-      "nodeid": "tests/test_orchestrator_no_progress.py::test_empty_cycles_reset_on_new_task",
-      "setup_seconds": 7.1e-05,
-      "teardown_seconds": 7.9e-05,
-      "total_seconds": 0.004593
+      "call_seconds": 0.000574,
+      "nodeid": "tests/test_lmstudio_adapter.py::test_invoke_handles_http_error",
+      "setup_seconds": 0.000495,
+      "teardown_seconds": 0.500588,
+      "total_seconds": 0.501657
     },
     {
-      "call_seconds": 0.004344,
-      "nodeid": "tests/test_plan_mode_runtime.py::test_process_plan_data_rejects_placeholder_instructions",
-      "setup_seconds": 6.9e-05,
-      "teardown_seconds": 8.1e-05,
-      "total_seconds": 0.004495
+      "call_seconds": 0.000876,
+      "nodeid": "tests/test_lmstudio_adapter.py::test_invoke_sends_correct_payload",
+      "setup_seconds": 0.00063,
+      "teardown_seconds": 0.499996,
+      "total_seconds": 0.501502
     },
     {
-      "call_seconds": 0.00432,
-      "nodeid": "tests/test_plan_validation.py::test_process_plan_data_rejects_zero_tasks",
-      "setup_seconds": 5.6e-05,
-      "teardown_seconds": 7.8e-05,
-      "total_seconds": 0.004453
+      "call_seconds": 0.000476,
+      "nodeid": "tests/test_lmstudio_adapter.py::test_invoke_returns_success",
+      "setup_seconds": 0.000333,
+      "teardown_seconds": 0.500178,
+      "total_seconds": 0.500987
     },
     {
-      "call_seconds": 0.00402,
-      "nodeid": "tests/test_plan_validation.py::test_process_plan_data_rejects_parse_failure_fallback",
-      "setup_seconds": 7.1e-05,
-      "teardown_seconds": 7.6e-05,
-      "total_seconds": 0.004168
-    },
-    {
-      "call_seconds": 0.003983,
-      "nodeid": "tests/test_orchestrator_retry.py::test_max_attempts_exhausted",
-      "setup_seconds": 7.2e-05,
-      "teardown_seconds": 6.7e-05,
-      "total_seconds": 0.004122
-    },
-    {
-      "call_seconds": 0.003789,
-      "nodeid": "tests/test_plan_mode_runtime.py::test_dispatch_plan_tasks_uses_both_workers",
-      "setup_seconds": 0.000181,
-      "teardown_seconds": 7.5e-05,
-      "total_seconds": 0.004046
-    },
-    {
-      "call_seconds": 0.003666,
-      "nodeid": "tests/test_plan_mode_runtime.py::test_transport_failure_stops_after_retry_budget",
-      "setup_seconds": 0.000107,
-      "teardown_seconds": 7.4e-05,
-      "total_seconds": 0.003846
-    },
-    {
-      "call_seconds": 0.003659,
-      "nodeid": "tests/test_orchestrator_happy_path.py::test_happy_path_single_task",
-      "setup_seconds": 6.6e-05,
-      "teardown_seconds": 7.4e-05,
-      "total_seconds": 0.003799
-    },
-    {
-      "call_seconds": 0.003325,
-      "nodeid": "tests/test_plan_mode_runtime.py::test_invalid_plan_loop_stops_after_max_attempts",
-      "setup_seconds": 7.9e-05,
-      "teardown_seconds": 7e-05,
-      "total_seconds": 0.003474
-    },
-    {
-      "call_seconds": 0.003263,
-      "nodeid": "tests/test_plan_mode_runtime.py::test_handle_planner_timeout_retries_once",
-      "setup_seconds": 6.8e-05,
-      "teardown_seconds": 6.8e-05,
-      "total_seconds": 0.0034
-    },
-    {
-      "call_seconds": 0.00296,
-      "nodeid": "tests/test_plan_validation.py::test_process_plan_data_defaults_execution_order_when_missing",
-      "setup_seconds": 6.4e-05,
-      "teardown_seconds": 7.3e-05,
-      "total_seconds": 0.003097
-    },
-    {
-      "call_seconds": 0.002897,
-      "nodeid": "tests/test_orchestrator_retry.py::test_retry_on_worker_error",
-      "setup_seconds": 6.3e-05,
-      "teardown_seconds": 7.3e-05,
-      "total_seconds": 0.003034
-    },
-    {
-      "call_seconds": 0.002855,
-      "nodeid": "tests/test_orchestrator_retry.py::test_reassign_task_moves_to_different_worker",
-      "setup_seconds": 6.6e-05,
+      "call_seconds": 0.0051,
+      "nodeid": "tests/test_plan_mode_runtime.py::test_process_plan_data_accepts_decision_gate_reason_field",
+      "setup_seconds": 0.000106,
       "teardown_seconds": 7.7e-05,
-      "total_seconds": 0.002998
+      "total_seconds": 0.005282
     },
     {
-      "call_seconds": 0.002233,
+      "call_seconds": 0.005006,
+      "nodeid": "tests/test_plan_validation.py::test_process_plan_data_rejects_zero_tasks",
+      "setup_seconds": 6.4e-05,
+      "teardown_seconds": 7.7e-05,
+      "total_seconds": 0.005147
+    },
+    {
+      "call_seconds": 0.004386,
+      "nodeid": "tests/test_plan_validation.py::test_process_plan_data_rejects_parse_failure_fallback",
+      "setup_seconds": 6.6e-05,
+      "teardown_seconds": 7.3e-05,
+      "total_seconds": 0.004525
+    },
+    {
+      "call_seconds": 0.004383,
+      "nodeid": "tests/test_plan_mode_runtime.py::test_transport_failure_retries_same_request_without_repair",
+      "setup_seconds": 6.5e-05,
+      "teardown_seconds": 6.7e-05,
+      "total_seconds": 0.004516
+    },
+    {
+      "call_seconds": 0.004092,
+      "nodeid": "tests/test_orchestrator_no_progress.py::test_stops_on_max_empty_cycles",
+      "setup_seconds": 9.8e-05,
+      "teardown_seconds": 6.7e-05,
+      "total_seconds": 0.004256
+    },
+    {
+      "call_seconds": 0.003737,
+      "nodeid": "tests/test_plan_mode_runtime.py::test_process_plan_data_rejects_placeholder_instructions",
+      "setup_seconds": 6.7e-05,
+      "teardown_seconds": 0.000122,
+      "total_seconds": 0.003925
+    },
+    {
+      "call_seconds": 0.003739,
+      "nodeid": "tests/test_plan_mode_runtime.py::test_transport_failure_stops_after_retry_budget",
+      "setup_seconds": 6.7e-05,
+      "teardown_seconds": 7.4e-05,
+      "total_seconds": 0.00388
+    },
+    {
+      "call_seconds": 0.003419,
+      "nodeid": "tests/test_plan_mode_runtime.py::test_parse_error_does_not_enter_repair_flow",
+      "setup_seconds": 6.2e-05,
+      "teardown_seconds": 7.6e-05,
+      "total_seconds": 0.003557
+    },
+    {
+      "call_seconds": 0.003397,
+      "nodeid": "tests/test_plan_mode_runtime.py::test_invalid_plan_loop_stops_after_max_attempts",
+      "setup_seconds": 6.5e-05,
+      "teardown_seconds": 8.1e-05,
+      "total_seconds": 0.003543
+    },
+    {
+      "call_seconds": 0.002727,
       "nodeid": "tests/test_plan_mode_runtime.py::test_reconcile_current_plan_state_restores_progress_and_baseline",
-      "setup_seconds": 0.000544,
-      "teardown_seconds": 8.8e-05,
-      "total_seconds": 0.002866
+      "setup_seconds": 0.000707,
+      "teardown_seconds": 0.0001,
+      "total_seconds": 0.003534
+    },
+    {
+      "call_seconds": 0.003283,
+      "nodeid": "tests/test_plan_validation.py::test_process_plan_data_accepts_valid_plan",
+      "setup_seconds": 6.3e-05,
+      "teardown_seconds": 7.2e-05,
+      "total_seconds": 0.003418
+    },
+    {
+      "call_seconds": 0.003163,
+      "nodeid": "tests/test_plan_validation.py::test_process_plan_data_defaults_execution_order_when_missing",
+      "setup_seconds": 6.8e-05,
+      "teardown_seconds": 6.9e-05,
+      "total_seconds": 0.003301
+    },
+    {
+      "call_seconds": 0.00302,
+      "nodeid": "tests/test_plan_validation.py::test_process_plan_data_uses_request_version_on_parse_failure",
+      "setup_seconds": 7.4e-05,
+      "teardown_seconds": 7e-05,
+      "total_seconds": 0.003164
+    },
+    {
+      "call_seconds": 0.002945,
+      "nodeid": "tests/test_orchestrator_retry.py::test_max_attempts_exhausted",
+      "setup_seconds": 5.6e-05,
+      "teardown_seconds": 6.4e-05,
+      "total_seconds": 0.003066
     }
   ]
 }

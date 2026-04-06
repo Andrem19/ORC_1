@@ -6,7 +6,7 @@ import json
 from unittest.mock import MagicMock, patch
 
 from app.models import OrchestratorState, TaskStatus
-from app.plan_models import PlanStep, PlanTask, ResearchPlan
+from app.plan_models import PlanStep, PlanTask, ResearchPlan, decision_gate_from_dict
 from app.plan_validation import validate_plan
 from app.result_parser import parse_plan_output
 
@@ -39,6 +39,45 @@ def test_parse_plan_output_valid_json_no_sentinel():
     result = parse_plan_output(raw)
     assert result["plan_action"] == "create"
     assert result.get("_parse_failed") is None  # no sentinel on success
+
+
+def test_parse_plan_output_schema_v3_steps_and_extra_fields() -> None:
+    raw = json.dumps({
+        "schema_version": 3,
+        "plan_action": "create",
+        "plan_version": 1,
+        "tasks": [
+            {
+                "stage_number": 0,
+                "stage_name": "Baseline",
+                "unknown_task_field": "ignore me",
+                "steps": [
+                    {
+                        "step_id": "baseline_run",
+                        "kind": "tool_call",
+                        "instruction": "Run baseline",
+                        "tool_name": "backtests_runs",
+                        "args": {"action": "start"},
+                        "unknown_step_field": "ignore me too",
+                    }
+                ],
+                "decision_gates": [
+                    {
+                        "metric": "sharpe",
+                        "threshold": 1.0,
+                        "reason": "keep",
+                        "unknown_gate_field": "extra",
+                    }
+                ],
+            }
+        ],
+    })
+    result = parse_plan_output(raw)
+
+    assert result["schema_version"] == 3
+    assert result["tasks"][0]["steps"][0]["step_id"] == "baseline_run"
+    assert result["tasks"][0]["steps"][0]["tool_name"] == "backtests_runs"
+    assert result["tasks"][0]["steps"][0]["args"]["action"] == "start"
 
 
 # ---------------------------------------------------------------------------
@@ -100,6 +139,25 @@ def test_process_plan_data_rejects_parse_failure_fallback():
     assert svc._current_plan is None
 
 
+def test_process_plan_data_uses_request_version_on_parse_failure() -> None:
+    svc = _make_plan_service()
+    svc.planner_service.plan_transport_retry_count = 1
+    fallback_data = {
+        "plan_action": "continue",
+        "plan_version": 0,
+        "reason": "Failed to parse planner output as JSON",
+        "_parse_failed": True,
+        "_failure_class": "parse_error",
+        "_request_type": "create",
+        "_request_version": 1,
+        "_attempt_number": 1,
+    }
+    svc._process_plan_data(fallback_data)
+
+    kwargs = svc._plan_store.save_rejected_plan_attempt.call_args.kwargs
+    assert kwargs["plan_version"] == 1
+
+
 def test_process_plan_data_accepts_valid_plan():
     svc = _make_plan_service()
     valid_data = {
@@ -136,6 +194,48 @@ def test_process_plan_data_accepts_valid_plan():
     svc._plan_store.save_plan.assert_called_once()
 
 
+def test_process_plan_data_accepts_steps_only_tasks() -> None:
+    svc = _make_plan_service()
+    valid_data = {
+        "schema_version": 3,
+        "plan_action": "create",
+        "plan_version": 1,
+        "_request_type": "create",
+        "_request_version": 1,
+        "_attempt_number": 1,
+        "_failure_class": "none",
+        "tasks": [
+            {
+                "stage_number": 0,
+                "stage_name": "Baseline",
+                "steps": [
+                    {
+                        "step_id": "baseline_run",
+                        "kind": "tool_call",
+                        "instruction": "Run baseline",
+                        "tool_name": "backtests_runs",
+                        "args": {
+                            "action": "start",
+                            "snapshot_id": "active-signal-v1",
+                            "version": "1",
+                            "symbol": "BTCUSDT",
+                            "anchor_timeframe": "1h",
+                            "execution_timeframe": "5m",
+                        },
+                    }
+                ],
+                "results_table_columns": ["run_id"],
+                "decision_gates": [],
+            },
+        ],
+    }
+    svc._process_plan_data(valid_data)
+
+    assert svc._current_plan is not None
+    assert svc._current_plan.tasks[0].steps[0].step_id == "baseline_run"
+    assert svc._current_plan.tasks[0].agent_instructions == []
+
+
 def test_process_plan_data_defaults_execution_order_when_missing():
     svc = _make_plan_service()
     data = {
@@ -164,6 +264,26 @@ def test_process_plan_data_defaults_execution_order_when_missing():
     assert svc._current_plan is not None
     # Should default to sorted stage order
     assert svc._current_plan.execution_order == [0, 2]
+
+
+def test_decision_gate_from_dict_handles_full_partial_and_extra_fields() -> None:
+    full = decision_gate_from_dict({
+        "metric": "sharpe",
+        "threshold": 1.1,
+        "comparator": "gte",
+        "verdict_pass": "PROMOTE",
+        "verdict_fail": "REJECT",
+        "reason": "Baseline should hold",
+        "future_field": "ignored",
+    })
+    partial = decision_gate_from_dict({"metric": "pnl"})
+    extra = decision_gate_from_dict({"future_field": "ignored"})
+
+    assert full.reason == "Baseline should hold"
+    assert full.threshold == 1.1
+    assert partial.metric == "pnl"
+    assert partial.comparator == "gte"
+    assert extra.metric == ""
 
 
 # ---------------------------------------------------------------------------

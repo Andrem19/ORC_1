@@ -14,6 +14,7 @@ from app.planner_runtime import PlannerRunSnapshot
 from app.plan_prompts import build_plan_repair_prompt, build_plan_revision_prompt
 from app.plan_store import PlanStore
 from app.plan_validation import PlanRepairRequest, PlanValidationError
+from app.result_parser import parse_plan_output
 from app.services.plan_orchestrator_service import PlanOrchestratorService
 
 
@@ -304,6 +305,52 @@ def test_process_plan_data_rejects_placeholder_instructions() -> None:
     assert svc.state.current_plan_attempt_type == "repair"
 
 
+def test_process_plan_data_accepts_decision_gate_reason_field() -> None:
+    svc, _orch = _make_service(worker_ids=["qwen-1"])
+    svc.planner_service.last_plan_raw_output = '{"tasks":[{"stage_number":0}]}'
+
+    svc._process_plan_data(
+        {
+            "schema_version": 3,
+            "plan_action": "create",
+            "plan_version": 1,
+            "_request_type": "create",
+            "_request_version": 1,
+            "_attempt_number": 1,
+            "_failure_class": "none",
+            "tasks": [
+                {
+                    "stage_number": 0,
+                    "stage_name": "Baseline",
+                    "steps": [
+                        {
+                            "step_id": "baseline_run",
+                            "kind": "work",
+                            "instruction": "Run baseline",
+                        }
+                    ],
+                    "results_table_columns": ["run_id"],
+                    "decision_gates": [
+                        {
+                            "metric": "sharpe",
+                            "threshold": 0.9,
+                            "comparator": "gte",
+                            "verdict_pass": "PROMOTE",
+                            "verdict_fail": "REJECT",
+                            "reason": "Baseline must reproduce expected Sharpe.",
+                        }
+                    ],
+                },
+            ],
+        }
+    )
+
+    assert svc._current_plan is not None
+    gate = svc._current_plan.tasks[0].decision_gates[0]
+    assert gate.metric == "sharpe"
+    assert gate.reason == "Baseline must reproduce expected Sharpe."
+
+
 def test_dispatch_plan_tasks_resolves_symbolic_refs_before_launch() -> None:
     svc, _orch = _make_service(worker_ids=["qwen-1"])
     svc._current_plan = ResearchPlan(
@@ -466,6 +513,31 @@ def test_transport_failure_stops_after_retry_budget() -> None:
     orch.notification_service.send_error.assert_called()
 
 
+def test_parse_error_does_not_enter_repair_flow() -> None:
+    svc, orch = _make_service(worker_ids=["qwen-1"])
+    svc.planner_service.plan_transport_retry_count = 1
+
+    svc._process_plan_data(
+        {
+            "plan_action": "continue",
+            "plan_version": 0,
+            "_parse_failed": True,
+            "_failure_class": "parse_error",
+            "_request_type": "create",
+            "_request_version": 1,
+            "_attempt_number": 1,
+            "reason": "Failed to parse planner output as JSON",
+        }
+    )
+
+    assert svc._terminal_stop_reason == StopReason.INVALID_OUTPUT
+    svc.planner_service.start_plan_repair.assert_not_called()
+    svc.planner_service.restart_plan_request.assert_not_called()
+    kwargs = svc._plan_store.save_rejected_plan_attempt.call_args.kwargs
+    assert kwargs["failure_class"] == "parse_error"
+    assert kwargs["plan_version"] == 1
+
+
 def test_build_plan_revision_prompt_includes_measured_baseline() -> None:
     plan = ResearchPlan(
         schema_version=2,
@@ -599,6 +671,107 @@ def test_planner_service_prefers_structured_payload_over_tool_result_text() -> N
     assert service.last_plan_raw_output.startswith('{"schema_version": 3')
 
 
+def test_planner_service_sets_transport_error_when_structured_output_lost() -> None:
+    from app.services.planner_service import PlannerService
+
+    adapter = MagicMock()
+    service = PlannerService(adapter=adapter, timeout=180)
+    adapter.check.return_value = ("", True)
+
+    transcript = "\n".join([
+        '{"type":"stream_event","event":{"type":"content_block_start","content_block":{"type":"tool_use","name":"StructuredOutput","input":{}}}}',
+        '{"type":"stream_event","event":{"type":"content_block_delta","delta":{"type":"input_json_delta","partial_json":"{\\"schema_version\\":3"}}}',
+    ])
+    process = MagicMock()
+    process.returncode = 0
+    handle = ProcessHandle(
+        process=process,
+        task_id="planner",
+        worker_id="planner",
+        partial_output="Structured output provided successfully",
+        metadata={"raw_stdout": transcript, "raw_stderr": "", "stream_event_count": 2},
+    )
+    service._active_handle = handle
+    service._plan_runtime = PlannerRunSnapshot(
+        request_type="create",
+        request_version=1,
+        attempt_number=1,
+        prompt_length=1000,
+        output_mode="stream-json",
+    )
+    service._plan_request_type = "create"
+    service._plan_request_version = 1
+    service._plan_request_attempt = 1
+
+    parsed, finished = service.check_plan_output()
+
+    assert finished is True
+    assert parsed is not None
+    assert parsed["_failure_class"] == "transport_error"
+    assert parsed["_request_version"] == 1
+    assert service.last_plan_raw_output == "Structured output provided successfully"
+
+
+def test_planner_service_sets_parse_error_when_no_structured_activity() -> None:
+    from app.services.planner_service import PlannerService
+
+    adapter = MagicMock()
+    service = PlannerService(adapter=adapter, timeout=180)
+    adapter.check.return_value = ("", True)
+
+    process = MagicMock()
+    process.returncode = 0
+    handle = ProcessHandle(
+        process=process,
+        task_id="planner",
+        worker_id="planner",
+        partial_output="just chatter",
+        metadata={"raw_stdout": "just chatter", "raw_stderr": "", "stream_event_count": 0},
+    )
+    service._active_handle = handle
+    service._plan_runtime = PlannerRunSnapshot(
+        request_type="create",
+        request_version=1,
+        attempt_number=1,
+        prompt_length=1000,
+        output_mode="stream-json",
+    )
+    service._plan_request_type = "create"
+    service._plan_request_version = 1
+    service._plan_request_attempt = 1
+
+    parsed, finished = service.check_plan_output()
+
+    assert finished is True
+    assert parsed is not None
+    assert parsed["_failure_class"] == "parse_error"
+    assert parsed["_request_version"] == 1
+
+
+def test_restart_plan_request_transport_retry_does_not_touch_timeout_retry() -> None:
+    from app.services.planner_service import PlannerService
+
+    adapter = MagicMock()
+    service = PlannerService(adapter=adapter, timeout=180)
+    service._plan_request_payload = {
+        "request_type": "create",
+        "goal": "goal",
+        "research_context": None,
+        "anti_patterns": None,
+        "cumulative_summary": "",
+        "worker_ids": ["qwen-1"],
+        "mcp_problem_summary": None,
+        "previous_plan_markdown": None,
+        "plan_version": 1,
+        "attempt_number": 1,
+    }
+    service._launch_plan_request = MagicMock()
+
+    assert service.restart_plan_request(reason="transport_error") is True
+    assert service.plan_transport_retry_count == 1
+    assert service._plan_timeout_retry_count == 0
+
+
 def test_check_silent_workers_classifies_stderr_only() -> None:
     svc, _orch = _make_service()
     task = Task(
@@ -626,3 +799,175 @@ def test_check_silent_workers_classifies_stderr_only() -> None:
     svc._check_silent_workers()
 
     assert svc.state.processes[0].monitor_state == "stderr_only"
+
+
+def test_check_silent_workers_classifies_slow_active() -> None:
+    svc, _orch = _make_service()
+    task = Task(
+        task_id="task-1",
+        status=TaskStatus.RUNNING,
+        assigned_worker_id="qwen-1",
+        metadata={"plan_mode": True},
+    )
+    svc.state.add_task(task)
+    svc.state.processes.append(
+        ProcessInfo(
+            task_id="task-1",
+            worker_id="qwen-1",
+            pid=123,
+            started_at=datetime(2026, 4, 6, 12, 0, tzinfo=timezone.utc).isoformat(),
+            first_output_at=datetime(2026, 4, 6, 12, 0, 5, tzinfo=timezone.utc).isoformat(),
+            last_output_at=datetime.now(timezone.utc).isoformat(),
+            partial_output="running",
+            stdout_bytes=len("running".encode()),
+        )
+    )
+    handle = MagicMock()
+    handle.process.poll.return_value = None
+    svc.worker_service._active_handles = {"task-1": handle}
+
+    svc._check_silent_workers()
+
+    assert svc.state.processes[0].monitor_state == "slow_active"
+
+
+def test_check_silent_workers_classifies_stalled() -> None:
+    svc, _orch = _make_service()
+    task = Task(
+        task_id="task-1",
+        status=TaskStatus.RUNNING,
+        assigned_worker_id="qwen-1",
+        metadata={"plan_mode": True},
+    )
+    svc.state.add_task(task)
+    svc.state.processes.append(
+        ProcessInfo(
+            task_id="task-1",
+            worker_id="qwen-1",
+            pid=123,
+            started_at=datetime(2026, 4, 6, 12, 0, tzinfo=timezone.utc).isoformat(),
+            first_output_at=datetime(2026, 4, 6, 12, 0, 5, tzinfo=timezone.utc).isoformat(),
+            last_output_at=datetime(2026, 4, 6, 12, 1, tzinfo=timezone.utc).isoformat(),
+            partial_output="running",
+            stdout_bytes=len("running".encode()),
+        )
+    )
+    handle = MagicMock()
+    handle.process.poll.return_value = None
+    svc.worker_service._active_handles = {"task-1": handle}
+
+    svc._check_silent_workers()
+
+    assert svc.state.processes[0].monitor_state == "stalled"
+    assert task.status == TaskStatus.RUNNING
+
+
+def test_check_silent_workers_no_output_does_not_change_task_status() -> None:
+    svc, _orch = _make_service()
+    task = Task(
+        task_id="task-1",
+        status=TaskStatus.RUNNING,
+        assigned_worker_id="qwen-1",
+        metadata={"plan_mode": True},
+    )
+    svc.state.add_task(task)
+    svc.state.processes.append(
+        ProcessInfo(
+            task_id="task-1",
+            worker_id="qwen-1",
+            pid=123,
+            started_at=datetime(2026, 4, 6, 12, 0, tzinfo=timezone.utc).isoformat(),
+        )
+    )
+    handle = MagicMock()
+    handle.process.poll.return_value = None
+    svc.worker_service._active_handles = {"task-1": handle}
+
+    svc._check_silent_workers()
+
+    assert svc.state.processes[0].monitor_state == "no_output"
+    assert task.status == TaskStatus.RUNNING
+
+
+def test_planner_output_state_classifies_structured_stream() -> None:
+    snapshot = PlannerRunSnapshot(structured_delta_bytes=10)
+    assert PlanOrchestratorService._planner_output_state(snapshot) == "structured_output_stream_active"
+
+
+def test_planner_output_state_classifies_text_stream() -> None:
+    snapshot = PlannerRunSnapshot(output_bytes=10)
+    assert PlanOrchestratorService._planner_output_state(snapshot) == "text_stream_active"
+
+
+def test_planner_output_state_classifies_stderr_only() -> None:
+    snapshot = PlannerRunSnapshot(stderr_bytes=10)
+    assert PlanOrchestratorService._planner_output_state(snapshot) == "stderr_only"
+
+
+def test_check_planner_watchdog_soft_active_uses_recent_output() -> None:
+    svc, orch = _make_service()
+    snapshot = PlannerRunSnapshot(
+        request_type="create",
+        request_version=1,
+        attempt_number=1,
+        prompt_length=1000,
+        output_bytes=20,
+        first_output_at_monotonic=1.0,
+        last_output_at_monotonic=1_000_000.0,
+    )
+    svc.planner_service.plan_runtime_snapshot.return_value = snapshot
+
+    import app.services.plan_orchestrator_service as mod
+    from unittest.mock import patch
+    with patch.object(mod.time, "monotonic", return_value=1_000_010.0):
+        snapshot.started_at_monotonic = 1_000_000.0 - 400.0
+        svc._check_planner_watchdog()
+
+    orch.notification_service.send_error.assert_called_once()
+    svc.planner_service.terminate_plan_run.assert_not_called()
+
+
+def test_check_planner_watchdog_stalled_uses_last_output_age() -> None:
+    svc, orch = _make_service()
+    snapshot = PlannerRunSnapshot(
+        request_type="create",
+        request_version=1,
+        attempt_number=1,
+        prompt_length=1000,
+        output_bytes=20,
+        first_output_at_monotonic=1.0,
+        last_output_at_monotonic=1_000_000.0,
+    )
+    svc.planner_service.plan_runtime_snapshot.return_value = snapshot
+
+    import app.services.plan_orchestrator_service as mod
+    from unittest.mock import patch
+    with patch.object(mod.time, "monotonic", return_value=1_000_400.0):
+        snapshot.started_at_monotonic = 1_000_000.0 - 400.0
+        svc._check_planner_watchdog()
+
+    orch.notification_service.send_error.assert_called_once()
+    svc.planner_service.terminate_plan_run.assert_not_called()
+
+
+def test_check_planner_watchdog_hard_timeout_ignores_zero_rendered_text_when_active() -> None:
+    svc, _orch = _make_service()
+    snapshot = PlannerRunSnapshot(
+        request_type="create",
+        request_version=1,
+        attempt_number=1,
+        prompt_length=1000,
+        structured_delta_bytes=50,
+        first_output_at_monotonic=1.0,
+        last_output_at_monotonic=1_000_000.0,
+    )
+    svc.planner_service.plan_runtime_snapshot.return_value = snapshot
+    svc._handle_planner_timeout = MagicMock()
+
+    import app.services.plan_orchestrator_service as mod
+    from unittest.mock import patch
+    with patch.object(mod.time, "monotonic", return_value=1_000_100.0):
+        snapshot.started_at_monotonic = 1_000_000.0 - 100.0
+        svc._check_planner_watchdog()
+
+    svc._handle_planner_timeout.assert_not_called()

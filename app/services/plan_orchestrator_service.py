@@ -24,6 +24,7 @@ from app.plan_models import (
     PlanTask,
     PlanStep,
     ResearchPlan,
+    decision_gate_from_dict,
     plan_task_to_task,
 )
 from app.plan_symbolic_refs import resolve_stage_references_in_value
@@ -680,7 +681,7 @@ class PlanOrchestratorService:
             gates = []
             for g in t_data.get("decision_gates", []):
                 if isinstance(g, dict):
-                    gates.append(DecisionGate(**g))
+                    gates.append(decision_gate_from_dict(g))
                 elif isinstance(g, DecisionGate):
                     gates.append(g)
 

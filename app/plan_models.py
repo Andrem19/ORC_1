@@ -28,6 +28,7 @@ class DecisionGate:
     comparator: str = "gte"   # "gte" | "lte" | "gt" | "lt" | "eq"
     verdict_pass: str = "PROMOTE"
     verdict_fail: str = "REJECT"
+    reason: str = ""
 
 
 @dataclass
@@ -255,6 +256,26 @@ def plan_task_to_task(plan_task: PlanTask) -> Task:
             "stage_number": plan_task.stage_number,
             "plan_mode": True,
         },
+    )
+
+
+def decision_gate_from_dict(data: dict[str, Any] | DecisionGate) -> DecisionGate:
+    """Build DecisionGate safely from planner/disk payloads.
+
+    Extra keys are ignored so planner contract additions do not crash runtime.
+    """
+    if isinstance(data, DecisionGate):
+        return data
+    if not isinstance(data, dict):
+        return DecisionGate()
+
+    return DecisionGate(
+        metric=str(data.get("metric", "")),
+        threshold=float(data.get("threshold", 0.0) or 0.0),
+        comparator=str(data.get("comparator", "gte")),
+        verdict_pass=str(data.get("verdict_pass", "PROMOTE")),
+        verdict_fail=str(data.get("verdict_fail", "REJECT")),
+        reason=str(data.get("reason", "")),
     )
 
 

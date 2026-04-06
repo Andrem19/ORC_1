@@ -17,7 +17,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from app.plan_models import ResearchPlan, TaskReport
+from app.plan_models import ResearchPlan, TaskReport, decision_gate_from_dict
 
 logger = logging.getLogger("orchestrator.plan_store")
 
@@ -348,7 +348,7 @@ def _dict_to_dataclass(data: dict[str, Any], target_class_name: str = "") -> Any
         gates = []
         for g in data.get("decision_gates", []):
             if isinstance(g, dict):
-                gates.append(DecisionGate(**g))
+                gates.append(decision_gate_from_dict(g))
             elif isinstance(g, DecisionGate):
                 gates.append(g)
         steps = []
@@ -378,8 +378,7 @@ def _dict_to_dataclass(data: dict[str, Any], target_class_name: str = "") -> Any
         return AntiPattern(**filtered)
     else:
         # DecisionGate or simple dataclass
-        from app.plan_models import DecisionGate
-        return DecisionGate(**data)
+        return decision_gate_from_dict(data)
 
 
 def _render_plan_markdown(plan: ResearchPlan) -> str:
