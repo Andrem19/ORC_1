@@ -194,12 +194,13 @@ class TestLoadModel:
         assert svc._model is None
         assert not svc.is_ready
 
-    def test_enabled_without_transformers_degrades(self):
+    def test_enabled_without_transformers_raises(self):
         svc = TranslationService(translate_to_russian=True)
-        # transformers may not be installed in test env
-        svc.load_model()
-        # Should not crash — either loads or degrades gracefully
-        assert True  # If we get here, no exception was raised
+        # When transformers is not importable, load_model must raise RuntimeError
+        import unittest.mock
+        with unittest.mock.patch.dict("sys.modules", {"transformers": None}):
+            with pytest.raises(RuntimeError, match="required packages are missing"):
+                svc.load_model()
 
     def test_enabled_but_not_loaded_returns_original(self):
         svc = TranslationService(translate_to_russian=True)

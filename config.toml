@@ -45,9 +45,19 @@ max_worker_timeout_count = 3
 
 state_dir = "state"
 state_file = "orchestrator_state.json"
+startup_mode = "reset_all"   # "resume" | "reset" | "reset_all"
 log_level = "DEBUG"
 log_dir = "logs"
 log_file = "orchestrator.log"
+
+# --- Console display ---
+rich_console = true
+console_truncate_length = 300
+
+# --- Plan mode ---
+plan_mode = true
+plan_dir = "plans"
+max_concurrent_plan_tasks = 2
 
 [[workers]]
 worker_id = "qwen-1"

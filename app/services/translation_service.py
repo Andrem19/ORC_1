@@ -70,6 +70,8 @@ class TranslationService:
         On first call, downloads Helsinki-NLP/opus-mt-en-ru from HuggingFace
         and saves it to model_dir. On subsequent calls, loads from disk.
         Called at startup from main.py when translate_to_russian is True.
+
+        Raises RuntimeError if required packages are missing or model fails to load.
         """
         if not self._translate:
             return
@@ -77,12 +79,11 @@ class TranslationService:
         try:
             from transformers import MarianMTModel, MarianTokenizer
         except ImportError:
-            logger.warning(
-                "transformers/torch not installed. "
-                "Notifications will be sent in English. "
-                "Install: pip install transformers torch sentencepiece"
+            raise RuntimeError(
+                "translate_to_russian is enabled but required packages are missing. "
+                "Install them in the project conda environment: "
+                "conda run -n env6 pip install transformers torch sentencepiece"
             )
-            return
 
         try:
             config_path = self._model_dir / "config.json"
@@ -109,9 +110,9 @@ class TranslationService:
             self._model_loaded = True
             logger.info("Translation model ready")
         except Exception as e:
-            logger.error("Failed to load translation model: %s", e)
-            self._model = None
-            self._tokenizer = None
+            raise RuntimeError(
+                f"Failed to load translation model: {e}"
+            ) from e
 
     def translate(self, text: str) -> str:
         """Translate English text to Russian, preserving technical terms.
@@ -152,9 +153,21 @@ class TranslationService:
         return protected, placeholder_map
 
     def _restore_terms(self, text: str, placeholder_map: dict[str, str]) -> str:
-        """Replace placeholders back with original technical terms."""
+        """Replace placeholders back with original technical terms.
+
+        The MT model may mangle placeholder format (e.g. strip underscores),
+        so we use fuzzy regex matching as a fallback.
+        """
         for placeholder, original in placeholder_map.items():
-            text = text.replace(placeholder, original)
+            if placeholder in text:
+                text = text.replace(placeholder, original)
+                continue
+            # Fuzzy fallback: MT model may modify surrounding underscores
+            idx_match = re.search(r'\d+', placeholder)
+            if idx_match:
+                idx = idx_match.group()
+                fuzzy = re.compile(r'_*TK' + idx + r'_*')
+                text = fuzzy.sub(original, text)
         return text
 
     def _do_translate(self, text: str) -> str:

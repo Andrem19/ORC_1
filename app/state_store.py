@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import json
 import logging
+import shutil
 import tempfile
 from dataclasses import asdict
 from pathlib import Path
@@ -36,13 +37,20 @@ def _serialize_state(state: OrchestratorState) -> dict[str, Any]:
 def _deserialize_state(data: dict[str, Any]) -> OrchestratorState:
     """Reconstruct state from a dict."""
     from app.models import PlannerDecision, StopReason, Task, TaskResult, ProcessInfo, MemoryEntry, TaskStatus
+    from app.plan_models import TaskReport
 
     tasks = [Task(**t) for t in data.pop("tasks", [])]
     # Restore enum status for tasks
     for t in tasks:
         t.status = TaskStatus(t.status)
 
-    results = [TaskResult(**r) for r in data.pop("results", [])]
+    results = []
+    for r in data.pop("results", []):
+        plan_report = r.get("plan_report")
+        if isinstance(plan_report, dict):
+            r = dict(r)
+            r["plan_report"] = TaskReport(**plan_report)
+        results.append(TaskResult(**r))
     processes = [ProcessInfo(**p) for p in data.pop("processes", [])]
     memory = [MemoryEntry(**m) for m in data.pop("memory", [])]
 
@@ -108,3 +116,11 @@ class StateStore:
         if self.state_path.exists():
             self.state_path.unlink()
             logger.info("State file removed: %s", self.state_path)
+
+    def archive_to(self, target_dir: Path) -> bool:
+        """Copy state file to target_dir for archival. Returns True if file existed."""
+        target_dir.mkdir(parents=True, exist_ok=True)
+        if self.state_path.exists():
+            shutil.copy2(self.state_path, target_dir / self.state_path.name)
+            return True
+        return False

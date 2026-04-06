@@ -10,7 +10,10 @@ import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from app.plan_models import TaskReport
 
 
 # ---------------------------------------------------------------------------
@@ -41,6 +44,7 @@ class StopReason(str, Enum):
     TIMEOUT = "timeout"
     NO_PROGRESS = "no_progress"
     INVALID_OUTPUT = "invalid_output"
+    INVALID_PLAN_LOOP = "invalid_plan_loop"
     SUBPROCESS_ERROR = "subprocess_error"
     TASK_STALE = "task_stale"
     PLANNER_REQUESTED = "planner_requested"
@@ -154,6 +158,7 @@ class TaskResult:
     error: str = ""
     raw_output: str = ""
     mcp_problems: list[dict[str, str]] = field(default_factory=list)
+    plan_report: "TaskReport | None" = None
     timestamp: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
     @property
@@ -191,6 +196,9 @@ class ProcessInfo:
     started_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     stdout_path: str | None = None
     stderr_path: str | None = None
+    partial_output: str = ""
+    prompt: str = ""
+    returncode: int | None = None
 
 
 @dataclass
@@ -208,6 +216,14 @@ class OrchestratorState:
     last_planner_call_at: str | None = None
     last_change_at: str | None = None
     stop_reason: StopReason | None = None
+    current_plan_version: int = 0
+    current_plan_attempt: int = 0
+    current_plan_attempt_type: str | None = None
+    current_plan_validation_errors: list[dict[str, Any]] = field(default_factory=list)
+    last_rejected_plan_version: int | None = None
+    last_rejected_plan_attempt_at: str | None = None
+    last_rejected_plan_artifact: str | None = None
+    plan_task_dispatch_map: dict[str, str] = field(default_factory=dict)  # stage_id -> task_id
     created_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     updated_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 

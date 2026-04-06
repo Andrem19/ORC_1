@@ -11,7 +11,7 @@ import logging
 import time
 from typing import Any
 
-from app.adapters.base import AdapterResponse, BaseAdapter
+from app.adapters.base import AdapterResponse, BaseAdapter, ProcessHandle
 
 logger = logging.getLogger("orchestrator.adapter.fake_worker")
 
@@ -30,6 +30,7 @@ class FakeWorker(BaseAdapter):
         self._delay = delay
         self.worker_id = worker_id
         self.call_log: list[str] = []
+        self._pending_response: str = ""
 
     def name(self) -> str:
         return f"fake_worker({self.worker_id})"
@@ -64,6 +65,42 @@ class FakeWorker(BaseAdapter):
             duration_seconds=self._delay,
         )
 
+    def start(self, prompt: str, **kwargs: Any) -> ProcessHandle:
+        """Fake start: store response, return handle that finishes instantly."""
+        self.call_log.append(prompt)
+        logger.info("FakeWorker %s start (call #%d)", self.worker_id, self._call_index + 1)
+
+        if self._call_index < len(self.responses):
+            resp = self.responses[self._call_index]
+            self._call_index += 1
+        else:
+            resp = {
+                "status": "success",
+                "summary": f"Fake worker {self.worker_id} completed task.",
+                "artifacts": [],
+                "next_hint": "",
+                "confidence": 0.9,
+                "error": "",
+            }
+
+        self._pending_response = json.dumps(resp)
+        return ProcessHandle(
+            process=None,
+            task_id=kwargs.get("task_id", ""),
+            worker_id=kwargs.get("worker_id", self.worker_id),
+            started_at=time.monotonic(),
+        )
+
+    def check(self, handle: ProcessHandle) -> tuple[str, bool]:
+        """Immediately return stored response (simulates instant completion)."""
+        if self._pending_response:
+            output = self._pending_response
+            self._pending_response = ""
+            handle.partial_output = output
+            return output, True
+        return "", True
+
     def reset(self) -> None:
         self._call_index = 0
         self.call_log.clear()
+        self._pending_response = ""

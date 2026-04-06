@@ -4,6 +4,7 @@ Orchestrator — the main loop.
 Core principle: models are called ONLY when state changes.
 The orchestrator sleeps between checks and only wakes the planner
 when there is new information to act on.
+Both planner and workers run as background processes — no blocking.
 """
 
 from __future__ import annotations
@@ -23,6 +24,7 @@ from app.models import (
     OrchestratorEvent,
     PlannerDecision,
     PlannerOutput,
+    ProcessInfo,
     RestartReason,
     StopReason,
     Task,
@@ -89,8 +91,21 @@ class Orchestrator:
 
         self.state = OrchestratorState(goal=config.goal)
         self._worker_ids = [w.worker_id for w in config.workers]
+        self._next_worker_idx: int = 0
         self._research_context_text: str | None = None
         self._log_event(OrchestratorEvent.STARTED)
+
+        # Graceful stop flag
+        self._stop_requested: bool = False
+        self._plan_service: "PlanOrchestratorService | None" = None
+
+        # Plan mode (structured research plans)
+        self._plan_store: "PlanStore | None" = None
+        self._current_plan: "ResearchPlan | None" = None
+        if config.plan_mode:
+            from app.plan_store import PlanStore
+            self._plan_store = PlanStore(config.plan_dir)
+            self._plan_store.ensure_dirs()
 
     def _log_event(self, event: OrchestratorEvent, detail: str = "") -> None:
         msg = f"[{event.value}] {detail}" if detail else f"[{event.value}]"
@@ -108,7 +123,13 @@ class Orchestrator:
             from app.research_context import format_research_context_for_planner, load_research_context
             ctx = load_research_context(self.config.state_dir)
             if ctx:
-                self._research_context_text = format_research_context_for_planner(ctx)
+                summaries = [
+                    r.summary for r in self.state.results
+                    if r.status == "success" and r.summary
+                ][-30:]
+                self._research_context_text = format_research_context_for_planner(
+                    ctx, completed_summaries=summaries,
+                )
                 logger.info("Research context loaded (%d chars)", len(self._research_context_text))
             else:
                 logger.warning("No research context file found")
@@ -125,7 +146,6 @@ class Orchestrator:
         if saved is not None:
             self.state = saved
             self._log_event(OrchestratorEvent.STATE_RESTORED, f"cycle={saved.current_cycle}")
-            # Mark any running tasks as stalled (processes died during restart)
             self._recover_from_restart()
             return True
         return False
@@ -145,6 +165,10 @@ class Orchestrator:
                     f"Task {task.task_id} marked stalled after restart recovery",
                 )
                 recovered = True
+        # Clear stale process info (Popen handles are lost on restart)
+        if self.state.processes:
+            self.state.processes.clear()
+            recovered = True
         if recovered:
             self._log_event(OrchestratorEvent.RESTART_RECOVERY)
             self.save_state()
@@ -155,6 +179,9 @@ class Orchestrator:
 
     def run(self) -> StopReason:
         """Main orchestrator loop. Returns the reason it stopped."""
+        if self.config.plan_mode:
+            return self._run_plan_mode()
+
         self.state.status = "running"
         self.save_state()
         self._log_event(OrchestratorEvent.CONFIG_LOADED, f"goal={self.config.goal[:80]}")
@@ -166,13 +193,12 @@ class Orchestrator:
             cycle_start = _time.monotonic()
             logger.info("=== Cycle %d ===", self.state.current_cycle)
 
-            # 2. Collect new results from active tasks
+            # 2. Check on running workers (non-blocking)
             new_results = self._collect_results()
 
             # 2.5. MCP problem review
             mcp_problem_summary = None
             if self._mcp_scanner:
-                # Save worker-reported problems immediately
                 for r in new_results:
                     worker_problems = self._mcp_scanner.extract_worker_problems(r)
                     if worker_problems:
@@ -182,7 +208,6 @@ class Orchestrator:
                             worker_problems, cycle=self.state.current_cycle,
                         )
 
-                # Periodic planner review
                 if self._mcp_scanner.should_review(self.state, new_results):
                     problems = self._mcp_scanner.run_review(
                         self.state, self.state.results[-20:],
@@ -193,51 +218,56 @@ class Orchestrator:
                             f"mcp_review: {len(problems)} problems found",
                         )
 
-                # Get summary for planner context
+                # Heuristic structural problem detection (cheap, runs every cycle)
+                heuristic_problems = self._mcp_scanner.detect_structural_problems(self.state)
+                if heuristic_problems:
+                    self._mcp_scanner.problem_store.save_report(
+                        heuristic_problems, cycle=self.state.current_cycle,
+                    )
+                    self._log_event(
+                        OrchestratorEvent.ERROR,
+                        f"heuristic: {len(heuristic_problems)} structural problems detected",
+                    )
+
                 mcp_problem_summary = self._mcp_scanner.get_context_for_planner(
                     max_items=self.config.mcp_review.max_problems_in_context,
                 )
 
-            # 3. Check if planner should be called
-            if self.scheduler.should_call_planner(self.state, new_results):
+            # 3. Planner: check running OR start new consultation
+            if self.planner_service.is_running:
+                # Planner is already running — check on it (non-blocking)
+                output, is_finished = self.planner_service.check_consultation()
+                if is_finished and output is not None:
+                    # Stop planner spinner
+                    from app.rich_handler import ProgressManager
+                    pm = ProgressManager._instance
+                    if pm and pm.is_active():
+                        pm.stop_planner_wait()
+                    self._process_planner_output(output)
+                    if self._should_stop_after_planner(output):
+                        return self._stop_reason_from_planner(output)
+                # else: planner still working, will check again next cycle
+            elif self.scheduler.should_call_planner(self.state, new_results):
+                # No planner running — start one
                 self._log_event(OrchestratorEvent.PLANNER_CALLED)
-                # Refresh research context every 10 cycles
+                # Progress tracking — planner spinner
+                from app.rich_handler import ProgressManager
+                pm = ProgressManager._instance
+                if pm and pm.is_active():
+                    pm.start_planner_wait(
+                        model=self.config.planner_adapter.model,
+                        action="Analyzing state and deciding next action",
+                    )
                 if self.state.current_cycle % 10 == 0:
                     self.load_research_context()
-                output = self.planner_service.consult(
+                self.planner_service.start_consultation(
                     self.state,
                     new_results=new_results if new_results else None,
                     worker_ids=self._worker_ids,
                     research_context=self._research_context_text,
                     mcp_problem_summary=mcp_problem_summary,
                 )
-                self.state.last_planner_decision = output.decision
-                self.state.last_planner_call_at = datetime.now(timezone.utc).isoformat()
-                self.memory_service.record_planner_decision(self.state, output)
-                logger.debug(
-                    "Planner full decision: decision=%s worker=%s instruction='%s' reason='%s' check_after=%ds memory='%s'",
-                    output.decision.value,
-                    output.target_worker_id or "N/A",
-                    output.task_instruction[:200] if output.task_instruction else "",
-                    output.reason[:200],
-                    output.check_after_seconds,
-                    output.memory_update[:100] if output.memory_update else "",
-                )
-                self._log_event(OrchestratorEvent.PLANNER_RESULT, output.decision.value)
-                self.notification_service.send_planner_decision(output, self.state.current_cycle)
-
-                # Process planner decision
-                self._execute_planner_decision(output)
-
-                if output.should_finish or output.decision == PlannerDecision.FINISH:
-                    reason = StopReason.GOAL_REACHED if output.should_finish else StopReason.GOAL_IMPOSSIBLE
-                    self._finish(reason, output.final_summary)
-                    return reason
-
-                # Track empty planner cycles (planner said wait but nothing changed)
-                if output.decision == PlannerDecision.WAIT:
-                    self.state.empty_cycles += 1
-                    self._log_event(OrchestratorEvent.NO_CHANGE, f"empty_cycles={self.state.empty_cycles}")
+                # Don't increment empty_cycles — we just started the planner
             else:
                 self.state.empty_cycles += 1
                 self._log_event(OrchestratorEvent.NO_CHANGE, f"empty_cycles={self.state.empty_cycles}")
@@ -252,26 +282,94 @@ class Orchestrator:
             self.save_state()
             cycle_elapsed = _time.monotonic() - cycle_start
             logger.debug(
-                "Cycle %d completed in %.1fs — tasks=%d results=%d errors=%d memory=%d empty=%d",
+                "Cycle %d completed in %.1fs — tasks=%d results=%d errors=%d memory=%d empty=%d planner_running=%s",
                 self.state.current_cycle, cycle_elapsed,
                 len(self.state.tasks), len(self.state.results),
                 self.state.total_errors, len(self.state.memory),
                 self.state.empty_cycles,
+                self.planner_service.is_running,
             )
-            self._log_event(OrchestratorEvent.SLEEPING, f"{self.config.poll_interval_seconds}s")
-            self.scheduler.sleep(seconds=self.config.poll_interval_seconds)
+            sleep_seconds = self.scheduler.sleep_interval(self.state)
+            self._log_event(OrchestratorEvent.SLEEPING, f"{sleep_seconds}s")
+            self.scheduler.sleep(seconds=sleep_seconds)
+
+    # ---------------------------------------------------------------
+    # Planner output handling
+    # ---------------------------------------------------------------
+
+    def _process_planner_output(self, output: PlannerOutput) -> None:
+        """Process a completed planner output."""
+        self.state.last_planner_decision = output.decision
+        self.state.last_planner_call_at = datetime.now(timezone.utc).isoformat()
+        self.memory_service.record_planner_decision(self.state, output)
+        logger.debug(
+            "Planner full decision: decision=%s worker=%s instruction='%s' reason='%s' check_after=%ds memory='%s'",
+            output.decision.value,
+            output.target_worker_id or "N/A",
+            output.task_instruction[:200] if output.task_instruction else "",
+            output.reason[:200],
+            output.check_after_seconds,
+            output.memory_update[:100] if output.memory_update else "",
+        )
+        self._log_event(OrchestratorEvent.PLANNER_RESULT, output.decision.value)
+        self.notification_service.send_planner_decision(output, self.state.current_cycle)
+        self._execute_planner_decision(output)
+
+        if output.decision == PlannerDecision.WAIT:
+            self.state.empty_cycles += 1
+            self._log_event(OrchestratorEvent.NO_CHANGE, f"empty_cycles={self.state.empty_cycles}")
+
+    def _should_stop_after_planner(self, output: PlannerOutput) -> bool:
+        return output.should_finish or output.decision == PlannerDecision.FINISH
+
+    def _stop_reason_from_planner(self, output: PlannerOutput) -> StopReason:
+        reason = StopReason.GOAL_REACHED if output.should_finish else StopReason.GOAL_IMPOSSIBLE
+        self._finish(reason, output.final_summary)
+        return reason
+
+    # ---------------------------------------------------------------
+    # Result collection (non-blocking)
+    # ---------------------------------------------------------------
 
     def _collect_results(self) -> list[TaskResult]:
-        """Collect results from active/waiting tasks."""
+        """Check on running workers and collect any completed results. Non-blocking."""
         new_results: list[TaskResult] = []
+
         for task in list(self.state.active_tasks()):
-            if task.status != TaskStatus.WAITING_RESULT:
+            if task.status != TaskStatus.RUNNING:
                 continue
 
-            result = self.worker_service.execute_task(
-                task,
-                memory_entries=self.memory_service.get_context_for_worker(self.state, task.task_id),
-            )
+            process_info = self.state.find_process(task.task_id)
+            if process_info is None:
+                logger.warning("Task %s is RUNNING but has no process info", task.task_id)
+                task.mark_failed()
+                self.state.total_errors += 1
+                continue
+
+            result, is_finished = self.worker_service.check_task(task, process_info)
+
+            if not is_finished:
+                output_len = len(process_info.partial_output or "")
+                elapsed_min = 0.0
+                try:
+                    started = datetime.fromisoformat(process_info.started_at)
+                    elapsed_min = (datetime.now(timezone.utc) - started).total_seconds() / 60
+                except (ValueError, TypeError):
+                    pass
+                logger.info(
+                    "Task %s still running (pid=%s, output_so_far=%d chars, elapsed=%.1fmin)",
+                    task.task_id, process_info.pid, output_len, elapsed_min,
+                )
+                continue
+
+            # Worker finished — clean up process info
+            self.state.remove_process(task.task_id)
+
+            if result is None:
+                logger.error("Task %s finished but no result returned", task.task_id)
+                task.mark_failed()
+                self.state.total_errors += 1
+                continue
 
             # Check for duplicates
             prev = self._last_result_for_task(task.task_id)
@@ -280,7 +378,10 @@ class Orchestrator:
                 continue
 
             if is_useless_result(result):
-                logger.info("Useless result for task %s", task.task_id)
+                logger.warning(
+                    "Useless result for task %s (status=%s, confidence=%.2f)",
+                    task.task_id, result.status, result.confidence,
+                )
                 self.state.total_errors += 1
 
             # Handle result
@@ -301,6 +402,12 @@ class Orchestrator:
         self.state.results.append(result)
         self.memory_service.record_worker_result(self.state, result)
         self.notification_service.send_worker_result(result, self.state.current_cycle)
+
+        # Remove worker progress tracker
+        from app.rich_handler import ProgressManager
+        pm = ProgressManager._instance
+        if pm and pm.is_active():
+            pm.remove_worker(task.task_id)
 
         if result.status == "success":
             task.mark_completed()
@@ -347,12 +454,36 @@ class Orchestrator:
         elif decision == PlannerDecision.FINISH:
             pass  # handled in run()
 
+    def _start_task_on_worker(self, task: Task) -> None:
+        """Launch a worker as a background process for the given task."""
+        process_info = self.worker_service.start_task(
+            task,
+            memory_entries=self.memory_service.get_context_for_worker(self.state, task.task_id),
+        )
+        self.state.processes.append(process_info)
+        # Progress tracking
+        from app.rich_handler import ProgressManager
+        pm = ProgressManager._instance
+        if pm and pm.is_active():
+            pm.add_worker(
+                task.task_id, task.assigned_worker_id,
+                pid=process_info.pid,
+                description=task.description,
+            )
+
     def _launch_worker(self, output: PlannerOutput) -> None:
-        """Create a new task and assign it to a worker."""
+        """Create a new task and launch it as a background worker."""
         worker_id = output.target_worker_id
         if not worker_id or worker_id not in self._worker_ids:
             if self._worker_ids:
-                worker_id = self._worker_ids[0]
+                # Prefer idle workers, then round-robin
+                active_workers = {t.assigned_worker_id for t in self.state.active_tasks()}
+                idle = [w for w in self._worker_ids if w not in active_workers]
+                if idle:
+                    worker_id = idle[self._next_worker_idx % len(idle)]
+                else:
+                    worker_id = self._worker_ids[self._next_worker_idx % len(self._worker_ids)]
+                self._next_worker_idx += 1
             else:
                 logger.error("No workers available")
                 return
@@ -366,15 +497,15 @@ class Orchestrator:
             description=output.task_instruction,
             assigned_worker_id=worker_id,
         )
-        task.mark_waiting_result()
+        task.mark_running()
         self.state.add_task(task)
+        self._start_task_on_worker(task)
         self.state.last_change_at = datetime.now(timezone.utc).isoformat()
         self.state.empty_cycles = 0
         self._log_event(OrchestratorEvent.WORKER_LAUNCHED, f"task={task.task_id} worker={worker_id}")
 
     def _retry_worker(self, output: PlannerOutput) -> None:
         """Retry a failed/stalled task."""
-        # Find most recent failed task
         for task in reversed(self.state.tasks):
             if task.status in (TaskStatus.FAILED, TaskStatus.STALLED, TaskStatus.TIMED_OUT):
                 self.task_supervisor.prepare_retry(
@@ -384,7 +515,8 @@ class Orchestrator:
                 )
                 if output.target_worker_id:
                     task.assigned_worker_id = output.target_worker_id
-                task.mark_waiting_result()
+                task.mark_running()
+                self._start_task_on_worker(task)
                 self.state.empty_cycles = 0
                 self._log_event(OrchestratorEvent.WORKER_LAUNCHED, f"retry task={task.task_id}")
                 return
@@ -398,8 +530,10 @@ class Orchestrator:
             if task.assigned_worker_id == target and task.status in (
                 TaskStatus.RUNNING, TaskStatus.WAITING_RESULT, TaskStatus.FAILED, TaskStatus.STALLED,
             ):
+                if task.status == TaskStatus.RUNNING:
+                    self.worker_service.terminate_task(task.task_id)
+                    self.state.remove_process(task.task_id)
                 task.mark_cancelled()
-                self.state.remove_process(task.task_id)
                 self._log_event(OrchestratorEvent.WORKER_STOPPED, f"task={task.task_id} worker={target}")
 
     def _reassign_task(self, output: PlannerOutput) -> None:
@@ -411,19 +545,30 @@ class Orchestrator:
 
         for task in reversed(self.state.tasks):
             if task.status in (
-                TaskStatus.RUNNING, TaskStatus.WAITING_RESULT,
                 TaskStatus.STALLED, TaskStatus.FAILED,
             ):
+                if self.state.find_process(task.task_id):
+                    self.worker_service.terminate_task(task.task_id)
+                    self.state.remove_process(task.task_id)
                 task.assigned_worker_id = new_worker
                 if output.task_instruction:
                     task.description = output.task_instruction
-                task.mark_waiting_result()
+                task.mark_running()
+                self._start_task_on_worker(task)
                 self.state.empty_cycles = 0
                 self._log_event(OrchestratorEvent.WORKER_LAUNCHED, f"reassign task={task.task_id} to {new_worker}")
                 return
 
+        logger.warning("Reassign requested but no eligible tasks found")
+
     def _finish(self, reason: StopReason, summary: str = "") -> None:
         """Finish orchestrator execution."""
+        # Terminate any running workers
+        for task in self.state.active_tasks():
+            if task.status == TaskStatus.RUNNING:
+                self.worker_service.terminate_task(task.task_id)
+        self.state.processes.clear()
+
         self.state.status = "finished"
         self.state.stop_reason = reason
         self.memory_service.record_event(self.state, f"Orchestrator finished: {reason.value}")
@@ -433,3 +578,34 @@ class Orchestrator:
         self.save_state()
         self._log_event(OrchestratorEvent.FINISHED, f"reason={reason.value} summary={summary[:100]}")
         logger.info("Orchestrator finished: %s. %s", reason.value, summary)
+
+    def request_stop(self) -> None:
+        """Signal the orchestrator to stop gracefully at the next cycle."""
+        self._stop_requested = True
+        if self._plan_service is not None:
+            self._plan_service._stop_requested = True
+        logger.info("Stop requested via signal")
+
+    # ---------------------------------------------------------------
+    # Plan-driven mode (delegates to PlanOrchestratorService)
+    # ---------------------------------------------------------------
+
+    def _run_plan_mode(self) -> StopReason:
+        """Plan-driven orchestrator loop — delegates to PlanOrchestratorService."""
+        from app.services.plan_orchestrator_service import PlanOrchestratorService
+
+        svc = PlanOrchestratorService(orch=self)
+        self._plan_service = svc
+        svc.set_research_context(self._research_context_text)
+        try:
+            return svc.run()
+        finally:
+            self._plan_service = None
+
+    def _get_mcp_summary(self) -> str | None:
+        """Get MCP problem summary if scanner is available."""
+        if self._mcp_scanner:
+            return self._mcp_scanner.get_context_for_planner(
+                max_items=self.config.mcp_review.max_problems_in_context,
+            )
+        return None

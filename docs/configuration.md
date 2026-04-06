@@ -1,10 +1,38 @@
 # Configuration
 
-All parameters are defined in `app/config.py` and can be overridden via `config.json` or function arguments. No argparse.
+All parameters are defined in `app/config.py` and can be overridden via `config.toml` or function arguments. No argparse.
+
+## Environment
+
+This project uses **conda environment `env6`** (Python 3.10.18).
+
+```bash
+# Conda binary (full path — conda may not be on PATH)
+CONDA=/home/jupiter/miniconda3/bin/conda
+
+# Run the orchestrator
+$CONDA run -n env6 python main.py
+
+# Install packages
+$CONDA run -n env6 pip install <package>
+
+# Run tests (parallel, 4 workers by default)
+$CONDA run -n env6 pytest
+
+# Run tests sequentially (for debugging)
+$CONDA run -n env6 pytest -n 0
+
+# Custom worker count
+$CONDA run -n env6 pytest -n 2
+```
+
+Tests run in parallel using **pytest-xdist** (4 worker processes by default, configured in `pyproject.toml`).
+
+**Do NOT** use bare `python` or `pip` — they resolve to the system Python, not the project environment.
 
 ## Configuration File
 
-Create `config.json` in the project root:
+Configuration is loaded from `config.toml` in the project root:
 
 ```json
 {

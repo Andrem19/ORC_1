@@ -13,6 +13,7 @@ from app.models import (
     OrchestratorState,
     PlannerDecision,
     TaskResult,
+    TaskStatus,
 )
 
 logger = logging.getLogger("orchestrator.scheduler")
@@ -42,7 +43,7 @@ class Scheduler:
         - It's the very first cycle (no decision yet)
         - New results arrived from workers
         - All workers are idle (pending tasks but nothing running)
-        - Error count crossed a threshold
+        - All tasks settled (no active, no pending) — planner must decide next
         """
         # First cycle ever (cycle counter is incremented before this check)
         if state.current_cycle == 1:
@@ -79,29 +80,61 @@ class Scheduler:
 
         return None
 
-    def sleep_interval(self, state: OrchestratorState) -> int:
+    # ---------------------------------------------------------------
+    # Plan-mode scheduling
+    # ---------------------------------------------------------------
+
+    def should_create_plan(self, state: OrchestratorState) -> bool:
+        """True if there is no current plan and we need to create one."""
+        return getattr(state, "current_plan_version", 0) == 0
+
+    def should_revise_plan(self, state: OrchestratorState) -> bool:
+        """True if all dispatched plan tasks are resolved and plan needs revision."""
+        plan_version = getattr(state, "current_plan_version", 0)
+        if plan_version == 0:
+            return False
+        # All active tasks must be done (no running/waiting)
+        active = state.active_tasks()
+        # Only revise if there are resolved tasks (at least some work was done this round)
+        resolved = [
+            t for t in state.tasks
+            if t.status in (TaskStatus.COMPLETED, TaskStatus.FAILED, TaskStatus.CANCELLED, TaskStatus.TIMED_OUT)
+            and t.metadata.get("plan_mode")
+        ]
+        return len(active) == 0 and len(resolved) > 0
+
+    def plan_tasks_to_dispatch(
+        self,
+        state: OrchestratorState,
+        max_concurrent: int = 2,
+    ) -> int:
+        """How many new plan tasks can be dispatched right now."""
+        active = len(state.active_tasks())
+        return max(0, max_concurrent - active)
+
+    def sleep_interval(self, state: OrchestratorState | None = None) -> int:
         """Return seconds to sleep before next cycle.
 
-        Uses the planner's suggested check_after_seconds if available,
-        otherwise falls back to the configured poll interval.
+        When workers are actively running, polls more frequently to monitor
+        progress. When idle, uses the full configured interval.
         """
-        # Default
-        interval = self.poll_interval_seconds
-
-        # Planner may have suggested a custom interval
-        if state.last_planner_call_at and state.current_cycle > 0:
-            # Use default poll for now — the planner's suggestion is stored
-            # but we keep things simple and predictable
-            pass
-
-        return interval
+        if state is not None and state.active_tasks():
+            return min(self.poll_interval_seconds, 30)
+        return self.poll_interval_seconds
 
     def sleep(self, seconds: int | None = None, state: OrchestratorState | None = None) -> None:
-        """Sleep for the specified or computed interval."""
-        if seconds is None and state is not None:
+        """Sleep for the specified or computed interval with progress bar."""
+        if seconds is None:
             seconds = self.sleep_interval(state)
-        elif seconds is None:
-            seconds = self.poll_interval_seconds
-
         logger.info("Sleeping for %d seconds", seconds)
-        time.sleep(seconds)
+
+        from app.rich_handler import ProgressManager
+        pm = ProgressManager._instance
+        if pm and pm.is_active():
+            pm.start_sleep(seconds)
+            for tick in range(seconds):
+                time.sleep(1)
+                pm.update_sleep(tick + 1)
+            pm.stop_sleep()
+        else:
+            time.sleep(seconds)

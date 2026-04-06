@@ -164,8 +164,17 @@ def run_demo() -> None:
 def main() -> None:
     """Main entry point."""
     if "--demo" in sys.argv:
-        setup_logging(log_level="DEBUG", log_dir="logs", log_file="demo.log")
-        run_demo()
+        setup_logging(log_level="DEBUG", log_dir="logs", log_file="demo.log", rich_console=True)
+        # Start Rich progress display for demo
+        if sys.stdout.isatty():
+            from app.rich_handler import ProgressManager
+            ProgressManager.get().start()
+        try:
+            run_demo()
+        finally:
+            if sys.stdout.isatty():
+                from app.rich_handler import ProgressManager
+                ProgressManager.get().stop()
         return
 
     # Production mode: initial logging before config is loaded
@@ -173,7 +182,10 @@ def main() -> None:
     logger.info("Orchestrator starting...")
 
     # Load config
-    import tomllib
+    if sys.version_info >= (3, 11):
+        import tomllib
+    else:
+        import tomli as tomllib
 
     config_path = Path(__file__).parent / "config.toml"
     if config_path.exists():
@@ -186,22 +198,90 @@ def main() -> None:
         logger.info("Using default config (no config.toml found)")
 
     # Reconfigure logging with config values (log_level, log_dir, log_file)
-    setup_logging(log_level=config.log_level, log_dir=config.log_dir, log_file=config.log_file)
+    setup_logging(
+        log_level=config.log_level,
+        log_dir=config.log_dir,
+        log_file=config.log_file,
+        rich_console=config.rich_console,
+        truncate_length=config.console_truncate_length,
+    )
     logger.info("Logging configured: level=%s, dir=%s, file=%s", config.log_level, config.log_dir, config.log_file)
+    resolved_log_path = getattr(logger, "orchestrator_log_path", "")
+    if resolved_log_path:
+        logger.info("Log file path: %s", resolved_log_path)
+        if not Path(resolved_log_path).exists():
+            logger.error("Configured log file was not created: %s", resolved_log_path)
 
-    orch = create_real_orchestrator(config)
+    # Start Rich progress display if enabled
+    if config.rich_console and sys.stdout.isatty():
+        from app.rich_handler import ProgressManager
+        ProgressManager.get().start()
 
-    # Load translation model at startup if enabled
-    if config.notifications.translate_to_russian:
-        logger.info("Loading translation model...")
-        orch.notification_service.init_translation()
+    # Acquire PID lock — prevent concurrent instances
+    from app.pid_lock import PidLock
 
-    # Load research context if MCP integration is configured
-    if config.research_config:
-        orch.load_research_context()
+    pid_lock = PidLock(Path(config.state_dir) / "orchestrator.pid")
+    if not pid_lock.acquire():
+        logger.critical("Aborting: another orchestrator instance holds the lock")
+        sys.exit(1)
 
-    reason = orch.run()
-    logger.info("Orchestrator stopped: %s", reason.value)
+    try:
+        # Handle startup_mode: reset state before creating orchestrator
+        if config.startup_mode in ("reset", "reset_all"):
+            from app.reset_manager import ResetManager
+            from app.plan_store import PlanStore
+            from app.state_store import StateStore
+
+            logger.info("startup_mode=%s — performing reset", config.startup_mode)
+            plan_store = PlanStore(config.plan_dir) if config.plan_mode else None
+            state_store = StateStore(config.state_path)
+            ResetManager(config.state_dir, state_store, plan_store).perform_reset(config.startup_mode)
+            config.startup_mode = "resume"  # in-memory revert to prevent double-reset
+            logger.info("Reset done — orchestrator will start from clean state")
+
+        orch = create_real_orchestrator(config)
+
+        # Ensure plan directory exists for plan mode
+        if config.plan_mode:
+            Path(config.plan_dir).mkdir(parents=True, exist_ok=True)
+            logger.info("Plan mode enabled, plans directory: %s", config.plan_dir)
+
+        # Restore state from previous run if available
+        orch.load_state()
+
+        # Load translation model at startup if enabled
+        if config.notifications.translate_to_russian:
+            logger.info("Loading translation model...")
+            try:
+                orch.notification_service.init_translation()
+            except RuntimeError as e:
+                logger.critical("Translation model failed to load: %s", e)
+                sys.exit(1)
+
+        # Load research context if MCP integration is configured
+        if config.research_config:
+            orch.load_research_context()
+
+        # Graceful shutdown on SIGTERM / SIGINT
+        import signal as _signal
+
+        def _signal_handler(signum: int, _frame: Any) -> None:
+            sig_name = _signal.Signals(signum).name
+            logger.warning("Received %s, initiating graceful shutdown...", sig_name)
+            orch.request_stop()
+
+        _signal.signal(_signal.SIGTERM, _signal_handler)
+        _signal.signal(_signal.SIGINT, _signal_handler)
+
+        reason = orch.run()
+        logger.info("Orchestrator stopped: %s", reason.value)
+    finally:
+        # Stop Rich progress display
+        if config.rich_console and sys.stdout.isatty():
+            from app.rich_handler import ProgressManager
+            ProgressManager.get().stop()
+        pid_lock.release()
+        logging.shutdown()
 
 
 if __name__ == "__main__":

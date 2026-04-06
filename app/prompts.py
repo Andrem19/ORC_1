@@ -7,6 +7,8 @@ All prompts enforce JSON output for reliability.
 
 from __future__ import annotations
 
+import random
+
 from app.models import (
     MemoryEntry,
     OrchestratorState,
@@ -108,8 +110,11 @@ def build_planner_prompt(
 
     # Available workers
     if worker_ids:
+        shuffled = list(worker_ids)
+        random.shuffle(shuffled)
         parts.append("## Available Workers")
-        parts.append(", ".join(worker_ids))
+        parts.append(", ".join(shuffled))
+        parts.append("Distribute tasks across all available workers for parallelism.")
         parts.append("")
 
     # Instructions

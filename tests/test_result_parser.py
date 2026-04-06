@@ -7,6 +7,7 @@ from app.result_parser import (
     is_duplicate_result,
     is_useless_result,
     parse_planner_output,
+    parse_task_report,
     parse_worker_output,
 )
 
@@ -99,6 +100,75 @@ def test_parse_worker_invalid_status():
     raw = json.dumps({"status": "flying"})
     result = parse_worker_output(raw, task_id="t1", worker_id="w1")
     assert result.status == "error"  # normalized
+
+
+def test_parse_worker_preserves_full_raw_output():
+    payload = {
+        "status": "success",
+        "summary": "x" * 2500,
+        "artifacts": [],
+        "confidence": 0.9,
+        "error": "",
+    }
+    raw = json.dumps(payload)
+    result = parse_worker_output(raw, task_id="t1", worker_id="w1")
+    assert result.raw_output == raw
+
+
+def test_parse_plan_task_report_with_preamble_and_fenced_json():
+    payload = {
+        "status": "success",
+        "what_was_requested": "run ETAP 4",
+        "what_was_done": "completed ETAP 4 with funding filter",
+        "results_table": [
+            {"run_id": "run-1", "net_pnl": 10, "verdict": "PROMOTE"},
+            {"run_id": "run-2", "net_pnl": 5, "verdict": "BASELINE"},
+        ],
+        "key_metrics": {"sharpe": 1.99, "trades": 185},
+        "artifacts": ["run-1", "snapshot:v2-funding@2"],
+        "verdict": "PROMOTE",
+        "confidence": 0.85,
+        "error": "",
+        "mcp_problems": [],
+    }
+    raw = (
+        "Все шаги выполнены. Финальный результат ниже.\n\n"
+        "```json\n"
+        f"{json.dumps(payload, ensure_ascii=False)}\n"
+        "```"
+    )
+    report = parse_task_report(raw, task_id="t1", worker_id="w1", plan_version=1)
+    assert report.status == "success"
+    assert report.verdict == "PROMOTE"
+    assert report.what_was_done == payload["what_was_done"]
+    assert len(report.results_table) == 2
+    assert report.raw_output == raw
+
+
+def test_parse_plan_task_report_rejects_truncated_nested_fragment():
+    payload = {
+        "status": "success",
+        "what_was_requested": "run ETAP 1",
+        "what_was_done": "completed ETAP 1",
+        "results_table": [
+            {"run_id": "run-1", "snapshot_id": "base", "net_pnl": 1, "verdict": "BASELINE"},
+            {"run_id": "run-2", "snapshot_id": "variant", "net_pnl": 2, "verdict": "WATCHLIST"},
+        ],
+        "key_metrics": {"net_pnl": 2, "sharpe": 0.9},
+        "artifacts": ["run-2"],
+        "verdict": "WATCHLIST",
+        "confidence": 0.8,
+        "error": "",
+        "mcp_problems": [],
+    }
+    raw = (
+        "Now let me compile the final results JSON:\n\n```json\n"
+        f"{json.dumps(payload)}\n```"
+    )
+    truncated = raw[:220]
+    report = parse_task_report(truncated, task_id="t1", worker_id="w1", plan_version=1)
+    assert report.status == "error"
+    assert "No parseable JSON" in report.error
 
 
 # --- Duplicate/useless detection ---

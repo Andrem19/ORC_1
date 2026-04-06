@@ -93,11 +93,16 @@ class OrchestratorConfig:
     # --- State ---
     state_dir: str = "state"
     state_file: str = "orchestrator_state.json"
+    startup_mode: str = "resume"  # "resume" | "reset" | "reset_all"
 
     # --- Logging ---
     log_level: str = "INFO"
     log_dir: str = "logs"
     log_file: str = "orchestrator.log"
+
+    # --- Console display ---
+    rich_console: bool = True
+    console_truncate_length: int = 300
 
     # --- Feature flags ---
     detect_duplicate_results: bool = True
@@ -111,6 +116,11 @@ class OrchestratorConfig:
 
     # --- MCP problem review ---
     mcp_review: McpReviewConfig = field(default_factory=McpReviewConfig)
+
+    # --- Plan mode ---
+    plan_mode: bool = False
+    plan_dir: str = "plans"
+    max_concurrent_plan_tasks: int = 2
 
     @property
     def state_path(self) -> Path:
@@ -132,8 +142,11 @@ def load_config_from_dict(data: dict[str, Any]) -> OrchestratorConfig:
         "max_errors_total", "max_empty_cycles", "max_task_attempts",
         "max_worker_timeout_count", "state_dir", "state_file",
         "log_level", "log_dir", "log_file",
+        "rich_console", "console_truncate_length",
         "detect_duplicate_results", "require_structured_output",
         "research_config",
+        "plan_mode", "plan_dir", "max_concurrent_plan_tasks",
+        "startup_mode",
     }
     for key in simple_fields:
         if key in data:
@@ -153,5 +166,11 @@ def load_config_from_dict(data: dict[str, Any]) -> OrchestratorConfig:
 
     if "mcp_review" in data:
         cfg.mcp_review = McpReviewConfig(**data["mcp_review"])
+
+    if cfg.startup_mode not in ("resume", "reset", "reset_all"):
+        raise ValueError(
+            f"Invalid startup_mode '{cfg.startup_mode}'. "
+            f"Must be one of: 'resume', 'reset', 'reset_all'"
+        )
 
     return cfg

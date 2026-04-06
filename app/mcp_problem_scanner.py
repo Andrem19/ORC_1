@@ -191,6 +191,57 @@ class McpProblemScanner:
         return self.problem_store.format_summary_for_planner(problems, max_items=max_items)
 
     # ---------------------------------------------------------------
+    # Heuristic structural problem detection
+    # ---------------------------------------------------------------
+
+    def detect_structural_problems(self, state: OrchestratorState) -> list[McpProblem]:
+        """Detect structural problems using heuristics (no LLM call needed)."""
+        problems: list[McpProblem] = []
+        now = datetime.now(timezone.utc).isoformat()
+
+        # 1. Repeated failures: same error pattern 3+ times in a row
+        recent_errors = [
+            r for r in state.results[-10:]
+            if r.status == "error" and r.error
+        ]
+        if len(recent_errors) >= 3:
+            common = recent_errors[-1].error[:30]
+            if all(common in other.error for other in recent_errors[-3:]):
+                problems.append(McpProblem(
+                    problem_id=uuid.uuid4().hex[:12],
+                    timestamp=now,
+                    cycle=state.current_cycle,
+                    task_id="",
+                    worker_id="",
+                    tool_name="worker",
+                    problem_type="repeated_failure",
+                    description=f"Same error repeated 3+ times: '{common}...'",
+                    evidence="; ".join(r.error[:60] for r in recent_errors[-3:])[:300],
+                    suggestion="The approach causing this error should be abandoned or modified",
+                    source="heuristic",
+                    severity="high",
+                ))
+
+        # 2. Empty cycle spiral: many empty cycles without progress
+        if state.empty_cycles >= 8:
+            problems.append(McpProblem(
+                problem_id=uuid.uuid4().hex[:12],
+                timestamp=now,
+                cycle=state.current_cycle,
+                task_id="",
+                worker_id="",
+                tool_name="orchestrator",
+                problem_type="empty_spiral",
+                description=f"Orchestrator has had {state.empty_cycles} empty cycles without progress",
+                evidence=f"empty_cycles={state.empty_cycles}, total_errors={state.total_errors}",
+                suggestion="Consider changing research direction or checking if workers are functional",
+                source="heuristic",
+                severity="medium",
+            ))
+
+        return problems
+
+    # ---------------------------------------------------------------
     # Internal
     # ---------------------------------------------------------------
 

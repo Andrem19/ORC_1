@@ -116,6 +116,8 @@ You have access to MCP dev_space1 tools. Call them directly as structured tool i
 5. For async operations: poll with action='status' or action='inspect' and job_id
 6. Report key metrics: Sharpe, return%, trade count, max drawdown, win rate, profit factor
 7. GOLD COLLECTION: When your task produces a breakthrough (new best snapshot, profitable new feature, milestone result), call gold_collection(action='add', entity_type='snapshot'|'feature', entity_id='...', reason='...') to preserve it
+8. CRITICAL — datasets_sync: NEVER use wait='completed'. Always use wait='started'. The 'completed' mode blocks until sync finishes (>30s) which causes the MCP server to drop your entire session and ALL tools disappear. Use wait='started', then poll with action='status' if you need to confirm completion.
+9. If any MCP tool call returns a timeout error or "tool not found in registry", do NOT retry the same call — the MCP session is corrupted. Instead, return what you have with status='partial' and report the MCP failure in error field.
 
 ### Result Format
 Return your results in the standard JSON schema:
@@ -158,8 +160,17 @@ def load_research_context(state_dir: str) -> dict[str, Any] | None:
         return None
 
 
-def format_research_context_for_planner(context: dict[str, Any]) -> str:
-    """Format MCP state into concise prompt text for the planner."""
+def format_research_context_for_planner(
+    context: dict[str, Any],
+    completed_summaries: list[str] | None = None,
+) -> str:
+    """Format MCP state into concise prompt text for the planner.
+
+    Args:
+        context: Loaded research context dict.
+        completed_summaries: Optional list of successful task summaries,
+            used to annotate gaps that may already be addressed.
+    """
     sections: list[str] = []
 
     sections.append("## MCP Research State")
@@ -240,7 +251,15 @@ def format_research_context_for_planner(context: dict[str, Any]) -> str:
     gaps = context.get("gaps", [])
     if gaps:
         sections.append("### What Has NOT Been Done Yet")
+        summaries_text = " ".join(completed_summaries).lower() if completed_summaries else ""
         for g in gaps:
+            if summaries_text:
+                # Check if key words from this gap appear in completed summaries
+                gap_words = [w for w in g.lower().split() if len(w) > 4]
+                matches = sum(1 for w in gap_words if w in summaries_text)
+                if matches >= 2:
+                    sections.append(f"- {g}  (may be addressed by recent tasks)")
+                    continue
             sections.append(f"- {g}")
         sections.append("")
 
