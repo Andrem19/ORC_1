@@ -46,9 +46,10 @@ def setup_logging(
     use_rich = rich_console and sys.stdout.isatty()
 
     if use_rich:
-        from app.rich_handler import RichConsoleHandler
+        from app.rich_handler import RichConsoleHandler, get_console
 
-        ch = RichConsoleHandler(truncate_length=truncate_length)
+        console = get_console()  # shared singleton
+        ch = RichConsoleHandler(console=console, truncate_length=truncate_length)
         ch.setLevel(getattr(logging, log_level.upper(), logging.INFO))
     else:
         plain_fmt = logging.Formatter(

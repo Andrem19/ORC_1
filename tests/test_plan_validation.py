@@ -226,6 +226,38 @@ def test_claude_cli_command_includes_tools_flag():
     assert "" in adapter._mandatory_flags
 
 
+def test_claude_cli_builds_batch_json_command() -> None:
+    from app.adapters.claude_planner_cli import ClaudePlannerCli
+
+    adapter = ClaudePlannerCli(cli_path="claude", model="opus")
+    cmd, output_mode = adapter._build_command("hello", json_schema='{"type":"object"}')
+
+    assert output_mode == "stream-json"
+    assert "--bare" in cmd
+    assert "--no-session-persistence" in cmd
+    assert "--output-format" in cmd
+    assert "stream-json" in cmd
+    assert "--include-partial-messages" in cmd
+    assert "--json-schema" in cmd
+
+
+def test_claude_runtime_summary_reports_custom_backend() -> None:
+    from app.adapters.claude_planner_cli import ClaudePlannerCli
+
+    adapter = ClaudePlannerCli(cli_path="claude", model="opus")
+    with patch.object(adapter, "_load_claude_settings", return_value={
+        "env": {
+            "ANTHROPIC_BASE_URL": "https://api.z.ai/api/anthropic",
+            "ANTHROPIC_DEFAULT_OPUS_MODEL": "glm-5.1",
+        }
+    }):
+        summary = adapter.runtime_summary()
+
+    assert summary["has_custom_backend"] is True
+    assert summary["has_model_remap"] is True
+    assert summary["resolved_model"] == "glm-5.1"
+
+
 def test_validate_plan_accepts_symbolic_ref_with_dependency() -> None:
     plan = ResearchPlan(
         schema_version=2,
@@ -290,3 +322,52 @@ def test_validate_plan_rejects_symbolic_ref_without_dependency() -> None:
 
     assert not validation.is_valid
     assert any(error.code == "unresolved_symbolic_reference" for error in validation.errors)
+
+
+def test_build_plan_repair_prompt_compacts_large_invalid_payload() -> None:
+    from app.plan_prompts import build_plan_repair_prompt
+    from app.plan_validation import PlanRepairRequest, PlanValidationError
+
+    prompt = build_plan_repair_prompt(
+        PlanRepairRequest(
+            goal="test goal",
+            plan_version=1,
+            attempt_number=2,
+            invalid_plan_data={
+                "plan_action": "create",
+                "tasks": [
+                    {
+                        "stage_number": 0,
+                        "stage_name": "Bad 0",
+                        "depends_on": [],
+                        "theory": "x" * 2000,
+                        "agent_instructions": ["bad " + ("y" * 1000)],
+                        "results_table_columns": ["run_id"],
+                        "decision_gates": [],
+                    },
+                    {
+                        "stage_number": 1,
+                        "stage_name": "Valid 1",
+                        "depends_on": [0],
+                        "agent_instructions": ["ok"],
+                        "results_table_columns": ["run_id"],
+                        "decision_gates": [],
+                    },
+                ],
+            },
+            validation_errors=[
+                PlanValidationError(
+                    stage_number=0,
+                    instruction_index=0,
+                    code="legacy_placeholder",
+                    message="Legacy <...> placeholder is not allowed",
+                    offending_text="<run_id>",
+                )
+            ],
+        )
+    )
+
+    assert "Valid Stage Summary" in prompt
+    assert "Invalid Stage Fragments" in prompt
+    assert "Valid 1" in prompt
+    assert len(prompt) < 15000

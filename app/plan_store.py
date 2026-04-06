@@ -29,12 +29,14 @@ class PlanStore:
         self.plans_dir = Path(plans_dir)
         self.reports_dir = self.plans_dir / "reports"
         self.rejected_dir = self.plans_dir / "rejected"
+        self.planner_runs_dir = self.plans_dir / "planner_runs"
 
     def ensure_dirs(self) -> None:
         """Create plan directories if they don't exist."""
         self.plans_dir.mkdir(parents=True, exist_ok=True)
         self.reports_dir.mkdir(parents=True, exist_ok=True)
         self.rejected_dir.mkdir(parents=True, exist_ok=True)
+        self.planner_runs_dir.mkdir(parents=True, exist_ok=True)
 
     # ---------------------------------------------------------------
     # Plan persistence
@@ -178,6 +180,28 @@ class PlanStore:
         )
         return path
 
+    def save_planner_run(
+        self,
+        *,
+        request_type: str,
+        request_version: int,
+        attempt_number: int,
+        payload: dict[str, Any],
+    ) -> Path:
+        """Persist one planner execution trace for diagnostics."""
+        self.ensure_dirs()
+        filename = f"{request_type}_v{request_version}_attempt_{attempt_number}.json"
+        path = self.planner_runs_dir / filename
+        path.write_text(
+            json.dumps(payload, ensure_ascii=False, indent=2),
+            encoding="utf-8",
+        )
+        logger.info(
+            "Planner run saved: type=%s v%d attempt=%d",
+            request_type, request_version, attempt_number,
+        )
+        return path
+
     def load_report(self, task_id: str) -> TaskReport | None:
         """Load a task report by task_id."""
         path = self.reports_dir / f"{task_id}.json"
@@ -222,6 +246,10 @@ class PlanStore:
             for p in list(self.rejected_dir.glob("*.json")):
                 p.unlink()
                 logger.info("Removed rejected plan artifact: %s", p)
+        if self.planner_runs_dir.exists():
+            for p in list(self.planner_runs_dir.glob("*.json")):
+                p.unlink()
+                logger.info("Removed planner run artifact: %s", p)
 
     def archive_to(self, target_dir: Path) -> int:
         """Copy all plan files and reports to target_dir. Returns file count."""
@@ -241,6 +269,12 @@ class PlanStore:
             rejected_target.mkdir(parents=True, exist_ok=True)
             for p in self.rejected_dir.glob("*.json"):
                 shutil.copy2(p, rejected_target / p.name)
+                count += 1
+        planner_runs_target = target_dir / "planner_runs"
+        if self.planner_runs_dir.exists():
+            planner_runs_target.mkdir(parents=True, exist_ok=True)
+            for p in self.planner_runs_dir.glob("*.json"):
+                shutil.copy2(p, planner_runs_target / p.name)
                 count += 1
         return count
 

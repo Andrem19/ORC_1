@@ -599,6 +599,9 @@ class Orchestrator:
         svc.set_research_context(self._research_context_text)
         try:
             return svc.run()
+        except KeyboardInterrupt:
+            self._finish(StopReason.NO_PROGRESS, "Interrupted by user (Ctrl+C)")
+            return StopReason.NO_PROGRESS
         finally:
             self._plan_service = None
 

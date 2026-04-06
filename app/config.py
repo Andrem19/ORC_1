@@ -30,6 +30,13 @@ class AdapterConfig:
     extra_flags: list[str] = field(default_factory=list)
     timeout_seconds: int = 120
     model: str = ""
+    mode: str = "default"
+    use_bare: bool = False
+    no_session_persistence: bool = False
+    soft_timeout_seconds: int = 300
+    hard_timeout_seconds: int = 900
+    no_first_byte_seconds: int = 180
+    capture_stderr_live: bool = False
     # LM Studio / HTTP API settings
     base_url: str = ""
     api_key: str = ""
@@ -84,6 +91,13 @@ class OrchestratorConfig:
         name="claude_planner_cli",
         cli_path="claude",
         model="opus",
+        mode="batch_json",
+        use_bare=True,
+        no_session_persistence=True,
+        soft_timeout_seconds=300,
+        hard_timeout_seconds=900,
+        no_first_byte_seconds=180,
+        capture_stderr_live=True,
     ))
     worker_adapter: AdapterConfig = field(default_factory=lambda: AdapterConfig(
         name="qwen_worker_cli",

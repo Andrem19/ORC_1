@@ -13,12 +13,13 @@ from typing import TYPE_CHECKING, Any
 
 from app.adapters.base import BaseAdapter, ProcessHandle
 from app.models import (
-    MemoryEntry,
     OrchestratorState,
     PlannerDecision,
     PlannerOutput,
     TaskResult,
 )
+from app.planner_json_schema import build_plan_json_schema
+from app.planner_runtime import PlannerRunSnapshot
 from app.prompts import build_planner_prompt
 from app.result_parser import parse_plan_output, parse_planner_output
 
@@ -36,19 +37,22 @@ class PlannerService:
         self.adapter = adapter
         self.timeout = timeout
         self._active_handle: ProcessHandle | None = None
-        self._supports_async: bool | None = None  # lazy detection
+        self._supports_async: bool | None = None
+        self._sync_result: PlannerOutput | None = None
         self._last_plan_raw_output: str = ""
         self._plan_request_type: str = "create"
         self._plan_request_version: int = 0
         self._plan_request_attempt: int = 0
+        self._plan_request_payload: dict[str, Any] | None = None
+        self._plan_runtime: PlannerRunSnapshot | None = None
+        self._last_completed_plan_runtime: PlannerRunSnapshot | None = None
+        self._plan_timeout_retry_count: int = 0
 
     def _check_async_support(self) -> bool:
         """Check if the adapter supports async start/check."""
         if self._supports_async is not None:
             return self._supports_async
         try:
-            # Test by calling start — adapters that don't support it raise NotImplementedError
-            # We detect this by checking if start() is overridden
             import inspect
             base_start = BaseAdapter.start
             adapter_start = self.adapter.__class__.start
@@ -112,13 +116,8 @@ class PlannerService:
         research_context: str | None = None,
         mcp_problem_summary: str | None = None,
     ) -> None:
-        """Launch planner as a background process. Returns immediately.
-
-        Falls back to synchronous consult() if the adapter doesn't support
-        background execution (stores result for immediate pickup by check_consultation).
-        """
+        """Launch planner as a background process."""
         if not self._check_async_support():
-            # Adapter doesn't support async — run synchronously and cache result
             logger.info("Adapter doesn't support async mode, falling back to synchronous consult")
             self._sync_result = self.consult(
                 state, new_results, worker_ids,
@@ -142,15 +141,8 @@ class PlannerService:
         )
 
     def check_consultation(self) -> tuple[PlannerOutput | None, bool]:
-        """Non-blocking check on the running planner.
-
-        Returns:
-            (output, is_finished):
-              - (None, False) — planner still working
-              - (output, True) — planner finished, output parsed
-        """
-        # Handle synchronous fallback result
-        if hasattr(self, "_sync_result") and self._sync_result is not None:
+        """Non-blocking check on the running planner."""
+        if self._sync_result is not None:
             result = self._sync_result
             self._sync_result = None
             return result, True
@@ -180,16 +172,12 @@ class PlannerService:
             )
             return None, False
 
-        # Planner finished — parse output
         full_output = handle.partial_output
         self._active_handle = None
 
         proc = handle.process
         if proc is not None and proc.returncode is not None and proc.returncode != 0:
-            logger.error(
-                "Planner process exited with code %d",
-                proc.returncode,
-            )
+            logger.error("Planner process exited with code %d", proc.returncode)
             return PlannerOutput(
                 decision=PlannerDecision.WAIT,
                 reason=f"Planner process exited with code {proc.returncode}",
@@ -210,11 +198,7 @@ class PlannerService:
 
     @property
     def is_running(self) -> bool:
-        """Whether a planner consultation is currently in progress."""
-        return (
-            self._active_handle is not None
-            or (hasattr(self, "_sync_result") and self._sync_result is not None)
-        )
+        return self._active_handle is not None or self._sync_result is not None
 
     # ---------------------------------------------------------------
     # Plan-mode methods
@@ -232,9 +216,22 @@ class PlannerService:
         plan_version: int = 1,
         attempt_number: int = 1,
     ) -> None:
-        """Launch planner to CREATE a new research plan (plan_v1 or first plan)."""
+        """Launch planner to CREATE a new research plan."""
         from app.plan_prompts import build_plan_creation_prompt
 
+        self._plan_timeout_retry_count = 0
+        self._plan_request_payload = {
+            "request_type": "create",
+            "goal": goal,
+            "research_context": research_context,
+            "anti_patterns": anti_patterns,
+            "cumulative_summary": cumulative_summary,
+            "worker_ids": worker_ids,
+            "mcp_problem_summary": mcp_problem_summary,
+            "previous_plan_markdown": previous_plan_markdown,
+            "plan_version": plan_version,
+            "attempt_number": attempt_number,
+        }
         prompt = build_plan_creation_prompt(
             goal=goal,
             research_context=research_context,
@@ -248,15 +245,14 @@ class PlannerService:
             "Starting plan creation via planner (version=%d attempt=%d, %d chars)",
             plan_version, attempt_number, len(prompt),
         )
-        self._plan_request_type = "create"
-        self._plan_request_version = plan_version
-        self._plan_request_attempt = attempt_number
-        self._last_plan_raw_output = ""
-
-        self._active_handle = self.adapter.start(
-            prompt,
+        self._launch_plan_request(
+            prompt=prompt,
+            request_type="create",
+            request_version=plan_version,
+            attempt_number=attempt_number,
+            max_tasks=5,
+            timeout_retry_count=0,
             task_id=f"plan-create-v{plan_version}-a{attempt_number}",
-            worker_id="planner",
         )
 
     def start_plan_revision(
@@ -272,6 +268,17 @@ class PlannerService:
         """Launch planner to REVISE the current plan based on worker reports."""
         from app.plan_prompts import build_plan_revision_prompt
 
+        self._plan_timeout_retry_count = 0
+        self._plan_request_payload = {
+            "request_type": "revision",
+            "goal": goal,
+            "current_plan": current_plan,
+            "reports": reports,
+            "research_context": research_context,
+            "anti_patterns": anti_patterns,
+            "worker_ids": worker_ids,
+            "mcp_problem_summary": mcp_problem_summary,
+        }
         prompt = build_plan_revision_prompt(
             goal=goal,
             current_plan=current_plan,
@@ -281,20 +288,19 @@ class PlannerService:
             worker_ids=worker_ids,
             mcp_problem_summary=mcp_problem_summary,
         )
+        next_version = current_plan.version + 1
         logger.info(
             "Starting plan revision v%d → v%d (%d reports, %d chars)",
-            current_plan.version, current_plan.version + 1,
-            len(reports), len(prompt),
+            current_plan.version, next_version, len(reports), len(prompt),
         )
-        self._plan_request_type = "revision"
-        self._plan_request_version = current_plan.version + 1
-        self._plan_request_attempt = 1
-        self._last_plan_raw_output = ""
-
-        self._active_handle = self.adapter.start(
-            prompt,
+        self._launch_plan_request(
+            prompt=prompt,
+            request_type="revision",
+            request_version=next_version,
+            attempt_number=1,
+            max_tasks=None,
+            timeout_retry_count=0,
             task_id=f"plan-revise-v{current_plan.version}",
-            worker_id="planner",
         )
 
     def start_plan_repair(
@@ -307,6 +313,14 @@ class PlannerService:
         """Launch planner to REPAIR an invalid create-plan attempt."""
         from app.plan_prompts import build_plan_repair_prompt
 
+        self._plan_timeout_retry_count = 0
+        self._plan_request_payload = {
+            "request_type": "repair",
+            "repair_request": repair_request,
+            "research_context": research_context,
+            "worker_ids": worker_ids,
+            "mcp_problem_summary": mcp_problem_summary,
+        }
         prompt = build_plan_repair_prompt(
             repair_request=repair_request,
             research_context=research_context,
@@ -319,32 +333,99 @@ class PlannerService:
             repair_request.attempt_number,
             len(prompt),
         )
-        self._plan_request_type = "repair"
-        self._plan_request_version = repair_request.plan_version
-        self._plan_request_attempt = repair_request.attempt_number
-        self._last_plan_raw_output = ""
-
-        self._active_handle = self.adapter.start(
-            prompt,
+        max_tasks = len(repair_request.invalid_plan_data.get("tasks", [])) or None
+        self._launch_plan_request(
+            prompt=prompt,
+            request_type="repair",
+            request_version=repair_request.plan_version,
+            attempt_number=repair_request.attempt_number,
+            max_tasks=max_tasks,
+            timeout_retry_count=0,
             task_id=f"plan-repair-v{repair_request.plan_version}-a{repair_request.attempt_number}",
-            worker_id="planner",
         )
 
+    def restart_plan_request(self) -> bool:
+        """Restart the current create/repair/revision request after a timeout."""
+        if not self._plan_request_payload:
+            return False
+
+        request = dict(self._plan_request_payload)
+        request_type = request.pop("request_type", "")
+        self._plan_timeout_retry_count += 1
+
+        if request_type == "create":
+            from app.plan_prompts import build_plan_creation_prompt
+            prompt = build_plan_creation_prompt(
+                goal=request["goal"],
+                research_context=request.get("research_context"),
+                anti_patterns=request.get("anti_patterns"),
+                cumulative_summary=request.get("cumulative_summary", ""),
+                worker_ids=request.get("worker_ids"),
+                mcp_problem_summary=request.get("mcp_problem_summary"),
+                previous_plan_markdown=request.get("previous_plan_markdown"),
+            )
+            self._launch_plan_request(
+                prompt=prompt,
+                request_type="create",
+                request_version=request["plan_version"],
+                attempt_number=request["attempt_number"],
+                max_tasks=5,
+                timeout_retry_count=self._plan_timeout_retry_count,
+                task_id=f"plan-create-v{request['plan_version']}-a{request['attempt_number']}",
+            )
+            return True
+
+        if request_type == "repair":
+            from app.plan_prompts import build_plan_repair_prompt
+            repair_request = request["repair_request"]
+            prompt = build_plan_repair_prompt(
+                repair_request=repair_request,
+                research_context=request.get("research_context"),
+                worker_ids=request.get("worker_ids"),
+                mcp_problem_summary=request.get("mcp_problem_summary"),
+            )
+            max_tasks = len(repair_request.invalid_plan_data.get("tasks", [])) or None
+            self._launch_plan_request(
+                prompt=prompt,
+                request_type="repair",
+                request_version=repair_request.plan_version,
+                attempt_number=repair_request.attempt_number,
+                max_tasks=max_tasks,
+                timeout_retry_count=self._plan_timeout_retry_count,
+                task_id=f"plan-repair-v{repair_request.plan_version}-a{repair_request.attempt_number}",
+            )
+            return True
+
+        if request_type == "revision":
+            from app.plan_prompts import build_plan_revision_prompt
+            current_plan = request["current_plan"]
+            prompt = build_plan_revision_prompt(
+                goal=request["goal"],
+                current_plan=current_plan,
+                reports=request["reports"],
+                research_context=request.get("research_context"),
+                anti_patterns=request.get("anti_patterns"),
+                worker_ids=request.get("worker_ids"),
+                mcp_problem_summary=request.get("mcp_problem_summary"),
+            )
+            self._launch_plan_request(
+                prompt=prompt,
+                request_type="revision",
+                request_version=current_plan.version + 1,
+                attempt_number=1,
+                max_tasks=None,
+                timeout_retry_count=self._plan_timeout_retry_count,
+                task_id=f"plan-revise-v{current_plan.version}",
+            )
+            return True
+
+        return False
+
     def check_plan_output(self) -> tuple[dict | None, bool]:
-        """Non-blocking check on the running planner (plan-mode).
-
-        Returns:
-            (parsed_dict, is_finished):
-              - (None, False) — planner still working
-              - (dict, True) — planner finished, output parsed
-        """
-        from app.result_parser import parse_plan_output
-
-        # Handle synchronous fallback
-        if hasattr(self, "_sync_result") and self._sync_result is not None:
+        """Non-blocking check on the running planner (plan-mode)."""
+        if self._sync_result is not None:
             result = self._sync_result
             self._sync_result = None
-            # _sync_result shouldn't be used in plan mode, but just in case
             return None, True
 
         if self._active_handle is None:
@@ -356,23 +437,29 @@ class PlannerService:
 
         handle = self._active_handle
         new_output, is_finished = self.adapter.check(handle)
+        self._refresh_plan_runtime_from_handle(handle)
 
+        snapshot = self._plan_runtime
         if new_output:
             logger.debug(
                 "Planner (plan): received %d chars (total: %d)",
-                len(new_output), len(handle.partial_output),
+                len(new_output),
+                len(handle.partial_output),
             )
 
         if not is_finished:
-            elapsed = _time.monotonic() - handle.started_at
-            logger.info(
-                "Planner (plan) still running: type=%s version=%d attempt=%d elapsed=%.0fs output=%d chars",
-                self._plan_request_type,
-                self._plan_request_version,
-                self._plan_request_attempt,
-                elapsed,
-                len(handle.partial_output),
-            )
+            if snapshot is not None:
+                logger.info(
+                    "Planner (plan) still running: type=%s version=%d attempt=%d elapsed=%.0fs output=%d chars stderr=%d chars events=%d retries=%d",
+                    snapshot.request_type,
+                    snapshot.request_version,
+                    snapshot.attempt_number,
+                    snapshot.elapsed_seconds,
+                    len(handle.partial_output),
+                    len(handle.partial_error_output),
+                    snapshot.stream_event_count,
+                    snapshot.timeout_retry_count,
+                )
             return None, False
 
         full_output = handle.partial_output
@@ -380,11 +467,20 @@ class PlannerService:
         self._active_handle = None
 
         proc = handle.process
-        if proc is not None and proc.returncode is not None and proc.returncode != 0:
-            logger.error("Planner process exited with code %d", proc.returncode)
+        exit_code = proc.returncode if proc is not None else None
+        if snapshot is not None:
+            snapshot.finish(
+                exit_code=exit_code,
+                rendered_output=full_output,
+                termination_reason="completed",
+            )
+            self._last_completed_plan_runtime = snapshot
+
+        if exit_code is not None and exit_code != 0:
+            logger.error("Planner process exited with code %d", exit_code)
             return {
                 "plan_action": "continue",
-                "reason": f"Planner process exited with code {proc.returncode}",
+                "reason": f"Planner process exited with code {exit_code}",
             }, True
 
         parsed = parse_plan_output(full_output)
@@ -398,6 +494,98 @@ class PlannerService:
         )
         return parsed, True
 
+    def terminate_plan_run(self, reason: str) -> PlannerRunSnapshot | None:
+        """Terminate the active plan-mode subprocess and return final telemetry."""
+        handle = self._active_handle
+        snapshot = self._plan_runtime
+        if handle is None or snapshot is None:
+            return snapshot
+
+        self.adapter.terminate(handle)
+        self.adapter.check(handle)
+        self._refresh_plan_runtime_from_handle(handle)
+        proc = handle.process
+        exit_code = proc.returncode if proc is not None else None
+        snapshot.finish(
+            exit_code=exit_code,
+            rendered_output=handle.partial_output,
+            termination_reason=reason,
+        )
+        self._last_plan_raw_output = handle.partial_output
+        self._last_completed_plan_runtime = snapshot
+        self._active_handle = None
+        self._plan_runtime = None
+        return snapshot
+
+    def plan_runtime_snapshot(self) -> PlannerRunSnapshot | None:
+        return self._plan_runtime
+
     @property
     def last_plan_raw_output(self) -> str:
         return self._last_plan_raw_output
+
+    def planner_runtime_summary(self) -> dict[str, Any]:
+        runtime_summary = {}
+        if hasattr(self.adapter, "runtime_summary"):
+            try:
+                runtime_summary = getattr(self.adapter, "runtime_summary")()
+            except Exception:
+                runtime_summary = {}
+        return runtime_summary
+
+    # ---------------------------------------------------------------
+    # Internal helpers
+    # ---------------------------------------------------------------
+
+    def _launch_plan_request(
+        self,
+        *,
+        prompt: str,
+        request_type: str,
+        request_version: int,
+        attempt_number: int,
+        max_tasks: int | None,
+        timeout_retry_count: int,
+        task_id: str,
+    ) -> None:
+        json_schema = build_plan_json_schema(max_tasks=max_tasks)
+        self._plan_request_type = request_type
+        self._plan_request_version = request_version
+        self._plan_request_attempt = attempt_number
+        self._last_plan_raw_output = ""
+        self._active_handle = self.adapter.start(
+            prompt,
+            task_id=task_id,
+            worker_id="planner",
+            json_schema=json_schema,
+        )
+        output_mode = str(self._active_handle.metadata.get("output_mode", "text"))
+        self._plan_runtime = PlannerRunSnapshot(
+            request_type=request_type,
+            request_version=request_version,
+            attempt_number=attempt_number,
+            prompt_length=len(prompt),
+            output_mode=output_mode,
+            timeout_retry_count=timeout_retry_count,
+        )
+
+    def _refresh_plan_runtime_from_handle(self, handle: ProcessHandle) -> None:
+        snapshot = self._plan_runtime
+        if snapshot is None:
+            return
+
+        raw_stdout = str(handle.metadata.get("raw_stdout", ""))
+        raw_stderr = str(handle.metadata.get("raw_stderr", ""))
+
+        stdout_fragment = raw_stdout[len(snapshot.raw_stdout):]
+        stderr_fragment = raw_stderr[len(snapshot.raw_stderr):]
+        rendered_fragment = handle.partial_output[len(snapshot.rendered_output):]
+
+        if stdout_fragment or stderr_fragment or rendered_fragment:
+            snapshot.record_output(
+                stdout_fragment=stdout_fragment,
+                stderr_fragment=stderr_fragment,
+                rendered_fragment=rendered_fragment,
+            )
+
+        snapshot.stream_event_count = int(handle.metadata.get("stream_event_count", 0))

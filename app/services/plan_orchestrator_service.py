@@ -145,6 +145,15 @@ class PlanOrchestratorService:
             # 2. If planner is running, check on it
             if self.planner_service.is_running:
                 plan_data, is_finished = self.planner_service.check_plan_output()
+                self._sync_planner_runtime_state()
+                if not is_finished:
+                    self._check_planner_watchdog()
+                    if self._should_check_stop():
+                        return self._get_stop_reason()
+                    orch.save_state()
+                    self._plan_sleep()
+                    continue
+
                 if is_finished and plan_data is not None:
                     # Stop planner progress spinner
                     from app.rich_handler import ProgressManager
@@ -152,6 +161,7 @@ class PlanOrchestratorService:
                     if pm and pm.is_active():
                         pm.stop_planner_wait()
                     self._process_plan_data(plan_data)
+                    self._sync_planner_runtime_state(clear=True)
 
                 if self._should_check_stop():
                     return self._get_stop_reason()
@@ -402,9 +412,6 @@ class PlanOrchestratorService:
             pi = self.state.find_process(task.task_id)
             if pi is None:
                 continue
-            # Only warn if zero output so far
-            if pi.partial_output and pi.partial_output.strip():
-                continue
             try:
                 started = datetime.fromisoformat(pi.started_at)
                 silent_seconds = (now - started).total_seconds()
@@ -415,10 +422,17 @@ class PlanOrchestratorService:
                 # Check if process is actually alive
                 handle = self.worker_service._active_handles.get(task.task_id)
                 if handle and handle.process and handle.process.poll() is None:
+                    stdout_len = len((pi.partial_output or "").strip())
+                    stderr_len = len((pi.partial_error_output or "").strip())
+                    if stdout_len == 0 and stderr_len == 0:
+                        state = "no stdout/stderr"
+                    elif stdout_len == 0 and stderr_len > 0:
+                        state = "stderr only"
+                    else:
+                        continue
                     logger.warning(
-                        "Task %s (pid=%s) has produced 0 output for %.0fs "
-                        "but process is alive — likely CLI output buffering",
-                        task.task_id, pi.pid, silent_seconds,
+                        "Task %s (pid=%s) quiet for %.0fs with %s — likely CLI buffering or backend stall",
+                        task.task_id, pi.pid, silent_seconds, state,
                     )
 
     # ---------------------------------------------------------------
@@ -963,6 +977,8 @@ class PlanOrchestratorService:
 
     def _plan_sleep(self) -> None:
         sleep_seconds = self.scheduler.sleep_interval(self.state)
+        if self.planner_service.is_running:
+            sleep_seconds = min(sleep_seconds, 30)
         self.orch._log_event(OrchestratorEvent.SLEEPING, f"{sleep_seconds}s")
         self.scheduler.sleep(seconds=sleep_seconds)
 
@@ -1020,6 +1036,124 @@ class PlanOrchestratorService:
     def _validate_plan(self, plan: ResearchPlan) -> PlanValidationResult:
         """Validate plan structure and executable instructions."""
         return validate_plan(plan)
+
+    def _sync_planner_runtime_state(self, clear: bool = False) -> None:
+        snapshot = None if clear else self.planner_service.plan_runtime_snapshot()
+        if snapshot is None:
+            self.state.planner_started_at = None
+            self.state.planner_first_output_at = None
+            self.state.planner_last_output_at = None
+            self.state.planner_output_bytes = 0
+            self.state.planner_stderr_bytes = 0
+            return
+
+        self.state.planner_started_at = snapshot.started_at_iso
+        self.state.planner_first_output_at = snapshot.first_output_at_iso
+        self.state.planner_last_output_at = snapshot.last_output_at_iso
+        self.state.planner_output_bytes = snapshot.output_bytes
+        self.state.planner_stderr_bytes = snapshot.stderr_bytes
+
+    def _check_planner_watchdog(self) -> None:
+        snapshot = self.planner_service.plan_runtime_snapshot()
+        if snapshot is None:
+            return
+
+        adapter_cfg = getattr(self.config, "planner_adapter", None)
+        no_first_byte_seconds = max(30, int(getattr(adapter_cfg, "no_first_byte_seconds", 180) or 180))
+        soft_stall_seconds = max(no_first_byte_seconds, int(getattr(adapter_cfg, "soft_timeout_seconds", 300) or 300))
+        hard_stall_seconds = max(soft_stall_seconds, int(getattr(adapter_cfg, "hard_timeout_seconds", 900) or 900))
+
+        elapsed = snapshot.elapsed_seconds
+        if not snapshot.has_first_byte and elapsed >= no_first_byte_seconds and not snapshot.no_first_byte_warning_sent:
+            snapshot.no_first_byte_warning_sent = True
+            logger.warning(
+                "planner_silent: type=%s version=%d attempt=%d elapsed=%.0fs prompt=%d chars stdout=0 stderr=%d",
+                snapshot.request_type,
+                snapshot.request_version,
+                snapshot.attempt_number,
+                elapsed,
+                snapshot.prompt_length,
+                snapshot.stderr_bytes,
+            )
+
+        if elapsed >= soft_stall_seconds and not snapshot.soft_warning_sent:
+            snapshot.soft_warning_sent = True
+            stdout_state = "no stdout"
+            if snapshot.output_bytes > 0 and snapshot.stream_event_count > 0:
+                stdout_state = "stream events"
+            elif snapshot.output_bytes > 0:
+                stdout_state = "partial stdout"
+            elif snapshot.stderr_bytes > 0:
+                stdout_state = "stderr only"
+
+            logger.warning(
+                "planner_soft_stall: type=%s version=%d attempt=%d elapsed=%.0fs state=%s stdout=%d stderr=%d prompt=%d",
+                snapshot.request_type,
+                snapshot.request_version,
+                snapshot.attempt_number,
+                elapsed,
+                stdout_state,
+                snapshot.output_bytes,
+                snapshot.stderr_bytes,
+                snapshot.prompt_length,
+            )
+            if not snapshot.soft_notification_sent:
+                snapshot.soft_notification_sent = True
+                self.notification_service.send_error(
+                    (
+                        f"Planner slow: {snapshot.request_type} v{snapshot.request_version} "
+                        f"attempt {snapshot.attempt_number}, elapsed {elapsed:.0f}s, "
+                        f"stdout={snapshot.output_bytes}B, stderr={snapshot.stderr_bytes}B, "
+                        f"prompt={snapshot.prompt_length} chars"
+                    ),
+                    context="plan_mode",
+                )
+
+        if elapsed >= hard_stall_seconds:
+            self._handle_planner_timeout(snapshot)
+
+    def _handle_planner_timeout(self, snapshot: Any) -> None:
+        final_snapshot = self.planner_service.terminate_plan_run("hard_timeout")
+        if final_snapshot is None:
+            return
+
+        self._sync_planner_runtime_state(clear=True)
+        self.state.planner_timeout_count += 1
+        artifact_path = self._persist_planner_run(final_snapshot)
+        summary = (
+            f"Planner timeout: {final_snapshot.request_type} v{final_snapshot.request_version} "
+            f"attempt {final_snapshot.attempt_number}, elapsed {final_snapshot.elapsed_seconds:.0f}s, "
+            f"stdout={final_snapshot.output_bytes}B, stderr={final_snapshot.stderr_bytes}B"
+        )
+
+        if final_snapshot.timeout_retry_count < 1 and self.planner_service.restart_plan_request():
+            logger.warning("%s — retrying once", summary)
+            self.notification_service.send_error(
+                f"{summary}. Retrying once. Artifact: {artifact_path}",
+                context="plan_mode",
+            )
+            self.state.empty_cycles = 0
+            self._sync_planner_runtime_state()
+            return
+
+        logger.error("%s — stopping orchestrator", summary)
+        self.notification_service.send_error(
+            f"{summary}. Stopping. Artifact: {artifact_path}",
+            context="plan_mode",
+        )
+        self._terminal_stop_reason = StopReason.PLANNER_TIMEOUT
+        self._terminal_stop_summary = summary
+
+    def _persist_planner_run(self, snapshot: Any) -> str | None:
+        if not self._plan_store:
+            return None
+        path = self._plan_store.save_planner_run(
+            request_type=snapshot.request_type,
+            request_version=snapshot.request_version,
+            attempt_number=snapshot.attempt_number,
+            payload=snapshot.to_dict(),
+        )
+        return str(path)
 
     def _handle_invalid_plan(
         self,

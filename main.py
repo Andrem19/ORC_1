@@ -44,6 +44,10 @@ def create_real_orchestrator(config: OrchestratorConfig) -> Orchestrator:
         cli_path=config.planner_adapter.cli_path,
         model=config.planner_adapter.model,
         extra_flags=config.planner_adapter.extra_flags,
+        mode=config.planner_adapter.mode,
+        use_bare=config.planner_adapter.use_bare,
+        no_session_persistence=config.planner_adapter.no_session_persistence,
+        capture_stderr_live=config.planner_adapter.capture_stderr_live,
     )
 
     # Select worker adapter by name
@@ -72,6 +76,21 @@ def create_real_orchestrator(config: OrchestratorConfig) -> Orchestrator:
         )
     else:
         logger.info("Planner adapter '%s' available (cli_path='%s')", planner_adapter.name(), config.planner_adapter.cli_path)
+        runtime = planner_adapter.runtime_summary()
+        logger.info(
+            "Planner runtime: mode=%s bare=%s no_session_persistence=%s resolved_model=%s",
+            runtime.get("mode"),
+            runtime.get("use_bare"),
+            runtime.get("no_session_persistence"),
+            runtime.get("resolved_model"),
+        )
+        if runtime.get("has_custom_backend") or runtime.get("has_model_remap"):
+            logger.warning(
+                "Planner is using custom backend/model mapping: base_url=%s configured_model=%s resolved_model=%s",
+                runtime.get("custom_base_url") or "<default>",
+                runtime.get("configured_model"),
+                runtime.get("resolved_model"),
+            )
 
     if not worker_ok:
         logger.error(
@@ -265,16 +284,33 @@ def main() -> None:
         # Graceful shutdown on SIGTERM / SIGINT
         import signal as _signal
 
+        _force_stop = False
+
         def _signal_handler(signum: int, _frame: Any) -> None:
+            nonlocal _force_stop
             sig_name = _signal.Signals(signum).name
-            logger.warning("Received %s, initiating graceful shutdown...", sig_name)
-            orch.request_stop()
+            if not _force_stop:
+                logger.warning("Received %s, initiating graceful shutdown...", sig_name)
+                orch.request_stop()
+                # Wake up the scheduler sleep immediately
+                from app.scheduler import Scheduler
+                Scheduler._wake.set()
+                _force_stop = True
+            else:
+                # Second press — force immediate stop via KeyboardInterrupt
+                logger.warning("Received second %s, forcing immediate shutdown!", sig_name)
+                raise KeyboardInterrupt
 
         _signal.signal(_signal.SIGTERM, _signal_handler)
+        # SIGINT: first press = graceful, second press = hard stop
         _signal.signal(_signal.SIGINT, _signal_handler)
 
-        reason = orch.run()
-        logger.info("Orchestrator stopped: %s", reason.value)
+        try:
+            reason = orch.run()
+            logger.info("Orchestrator stopped: %s", reason.value)
+        except KeyboardInterrupt:
+            logger.warning("Interrupted by user — shutting down immediately")
+            orch._finish(StopReason.NO_PROGRESS, "Interrupted by user (Ctrl+C)")
     finally:
         # Stop Rich progress display
         if config.rich_console and sys.stdout.isatty():

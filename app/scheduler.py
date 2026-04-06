@@ -7,6 +7,7 @@ Core principle: do NOT call the planner unless something changed.
 from __future__ import annotations
 
 import logging
+import threading
 import time
 
 from app.models import (
@@ -122,19 +123,29 @@ class Scheduler:
             return min(self.poll_interval_seconds, 30)
         return self.poll_interval_seconds
 
+    # Shared event — set by the signal handler to interrupt sleep immediately
+    _wake = threading.Event()
+
     def sleep(self, seconds: int | None = None, state: OrchestratorState | None = None) -> None:
-        """Sleep for the specified or computed interval with progress bar."""
+        """Sleep for the specified or computed interval with progress bar.
+
+        Uses threading.Event.wait() instead of time.sleep() so that SIGINT
+        (Ctrl+C) interrupts the sleep immediately — even with a custom signal
+        handler installed (PEP 475 causes time.sleep to auto-retry).
+        """
         if seconds is None:
             seconds = self.sleep_interval(state)
         logger.info("Sleeping for %d seconds", seconds)
+        self._wake.clear()
 
         from app.rich_handler import ProgressManager
         pm = ProgressManager._instance
         if pm and pm.is_active():
             pm.start_sleep(seconds)
             for tick in range(seconds):
-                time.sleep(1)
+                if self._wake.wait(timeout=1.0):
+                    break  # interrupted by signal
                 pm.update_sleep(tick + 1)
             pm.stop_sleep()
         else:
-            time.sleep(seconds)
+            self._wake.wait(timeout=seconds)

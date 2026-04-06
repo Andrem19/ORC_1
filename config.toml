@@ -74,6 +74,13 @@ name = "claude_planner_cli"
 cli_path = "claude"
 model = "opus"
 extra_flags = []
+mode = "batch_json"
+use_bare = true
+no_session_persistence = true
+soft_timeout_seconds = 300
+hard_timeout_seconds = 900
+no_first_byte_seconds = 180
+capture_stderr_live = true
 
 [worker_adapter]
 name = "qwen_worker_cli"

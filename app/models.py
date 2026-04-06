@@ -42,6 +42,7 @@ class PlannerDecision(str, Enum):
 
 class StopReason(str, Enum):
     TIMEOUT = "timeout"
+    PLANNER_TIMEOUT = "planner_timeout"
     NO_PROGRESS = "no_progress"
     INVALID_OUTPUT = "invalid_output"
     INVALID_PLAN_LOOP = "invalid_plan_loop"
@@ -197,6 +198,7 @@ class ProcessInfo:
     stdout_path: str | None = None
     stderr_path: str | None = None
     partial_output: str = ""
+    partial_error_output: str = ""
     prompt: str = ""
     returncode: int | None = None
 
@@ -214,6 +216,12 @@ class OrchestratorState:
     memory: list[MemoryEntry] = field(default_factory=list)
     last_planner_decision: PlannerDecision | None = None
     last_planner_call_at: str | None = None
+    planner_started_at: str | None = None
+    planner_first_output_at: str | None = None
+    planner_last_output_at: str | None = None
+    planner_output_bytes: int = 0
+    planner_stderr_bytes: int = 0
+    planner_timeout_count: int = 0
     last_change_at: str | None = None
     stop_reason: StopReason | None = None
     current_plan_version: int = 0

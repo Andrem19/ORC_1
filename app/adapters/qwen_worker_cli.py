@@ -54,10 +54,10 @@ class QwenWorkerCli(BaseAdapter):
                 timeout=timeout,
             )
             duration = time.monotonic() - start
-            output = result.stdout.strip()
+            output = (result.stdout or "").strip()
+            stderr = (result.stderr or "").strip()
 
             if result.returncode != 0:
-                stderr = result.stderr.strip()
                 logger.warning("Qwen CLI returned exit code %d: %s", result.returncode, stderr[:200])
                 return AdapterResponse(
                     success=False,
@@ -96,14 +96,14 @@ class QwenWorkerCli(BaseAdapter):
                 error=f"CLI not found: {self.cli_path}",
             )
 
-        except Exception as e:
+        except Exception as exc:
             duration = time.monotonic() - start
-            logger.error("Qwen CLI unexpected error: %s", e)
+            logger.error("Qwen CLI unexpected error: %s", exc)
             return AdapterResponse(
                 success=False,
                 raw_output="",
                 exit_code=-1,
-                error=str(e),
+                error=str(exc),
                 duration_seconds=duration,
             )
 
@@ -120,14 +120,12 @@ class QwenWorkerCli(BaseAdapter):
             cmd,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            text=True,
-            bufsize=1,
+            text=False,
+            bufsize=0,
         )
 
-        # Set stdout to non-blocking so check() can read without blocking
-        fd = process.stdout.fileno()
-        flags = fcntl.fcntl(fd, fcntl.F_GETFL)
-        fcntl.fcntl(fd, fcntl.F_SETFL, flags | os.O_NONBLOCK)
+        self._set_nonblocking(process.stdout)
+        self._set_nonblocking(process.stderr)
 
         logger.info("Started Qwen CLI pid=%d", process.pid)
         return ProcessHandle(
@@ -135,51 +133,77 @@ class QwenWorkerCli(BaseAdapter):
             task_id=kwargs.get("task_id", ""),
             worker_id=kwargs.get("worker_id", ""),
             started_at=time.monotonic(),
+            metadata={"raw_stdout": "", "raw_stderr": "", "output_mode": "text"},
         )
 
     def check(self, handle: ProcessHandle) -> tuple[str, bool]:
-        """Non-blocking check on a running worker.
-
-        Returns (new_output_since_last_check, is_finished).
-        """
-        new_output = ""
+        """Non-blocking check on a running worker."""
         proc = handle.process
         if proc is None:
             return "", True
 
-        # Non-blocking read from stdout
-        try:
-            fd = proc.stdout.fileno()
-            chunk = os.read(fd, 65536)
-            if chunk:
-                new_output = chunk.decode("utf-8", errors="replace")
-        except (BlockingIOError, OSError):
-            pass  # no data available yet
+        stdout_fragment = self._read_available(proc.stdout)
+        stderr_fragment = self._read_available(proc.stderr)
+
+        if stdout_fragment:
+            handle.partial_output += stdout_fragment
+            handle.metadata["raw_stdout"] = handle.metadata.get("raw_stdout", "") + stdout_fragment
+        if stderr_fragment:
+            handle.partial_error_output += stderr_fragment
+            handle.metadata["raw_stderr"] = handle.metadata.get("raw_stderr", "") + stderr_fragment
 
         is_finished = proc.poll() is not None
-
         if is_finished:
-            # Drain remaining stdout
-            try:
-                remaining = proc.stdout.read()
-                if remaining:
-                    new_output += remaining
-            except Exception:
-                pass
-
-            # Read stderr for error reporting
-            try:
-                stderr_output = proc.stderr.read() or ""
-            except Exception:
-                stderr_output = ""
-
+            final_stdout = self._read_remaining(proc.stdout)
+            final_stderr = self._read_remaining(proc.stderr)
+            if final_stdout:
+                handle.partial_output += final_stdout
+                handle.metadata["raw_stdout"] = handle.metadata.get("raw_stdout", "") + final_stdout
+                stdout_fragment += final_stdout
+            if final_stderr:
+                handle.partial_error_output += final_stderr
+                handle.metadata["raw_stderr"] = handle.metadata.get("raw_stderr", "") + final_stderr
             proc.wait()
 
-            if proc.returncode and proc.returncode != 0 and stderr_output:
+            if proc.returncode and proc.returncode != 0:
                 logger.warning(
                     "Worker pid=%d exited %d: %s",
-                    proc.pid, proc.returncode, stderr_output[:200],
+                    proc.pid, proc.returncode, handle.partial_error_output[:200],
                 )
 
-        handle.partial_output += new_output
-        return new_output, is_finished
+        return stdout_fragment, is_finished
+
+    @staticmethod
+    def _set_nonblocking(pipe: Any) -> None:
+        if pipe is None:
+            return
+        fd = pipe.fileno()
+        flags = fcntl.fcntl(fd, fcntl.F_GETFL)
+        fcntl.fcntl(fd, fcntl.F_SETFL, flags | os.O_NONBLOCK)
+
+    @staticmethod
+    def _read_available(pipe: Any) -> str:
+        if pipe is None:
+            return ""
+        try:
+            chunk = os.read(pipe.fileno(), 65536)
+        except (BlockingIOError, OSError):
+            return ""
+        if not chunk:
+            return ""
+        return chunk.decode("utf-8", errors="replace")
+
+    @staticmethod
+    def _read_remaining(pipe: Any) -> str:
+        if pipe is None:
+            return ""
+        fragments: list[str] = []
+        while True:
+            try:
+                chunk = os.read(pipe.fileno(), 65536)
+            except OSError:
+                break
+            if not chunk:
+                break
+            fragments.append(chunk.decode("utf-8", errors="replace"))
+        return "".join(fragments)

@@ -8,14 +8,17 @@ Supports both synchronous invoke() and async start()/check() modes.
 from __future__ import annotations
 
 import fcntl
+import json
 import logging
 import os
+from pathlib import Path
 import shutil
 import subprocess
 import time
 from typing import Any
 
 from app.adapters.base import AdapterResponse, BaseAdapter, ProcessHandle
+from app.planner_stream import consume_stream_fragment
 
 logger = logging.getLogger("orchestrator.adapter.claude")
 
@@ -28,11 +31,18 @@ class ClaudePlannerCli(BaseAdapter):
         cli_path: str = "claude",
         model: str = "opus",
         extra_flags: list[str] | None = None,
+        *,
+        mode: str = "batch_json",
+        use_bare: bool = True,
+        no_session_persistence: bool = True,
+        capture_stderr_live: bool = True,
     ) -> None:
         self.cli_path = cli_path
         self.model = model
-        # Mandatory flags: disable all tools so Claude CLI acts as a pure
-        # text generator instead of a full agent with tool use / thinking.
+        self.mode = mode or "default"
+        self.use_bare = use_bare
+        self.no_session_persistence = no_session_persistence
+        self.capture_stderr_live = capture_stderr_live
         self._mandatory_flags = ["--tools", ""]
         self.extra_flags = extra_flags or []
 
@@ -42,18 +52,37 @@ class ClaudePlannerCli(BaseAdapter):
     def is_available(self) -> bool:
         return shutil.which(self.cli_path) is not None
 
+    def runtime_summary(self) -> dict[str, Any]:
+        """Return sanitized runtime settings relevant to latency/debugging."""
+        settings = self._load_claude_settings()
+        env = settings.get("env", {}) if isinstance(settings, dict) else {}
+        base_url = str(env.get("ANTHROPIC_BASE_URL", "")).strip()
+        resolved_model = str(env.get("ANTHROPIC_DEFAULT_OPUS_MODEL", self.model)).strip()
+        return {
+            "cli_path": self.cli_path,
+            "configured_model": self.model,
+            "resolved_model": resolved_model or self.model,
+            "mode": self.mode,
+            "use_bare": self.use_bare,
+            "no_session_persistence": self.no_session_persistence,
+            "custom_base_url": base_url,
+            "settings_path": str(self._settings_path()),
+            "has_custom_backend": bool(base_url),
+            "has_model_remap": resolved_model not in {"", self.model},
+        }
+
     # ---------------------------------------------------------------
     # Synchronous mode (blocking, kept for backward compat)
     # ---------------------------------------------------------------
 
     def invoke(self, prompt: str, timeout: int = 180, **kwargs: Any) -> AdapterResponse:
         """Call Claude CLI with a prompt and return the output (blocking)."""
-        cmd = [self.cli_path, "--model", self.model, "-p", prompt]
-        cmd.extend(self._mandatory_flags)
-        cmd.extend(self.extra_flags)
-
-        logger.info("Calling Claude CLI (model=%s, timeout=%ds)", self.model, timeout)
-        logger.debug("Claude CLI command: %s (prompt: %d chars)", cmd[:2], len(prompt))
+        cmd, output_mode = self._build_command(
+            prompt,
+            json_schema=kwargs.get("json_schema"),
+        )
+        logger.info("Calling Claude CLI (model=%s, timeout=%ds, mode=%s)", self.model, timeout, output_mode)
+        logger.debug("Claude CLI command: %s (prompt: %d chars)", cmd[:8], len(prompt))
         start = time.monotonic()
 
         try:
@@ -64,10 +93,10 @@ class ClaudePlannerCli(BaseAdapter):
                 timeout=timeout,
             )
             duration = time.monotonic() - start
-            output = result.stdout.strip()
+            output = self._render_output(result.stdout or "", output_mode)
+            stderr = (result.stderr or "").strip()
 
             if result.returncode != 0:
-                stderr = result.stderr.strip()
                 logger.warning("Claude CLI returned exit code %d: %s", result.returncode, stderr[:200])
                 return AdapterResponse(
                     success=False,
@@ -106,14 +135,14 @@ class ClaudePlannerCli(BaseAdapter):
                 error=f"CLI not found: {self.cli_path}",
             )
 
-        except Exception as e:
+        except Exception as exc:
             duration = time.monotonic() - start
-            logger.error("Claude CLI unexpected error: %s", e)
+            logger.error("Claude CLI unexpected error: %s", exc)
             return AdapterResponse(
                 success=False,
                 raw_output="",
                 exit_code=-1,
-                error=str(e),
+                error=str(exc),
                 duration_seconds=duration,
             )
 
@@ -123,25 +152,23 @@ class ClaudePlannerCli(BaseAdapter):
 
     def start(self, prompt: str, **kwargs: Any) -> ProcessHandle:
         """Launch Claude CLI as a background process. Returns immediately."""
-        cmd = [self.cli_path, "--model", self.model, "-p", prompt]
-        cmd.extend(self._mandatory_flags)
-        cmd.extend(self.extra_flags)
-
-        logger.info("Starting Claude CLI (model=%s) as background process", self.model)
-        logger.debug("Claude CLI command: %s (prompt: %d chars)", cmd[:3], len(prompt))
+        cmd, output_mode = self._build_command(
+            prompt,
+            json_schema=kwargs.get("json_schema"),
+        )
+        logger.info("Starting Claude CLI (model=%s, mode=%s) as background process", self.model, output_mode)
+        logger.debug("Claude CLI command: %s (prompt: %d chars)", cmd[:10], len(prompt))
 
         process = subprocess.Popen(
             cmd,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            text=True,
-            bufsize=1,
+            text=False,
+            bufsize=0,
         )
 
-        # Set stdout to non-blocking
-        fd = process.stdout.fileno()
-        flags = fcntl.fcntl(fd, fcntl.F_GETFL)
-        fcntl.fcntl(fd, fcntl.F_SETFL, flags | os.O_NONBLOCK)
+        self._set_nonblocking(process.stdout)
+        self._set_nonblocking(process.stderr)
 
         logger.info("Started Claude CLI pid=%d", process.pid)
         return ProcessHandle(
@@ -149,51 +176,144 @@ class ClaudePlannerCli(BaseAdapter):
             task_id=kwargs.get("task_id", "planner"),
             worker_id="planner",
             started_at=time.monotonic(),
+            metadata={
+                "output_mode": output_mode,
+                "stream_buffer": "",
+                "stream_event_count": 0,
+                "raw_stdout": "",
+                "raw_stderr": "",
+                "command": cmd,
+            },
         )
 
     def check(self, handle: ProcessHandle) -> tuple[str, bool]:
-        """Non-blocking check on a running planner process.
-
-        Returns (new_output_since_last_check, is_finished).
-        """
-        new_output = ""
+        """Non-blocking check on a running planner process."""
         proc = handle.process
         if proc is None:
             return "", True
 
-        # Non-blocking read from stdout
-        try:
-            fd = proc.stdout.fileno()
-            chunk = os.read(fd, 65536)
-            if chunk:
-                new_output = chunk.decode("utf-8", errors="replace")
-        except (BlockingIOError, OSError):
-            pass  # no data available yet
+        stdout_fragment = self._read_available(proc.stdout)
+        stderr_fragment = self._read_available(proc.stderr) if self.capture_stderr_live else ""
+
+        rendered_fragment = self._consume_stdout_fragment(handle, stdout_fragment)
+        if stderr_fragment:
+            handle.partial_error_output += stderr_fragment
+            handle.metadata["raw_stderr"] = handle.metadata.get("raw_stderr", "") + stderr_fragment
 
         is_finished = proc.poll() is not None
 
         if is_finished:
-            # Drain remaining stdout
-            try:
-                remaining = proc.stdout.read()
-                if remaining:
-                    new_output += remaining
-            except Exception:
-                pass
-
-            # Read stderr for error reporting
-            try:
-                stderr_output = proc.stderr.read() or ""
-            except Exception:
-                stderr_output = ""
-
+            final_stdout = self._read_remaining(proc.stdout)
+            final_stderr = self._read_remaining(proc.stderr)
+            if final_stdout:
+                rendered_fragment += self._consume_stdout_fragment(handle, final_stdout)
+            if final_stderr:
+                handle.partial_error_output += final_stderr
+                handle.metadata["raw_stderr"] = handle.metadata.get("raw_stderr", "") + final_stderr
             proc.wait()
-
-            if proc.returncode and proc.returncode != 0 and stderr_output:
+            if proc.returncode and proc.returncode != 0:
                 logger.warning(
                     "Planner pid=%d exited %d: %s",
-                    proc.pid, proc.returncode, stderr_output[:200],
+                    proc.pid, proc.returncode, handle.partial_error_output[:200],
                 )
 
-        handle.partial_output += new_output
-        return new_output, is_finished
+        return rendered_fragment, is_finished
+
+    # ---------------------------------------------------------------
+    # Internal helpers
+    # ---------------------------------------------------------------
+
+    def _build_command(self, prompt: str, *, json_schema: str | None = None) -> tuple[list[str], str]:
+        output_mode = "text"
+        cmd = [self.cli_path, "--model", self.model, "-p", prompt]
+
+        if self.use_bare:
+            cmd.append("--bare")
+        if self.no_session_persistence:
+            cmd.append("--no-session-persistence")
+
+        if self.mode == "batch_json":
+            output_mode = "stream-json"
+            cmd.extend(["--output-format", "stream-json", "--include-partial-messages"])
+            if json_schema:
+                cmd.extend(["--json-schema", json_schema])
+
+        cmd.extend(self._mandatory_flags)
+        cmd.extend(self.extra_flags)
+        return cmd, output_mode
+
+    def _consume_stdout_fragment(self, handle: ProcessHandle, fragment: str) -> str:
+        if not fragment:
+            return ""
+
+        handle.metadata["raw_stdout"] = handle.metadata.get("raw_stdout", "") + fragment
+        output_mode = str(handle.metadata.get("output_mode", "text"))
+        rendered_fragment = fragment
+        if output_mode == "stream-json":
+            rendered_fragment, buffer, event_count = consume_stream_fragment(
+                fragment,
+                str(handle.metadata.get("stream_buffer", "")),
+            )
+            handle.metadata["stream_buffer"] = buffer
+            handle.metadata["stream_event_count"] = int(handle.metadata.get("stream_event_count", 0)) + event_count
+
+        handle.partial_output += rendered_fragment
+        return rendered_fragment
+
+    @staticmethod
+    def _render_output(stdout: str, output_mode: str) -> str:
+        if output_mode != "stream-json":
+            return stdout.strip()
+        rendered, buffer, _event_count = consume_stream_fragment(stdout, "")
+        if buffer.strip():
+            rendered += buffer
+        return rendered.strip()
+
+    @staticmethod
+    def _set_nonblocking(pipe: Any) -> None:
+        if pipe is None:
+            return
+        fd = pipe.fileno()
+        flags = fcntl.fcntl(fd, fcntl.F_GETFL)
+        fcntl.fcntl(fd, fcntl.F_SETFL, flags | os.O_NONBLOCK)
+
+    @staticmethod
+    def _read_available(pipe: Any) -> str:
+        if pipe is None:
+            return ""
+        try:
+            chunk = os.read(pipe.fileno(), 65536)
+        except (BlockingIOError, OSError):
+            return ""
+        if not chunk:
+            return ""
+        return chunk.decode("utf-8", errors="replace")
+
+    @staticmethod
+    def _read_remaining(pipe: Any) -> str:
+        if pipe is None:
+            return ""
+        fragments: list[str] = []
+        while True:
+            try:
+                chunk = os.read(pipe.fileno(), 65536)
+            except OSError:
+                break
+            if not chunk:
+                break
+            fragments.append(chunk.decode("utf-8", errors="replace"))
+        return "".join(fragments)
+
+    @staticmethod
+    def _settings_path() -> Path:
+        return Path.home() / ".claude" / "settings.json"
+
+    def _load_claude_settings(self) -> dict[str, Any]:
+        settings_path = self._settings_path()
+        if not settings_path.exists():
+            return {}
+        try:
+            return json.loads(settings_path.read_text(encoding="utf-8"))
+        except Exception as exc:
+            logger.debug("Failed to read Claude settings %s: %s", settings_path, exc)
+            return {}

@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import MagicMock
 
 from app.models import OrchestratorState, ProcessInfo, StopReason, Task, TaskResult, TaskStatus
 from app.plan_models import PlanTask, ResearchPlan, TaskReport
+from app.planner_runtime import PlannerRunSnapshot
 from app.plan_prompts import build_plan_repair_prompt, build_plan_revision_prompt
 from app.plan_store import PlanStore
 from app.plan_validation import PlanRepairRequest, PlanValidationError
@@ -22,6 +24,12 @@ def _make_service(*, worker_ids: list[str] | None = None) -> tuple[PlanOrchestra
         mcp_review=SimpleNamespace(max_problems_in_context=10),
         plan_task_timeout_seconds=600,
         worker_adapter=SimpleNamespace(cli_path="qwen"),
+        planner_adapter=SimpleNamespace(
+            soft_timeout_seconds=300,
+            hard_timeout_seconds=900,
+            no_first_byte_seconds=180,
+            model="opus",
+        ),
     )
     orch._research_context_text = None
     orch._mcp_scanner = None
@@ -446,3 +454,77 @@ def test_build_plan_repair_prompt_includes_validation_errors() -> None:
     assert "Repair Rules" in prompt
     assert "legacy_placeholder" in prompt
     assert "<run_id>" in prompt
+
+
+def test_plan_sleep_shortens_while_planner_running() -> None:
+    svc, orch = _make_service()
+    svc.planner_service.is_running = True
+    orch.scheduler.sleep_interval.return_value = 120
+
+    svc._plan_sleep()
+
+    orch.scheduler.sleep.assert_called_once_with(seconds=30)
+
+
+def test_handle_planner_timeout_retries_once() -> None:
+    svc, orch = _make_service()
+    snapshot = PlannerRunSnapshot(
+        request_type="create",
+        request_version=1,
+        attempt_number=1,
+        prompt_length=6000,
+        timeout_retry_count=0,
+    )
+    svc.planner_service.terminate_plan_run.return_value = snapshot
+    svc.planner_service.restart_plan_request.return_value = True
+    svc._plan_store.save_planner_run.return_value = Path("/tmp/planner_run.json")
+
+    svc._handle_planner_timeout(snapshot)
+
+    assert svc._terminal_stop_reason is None
+    svc.planner_service.restart_plan_request.assert_called_once()
+    orch.notification_service.send_error.assert_called_once()
+
+
+def test_handle_planner_timeout_stops_after_retry_budget() -> None:
+    svc, orch = _make_service()
+    snapshot = PlannerRunSnapshot(
+        request_type="repair",
+        request_version=1,
+        attempt_number=2,
+        prompt_length=14000,
+        timeout_retry_count=1,
+    )
+    svc.planner_service.terminate_plan_run.return_value = snapshot
+    svc._plan_store.save_planner_run.return_value = Path("/tmp/planner_run.json")
+
+    svc._handle_planner_timeout(snapshot)
+
+    assert svc._terminal_stop_reason == StopReason.PLANNER_TIMEOUT
+    orch.notification_service.send_error.assert_called_once()
+
+
+def test_check_silent_workers_classifies_stderr_only() -> None:
+    svc, _orch = _make_service()
+    task = Task(
+        task_id="task-1",
+        status=TaskStatus.RUNNING,
+        assigned_worker_id="qwen-1",
+        metadata={"plan_mode": True},
+    )
+    svc.state.add_task(task)
+    svc.state.processes.append(
+        ProcessInfo(
+            task_id="task-1",
+            worker_id="qwen-1",
+            pid=123,
+            started_at=datetime(2026, 4, 6, 12, 0, tzinfo=timezone.utc).isoformat(),
+            partial_output="",
+            partial_error_output="auth warning",
+        )
+    )
+    handle = MagicMock()
+    handle.process.poll.return_value = None
+    svc.worker_service._active_handles = {"task-1": handle}
+
+    svc._check_silent_workers()

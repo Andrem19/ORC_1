@@ -34,6 +34,8 @@ class ProcessHandle:
     worker_id: str
     started_at: float = field(default_factory=_time.monotonic)
     partial_output: str = ""
+    partial_error_output: str = ""
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 class BaseAdapter(ABC):

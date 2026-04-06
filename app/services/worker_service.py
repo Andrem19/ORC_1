@@ -140,6 +140,7 @@ class WorkerService:
 
         new_output, is_finished = self.adapter.check(handle)
         process_info.partial_output = handle.partial_output
+        process_info.partial_error_output = handle.partial_error_output
 
         if new_output:
             logger.debug(
@@ -162,15 +163,18 @@ class WorkerService:
         # Non-zero exit code → error
         if process_info.returncode is not None and process_info.returncode != 0:
             logger.warning(
-                "Task %s worker exited with code %d",
-                task.task_id, process_info.returncode,
+                "Task %s worker exited with code %d (stderr=%s)",
+                task.task_id, process_info.returncode, process_info.partial_error_output[:200],
             )
             return TaskResult(
                 task_id=task.task_id,
                 worker_id=task.assigned_worker_id or "unknown",
                 status="error",
-                error=f"Worker exited with code {process_info.returncode}",
-                raw_output=full_output[:500],
+                error=(
+                    process_info.partial_error_output[:500]
+                    or f"Worker exited with code {process_info.returncode}"
+                ),
+                raw_output=full_output,
             ), True
 
         # Parse successful output

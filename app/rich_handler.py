@@ -1,9 +1,9 @@
 """
 Rich console handler and progress manager for the orchestrator.
 
-RichConsoleHandler: Emits styled log records via rich.console.Console.
-ProgressManager:    Singleton that manages Rich Live/Progress displays for
-                    sleep countdown, planner tracking, and worker tracking.
+Uses a single shared Console so that Rich's Live display and logging
+automatically coordinate: log messages print above the progress area,
+and the progress bar stays at the bottom.
 """
 
 from __future__ import annotations
@@ -27,6 +27,20 @@ from rich.text import Text
 
 from app.rich_formatter import _extract_event_tag, RichFormatter
 from app.models import OrchestratorEvent
+
+# ---------------------------------------------------------------------------
+# Shared Console — one instance for the entire process
+# ---------------------------------------------------------------------------
+
+_shared_console: Console | None = None
+
+
+def get_console() -> Console:
+    global _shared_console
+    if _shared_console is None:
+        _shared_console = Console()
+    return _shared_console
+
 
 # ---------------------------------------------------------------------------
 # Console suppression — messages hidden from console (still in file log)
@@ -54,9 +68,8 @@ def _should_suppress(record: logging.LogRecord) -> bool:
 
 
 def _short(text: str, max_len: int = 60) -> str:
-    """Truncate text keeping first line only."""
     text = text.replace("\n", " ").strip()
-    return text[:max_len - 3] + "..." if len(text) > max_len else text
+    return text[: max_len - 3] + "..." if len(text) > max_len else text
 
 
 # ---------------------------------------------------------------------------
@@ -65,7 +78,12 @@ def _short(text: str, max_len: int = 60) -> str:
 
 
 class RichConsoleHandler(logging.Handler):
-    """Logging handler that outputs styled messages via Rich Console."""
+    """Logging handler that prints styled messages via the shared Console.
+
+    No manual Live coordination needed — when ProgressManager's Live is
+    active on the same Console, Rich automatically pauses it, prints the
+    log line, then resumes the progress display.
+    """
 
     def __init__(
         self,
@@ -73,7 +91,7 @@ class RichConsoleHandler(logging.Handler):
         truncate_length: int = 300,
     ) -> None:
         super().__init__()
-        self.console = console or Console()
+        self.console = console or get_console()
         self._formatter = RichFormatter(truncate_length=truncate_length)
 
     def emit(self, record: logging.LogRecord) -> None:
@@ -81,12 +99,7 @@ class RichConsoleHandler(logging.Handler):
             self.acquire()
             if _should_suppress(record):
                 return
-            pm = ProgressManager._instance
-            if pm and pm._live is not None:
-                with pm._live:
-                    self._print_record(record)
-            else:
-                self._print_record(record)
+            self._print_record(record)
         finally:
             self.release()
 
@@ -105,18 +118,21 @@ class RichConsoleHandler(logging.Handler):
 
 
 class ProgressManager:
-    """Singleton: owns Rich Live display and coordinates progress bars.
+    """Singleton that owns the Rich Live + Progress display.
+
+    Uses the *same* shared Console as RichConsoleHandler so Rich can
+    coordinate log output and progress bars automatically.
 
     Tracks:
-    - Sleep countdown (blue determinate bar)
-    - Planner wait (yellow spinner — "Claude Code (opus) — <action>")
-    - Active workers (green spinners — "qwen-1 — <task description>")
+    - Sleep countdown  (blue,   determinate bar)
+    - Planner wait     (yellow, indeterminate spinner)
+    - Active workers   (green,  indeterminate spinners, one per worker)
     """
 
     _instance: ClassVar[ProgressManager | None] = None
 
     def __init__(self, console: Console | None = None) -> None:
-        self.console = console or Console()
+        self.console = console or get_console()
         self._live: Live | None = None
         self._progress = Progress(
             SpinnerColumn(),
@@ -192,11 +208,6 @@ class ProgressManager:
         model: str = "",
         action: str = "Planning next action",
     ) -> None:
-        """Show a yellow spinner while waiting for the planner.
-
-        action: short description of what the planner is doing
-                (e.g. "Creating research plan v3", "Analyzing results").
-        """
         label = "[bold yellow]Claude Code"
         if model:
             label += f" ({model})"
@@ -205,8 +216,7 @@ class ProgressManager:
         self._planner_task = self._progress.add_task(label, total=None)
 
     def update_planner_wait(self, output_chars: int = 0) -> None:
-        # Elapsed time is shown by TimeElapsedColumn automatically
-        pass
+        pass  # TimeElapsedColumn handles elapsed automatically
 
     def stop_planner_wait(self) -> None:
         if self._planner_task is not None:
@@ -222,10 +232,6 @@ class ProgressManager:
         pid: int | None = None,
         description: str = "",
     ) -> None:
-        """Show a green spinner for an active worker.
-
-        description: short task description (e.g. "Run backtest for snapshot X").
-        """
         label = f"[bold green]{worker_id}"
         if pid:
             label += f" (pid={pid})"

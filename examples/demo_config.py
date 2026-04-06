@@ -41,7 +41,7 @@ demo_config = OrchestratorConfig(
 
     worker_adapter=AdapterConfig(
         name="qwen_worker_cli",
-        cli_path="qwen-code",
+        cli_path="qwen",
     ),
 
     state_dir="state",

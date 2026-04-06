@@ -14,6 +14,12 @@ import random
 from typing import Any
 
 from app.plan_models import ResearchPlan, TaskReport
+from app.plan_prompt_budget import (
+    compact_repair_context,
+    compact_reports_for_revision,
+    summarize_plan_for_markdown,
+    truncate_text,
+)
 from app.plan_validation import PlanRepairRequest
 
 
@@ -69,6 +75,8 @@ WORKER_REPORT_SCHEMA = """{
   "mcp_problems": [{"tool_name": "...", "description": "...", "suggestion": "...", "severity": "low|medium|high"}]
 }"""
 
+MAX_CREATE_TASKS = 5
+
 
 # ---------------------------------------------------------------------------
 # Planner prompts
@@ -89,122 +97,76 @@ def build_plan_creation_prompt(
     """
     parts: list[str] = []
 
-    parts.append("## Your Role")
-    parts.append(
-        "You are the research director. Your job is to write a STRUCTURED RESEARCH PLAN "
-        "that will be executed by worker agents. The plan must contain MULTIPLE numbered "
-        "stages (ETAPs), each with theory, specific instructions, results table schema, "
-        "and quantitative decision gates."
-    )
+    parts.append("## Role")
+    parts.append("Write a concise, executable research plan for worker agents.")
     parts.append("")
 
-    parts.append("## Global Goal")
-    parts.append(goal)
+    parts.append("## Goal")
+    parts.append(truncate_text(goal, 500))
     parts.append("")
 
-    # Research context (MCP state, baseline metrics, available tools)
     if research_context:
-        parts.append(research_context)
+        parts.append("## Context")
+        parts.append(truncate_text(research_context, 2200))
         parts.append("")
 
-    # Cumulative knowledge from all previous plans
     if cumulative_summary:
-        parts.append("## Cumulative Knowledge (from all previous plan versions)")
-        parts.append(cumulative_summary)
+        parts.append("## Cumulative Knowledge")
+        parts.append(truncate_text(cumulative_summary, 900))
         parts.append("")
 
-    # Anti-patterns — what NOT to do
     if anti_patterns:
-        parts.append("## Anti-Patterns (DO NOT repeat these approaches)")
-        parts.append(
-            "These approaches have been PROVEN to fail. Never include them in your plan:"
-        )
-        parts.append("")
+        parts.append("## Anti-Patterns")
         for ap in anti_patterns:
             parts.append(
-                f"- **{ap.get('category', '?')}**: {ap.get('description', '')} "
-                f"({ap.get('evidence_count', '?')} failures — {ap.get('evidence_summary', '')})"
+                f"- {ap.get('category', '?')}: "
+                f"{truncate_text(str(ap.get('description', '')), 140)} "
+                f"({ap.get('evidence_count', '?')} failures)"
             )
         parts.append("")
 
-    # Previous plan (for revision context)
     if previous_plan_markdown:
         parts.append("## Previous Plan")
-        parts.append(previous_plan_markdown)
+        parts.append(truncate_text(previous_plan_markdown, 1200))
         parts.append("")
 
-    # Known MCP problems
     if mcp_problem_summary:
         parts.append("## Known MCP Problems (avoid these mistakes)")
-        parts.append(mcp_problem_summary)
+        parts.append(truncate_text(mcp_problem_summary, 900))
         parts.append("")
 
-    # Workers available
     if worker_ids:
         shuffled = list(worker_ids)
         random.shuffle(shuffled)
-        parts.append("## Available Workers")
+        parts.append("## Workers")
         parts.append(", ".join(shuffled))
-        parts.append("Distribute tasks across workers for parallelism.")
         parts.append("")
 
-    # Plan structure instructions
-    parts.append("## Plan Structure Requirements")
+    parts.append("## Requirements")
     parts.append(
-        "Your plan MUST follow this structure:\n"
-        "\n"
-        "1. **Header**: Frozen base reference (immutable), goal of this version\n"
-        "2. **Principles**: 3-5 rules that govern this plan version\n"
-        "3. **Cumulative Summary**: What has been proven so far (carry forward + update)\n"
-        "4. **Anti-Patterns**: What categorically does NOT work (add new ones if evidence exists)\n"
-        "5. **Numbered Stages (ETAP 0, ETAP 1, ...)**, each with:\n"
-        "   - **Theory**: 2-5 sentences on why this hypothesis is worth testing\n"
-        "   - **Depends On**: list of prerequisite stage numbers that must resolve first\n"
-        "   - **Agent Instructions**: Numbered, SPECIFIC steps with EXACT MCP tool calls,\n"
-        "     snapshot IDs, parameters. Workers need exact tool_name(action='...', param=value) syntax.\n"
-        "   - **Results Table Columns**: Define what metrics the worker must report\n"
-        "   - **Decision Gates**: Quantitative accept/reject criteria\n"
-        "6. **Dependencies / Parallelism**: Stages with satisfied dependencies may run in parallel\n"
+        f"- Return at most {MAX_CREATE_TASKS} stages.\n"
+        "- Prefer fewer, higher-value stages over exhaustive plans.\n"
+        "- Use `depends_on` as the only execution contract.\n"
+        "- Each stage must be executable with exact MCP calls and parameters.\n"
+        "- `plan_markdown` must be concise and summarize the plan instead of duplicating every detail.\n"
+        "- Stages with satisfied dependencies may run in parallel.\n"
     )
     parts.append("")
 
-    parts.append("## Key Principles for Good Plans")
+    parts.append("## Execution Rules")
     parts.append(
-        "- Each stage should be a SUBSTANTIAL task (not a single tool call, but a coherent investigation)\n"
-        "- Give workers EXACT parameters: snapshot IDs, feature names, timeframes, thresholds\n"
         "- Use symbolic refs ONLY for future outputs: {{stage:N.run_id}}, {{stage:N.snapshot_ref}}, {{stage:N.results_table[0].column}}\n"
-        "- NEVER emit placeholders like <best_snapshot_id>, ellipses, or incomplete tool calls\n"
-        "- Include CODE SNIPPETS for signal logic when applicable\n"
-        "- Define clear VERDICT criteria: PROMOTE (confirmed improvement), WATCHLIST (promising but needs more evidence), REJECT (failed)\n"
-        "- Group related hypotheses into families\n"
-        "- Never repeat approaches from the anti-patterns list\n"
-        "- Reference the frozen base explicitly when comparing results\n"
-    )
-    parts.append("")
-    parts.append(
-        "## Decision Gate Best Practices\n"
-        "- NEVER use comparator='eq' with threshold=1.0 for tool_success_rate — "
-        "async operations like datasets_sync time out regularly.\n"
-        "- Use comparator='gte' with threshold=0.7 or higher for success rates.\n"
-        "- Infrastructure stages (Stage 0) should have permissive gates: "
-        "if the core research pipeline is functional, PROMOTE.\n"
+        "- NEVER emit placeholders like <best_snapshot_id>, <run_id>, <v>, ellipses, or incomplete tool calls.\n"
+        "- Use concrete IDs only when already known from context.\n"
+        "- Define clear verdict criteria: PROMOTE, WATCHLIST, REJECT.\n"
     )
     parts.append("")
 
-    parts.append("## Required Output Format")
-    parts.append("Respond ONLY with a JSON object matching this schema:")
+    parts.append("## Output")
+    parts.append("Respond with JSON only matching this schema:")
     parts.append("```json")
     parts.append(PLANNER_PLAN_SCHEMA)
     parts.append("```")
-    parts.append("")
-    parts.append(
-        "IMPORTANT: The `plan_markdown` field must contain the FULL plan document as "
-        "a single string (use \\n for line breaks). This is saved as plan_vN.md for "
-        "future reference. The `tasks` array provides structured metadata for dispatch. "
-        "Each task MUST include explicit `depends_on` stage numbers. A task with "
-        "`depends_on: []` is ready immediately. Tasks whose dependencies are satisfied "
-        "may run in parallel."
-    )
     parts.append("")
     parts.append("## Symbolic Reference Contract")
     parts.append(
@@ -250,7 +212,8 @@ def build_plan_revision_prompt(
     parts.append("")
 
     if research_context:
-        parts.append(research_context)
+        parts.append("## Context")
+        parts.append(truncate_text(research_context, 1800))
         parts.append("")
 
     if current_plan.baseline_run_id or current_plan.baseline_metrics:
@@ -266,52 +229,15 @@ def build_plan_revision_prompt(
     # Current plan
     parts.append(f"## Current Plan (v{current_plan.version})")
     if current_plan.plan_markdown:
-        parts.append(current_plan.plan_markdown)
+        parts.append(truncate_text(current_plan.plan_markdown, 1600))
     else:
         parts.append(f"Goal: {current_plan.goal}")
         parts.append(f"Frozen base: {current_plan.frozen_base}")
     parts.append("")
 
-    # Worker reports
     parts.append("## Worker Reports")
-    parts.append(
-        "These are the results from workers who executed tasks in the current plan:"
-    )
+    parts.append(compact_reports_for_revision(reports))
     parts.append("")
-    for report in reports:
-        parts.append(f"### Task Report (stage from plan_v{report.plan_version})")
-        parts.append(f"- **Worker**: {report.worker_id}")
-        parts.append(f"- **Status**: {report.status}")
-        parts.append(f"- **Confidence**: {report.confidence}")
-        parts.append(f"- **Verdict**: {report.verdict}")
-        parts.append("")
-        if report.what_was_requested:
-            parts.append(f"**What was requested**: {report.what_was_requested}")
-            parts.append("")
-        if report.what_was_done:
-            parts.append(f"**What was done**: {report.what_was_done}")
-            parts.append("")
-        if report.results_table:
-            parts.append("**Results Table**:")
-            # Render as markdown table
-            if report.results_table:
-                cols = list(report.results_table[0].keys())
-                parts.append("| " + " | ".join(cols) + " |")
-                parts.append("| " + " | ".join("---" for _ in cols) + " |")
-                for row in report.results_table:
-                    parts.append("| " + " | ".join(str(row.get(c, "")) for c in cols) + " |")
-            parts.append("")
-        if report.key_metrics:
-            parts.append("**Key Metrics**:")
-            for k, v in report.key_metrics.items():
-                parts.append(f"- {k}: {v}")
-            parts.append("")
-        if report.error:
-            parts.append(f"**Error**: {report.error}")
-            parts.append("")
-        if report.artifacts:
-            parts.append(f"**Artifacts**: {', '.join(report.artifacts)}")
-            parts.append("")
 
     # Anti-patterns
     if anti_patterns:
@@ -354,8 +280,8 @@ def build_plan_revision_prompt(
     )
     parts.append("")
 
-    parts.append("## Required Output Format")
-    parts.append("Respond ONLY with a JSON object matching this schema:")
+    parts.append("## Output")
+    parts.append("Respond with JSON only matching this schema:")
     parts.append("```json")
     parts.append(PLANNER_PLAN_SCHEMA)
     parts.append("```")
@@ -370,20 +296,21 @@ def build_plan_repair_prompt(
     mcp_problem_summary: str | None = None,
 ) -> str:
     """Build the prompt for repairing one invalid planner output."""
+    invalid_payload, valid_summary = compact_repair_context(repair_request)
     parts: list[str] = []
 
-    parts.append("## Your Role")
+    parts.append("## Role")
     parts.append(
-        "You are repairing an INVALID research plan. Keep the plan structure and intent, "
-        "but patch only the invalid parts so the orchestrator can execute it."
+        "Repair an invalid research plan. Patch only the broken parts and keep the overall intent."
     )
     parts.append("")
-    parts.append("## Global Goal")
-    parts.append(repair_request.goal)
+    parts.append("## Goal")
+    parts.append(truncate_text(repair_request.goal, 500))
     parts.append("")
 
     if research_context:
-        parts.append(research_context)
+        parts.append("## Context")
+        parts.append(truncate_text(research_context, 1600))
         parts.append("")
 
     if mcp_problem_summary:
@@ -405,6 +332,7 @@ def build_plan_repair_prompt(
         "- Use `depends_on` as the only dependency contract\n"
         "- Use symbolic refs like {{stage:N.run_id}} for future outputs\n"
         "- NEVER emit <...> placeholders, ellipses, or incomplete tool calls\n"
+        f"- Keep the existing stage count; do not expand beyond {len(repair_request.invalid_plan_data.get('tasks', []))} stages\n"
         "- Respond with a COMPLETE corrected plan JSON, not a patch diff"
     )
     parts.append("")
@@ -416,17 +344,24 @@ def build_plan_repair_prompt(
         )
     parts.append("")
 
-    parts.append("## Invalid Plan Payload")
+    if valid_summary:
+        parts.append("## Valid Stage Summary")
+        parts.append(valid_summary)
+        parts.append("")
+
+    parts.append("## Invalid Stage Fragments")
     parts.append("```json")
-    parts.append(json.dumps(repair_request.invalid_plan_data, ensure_ascii=False, indent=2))
+    parts.append(invalid_payload)
     parts.append("```")
     parts.append("")
 
-    parts.append("## Required Output Format")
-    parts.append("Respond ONLY with a JSON object matching this schema:")
+    parts.append("## Output")
+    parts.append("Respond with JSON only matching this schema:")
     parts.append("```json")
     parts.append(PLANNER_PLAN_SCHEMA)
     parts.append("```")
+    parts.append("")
+    parts.append("`plan_markdown` must be concise and summarize the corrected plan rather than duplicating every task detail.")
 
     return "\n".join(parts)
 
