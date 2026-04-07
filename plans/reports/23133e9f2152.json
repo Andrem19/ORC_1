@@ -1,0 +1,34 @@
+{
+  "task_id": "23133e9f2152",
+  "worker_id": "qwen-3",
+  "plan_version": 3,
+  "status": "partial",
+  "what_was_requested": "cf_cumulative_delta standalone backtest v3: build feature, clone snapshot, add cf_cumulative_delta gate, run full-history backtest, record results",
+  "what_was_done": "1) Verified cf_cumulative_delta exists in BTCUSDT_1h feature dataset (54864 rows, healthy). 2) Cloned active-signal-v1 into test_cumdelta_v3 snapshot. 3) Validated signal_long: dow in [0,1,2,3,6] and sum([iv_est in [3,4], rsi in [1], hour in [6], cl_1h in [2]])>=3 and cf_cumulative_delta > 0. 4) Validated signal_short: dow in [3] and sum([cl_1d in [2], cl_15m in [3], cl_1h in [1], hour in [15]])>=2 and cf_cumulative_delta < 0. 5) Saved version 2 of test_cumdelta_v3 with new signal logic. 6) backtests_plan timed out. 7) All dev_space1 MCP tools disappeared from registry after timeout — session corrupted.",
+  "results_table": [],
+  "key_metrics": {
+    "snapshot_id": "test_cumdelta_v3",
+    "version": 2,
+    "signal_long_validated": true,
+    "signal_short_validated": true,
+    "backtest_executed": false,
+    "mcp_timeout_on": "backtests_plan"
+  },
+  "artifacts": [
+    "test_cumdelta_v3@2",
+    "plan-v3-orthogonal-dimensions-1e440ac7"
+  ],
+  "confidence": 0.5,
+  "verdict": "PENDING",
+  "error": "MCP session corrupted after backtests_plan timeout (-32001). All dev_space1 tools disappeared from registry. Backtest could not be executed.",
+  "raw_output": "MCP сессия окончательно потеряна после таймаута `backtests_plan`. Все инструменты dev_space1 исчезли из реестра. Это известная проблема инфраструктуры (правило 8 в руководстве).\n\nФиксирую достигнутый прогресс:\n\n**Выполнено:**\n1. ✅ [s1_build] — `cf_cumulative_delta` уже присутствует в датасете BTCUSDT_1h (проверено через `features_dataset(action='inspect')`)\n2. ✅ [s1_clone] — Снапшот `test_cumdelta_v3` успешно склонирован из `active-signal-v1`\n3. ✅ [s1_validate_signal] — Оба сигнала (long/short) с `cf_cumulative_delta` валидированы\n4. ✅ [s1_save] — Версия 2 сохранена с новой логикой сигналов\n5. ❌ [s1_plan] — Таймаут MCP (`backtests_plan`)\n6. ❌ [s1_run] — MCP сессия потеряна, инструмент недоступен\n7. ❌ [s1_inspect] — Невозможно выполнить\n8. ❌ [s1_record] — Невозможно выполнить\n\n**Артефакты:**\n- `snapshot_id`: `test_cumdelta_v3@2`\n- `project_id`: `plan-v3-orthogonal-dimensions-1e440ac7`\n\n**Результаты:** Бэктест не был запущен из-за таймаута MCP на этапе `backtests_plan`. Сигнальная логика валидна, снапшот готов к запуску когда MCP восстановится.\n\n**Вердикт:** PENDING — инфраструктура не позволила завершить бэктест. Сигналы валидны, снапшот готов.\n\n```json\n{\n  \"status\": \"partial\",\n  \"what_was_requested\": \"cf_cumulative_delta standalone backtest v3: build feature, clone snapshot, add cf_cumulative_delta gate, run full-history backtest, record results\",\n  \"what_was_done\": \"1) Verified cf_cumulative_delta exists in BTCUSDT_1h feature dataset (54864 rows, healthy). 2) Cloned active-signal-v1 into test_cumdelta_v3 snapshot. 3) Validated signal_long: dow in [0,1,2,3,6] and sum([iv_est in [3,4], rsi in [1], hour in [6], cl_1h in [2]])>=3 and cf_cumulative_delta > 0. 4) Validated signal_short: dow in [3] and sum([cl_1d in [2], cl_15m in [3], cl_1h in [1], hour in [15]])>=2 and cf_cumulative_delta < 0. 5) Saved version 2 of test_cumdelta_v3 with new signal logic. 6) backtests_plan timed out. 7) All dev_space1 MCP tools disappeared from registry after timeout — session corrupted.\",\n  \"results_table\": [],\n  \"key_metrics\": {\"snapshot_id\": \"test_cumdelta_v3\", \"version\": 2, \"signal_long_validated\": true, \"signal_short_validated\": true, \"backtest_executed\": false, \"mcp_timeout_on\": \"backtests_plan\"},\n  \"artifacts\": [\"test_cumdelta_v3@2\", \"plan-v3-orthogonal-dimensions-1e440ac7\"],\n  \"verdict\": \"PENDING\",\n  \"confidence\": 0.5,\n  \"error\": \"MCP session corrupted after backtests_plan timeout (-32001). All dev_space1 tools disappeared from registry. Backtest could not be executed.\",\n  \"mcp_problems\": [\n    {\n      \"tool_name\": \"backtests_plan\",\n      \"description\": \"MCP error -32001: Request timed out. This caused the entire dev_space1 MCP session to drop, making all tools unavailable.\",\n      \"suggestion\": \"Retry the workflow starting from backtests_runs when MCP session is restored. The snapshot test_cumdelta_v3@2 is ready and validated.\",\n      \"severity\": \"high\"\n    }\n  ]\n}\n```",
+  "mcp_problems": [
+    {
+      "tool_name": "backtests_plan",
+      "description": "MCP error -32001: Request timed out. This caused the entire dev_space1 MCP session to drop, making all tools unavailable.",
+      "suggestion": "Retry the workflow starting from backtests_runs when MCP session is restored. The snapshot test_cumdelta_v3@2 is ready and validated.",
+      "severity": "high"
+    }
+  ],
+  "timestamp": "2026-04-07T20:56:50.449736+00:00"
+}

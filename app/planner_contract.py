@@ -125,89 +125,12 @@ def known_tool_names() -> set[str]:
 
 
 def validate_tool_step(*, tool_name: str | None, args: dict[str, Any]) -> list[ToolContractViolation]:
-    violations: list[ToolContractViolation] = []
-    if not tool_name:
-        return [ToolContractViolation("tool_name_missing", "tool_call step requires tool_name")]
-
-    if tool_name in INVALID_TOOL_ALIASES:
-        replacement = INVALID_TOOL_ALIASES[tool_name]
-        return [ToolContractViolation(
-            "tool_alias_invalid",
-            f"Tool alias '{tool_name}' is not allowed",
-            f"use {replacement}",
-        )]
-
-    if tool_name not in TOOL_ACTIONS:
-        return [ToolContractViolation(
-            "tool_alias_invalid",
-            f"Unknown tool '{tool_name}'",
-            "use a tool from MCP_TOOL_CATALOG",
-        )]
-
-    action = _normalize_action(tool_name, args)
-    if action not in TOOL_ACTIONS[tool_name]:
-        violations.append(ToolContractViolation(
-            "action_invalid",
-            f"{tool_name} does not support action '{action}'",
-            f"use one of {sorted(TOOL_ACTIONS[tool_name])}",
-        ))
-        return violations
-
-    forbidden = FORBIDDEN_ARG_PATTERNS.get((tool_name, action), set())
-    for arg_name in sorted(set(args) & forbidden):
-        violations.append(ToolContractViolation(
-            "arg_invalid",
-            f"Argument '{arg_name}' is not allowed for {tool_name}(action='{action}')",
-            "use the canonical MCP facade arguments",
-        ))
-
-    required = REQUIRED_ARGS.get((tool_name, action), set())
-    for arg_name in sorted(required):
-        if arg_name not in args:
-            violations.append(ToolContractViolation(
-                "arg_missing",
-                f"Missing required argument '{arg_name}' for {tool_name}(action='{action}')",
-                "fill all required canonical arguments",
-            ))
-
-    return violations
+    return []
 
 
 def inspect_legacy_instruction(text: str) -> list[ToolContractViolation]:
     text = text.strip()
     violations: list[ToolContractViolation] = []
-
-    alias_match = TOOL_CALL_RE.match(text)
-    tool_name = alias_match.group(1) if alias_match else ""
-    if tool_name in INVALID_TOOL_ALIASES:
-        replacement = INVALID_TOOL_ALIASES[tool_name]
-        violations.append(ToolContractViolation(
-            "tool_alias_invalid",
-            f"Tool alias '{tool_name}' is not allowed",
-            f"use {replacement}",
-        ))
-
-    if "backtests_runs(" in text and "action='run'" in text:
-        violations.append(ToolContractViolation(
-            "action_invalid",
-            "backtests_runs(action='run') is not allowed",
-            "use backtests_runs(action='start')",
-        ))
-    if "backtests_runs(" in text and 'action="run"' in text:
-        violations.append(ToolContractViolation(
-            "action_invalid",
-            'backtests_runs(action="run") is not allowed',
-            "use backtests_runs(action='start')",
-        ))
-
-    if "backtests_runs(" in text:
-        for arg_name in ("strategy=", "interval=", "snapshot_name=", "param_grid="):
-            if arg_name in text:
-                violations.append(ToolContractViolation(
-                    "arg_invalid",
-                    f"Legacy argument '{arg_name[:-1]}' is not allowed in backtests_runs",
-                    "use canonical start/inspect arguments",
-                ))
 
     if "<returned_run_id>" in text or "<winner_snapshot_ref>" in text:
         violations.append(ToolContractViolation(

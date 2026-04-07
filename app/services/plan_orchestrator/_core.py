@@ -55,6 +55,18 @@ class PlanOrchestratorCore:
         self._worker_ids: list[str] = orch._worker_ids
         self._mcp_scanner: McpProblemScanner | None = orch._mcp_scanner
 
+        # Report compression service
+        from app.services.report_compressor import ReportCompressorService
+        compressor_cfg = getattr(self.config, "report_compressor", None)
+        self._report_compressor = ReportCompressorService(compressor_cfg)
+
+        # LMStudio assistant (optional — log analysis & execution prediction)
+        from app.services.lmstudio_assistant import LMStudioAssistant
+        lmstudio_cfg = getattr(self.config, "lmstudio", None)
+        self._lmstudio: LMStudioAssistant | None = (
+            LMStudioAssistant(lmstudio_cfg) if lmstudio_cfg and lmstudio_cfg.enabled else None
+        )
+
         self._current_plan: ResearchPlan | None = None
         self._next_worker_idx: int = 0
 
@@ -62,6 +74,7 @@ class PlanOrchestratorCore:
         self._mcp_healthy: bool = True
         self._mcp_check_cycle: int = 0
         self._cycles_since_last_real_health_check: int = 0
+        self._mcp_reconnect_attempts: int = 0
 
         # Graceful stop flag (set externally via request_stop)
         self._stop_requested: bool = False
@@ -122,6 +135,7 @@ class PlanOrchestratorCore:
                 return StopReason.NO_PROGRESS
 
             self.state.current_cycle += 1
+            self._mcp_reconnect_attempts = 0
             logger.info(
                 "=== Plan Cycle %d (plan v%d) ===",
                 self.state.current_cycle, self.state.current_plan_version,
@@ -135,6 +149,12 @@ class PlanOrchestratorCore:
 
             # 1. Collect results from running workers (delegates to Orchestrator)
             new_results = orch._collect_results()
+
+            # 1c. Periodic log analysis via LMStudio
+            if self._lmstudio and self.state.current_cycle > 0:
+                interval = self.config.lmstudio.analysis_interval_cycles
+                if self.state.current_cycle % interval == 0:
+                    self._run_log_analysis()
 
             # 1b. Drain mode: wait for running tasks to finish
             if self._drain_mode:
@@ -176,6 +196,7 @@ class PlanOrchestratorCore:
                     self._plan_sleep()
                     continue
 
+                plan_produced = False
                 if is_finished and plan_data is not None:
                     # Stop planner progress spinner
                     from app.rich_handler import ProgressManager
@@ -184,13 +205,20 @@ class PlanOrchestratorCore:
                         pm.stop_planner_wait()
                     self._process_plan_data(plan_data)
                     self._sync_planner_runtime_state(clear=True)
+                    plan_produced = True
 
                 if self._should_check_stop():
                     return self._get_stop_reason()
 
                 orch.save_state()
-                self._plan_sleep()
-                continue
+
+                # If planner just produced a new plan, skip sleep and fall
+                # through to dispatch tasks immediately in this same cycle.
+                if plan_produced and self._current_plan is not None:
+                    pass  # fall through to steps 3-9
+                else:
+                    self._plan_sleep()
+                    continue
 
             # 3. Convert new TaskResults to TaskReports + retry logic
             self._process_plan_results(new_results)
@@ -362,6 +390,29 @@ class PlanOrchestratorCore:
         if self._terminal_stop_reason is not None:
             return self._terminal_stop_reason
         return StopReason(self.state.stop_reason or "no_progress")
+
+    def _run_log_analysis(self) -> None:
+        """Periodic log analysis via LMStudio. Non-blocking with timeout."""
+        try:
+            from pathlib import Path
+            from app.services.log_reader import read_last_n_lines
+
+            log_path = Path(self.config.log_dir) / self.config.log_file
+            lines = read_last_n_lines(log_path, self.config.lmstudio.max_log_lines)
+            if not lines:
+                logger.debug("No log lines to analyze")
+                return
+
+            result = self._lmstudio.analyze_log(lines)  # type: ignore[union-attr]
+            if result:
+                self.notification_service.send_diagnostic_digest(
+                    result.raw_digest, self.state.current_cycle,
+                )
+                logger.info(
+                    "Log analysis digest sent (cycle %d)", self.state.current_cycle,
+                )
+        except Exception as e:
+            logger.warning("Log analysis failed: %s", e)
 
     def _plan_sleep(self) -> None:
         sleep_seconds = self.scheduler.sleep_interval(self.state)

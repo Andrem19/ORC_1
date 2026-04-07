@@ -135,18 +135,20 @@ class PlanStore:
         return plan.cumulative_summary
 
     def load_all_reports_compact(
-        self, current_plan_version: int = 0, max_lines: int = 20
+        self, current_plan_version: int = 0, max_lines: int = 10,
+        max_versions: int = 5,
     ) -> list[str]:
-        """Return compact one-line verdicts from ALL plan versions' reports.
+        """Return compact one-line verdicts from recent plan versions' reports.
 
         Skips the current plan version (those reports are already in the
-        Worker Reports section of the prompt).
+        Worker Reports section of the prompt).  Only the *max_versions* most
+        recent older versions are included to keep prompt size bounded.
         """
         lines: list[str] = []
         versions = self.list_plan_versions()
-        for ver in versions:
-            if ver == current_plan_version:
-                continue
+        older = [v for v in versions if v != current_plan_version]
+        recent_versions = older[-max_versions:] if len(older) > max_versions else older
+        for ver in recent_versions:
             reports = self.load_reports_for_plan(ver)
             for report in reports:
                 verdict = report.verdict or "PENDING"

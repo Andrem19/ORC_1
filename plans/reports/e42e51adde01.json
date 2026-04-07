@@ -1,0 +1,33 @@
+{
+  "task_id": "e42e51adde01",
+  "worker_id": "qwen-2",
+  "plan_version": 3,
+  "status": "success",
+  "what_was_requested": "ETAP 0 bootstrap and verify: system health, feature catalog verification, gold collection check, project setup, hypothesis recording",
+  "what_was_done": "Executed all 6 ETAP 0 steps: (1) system_bootstrap — loaded all 10 mandatory rules + 24 research rules. (2) system_health — all 46 tools registered, 10/10 healthy domains (datasets, features, models, backtests_runs, backtests_snapshots, backtests_research, experiments, research_memory, telegram, system). Queue has 1 stalled backtests_walk_forward operation (id: 20260407-200014-5cc20066) but no recovery required. (3) features_catalog — verified cf_cumulative_delta is published (custom feature, 48-bar volume-weighted buying/selling pressure). Total 27 features available: 6 custom (cf_choppiness_index, cf_cumulative_delta, cf_funding_extreme, cf_return_skew, cf_session_momentum, cf_vol_term_spread), 4 classifiers (cl_15m, cl_1d, cl_1h, cl_4h), 17 builtin. (4) gold_collection — 4 entries: 1 feature (cf_vol_term_spread), 3 snapshots (active-signal-v1@1, candidate_vol_term_spread_v1, candidate_orthogonal_combo_v1). cf_vol_term_spread confirmed present. (5) research_project — created project 'plan-v3-orthogonal-dimensions-1e440ac7' (plan_v3 didn't exist), opened successfully. (6) research_record — recorded v3 hypothesis with 3 orthogonal dimensions: cumulative_delta, trend_acceleration, relative_volume.",
+  "results_table": [],
+  "key_metrics": {
+    "healthy_domains": 10,
+    "registered_tools": 46,
+    "total_features": 27,
+    "custom_features": 6,
+    "cf_cumulative_delta_present": true,
+    "gold_collection_entries": 4,
+    "gold_feature_count": 1,
+    "gold_snapshot_count": 3,
+    "project_id": "plan-v3-orthogonal-dimensions-1e440ac7",
+    "hypothesis_node_id": "node-22762fd616ac432d9413e517f1a17c03",
+    "queue_stalled_operations": 1
+  },
+  "artifacts": [
+    "plan-v3-orthogonal-dimensions-1e440ac7",
+    "node-22762fd616ac432d9413e517f1a17c03",
+    "branch-4e3903e145d04ba29d6be95a7ff94e30"
+  ],
+  "confidence": 0.95,
+  "verdict": "PROMOTE",
+  "error": "",
+  "raw_output": "Все шаги ETAP 0 выполнены. Формирую итоговый отчёт:\n\n```json\n{\n  \"status\": \"success\",\n  \"what_was_requested\": \"ETAP 0 bootstrap and verify: system health, feature catalog verification, gold collection check, project setup, hypothesis recording\",\n  \"what_was_done\": \"Executed all 6 ETAP 0 steps: (1) system_bootstrap — loaded all 10 mandatory rules + 24 research rules. (2) system_health — all 46 tools registered, 10/10 healthy domains (datasets, features, models, backtests_runs, backtests_snapshots, backtests_research, experiments, research_memory, telegram, system). Queue has 1 stalled backtests_walk_forward operation (id: 20260407-200014-5cc20066) but no recovery required. (3) features_catalog — verified cf_cumulative_delta is published (custom feature, 48-bar volume-weighted buying/selling pressure). Total 27 features available: 6 custom (cf_choppiness_index, cf_cumulative_delta, cf_funding_extreme, cf_return_skew, cf_session_momentum, cf_vol_term_spread), 4 classifiers (cl_15m, cl_1d, cl_1h, cl_4h), 17 builtin. (4) gold_collection — 4 entries: 1 feature (cf_vol_term_spread), 3 snapshots (active-signal-v1@1, candidate_vol_term_spread_v1, candidate_orthogonal_combo_v1). cf_vol_term_spread confirmed present. (5) research_project — created project 'plan-v3-orthogonal-dimensions-1e440ac7' (plan_v3 didn't exist), opened successfully. (6) research_record — recorded v3 hypothesis with 3 orthogonal dimensions: cumulative_delta, trend_acceleration, relative_volume.\",\n  \"results_table\": [],\n  \"key_metrics\": {\n    \"healthy_domains\": 10,\n    \"registered_tools\": 46,\n    \"total_features\": 27,\n    \"custom_features\": 6,\n    \"cf_cumulative_delta_present\": true,\n    \"gold_collection_entries\": 4,\n    \"gold_feature_count\": 1,\n    \"gold_snapshot_count\": 3,\n    \"project_id\": \"plan-v3-orthogonal-dimensions-1e440ac7\",\n    \"hypothesis_node_id\": \"node-22762fd616ac432d9413e517f1a17c03\",\n    \"queue_stalled_operations\": 1\n  },\n  \"artifacts\": [\n    \"plan-v3-orthogonal-dimensions-1e440ac7\",\n    \"node-22762fd616ac432d9413e517f1a17c03\",\n    \"branch-4e3903e145d04ba29d6be95a7ff94e30\"\n  ],\n  \"verdict\": \"PROMOTE\",\n  \"confidence\": 0.95,\n  \"error\": \"\",\n  \"mcp_problems\": []\n}\n```",
+  "mcp_problems": [],
+  "timestamp": "2026-04-07T20:53:16.881654+00:00"
+}

@@ -1,0 +1,75 @@
+{
+  "task_id": "0dd0a31eb093",
+  "worker_id": "qwen-3",
+  "plan_version": 2,
+  "status": "success",
+  "what_was_requested": "ETAP 0 Bootstrap + Gold Collection: bootstrap system, record v1 winner to Gold Collection, gather feature catalog",
+  "what_was_done": "Executed all 5 ETAP 0 steps successfully: (1) system_bootstrap — loaded mandatory MCP guidance, bootstrap v2026-03-23, confirmed 10 mandatory rules and research rules. (2) system_health with validate_tools=true — confirmed all 46 tools registered, server healthy, all 10 domains healthy (datasets, features, models, backtests_runs, backtests_snapshots, backtests_research, experiments, research_memory, telegram, system), queue depth 0, no anomalies. (3) gold_collection(action='add') — added cf_vol_term_spread as feature entity with reason documenting v1 winner metrics: +14.3% PnL ($1496.34 vs $1308.65 baseline), Sharpe 1.456, 330 trades, PF 1.571, max DD ~1.68%. (4) research_record(action='create', kind='result') — recorded Plan v1 Final Verdicts to research memory (node-ea2b98556a214bca88c765c50e068543) with metrics: net_pnl=1496.34, sharpe=1.456, profit_factor=1.571, max_drawdown=0.0168, trade_count=330. Verdicts: PROMOTE cf_vol_term_spread, REJECT cf_funding_extreme and cf_return_skew. (5) features_catalog(scope='available') — confirmed 24 available features including 3 custom features (cf_vol_term_spread, cf_funding_extreme, cf_return_skew), 4 classifier columns (cl_15m, cl_1d, cl_1h, cl_4h), and various builtin features (atr_1, rsi, iv_est, event markers, time features).",
+  "results_table": [
+    {
+      "run_id": "bootstrap",
+      "net_pnl": 0,
+      "trades": 0,
+      "PF": 0.0,
+      "WR": 0.0,
+      "verdict": "PROMOTE"
+    },
+    {
+      "run_id": "health_check",
+      "net_pnl": 0,
+      "trades": 0,
+      "PF": 0.0,
+      "WR": 0.0,
+      "verdict": "PROMOTE"
+    },
+    {
+      "run_id": "gold_collection_add",
+      "net_pnl": 0,
+      "trades": 0,
+      "PF": 0.0,
+      "WR": 0.0,
+      "verdict": "PROMOTE"
+    },
+    {
+      "run_id": "research_record_create",
+      "net_pnl": 1496.34,
+      "trades": 330,
+      "PF": 1.571,
+      "WR": 0.0,
+      "verdict": "PROMOTE"
+    },
+    {
+      "run_id": "features_catalog",
+      "net_pnl": 0,
+      "trades": 0,
+      "PF": 0.0,
+      "WR": 0.0,
+      "verdict": "PROMOTE"
+    }
+  ],
+  "key_metrics": {
+    "registered_tool_count": 46,
+    "healthy_domains": 10,
+    "queue_depth": 0,
+    "gold_collection_entries": 1,
+    "cf_vol_term_spread_pnl": 1496.34,
+    "cf_vol_term_spread_sharpe": 1.456,
+    "cf_vol_term_spread_profit_factor": 1.571,
+    "cf_vol_term_spread_max_drawdown": 0.0168,
+    "cf_vol_term_spread_trades": 330,
+    "total_available_features": 24,
+    "custom_features": 3,
+    "classifier_columns": 4
+  },
+  "artifacts": [
+    "gold_collection:cf_vol_term_spread",
+    "research_record:node-ea2b98556a214bca88c765c50e068543",
+    "features_catalog:24_columns"
+  ],
+  "confidence": 1.0,
+  "verdict": "PROMOTE",
+  "error": "",
+  "raw_output": "```json\n{\n  \"status\": \"success\",\n  \"what_was_requested\": \"ETAP 0 Bootstrap + Gold Collection: bootstrap system, record v1 winner to Gold Collection, gather feature catalog\",\n  \"what_was_done\": \"Executed all 5 ETAP 0 steps successfully: (1) system_bootstrap — loaded mandatory MCP guidance, bootstrap v2026-03-23, confirmed 10 mandatory rules and research rules. (2) system_health with validate_tools=true — confirmed all 46 tools registered, server healthy, all 10 domains healthy (datasets, features, models, backtests_runs, backtests_snapshots, backtests_research, experiments, research_memory, telegram, system), queue depth 0, no anomalies. (3) gold_collection(action='add') — added cf_vol_term_spread as feature entity with reason documenting v1 winner metrics: +14.3% PnL ($1496.34 vs $1308.65 baseline), Sharpe 1.456, 330 trades, PF 1.571, max DD ~1.68%. (4) research_record(action='create', kind='result') — recorded Plan v1 Final Verdicts to research memory (node-ea2b98556a214bca88c765c50e068543) with metrics: net_pnl=1496.34, sharpe=1.456, profit_factor=1.571, max_drawdown=0.0168, trade_count=330. Verdicts: PROMOTE cf_vol_term_spread, REJECT cf_funding_extreme and cf_return_skew. (5) features_catalog(scope='available') — confirmed 24 available features including 3 custom features (cf_vol_term_spread, cf_funding_extreme, cf_return_skew), 4 classifier columns (cl_15m, cl_1d, cl_1h, cl_4h), and various builtin features (atr_1, rsi, iv_est, event markers, time features).\",\n  \"results_table\": [\n    {\"run_id\": \"bootstrap\", \"net_pnl\": 0, \"trades\": 0, \"PF\": 0.0, \"WR\": 0.0, \"verdict\": \"PROMOTE\"},\n    {\"run_id\": \"health_check\", \"net_pnl\": 0, \"trades\": 0, \"PF\": 0.0, \"WR\": 0.0, \"verdict\": \"PROMOTE\"},\n    {\"run_id\": \"gold_collection_add\", \"net_pnl\": 0, \"trades\": 0, \"PF\": 0.0, \"WR\": 0.0, \"verdict\": \"PROMOTE\"},\n    {\"run_id\": \"research_record_create\", \"net_pnl\": 1496.34, \"trades\": 330, \"PF\": 1.571, \"WR\": 0.0, \"verdict\": \"PROMOTE\"},\n    {\"run_id\": \"features_catalog\", \"net_pnl\": 0, \"trades\": 0, \"PF\": 0.0, \"WR\": 0.0, \"verdict\": \"PROMOTE\"}\n  ],\n  \"key_metrics\": {\n    \"registered_tool_count\": 46,\n    \"healthy_domains\": 10,\n    \"queue_depth\": 0,\n    \"gold_collection_entries\": 1,\n    \"cf_vol_term_spread_pnl\": 1496.34,\n    \"cf_vol_term_spread_sharpe\": 1.456,\n    \"cf_vol_term_spread_profit_factor\": 1.571,\n    \"cf_vol_term_spread_max_drawdown\": 0.0168,\n    \"cf_vol_term_spread_trades\": 330,\n    \"total_available_features\": 24,\n    \"custom_features\": 3,\n    \"classifier_columns\": 4\n  },\n  \"artifacts\": [\n    \"gold_collection:cf_vol_term_spread\",\n    \"research_record:node-ea2b98556a214bca88c765c50e068543\",\n    \"features_catalog:24_columns\"\n  ],\n  \"verdict\": \"PROMOTE\",\n  \"confidence\": 1.0,\n  \"error\": \"\",\n  \"mcp_problems\": []\n}\n```",
+  "mcp_problems": [],
+  "timestamp": "2026-04-07T20:14:55.908688+00:00"
+}

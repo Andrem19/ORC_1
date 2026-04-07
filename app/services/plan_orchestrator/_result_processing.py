@@ -102,6 +102,21 @@ class ResultProcessingMixin:
                 )
                 # Scan partial results for MCP failure indicators
                 if self._is_mcp_failure(report):
+                    if self._is_session_error(report) and self._mcp_reconnect_attempts < 2:
+                        # Transient session error — retry with fresh subprocess
+                        self._mcp_reconnect_attempts += 1
+                        task.status = TaskStatus.PENDING
+                        task.assigned_worker_id = None
+                        pt.status = TaskStatus.PENDING
+                        pt.assigned_worker_id = None
+                        pt.completed_at = None
+                        logger.info(
+                            "MCP session error on stage %d — scheduling reconnect retry "
+                            "(attempt %d/2)",
+                            stage_num, self._mcp_reconnect_attempts,
+                        )
+                        self._persist_current_plan()
+                        continue
                     self._mcp_healthy = False
                     self.state.mcp_consecutive_failures += 1
                     logger.warning(
@@ -183,6 +198,12 @@ class ResultProcessingMixin:
         ]
         text = f"{getattr(report, 'error', '')} {getattr(report, 'raw_output', '')}".lower()
         return any(indicator in text for indicator in mcp_indicators)
+
+    @staticmethod
+    def _is_session_error(report: Any) -> bool:
+        """Check if this is a transient MCP session error (not server-down)."""
+        text = f"{getattr(report, 'error', '')} {getattr(report, 'raw_output', '')}".lower()
+        return "tool not found in registry" in text
 
     def _maybe_update_plan_baseline(self, plan_task: PlanTask, report: Any) -> None:
         """Capture the measured baseline from ETAP 0 so later plans use real metrics."""

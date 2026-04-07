@@ -56,16 +56,26 @@ A genuine improvement requires simultaneous progress in PnL, trade count, AND dr
 
 operator_directives = "Твоя задача найти новые features которые бы давали новые сигналы которые мы не получаем от сигналов в baseline т е чтобы не было канибазизма а добавлялись реально новые сигналы дающие прибыль. Составляй качественные продуманные планы. Продумывай их так чтобы workers не простаивали (у тебя 3 работника) чтобы они могли большую часть делать параллельно."
 
-worker_system_prompt = "You are a trading research worker. Execute the assigned task by calling MCP dev_space1 tools. You have full access to the MCP server. Call tools directly. Return a structured JSON result."
+worker_system_prompt = """\
+You are a trading research worker. Execute the assigned task by calling MCP dev_space1 tools. You have full access to the MCP server. Call tools directly. Return a structured JSON result.
+
+## Incident Reporting
+Whenever you encounter infrastructure problems on the MCP side (timeouts, crashes, data corruption, missing datasets, tool call failures that are not your fault), immediately create an incident using the `incidents` tool:
+- incidents(action='capture', summary='...', error='...', severity='medium', affected_tool='tool_name', service='dev_space1')
+If you find ambiguities in tool contracts, unclear parameter requirements, unexpected behaviors, or interface difficulties — also capture an incident so these can be investigated and resolved.
+Severity levels: 'low' (minor annoyance), 'medium' (blocks current task), 'high' (blocks entire workflow), 'critical' (data loss or system down).
+Always include as much context as possible: tool name, parameters used, exact error message, and what you expected to happen."""
 
 poll_interval_seconds = 120
-planner_timeout_seconds = 300
-worker_timeout_seconds = 900
+planner_timeout_seconds = 3600
+worker_timeout_seconds = 3600
 
 max_errors_total = 50
 max_empty_cycles = 24
 max_task_attempts = 3
 max_worker_timeout_count = 3
+plan_task_timeout_seconds = 3600
+silent_worker_warn_seconds = 900
 
 state_dir = "state"
 state_file = "orchestrator_state.json"
@@ -82,6 +92,7 @@ console_truncate_length = 300
 plan_mode = true
 plan_dir = "plans"
 max_concurrent_plan_tasks = 3
+plan_stages_guidance = "Create 5 to 7 research stages depending on complexity. If investigation can be parallelized across 2-3 workers, count those parallel branches as a single time-stage. Design each plan to keep all 3 workers busy. Adjust stage count to the problem — use fewer for focused validation, more for multi-hypothesis exploration."
 
 [[workers]]
 worker_id = "qwen-1"
@@ -106,9 +117,9 @@ extra_flags = []
 mode = "batch_text"
 use_bare = true
 no_session_persistence = true
-soft_timeout_seconds = 300
-hard_timeout_seconds = 900
-no_first_byte_seconds = 180
+soft_timeout_seconds = 3600
+hard_timeout_seconds = 7200
+no_first_byte_seconds = 900
 capture_stderr_live = true
 
 [worker_adapter]
@@ -129,8 +140,15 @@ max_concurrent_research_tracks = 3
 enabled = true
 min_interval_seconds = 30
 translate_to_russian = true
+# Translation backend: "opus" (Helsinki-NLP MarianMT) or "lmstudio" (LM Studio API)
+translation_backend = "opus"
 translation_model_name = "Helsinki-NLP/opus-mt-en-ru"
 translation_model_dir = "models/opus-mt-en-ru"
+# LM Studio translation settings (used when translation_backend = "lmstudio")
+translation_lmstudio_base_url = "http://localhost:1234"
+translation_lmstudio_model = ""  # empty = use currently loaded model, e.g. "qwen3.5-9b"
+translation_lmstudio_max_tokens = 1024
+translation_lmstudio_timeout_seconds = 30
 
 [mcp_review]
 enabled = true
@@ -139,3 +157,21 @@ review_after_n_errors = 3
 fixes_dir = "fixes"
 planner_timeout = 180
 max_problems_in_context = 10
+
+# LM Studio report compressor — uncomment when LM Studio is running
+# [report_compressor]
+# enabled = true
+# base_url = "http://localhost:1234"
+# model = ""  # uses whatever model is loaded
+# max_tokens = 200
+# timeout_seconds = 30
+
+# LM Studio assistant — log analysis & execution prediction
+[lmstudio]
+enabled = false  # true when LM Studio is running
+base_url = "http://localhost:1234"
+model = ""  # empty = use currently loaded model
+analysis_interval_cycles = 50
+max_log_lines = 200
+max_tokens = 1024
+timeout_seconds = 60

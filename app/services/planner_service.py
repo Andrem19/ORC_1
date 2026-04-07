@@ -41,11 +41,13 @@ class PlannerService:
         timeout: int = 180,
         planner_system_prompt: str = "",
         operator_directives: str = "",
+        stages_guidance: str = "",
     ) -> None:
         self.adapter = adapter
         self.timeout = timeout
         self._planner_system_prompt = planner_system_prompt
         self._operator_directives = operator_directives
+        self._stages_guidance = stages_guidance
         self._active_handle: ProcessHandle | None = None
         self._supports_async: bool | None = None
         self._sync_result: PlannerOutput | None = None
@@ -260,6 +262,7 @@ class PlannerService:
             planner_system_prompt=self._planner_system_prompt,
             operator_directives=self._operator_directives,
             research_history=research_history,
+            stages_guidance=self._stages_guidance,
         )
         logger.info(
             "Starting plan creation via planner (version=%d attempt=%d, %d chars)",
@@ -270,7 +273,7 @@ class PlannerService:
             request_type="create",
             request_version=plan_version,
             attempt_number=attempt_number,
-            max_tasks=5,
+            max_tasks=None,
             timeout_retry_count=0,
             transport_retry_count=0,
             task_id=f"plan-create-v{plan_version}-a{attempt_number}",
@@ -287,6 +290,7 @@ class PlannerService:
         mcp_problem_summary: str | None = None,
         validation_warnings: list[dict] | None = None,
         research_history: list[str] | None = None,
+        compressed_reports: str | None = None,
     ) -> None:
         """Launch planner to REVISE the current plan based on worker reports."""
         from app.plan_prompts import build_plan_revision_prompt
@@ -316,6 +320,7 @@ class PlannerService:
             planner_system_prompt=self._planner_system_prompt,
             operator_directives=self._operator_directives,
             research_history=research_history,
+            compressed_reports=compressed_reports,
         )
         next_version = current_plan.version + 1
         logger.info(
@@ -403,13 +408,14 @@ class PlannerService:
                 previous_plan_markdown=request.get("previous_plan_markdown"),
                 planner_system_prompt=self._planner_system_prompt,
                 operator_directives=self._operator_directives,
+                stages_guidance=self._stages_guidance,
             )
             self._launch_plan_request(
                 prompt=prompt,
                 request_type="create",
                 request_version=request["plan_version"],
                 attempt_number=request["attempt_number"],
-                max_tasks=5,
+                max_tasks=None,
                 timeout_retry_count=self._plan_timeout_retry_count,
                 transport_retry_count=self._plan_transport_retry_count,
                 task_id=f"plan-create-v{request['plan_version']}-a{request['attempt_number']}",

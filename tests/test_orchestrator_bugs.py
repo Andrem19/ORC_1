@@ -34,11 +34,6 @@ class TestValidationSeverity:
     def test_tool_contract_codes_are_repair_not_soft(self) -> None:
         """Tool contract violation codes get 'repair' severity, not 'soft'."""
         repair_codes = {
-            "tool_alias_invalid",
-            "action_invalid",
-            "arg_invalid",
-            "non_executable_tool_call",
-            "tool_name_missing",
             "step_ref_invalid",
         }
         for code in repair_codes:
@@ -52,14 +47,16 @@ class TestValidationSeverity:
             assert err.severity == "hard", f"Expected 'hard' for {code}, got '{err.severity}'"
 
     def test_soft_errors_remain_soft(self) -> None:
-        """arg_missing (not in HARD or REPAIR) stays soft."""
+        """action_invalid and arg_missing (not in HARD or REPAIR) stay soft."""
         err = PlanValidationError(stage_number=0, code="arg_missing", message="test")
         assert err.severity == "soft"
+        err2 = PlanValidationError(stage_number=0, code="action_invalid", message="test")
+        assert err2.severity == "soft"
 
     def test_is_acceptable_rejects_repair_errors(self) -> None:
         """PlanValidationResult with repair errors is NOT acceptable."""
         result = PlanValidationResult(errors=[
-            PlanValidationError(stage_number=0, code="action_invalid", message="bad action"),
+            PlanValidationError(stage_number=0, code="step_ref_invalid", message="bad step"),
         ])
         assert result.has_repair_errors is True
         assert result.has_hard_errors is False
@@ -77,16 +74,16 @@ class TestValidationSeverity:
     def test_repair_errors_property(self) -> None:
         """repair_errors returns only repair-severity errors."""
         result = PlanValidationResult(errors=[
-            PlanValidationError(stage_number=0, code="action_invalid", message="bad"),
+            PlanValidationError(stage_number=0, code="step_ref_invalid", message="bad"),
             PlanValidationError(stage_number=1, code="arg_missing", message="missing"),
         ])
         assert len(result.repair_errors) == 1
-        assert result.repair_errors[0].code == "action_invalid"
+        assert result.repair_errors[0].code == "step_ref_invalid"
 
     def test_summary_includes_severity(self) -> None:
         """summary() shows severity bracket in output."""
         result = PlanValidationResult(errors=[
-            PlanValidationError(stage_number=0, code="action_invalid", message="bad action"),
+            PlanValidationError(stage_number=0, code="step_ref_invalid", message="bad step"),
         ])
         assert "[repair]" in result.summary()
 
@@ -101,15 +98,15 @@ class TestValidationFeedbackInPrompts:
         from app.plan_prompts import build_plan_creation_prompt
 
         warnings = [
-            {"stage_number": 2, "code": "action_invalid", "message": "Invalid action 'inspect'"},
+            {"stage_number": 2, "code": "step_ref_invalid", "message": "Duplicate step_id"},
         ]
         prompt = build_plan_creation_prompt(
             goal="test goal",
             validation_warnings=warnings,
         )
         assert "Previous Plan Validation Warnings" in prompt
-        assert "action_invalid" in prompt
-        assert "Invalid action" in prompt
+        assert "step_ref_invalid" in prompt
+        assert "Duplicate step_id" in prompt
 
     def test_creation_prompt_omits_section_when_no_warnings(self) -> None:
         from app.plan_prompts import build_plan_creation_prompt
@@ -128,7 +125,7 @@ class TestValidationFeedbackInPrompts:
 
         plan = ResearchPlan(schema_version=4, version=1, goal="test")
         warnings = [
-            {"stage_number": 1, "code": "tool_alias_invalid", "message": "Use backtests_strategy not snapshots"},
+            {"stage_number": 1, "code": "step_ref_invalid", "message": "Duplicate step_id"},
         ]
         prompt = build_plan_revision_prompt(
             goal="test",
@@ -137,7 +134,7 @@ class TestValidationFeedbackInPrompts:
             validation_warnings=warnings,
         )
         assert "Previous Plan Validation Warnings" in prompt
-        assert "tool_alias_invalid" in prompt
+        assert "step_ref_invalid" in prompt
 
     def test_creation_prompt_limits_to_five_warnings(self) -> None:
         from app.plan_prompts import build_plan_creation_prompt
@@ -328,8 +325,8 @@ class TestPerStageRetryEnforcement:
         # Verify PlanTask has the status field
         assert pt.status == TaskStatus.PENDING
 
-    def test_validate_plan_with_invalid_action(self) -> None:
-        """validate_plan catches action_invalid and assigns repair severity."""
+    def test_validate_plan_allows_any_action(self) -> None:
+        """validate_plan no longer rejects unknown actions (validation removed)."""
         from app.plan_validation import validate_plan
 
         plan = ResearchPlan(
@@ -357,9 +354,8 @@ class TestPerStageRetryEnforcement:
         )
         result = validate_plan(plan)
         action_errors = [e for e in result.errors if e.code == "action_invalid"]
-        assert len(action_errors) > 0
-        assert action_errors[0].severity == "repair"
-        assert result.is_acceptable is False
+        assert len(action_errors) == 0
+        assert result.is_acceptable is True
 
 
 # ===================================================================
@@ -429,7 +425,7 @@ class TestJSONRepair:
 # ===================================================================
 
 class TestActionParamMapping:
-    """Test that _normalize_action handles non-'action' parameter names."""
+    """Test that validate_tool_step is now permissive (returns no violations)."""
 
     def test_features_catalog_uses_scope(self) -> None:
         from app.planner_contract import validate_tool_step
@@ -437,17 +433,15 @@ class TestActionParamMapping:
             tool_name="features_catalog",
             args={"scope": "available"},
         )
-        assert not any(v.code == "action_invalid" for v in violations), (
-            f"features_catalog(scope='available') should be valid, got: {violations}"
-        )
+        assert violations == []
 
-    def test_features_catalog_rejects_bad_scope(self) -> None:
+    def test_features_catalog_allows_any_scope(self) -> None:
         from app.planner_contract import validate_tool_step
         violations = validate_tool_step(
             tool_name="features_catalog",
             args={"scope": "nonexistent_scope"},
         )
-        assert any(v.code == "action_invalid" for v in violations)
+        assert violations == []
 
     def test_backtests_strategy_validate_uses_mode(self) -> None:
         from app.planner_contract import validate_tool_step
@@ -455,17 +449,15 @@ class TestActionParamMapping:
             tool_name="backtests_strategy_validate",
             args={"mode": "signal"},
         )
-        assert not any(v.code == "action_invalid" for v in violations), (
-            f"backtests_strategy_validate(mode='signal') should be valid, got: {violations}"
-        )
+        assert violations == []
 
-    def test_backtests_strategy_validate_rejects_bad_mode(self) -> None:
+    def test_backtests_strategy_validate_allows_any_mode(self) -> None:
         from app.planner_contract import validate_tool_step
         violations = validate_tool_step(
             tool_name="backtests_strategy_validate",
             args={"mode": "invalid_mode"},
         )
-        assert any(v.code == "action_invalid" for v in violations)
+        assert violations == []
 
     def test_datasets_uses_view(self) -> None:
         from app.planner_contract import validate_tool_step
@@ -473,7 +465,7 @@ class TestActionParamMapping:
             tool_name="datasets",
             args={"view": "catalog"},
         )
-        assert not any(v.code == "action_invalid" for v in violations)
+        assert violations == []
 
     def test_events_uses_view(self) -> None:
         from app.planner_contract import validate_tool_step
@@ -481,7 +473,7 @@ class TestActionParamMapping:
             tool_name="events",
             args={"view": "catalog"},
         )
-        assert not any(v.code == "action_invalid" for v in violations)
+        assert violations == []
 
     def test_research_search_uses_query(self) -> None:
         """research_search has no action selector — any query value is valid."""
@@ -490,9 +482,7 @@ class TestActionParamMapping:
             tool_name="research_search",
             args={"query": "prior baseline attempts"},
         )
-        assert not any(v.code == "action_invalid" for v in violations), (
-            f"research_search(query=...) should be valid, got: {violations}"
-        )
+        assert violations == []
 
     def test_datasets_preview_uses_view(self) -> None:
         from app.planner_contract import validate_tool_step
@@ -500,7 +490,7 @@ class TestActionParamMapping:
             tool_name="datasets_preview",
             args={"view": "rows"},
         )
-        assert not any(v.code == "action_invalid" for v in violations)
+        assert violations == []
 
     def test_tools_with_action_still_work(self) -> None:
         """Tools that genuinely use 'action' should still validate correctly."""
@@ -509,7 +499,7 @@ class TestActionParamMapping:
             tool_name="backtests_runs",
             args={"action": "start", "snapshot_id": "test", "version": "1"},
         )
-        assert not any(v.code == "action_invalid" for v in violations)
+        assert violations == []
 
     def test_empty_args_on_mapped_tool_uses_default(self) -> None:
         """features_catalog with empty args should use default 'available'."""
@@ -518,7 +508,7 @@ class TestActionParamMapping:
             tool_name="features_catalog",
             args={},
         )
-        assert not any(v.code == "action_invalid" for v in violations)
+        assert violations == []
 
 
 # ===================================================================
@@ -839,7 +829,7 @@ class TestDynamicStageTimeout:
         ])
         task = Task(task_id="t1", metadata={"plan_mode": True, "stage_number": 0})
         timeout = mixin._estimate_stage_timeout(task, 600)
-        assert timeout == 600 + (8 - 3) * 60  # 600 + 300 = 900
+        assert timeout == 600 + (8 - 3) * 180  # 600 + 900 = 1500
 
     def test_extra_time_for_heavy_tools(self) -> None:
         from app.plan_models import PlanStep, PlanTask, ResearchPlan
@@ -855,7 +845,7 @@ class TestDynamicStageTimeout:
         ])
         task = Task(task_id="t1", metadata={"plan_mode": True, "stage_number": 0})
         timeout = mixin._estimate_stage_timeout(task, 600)
-        assert timeout == 600 + 300  # heavy tool bonus
+        assert timeout == 600 + 900  # heavy tool bonus
 
     def test_no_current_plan_returns_base(self) -> None:
         from app.services.plan_orchestrator._task_health import TaskHealthMixin

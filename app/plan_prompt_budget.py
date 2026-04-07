@@ -10,6 +10,30 @@ from typing import Any
 from app.plan_models import ResearchPlan, TaskReport
 from app.plan_validation import PlanRepairRequest
 
+# --- Revision prompt budget ---
+
+REVISION_PROMPT_BUDGET = 14000  # max total chars for revision prompt
+
+# Per-section budget (chars). Sections not listed default to 2000.
+SECTION_BUDGETS: dict[str, int] = {
+    "operator_directives": 500,
+    "system_instructions": 500,
+    "revision_context": 300,
+    "goal": 200,
+    "context": 3000,
+    "baseline": 300,
+    "current_plan": 1200,
+    "worker_reports": 2500,
+    "research_history": 1500,
+    "anti_patterns": 800,
+    "mcp_problems": 500,
+    "validation_warnings": 400,
+    "workers": 100,
+}
+
+# Sections that are never truncated (fixed instructional text).
+_FIXED_SECTIONS = frozenset({"revision_context", "revision_instructions"})
+
 
 def truncate_text(text: str, limit: int) -> str:
     text = text.strip()
@@ -20,13 +44,47 @@ def truncate_text(text: str, limit: int) -> str:
     return text[: limit - 15].rstrip() + "\n...[truncated]"
 
 
-def compact_reports_for_revision(reports: list[TaskReport], *, max_reports: int = 5) -> str:
+def apply_global_budget(
+    sections: dict[str, str],
+    total_budget: int = REVISION_PROMPT_BUDGET,
+) -> dict[str, str]:
+    """Apply global budget by truncating oversized sections, then proportional reduction."""
+    result: dict[str, str] = {}
+    for name, content in sections.items():
+        if name in _FIXED_SECTIONS:
+            result[name] = content
+        else:
+            budget = SECTION_BUDGETS.get(name, 2000)
+            result[name] = truncate_text(content, budget) if len(content) > budget else content
+
+    total = sum(len(v) for v in result.values())
+    if total <= total_budget:
+        return result
+
+    # Proportional reduction of all non-fixed sections
+    fixed_total = sum(len(v) for k, v in result.items() if k in _FIXED_SECTIONS)
+    adjustable = {k: v for k, v in result.items() if k not in _FIXED_SECTIONS}
+    adjustable_total = sum(len(v) for v in adjustable.values())
+    if adjustable_total == 0:
+        return result
+    target = total_budget - fixed_total
+    ratio = target / adjustable_total
+
+    for name in adjustable:
+        new_len = int(len(result[name]) * ratio)
+        if new_len < len(result[name]):
+            result[name] = truncate_text(result[name], max(new_len, 100))
+
+    return result
+
+
+def compact_reports_for_revision(reports: list[TaskReport], *, max_reports: int = 3) -> str:
     lines: list[str] = []
     for report in reports[:max_reports]:
         conf_flag = f" conf={report.confidence:.0%}" if report.confidence is not None and report.confidence < 0.8 else ""
         lines.append(f"- stage plan_v{report.plan_version} | worker={report.worker_id} | status={report.status} | verdict={report.verdict}{conf_flag}")
         if report.what_was_done:
-            lines.append(f"  done: {truncate_text(report.what_was_done, 220)}")
+            lines.append(f"  done: {truncate_text(report.what_was_done, 160)}")
         if report.key_metrics:
             metrics = ", ".join(f"{k}={v}" for k, v in list(report.key_metrics.items())[:6])
             lines.append(f"  metrics: {metrics}")

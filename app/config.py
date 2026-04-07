@@ -20,8 +20,15 @@ class NotificationConfig:
     enabled: bool = False
     min_interval_seconds: int = 30  # rate limit between messages
     translate_to_russian: bool = False
+    translation_backend: str = "opus"  # "opus" (Helsinki-NLP) or "lmstudio"
     translation_model_dir: str = "models/opus-mt-en-ru"
     translation_model_name: str = "Helsinki-NLP/opus-mt-en-ru"
+    translation_lmstudio_base_url: str = "http://localhost:1234"
+    translation_lmstudio_model: str = ""  # empty = use currently loaded model
+    translation_lmstudio_max_tokens: int = 1024
+    translation_lmstudio_timeout_seconds: int = 30
+    batch_enabled: bool = True  # batch worker-result notifications
+    batch_debounce_seconds: float = 5.0  # wait before sending batch
 
 
 @dataclass
@@ -29,14 +36,14 @@ class AdapterConfig:
     name: str
     cli_path: str = ""
     extra_flags: list[str] = field(default_factory=list)
-    timeout_seconds: int = 120
+    timeout_seconds: int = 1800
     model: str = ""
     mode: str = "default"
     use_bare: bool = False
     no_session_persistence: bool = False
-    soft_timeout_seconds: int = 300
-    hard_timeout_seconds: int = 900
-    no_first_byte_seconds: int = 180
+    soft_timeout_seconds: int = 3600
+    hard_timeout_seconds: int = 7200
+    no_first_byte_seconds: int = 900
     capture_stderr_live: bool = False
     # LM Studio / HTTP API settings
     base_url: str = ""
@@ -54,6 +61,28 @@ class McpReviewConfig:
     fixes_dir: str = "fixes"
     planner_timeout: int = 180
     max_problems_in_context: int = 10
+
+
+@dataclass
+class ReportCompressorConfig:
+    """LM Studio config for LLM-based report compression."""
+    enabled: bool = False
+    base_url: str = "http://localhost:1234"
+    model: str = ""  # empty = use currently loaded model
+    max_tokens: int = 200  # enough for 2-3 sentences
+    timeout_seconds: int = 30
+
+
+@dataclass
+class LMStudioConfig:
+    """LM Studio assistant for log analysis and execution time prediction."""
+    enabled: bool = False
+    base_url: str = "http://localhost:1234"
+    model: str = ""  # empty = use currently loaded model
+    analysis_interval_cycles: int = 50
+    max_log_lines: int = 200
+    max_tokens: int = 1024
+    timeout_seconds: int = 60
 
 
 @dataclass
@@ -78,8 +107,8 @@ class OrchestratorConfig:
 
     # --- Timing ---
     poll_interval_seconds: int = 300  # 5 minutes default
-    planner_timeout_seconds: int = 180
-    worker_timeout_seconds: int = 300
+    planner_timeout_seconds: int = 1800
+    worker_timeout_seconds: int = 1800
     worker_restart_delay_seconds: int = 10
 
     # --- Limits ---
@@ -97,9 +126,9 @@ class OrchestratorConfig:
         mode="batch_text",
         use_bare=True,
         no_session_persistence=True,
-        soft_timeout_seconds=300,
-        hard_timeout_seconds=900,
-        no_first_byte_seconds=180,
+        soft_timeout_seconds=3600,
+        hard_timeout_seconds=7200,
+        no_first_byte_seconds=900,
         capture_stderr_live=True,
     ))
     worker_adapter: AdapterConfig = field(default_factory=lambda: AdapterConfig(
@@ -134,15 +163,22 @@ class OrchestratorConfig:
     # --- MCP problem review ---
     mcp_review: McpReviewConfig = field(default_factory=McpReviewConfig)
 
+    # --- Report compression ---
+    report_compressor: ReportCompressorConfig = field(default_factory=ReportCompressorConfig)
+
+    # --- LM Studio assistant ---
+    lmstudio: LMStudioConfig = field(default_factory=LMStudioConfig)
+
     # --- Plan mode ---
     plan_mode: bool = False
     plan_dir: str = "plans"
     max_concurrent_plan_tasks: int = 2
-    plan_task_timeout_seconds: int = 600
+    plan_task_timeout_seconds: int = 3600
     max_mcp_failures: int = 5
     mcp_health_check_interval_cycles: int = 5
-    silent_worker_warn_seconds: int = 300
+    silent_worker_warn_seconds: int = 900
     max_plan_attempts: int = 3
+    plan_stages_guidance: str = "Create 5 to 7 research stages depending on complexity. If investigation can be parallelized across 2-3 workers, count those parallel branches as a single time-stage."
 
     @property
     def state_path(self) -> Path:
@@ -170,6 +206,7 @@ def load_config_from_dict(data: dict[str, Any]) -> OrchestratorConfig:
         "plan_mode", "plan_dir", "max_concurrent_plan_tasks",
         "plan_task_timeout_seconds", "max_mcp_failures",
         "silent_worker_warn_seconds", "max_plan_attempts",
+        "plan_stages_guidance",
         "startup_mode", "drain_timeout_seconds",
     }
     for key in simple_fields:
@@ -190,6 +227,12 @@ def load_config_from_dict(data: dict[str, Any]) -> OrchestratorConfig:
 
     if "mcp_review" in data:
         cfg.mcp_review = McpReviewConfig(**data["mcp_review"])
+
+    if "report_compressor" in data:
+        cfg.report_compressor = ReportCompressorConfig(**data["report_compressor"])
+
+    if "lmstudio" in data:
+        cfg.lmstudio = LMStudioConfig(**data["lmstudio"])
 
     if cfg.startup_mode not in ("resume", "reset", "reset_all"):
         raise ValueError(

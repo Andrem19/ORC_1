@@ -1,0 +1,792 @@
+{
+  "plan_id": "8c4c9ab923d9",
+  "schema_version": 4,
+  "version": 2,
+  "created_at": "2026-04-07T20:11:06.507304+00:00",
+  "frozen_base": "active-signal-v1@1",
+  "baseline_run_id": "bootstrap",
+  "baseline_snapshot_ref": "active-signal-v1@1",
+  "baseline_metrics": {
+    "registered_tool_count": 46,
+    "healthy_domains": 10,
+    "queue_depth": 0,
+    "gold_collection_entries": 1,
+    "cf_vol_term_spread_pnl": 1496.34,
+    "cf_vol_term_spread_sharpe": 1.456,
+    "cf_vol_term_spread_profit_factor": 1.571,
+    "cf_vol_term_spread_max_drawdown": 0.0168,
+    "cf_vol_term_spread_trades": 330,
+    "total_available_features": 24,
+    "custom_features": 3,
+    "classifier_columns": 4
+  },
+  "goal": "Continuously improve automated trading strategy performance on BTCUSDT via MCP dev_space1. Maximize net PnL and trade count while minimizing max drawdown. Run research cycles indefinitely, exploring new features, models, and strategies, validating them against the active-signal-v1 baseline (Sharpe 1.06, +13% return, 498 trades, max DD 2.4%).",
+  "principles": [
+    "Seek truly orthogonal signal dimensions — not cosmetic rewrites of existing features",
+    "Regime TRANSITION and DYNAMIC signals outperform static LEVEL signals",
+    "Test standalone first against frozen baseline, then integrate with best known configuration",
+    "Judge improvement by SIMULTANEOUS progress in PnL, trade count, AND drawdown quality",
+    "Features that inflate trade count without proportional PnL are noise — REJECT early",
+    "Higher-order return statistics (skewness, kurtosis) tend to overfit — approach with extreme caution",
+    "Event-based features (funding, expiry) may lack resolution for 5m execution — validate carefully",
+    "Run signal ownership analysis on any integration to detect cannibalization before promoting",
+    "Walk-forward OOS validation is mandatory before any Gold Collection promotion",
+    "When one hypothesis class is exhausted, switch to a fundamentally different signal dimension"
+  ],
+  "anti_patterns": [],
+  "cumulative_summary": "## Cumulative Research Knowledge\n\n### Confirmed Winners\n1. **cf_vol_term_spread** (v1): ratio of 12-period to 96-period rolling return std, minus 1. Captures vol regime transitions. +14.3% PnL ($1496 vs $1309), Sharpe 1.456, 330 trades, DD 1.68%, PF 1.571.\n\n### Confirmed Losers\n1. **cf_funding_extreme** (v1): funding rate extreme events. REJECT — no edge on 5m timeframe (Sharpe 0.952, worse DD).\n2. **cf_return_skew** (v1): 48-period rolling return skewness. REJECT — massive noise generator (-26.2% PnL, 694 trades).\n\n### Anti-patterns\n- Raw higher-order return statistics (skewness, kurtosis) overfit and generate noise trades\n- Funding rate event data lacks sufficient resolution for 5m execution signals\n- Features that inflate trade count without proportional PnL are noise generators\n- Regime TRANSITION signals (dynamics) outperform static LEVEL signals\n\n### Current Best Known Configuration\n- Baseline + cf_vol_term_spread: PnL $1496.34, Sharpe 1.456, 330 trades, DD ~1.68%\n- Baseline alone: PnL $1308.65, Sharpe 1.056, 498 trades, DD 2.44%\n\n### Baseline (Frozen)\nactive-signal-v1@1: Sharpe 1.056, +13.09% return, 498 trades, max DD 2.44%",
+  "tasks": [
+    {
+      "task_id": "0dd0a31eb093",
+      "plan_version": 2,
+      "stage_number": 0,
+      "stage_name": "Bootstrap + Gold Collection",
+      "theory": "Bootstrap system, record v1 winner to Gold Collection, gather feature catalog for context",
+      "depends_on": [],
+      "steps": [
+        {
+          "step_id": "s0_bootstrap",
+          "kind": "tool_call",
+          "instruction": "Bootstrap the system",
+          "tool_name": "system_bootstrap",
+          "args": {},
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "s0_health",
+          "kind": "tool_call",
+          "instruction": "Verify all 46 tools healthy",
+          "tool_name": "system_health",
+          "args": {
+            "validate_tools": true
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "s0_gold",
+          "kind": "tool_call",
+          "instruction": "Add cf_vol_term_spread to Gold Collection — confirmed v1 winner",
+          "tool_name": "gold_collection",
+          "args": {
+            "action": "add",
+            "entity_type": "feature",
+            "entity_id": "cf_vol_term_spread",
+            "reason": "Plan v1 winner: +14.3% PnL ($1496.34 vs $1308.65 baseline), Sharpe 1.456, 330 trades, PF 1.571, max DD ~1.68%. Vol regime transition signal (12/96 period rolling std ratio - 1). Run IDs: standalone 20260407-195135-a6102c78, integrated 20260407-195825-2d03834e."
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "s0_record",
+          "kind": "tool_call",
+          "instruction": "Record v1 final results to research memory",
+          "tool_name": "research_record",
+          "args": {
+            "action": "create",
+            "record_type": "result",
+            "title": "Plan v1 Final Verdicts",
+            "content": "PROMOTE: cf_vol_term_spread (+14.3% PnL, Sharpe 1.456, DD 1.68%, 330 trades). REJECT: cf_funding_extreme (Sharpe 0.952, no edge from funding rates on 5m). REJECT: cf_return_skew (-26.2% PnL, 694 noise trades). Key insight: regime TRANSITION signals (vol dynamics) work; static distribution shape features overfit; event-based features lack resolution for 5m execution.",
+            "tags": [
+              "plan_v1",
+              "final_result",
+              "cf_vol_term_spread",
+              "anti_pattern"
+            ]
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "s0_catalog",
+          "kind": "tool_call",
+          "instruction": "Inspect feature catalog to confirm available features before building new ones",
+          "tool_name": "features_catalog",
+          "args": {
+            "scope": "available"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        }
+      ],
+      "agent_instructions": [],
+      "results_table_columns": [],
+      "results_table_rows": [
+        {
+          "run_id": "bootstrap",
+          "net_pnl": 0,
+          "trades": 0,
+          "PF": 0.0,
+          "WR": 0.0,
+          "verdict": "PROMOTE"
+        },
+        {
+          "run_id": "health_check",
+          "net_pnl": 0,
+          "trades": 0,
+          "PF": 0.0,
+          "WR": 0.0,
+          "verdict": "PROMOTE"
+        },
+        {
+          "run_id": "gold_collection_add",
+          "net_pnl": 0,
+          "trades": 0,
+          "PF": 0.0,
+          "WR": 0.0,
+          "verdict": "PROMOTE"
+        },
+        {
+          "run_id": "research_record_create",
+          "net_pnl": 1496.34,
+          "trades": 330,
+          "PF": 1.571,
+          "WR": 0.0,
+          "verdict": "PROMOTE"
+        },
+        {
+          "run_id": "features_catalog",
+          "net_pnl": 0,
+          "trades": 0,
+          "PF": 0.0,
+          "WR": 0.0,
+          "verdict": "PROMOTE"
+        }
+      ],
+      "decision_gates": [],
+      "verdict": "PROMOTE",
+      "assigned_worker_id": "qwen-3",
+      "status": "completed",
+      "created_at": "2026-04-07T20:11:06.507348+00:00",
+      "completed_at": "2026-04-07T20:14:58.905017+00:00"
+    },
+    {
+      "task_id": "35cd49e3af5f",
+      "plan_version": 2,
+      "stage_number": 1,
+      "stage_name": "cf_cumulative_delta branch",
+      "theory": "Volume-weighted directional conviction: (close-open)/(high-low)*volume accumulated and normalized over 48 bars captures order flow imbalance — a microstructure signal completely orthogonal to all price-only and volatility-only features",
+      "depends_on": [
+        0
+      ],
+      "steps": [
+        {
+          "step_id": "s1_validate",
+          "kind": "tool_call",
+          "instruction": "Validate cf_cumulative_delta: normalized cumulative delta proxy. body_pct = (close-open)/(high-low+1e-8), signed_vol = body_pct * volume, result = rolling_sum(signed_vol,48) / rolling_sum(volume,48). Range [-1,1]. Positive = buying pressure, negative = selling pressure.",
+          "tool_name": "features_custom",
+          "args": {
+            "action": "validate",
+            "name": "cf_cumulative_delta",
+            "description": "Normalized cumulative delta proxy: volume-weighted buying/selling pressure over 48 bars. Captures order flow imbalance orthogonal to price-only signals.",
+            "code": "def compute_series(ctx):\n    import pandas as pd, numpy as np\n    c, o, h, l, v = ctx['close'], ctx['open'], ctx['high'], ctx['low'], ctx['volume']\n    range_ = h - l + 1e-8\n    body_pct = (c - o) / range_\n    signed_vol = body_pct * v\n    roll_sum = signed_vol.rolling(48, min_periods=12).sum()\n    vol_sum = v.rolling(48, min_periods=12).sum()\n    return roll_sum / (vol_sum + 1e-8)"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "s1_publish",
+          "kind": "tool_call",
+          "instruction": "Publish cf_cumulative_delta to feature registry",
+          "tool_name": "features_custom",
+          "args": {
+            "action": "publish",
+            "name": "cf_cumulative_delta"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "s1_build",
+          "kind": "tool_call",
+          "instruction": "Build feature dataset to include the new cf_cumulative_delta column",
+          "tool_name": "features_dataset",
+          "args": {
+            "action": "build"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "s1_clone",
+          "kind": "tool_call",
+          "instruction": "Clone baseline strategy for cf_cumulative_delta testing",
+          "tool_name": "backtests_strategy",
+          "args": {
+            "action": "clone",
+            "source_snapshot_id": "active-signal-v1",
+            "new_name": "candidate_cumulative_delta"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "s1_save",
+          "kind": "tool_call",
+          "instruction": "Save new version: add cf_cumulative_delta as a confirmation filter. Long signal requires cf_cumulative_delta > 0.05 (net buying pressure confirms), short signal requires cf_cumulative_delta < -0.05 (net selling pressure confirms). Preserve ALL existing baseline logic.",
+          "tool_name": "backtests_strategy",
+          "args": {
+            "action": "save_version",
+            "snapshot_id": "candidate_cumulative_delta",
+            "changes": "Add cf_cumulative_delta as entry confirmation filter: long requires cf_cumulative_delta > 0.05, short requires cf_cumulative_delta < -0.05. All existing baseline signal logic preserved."
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "s1_backtest",
+          "kind": "tool_call",
+          "instruction": "Run full-history backtest for cf_cumulative_delta candidate",
+          "tool_name": "backtests_runs",
+          "args": {
+            "action": "start",
+            "snapshot_id": "candidate_cumulative_delta",
+            "version": "1",
+            "symbol": "BTCUSDT",
+            "anchor_timeframe": "1h",
+            "execution_timeframe": "5m",
+            "start_at": "2021-03-24T00:00:00+00:00",
+            "end_at": "2024-12-31T23:55:00+00:00"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "s1_inspect",
+          "kind": "tool_call",
+          "instruction": "Inspect results. Compare to baseline: PnL $1308.65, Sharpe 1.056, 498 trades, DD 2.44%",
+          "tool_name": "backtests_runs",
+          "args": {
+            "action": "inspect",
+            "run_id": "{{step:s1_backtest.run_id}}",
+            "view": "detail"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "s1_record",
+          "kind": "tool_call",
+          "instruction": "Record cf_cumulative_delta results. Verdict: PROMOTE if ≥5% gain in ≥2 of {PnL, trades, DD}; WATCHLIST if ≥3% in 1; REJECT otherwise.",
+          "tool_name": "research_record",
+          "args": {
+            "action": "create",
+            "record_type": "result",
+            "title": "Plan v2 — cf_cumulative_delta standalone",
+            "content": "Record: net_pnl, sharpe, trades, max_drawdown, win_rate, profit_factor vs baseline ($1308.65 / 1.056 / 498 / 2.44%). State verdict with justification.",
+            "tags": [
+              "plan_v2",
+              "cf_cumulative_delta",
+              "standalone"
+            ]
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        }
+      ],
+      "agent_instructions": [],
+      "results_table_columns": [],
+      "results_table_rows": [
+        {
+          "run_id": "N/A - MCP session corrupted before backtest could start",
+          "net_pnl": 0,
+          "trades": 0,
+          "PF": 0,
+          "WR": 0,
+          "verdict": "PENDING"
+        }
+      ],
+      "decision_gates": [],
+      "verdict": "PENDING",
+      "assigned_worker_id": "qwen-1",
+      "status": "completed",
+      "created_at": "2026-04-07T20:11:06.507374+00:00",
+      "completed_at": "2026-04-07T20:20:02.872221+00:00"
+    },
+    {
+      "task_id": "e29e3f76f9cf",
+      "plan_version": 2,
+      "stage_number": 2,
+      "stage_name": "cf_choppiness_index branch",
+      "theory": "Choppiness Index (ATR-sum / price-range ratio) distinguishes trending from choppy markets — a regime TYPE signal orthogonal to vol LEVELS and vol TERM STRUCTURE. When CI is low (trending), trend-following works; when high (choppy), signals should be filtered. This answers 'is the market in a trend or range?' — different from 'how volatile?' or 'is vol expanding?'",
+      "depends_on": [
+        0
+      ],
+      "steps": [
+        {
+          "step_id": "s2_validate",
+          "kind": "tool_call",
+          "instruction": "Validate cf_choppiness_index: classic choppiness indicator. CI = LOG10(SUM(high-low, 48)) / LOG10(48) / (rolling_max(high,48) - rolling_min(low,48) + 1e-8). High → choppy/ranging, Low → trending. Scaled to [0,1] range.",
+          "tool_name": "features_custom",
+          "args": {
+            "action": "validate",
+            "name": "cf_choppiness_index",
+            "description": "Market structure indicator: distinguishes trending from choppy regimes. High values = ranging/choppy (avoid trend signals), Low values = trending (favor trend signals). Orthogonal to vol levels and vol term structure.",
+            "code": "def compute_series(ctx):\n    import pandas as pd, numpy as np\n    h, l = ctx['high'], ctx['low']\n    period = 48\n    atr_sum = (h - l).rolling(period, min_periods=24).sum()\n    highest = h.rolling(period, min_periods=24).max()\n    lowest = l.rolling(period, min_periods=24).min()\n    price_range = highest - lowest + 1e-8\n    raw = np.log10(atr_sum / price_range) / np.log10(period)\n    return raw"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "s2_publish",
+          "kind": "tool_call",
+          "instruction": "Publish cf_choppiness_index to feature registry",
+          "tool_name": "features_custom",
+          "args": {
+            "action": "publish",
+            "name": "cf_choppiness_index"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "s2_build",
+          "kind": "tool_call",
+          "instruction": "Build feature dataset to include cf_choppiness_index",
+          "tool_name": "features_dataset",
+          "args": {
+            "action": "build"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "s2_clone",
+          "kind": "tool_call",
+          "instruction": "Clone baseline strategy for cf_choppiness_index testing",
+          "tool_name": "backtests_strategy",
+          "args": {
+            "action": "clone",
+            "source_snapshot_id": "active-signal-v1",
+            "new_name": "candidate_choppiness_index"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "s2_save",
+          "kind": "tool_call",
+          "instruction": "Save new version: add cf_choppiness_index as a regime gate. Only allow entry signals when cf_choppiness_index < 0.55 (market is trending, not choppy). This filters out noise trades in ranging markets. Preserve ALL existing baseline logic.",
+          "tool_name": "backtests_strategy",
+          "args": {
+            "action": "save_version",
+            "snapshot_id": "candidate_choppiness_index",
+            "changes": "Add cf_choppiness_index as regime gate: only enter trades when cf_choppiness_index < 0.55 (trending market filter). All existing baseline signal logic preserved."
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "s2_backtest",
+          "kind": "tool_call",
+          "instruction": "Run full-history backtest for cf_choppiness_index candidate",
+          "tool_name": "backtests_runs",
+          "args": {
+            "action": "start",
+            "snapshot_id": "candidate_choppiness_index",
+            "version": "1",
+            "symbol": "BTCUSDT",
+            "anchor_timeframe": "1h",
+            "execution_timeframe": "5m",
+            "start_at": "2021-03-24T00:00:00+00:00",
+            "end_at": "2024-12-31T23:55:00+00:00"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "s2_inspect",
+          "kind": "tool_call",
+          "instruction": "Inspect results. Compare to baseline: PnL $1308.65, Sharpe 1.056, 498 trades, DD 2.44%",
+          "tool_name": "backtests_runs",
+          "args": {
+            "action": "inspect",
+            "run_id": "{{step:s2_backtest.run_id}}",
+            "view": "detail"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "s2_record",
+          "kind": "tool_call",
+          "instruction": "Record cf_choppiness_index results. Verdict: PROMOTE if ≥5% gain in ≥2 of {PnL, trades, DD}; WATCHLIST if ≥3% in 1; REJECT otherwise.",
+          "tool_name": "research_record",
+          "args": {
+            "action": "create",
+            "record_type": "result",
+            "title": "Plan v2 — cf_choppiness_index standalone",
+            "content": "Record: net_pnl, sharpe, trades, max_drawdown, win_rate, profit_factor vs baseline ($1308.65 / 1.056 / 498 / 2.44%). State verdict with justification.",
+            "tags": [
+              "plan_v2",
+              "cf_choppiness_index",
+              "standalone"
+            ]
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        }
+      ],
+      "agent_instructions": [],
+      "results_table_columns": [],
+      "results_table_rows": [
+        {
+          "run_id": "20260407-202716-79ce64e9",
+          "net_pnl": 937.8,
+          "trades": 308,
+          "PF": 1.365,
+          "WR": 0.477,
+          "verdict": "REJECT"
+        }
+      ],
+      "decision_gates": [],
+      "verdict": "REJECT",
+      "assigned_worker_id": "qwen-3",
+      "status": "completed",
+      "created_at": "2026-04-07T20:11:06.507391+00:00",
+      "completed_at": "2026-04-07T20:30:40.222761+00:00"
+    },
+    {
+      "task_id": "a1e46939d4a7",
+      "plan_version": 2,
+      "stage_number": 3,
+      "stage_name": "cf_session_momentum branch",
+      "theory": "Cross-session momentum bias: US vs Asian session return differential captures institutional money flow patterns. BTC often trends during US hours and consolidates during Asian hours. The differential measures whether US-driven momentum is strengthening or fading — a temporal seasonality signal completely orthogonal to all price-derived features.",
+      "depends_on": [
+        0
+      ],
+      "steps": [
+        {
+          "step_id": "s3_validate",
+          "kind": "tool_call",
+          "instruction": "Validate cf_session_momentum: session-weighted rolling return. US hours (16-23 UTC) get weight +1, Asian hours (0-7 UTC) get weight -1, European (8-15 UTC) weight 0. Rolling mean of weighted returns over 288 bars (~1 day). Positive = US momentum dominant, Negative = Asian momentum dominant.",
+          "tool_name": "features_custom",
+          "args": {
+            "action": "validate",
+            "name": "cf_session_momentum",
+            "description": "Cross-session momentum bias: US vs Asian session return differential. Captures institutional money flow timing. Completely orthogonal to all price-derived features — a pure temporal seasonality signal.",
+            "code": "def compute_series(ctx):\n    import pandas as pd, numpy as np\n    hours = ctx['close'].index.hour\n    returns = ctx['close'].pct_change()\n    weight = np.where(hours >= 16, 1.0,\n             np.where(hours < 8, -1.0, 0.0))\n    session_weighted = returns * pd.Series(weight, index=returns.index, dtype=float)\n    return session_weighted.rolling(288, min_periods=72).mean()"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "s3_publish",
+          "kind": "tool_call",
+          "instruction": "Publish cf_session_momentum to feature registry",
+          "tool_name": "features_custom",
+          "args": {
+            "action": "publish",
+            "name": "cf_session_momentum"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "s3_build",
+          "kind": "tool_call",
+          "instruction": "Build feature dataset to include cf_session_momentum",
+          "tool_name": "features_dataset",
+          "args": {
+            "action": "build"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "s3_clone",
+          "kind": "tool_call",
+          "instruction": "Clone baseline strategy for cf_session_momentum testing",
+          "tool_name": "backtests_strategy",
+          "args": {
+            "action": "clone",
+            "source_snapshot_id": "active-signal-v1",
+            "new_name": "candidate_session_momentum"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "s3_save",
+          "kind": "tool_call",
+          "instruction": "Save new version: add cf_session_momentum as a directional bias filter. Long signal gets boost when cf_session_momentum > 0.001 (US momentum bullish), short signal gets boost when cf_session_momentum < -0.001 (Asian momentum bearish). Preserve ALL existing baseline logic.",
+          "tool_name": "backtests_strategy",
+          "args": {
+            "action": "save_version",
+            "snapshot_id": "candidate_session_momentum",
+            "changes": "Add cf_session_momentum as directional bias: long confirmation when cf_session_momentum > 0.001, short confirmation when cf_session_momentum < -0.001. All existing baseline signal logic preserved."
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "s3_backtest",
+          "kind": "tool_call",
+          "instruction": "Run full-history backtest for cf_session_momentum candidate",
+          "tool_name": "backtests_runs",
+          "args": {
+            "action": "start",
+            "snapshot_id": "candidate_session_momentum",
+            "version": "1",
+            "symbol": "BTCUSDT",
+            "anchor_timeframe": "1h",
+            "execution_timeframe": "5m",
+            "start_at": "2021-03-24T00:00:00+00:00",
+            "end_at": "2024-12-31T23:55:00+00:00"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "s3_inspect",
+          "kind": "tool_call",
+          "instruction": "Inspect results. Compare to baseline: PnL $1308.65, Sharpe 1.056, 498 trades, DD 2.44%",
+          "tool_name": "backtests_runs",
+          "args": {
+            "action": "inspect",
+            "run_id": "{{step:s3_backtest.run_id}}",
+            "view": "detail"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "s3_record",
+          "kind": "tool_call",
+          "instruction": "Record cf_session_momentum results. Verdict: PROMOTE if ≥5% gain in ≥2 of {PnL, trades, DD}; WATCHLIST if ≥3% in 1; REJECT otherwise.",
+          "tool_name": "research_record",
+          "args": {
+            "action": "create",
+            "record_type": "result",
+            "title": "Plan v2 — cf_session_momentum standalone",
+            "content": "Record: net_pnl, sharpe, trades, max_drawdown, win_rate, profit_factor vs baseline ($1308.65 / 1.056 / 498 / 2.44%). State verdict with justification.",
+            "tags": [
+              "plan_v2",
+              "cf_session_momentum",
+              "standalone"
+            ]
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        }
+      ],
+      "agent_instructions": [],
+      "results_table_columns": [],
+      "results_table_rows": [
+        {
+          "run_id": "20260407-202356-0cd53057",
+          "net_pnl": -43.62,
+          "trades": 4,
+          "PF": 0.0,
+          "WR": 0.0,
+          "verdict": "REJECT"
+        }
+      ],
+      "decision_gates": [],
+      "verdict": "REJECT",
+      "assigned_worker_id": "qwen-2",
+      "status": "completed",
+      "created_at": "2026-04-07T20:11:06.507405+00:00",
+      "completed_at": "2026-04-07T20:25:36.439539+00:00"
+    },
+    {
+      "task_id": "fcd820a14e55",
+      "plan_version": 2,
+      "stage_number": 4,
+      "stage_name": "Integration + Validation",
+      "theory": "Combine all PROMOTED features from v1 (cf_vol_term_spread) and v2 into a single integrated strategy. Test for cannibalization, run walk-forward OOS validation, and perform signal ownership analysis to ensure genuine net improvement.",
+      "depends_on": [
+        1,
+        2,
+        3
+      ],
+      "steps": [
+        {
+          "step_id": "s4_search_snapshots",
+          "kind": "tool_call",
+          "instruction": "List existing strategy snapshots to find the v1 integration candidate (with cf_vol_term_spread) or confirm we need to create a fresh integration",
+          "tool_name": "backtests_strategy",
+          "args": {
+            "action": "inspect"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "s4_clone_best",
+          "kind": "tool_call",
+          "instruction": "Clone the best available base for integration. If a snapshot with cf_vol_term_spread already exists from v1 integration, clone that (use its snapshot_id as source_snapshot_id). Otherwise clone active-signal-v1. Name the clone 'candidate_v2_integrated'.",
+          "tool_name": "backtests_strategy",
+          "args": {
+            "action": "clone",
+            "source_snapshot_id": "active-signal-v1",
+            "new_name": "candidate_v2_integrated"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "s4_save_integrated",
+          "kind": "tool_call",
+          "instruction": "Save integrated version: add ALL promoted features from v1 and v2. Include cf_vol_term_spread (confirmed winner from v1) plus any features that achieved PROMOTE or WATCHLIST verdict in stages 1-3. For each: add appropriate signal logic (entry filter/gate/confirmation). If all v2 features were REJECTED, still integrate cf_vol_term_spread alone as the confirmed v1 winner.",
+          "tool_name": "backtests_strategy",
+          "args": {
+            "action": "save_version",
+            "snapshot_id": "candidate_v2_integrated",
+            "changes": "Integrate cf_vol_term_spread (v1 winner) + all PROMOTED/WATCHLIST features from v2 stages 1-3. Each feature adds its own signal layer. Preserve all baseline logic."
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "s4_backtest_integrated",
+          "kind": "tool_call",
+          "instruction": "Run full-history backtest on the integrated candidate",
+          "tool_name": "backtests_runs",
+          "args": {
+            "action": "start",
+            "snapshot_id": "candidate_v2_integrated",
+            "version": "1",
+            "symbol": "BTCUSDT",
+            "anchor_timeframe": "1h",
+            "execution_timeframe": "5m",
+            "start_at": "2021-03-24T00:00:00+00:00",
+            "end_at": "2024-12-31T23:55:00+00:00"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "s4_inspect_integrated",
+          "kind": "tool_call",
+          "instruction": "Inspect integrated backtest results. Must beat BOTH baseline ($1308.65, Sharpe 1.056, 498 trades, DD 2.44%) AND v1 best ($1496.34, Sharpe 1.456, 330 trades, DD 1.68%). Check for cannibalization: does adding v2 features degrade the v1 winner's contribution?",
+          "tool_name": "backtests_runs",
+          "args": {
+            "action": "inspect",
+            "run_id": "{{step:s4_backtest_integrated.run_id}}",
+            "view": "detail"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "s4_walkforward",
+          "kind": "tool_call",
+          "instruction": "Run walk-forward validation on the integrated candidate to verify out-of-sample stability",
+          "tool_name": "backtests_walkforward",
+          "args": {
+            "action": "start",
+            "snapshot_id": "candidate_v2_integrated",
+            "version": "1",
+            "symbol": "BTCUSDT",
+            "anchor_timeframe": "1h",
+            "execution_timeframe": "5m"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "s4_ownership",
+          "kind": "tool_call",
+          "instruction": "Run signal ownership analysis to verify each feature layer genuinely contributes to PnL and none is redundant",
+          "tool_name": "backtests_analysis",
+          "args": {
+            "action": "start",
+            "analysis": "signal_ownership",
+            "run_id": "{{step:s4_backtest_integrated.run_id}}"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "s4_record_final",
+          "kind": "tool_call",
+          "instruction": "Record final v2 integration results. If integration beats v1 best ($1496 PnL, 1.456 Sharpe): add to Gold Collection. If not: document why and which features caused cannibalization.",
+          "tool_name": "research_record",
+          "args": {
+            "action": "create",
+            "record_type": "result",
+            "title": "Plan v2 — Final Integration Results",
+            "content": "Record integrated metrics vs baseline ($1308.65) and v1 best ($1496.34). Document walk-forward stability, ownership analysis findings, and any cannibalization detected. Final verdict on v2 features.",
+            "tags": [
+              "plan_v2",
+              "integration",
+              "walk_forward",
+              "ownership",
+              "final"
+            ]
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        }
+      ],
+      "agent_instructions": [],
+      "results_table_columns": [],
+      "results_table_rows": [
+        {
+          "run_id": "N/A - MCP session corrupted before backtest could start",
+          "net_pnl": 0,
+          "trades": 0,
+          "PF": 0,
+          "WR": 0,
+          "verdict": "PENDING"
+        }
+      ],
+      "decision_gates": [],
+      "verdict": "PENDING",
+      "assigned_worker_id": "qwen-1",
+      "status": "completed",
+      "created_at": "2026-04-07T20:11:06.507420+00:00",
+      "completed_at": "2026-04-07T20:37:33.797388+00:00"
+    }
+  ],
+  "execution_order": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "status": "active",
+  "plan_markdown": "",
+  "previous_version_id": null,
+  "planner_run_artifact": "plans/planner_runs/revision_v2_attempt_1_exec_1.json"
+}

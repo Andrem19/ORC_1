@@ -1,5 +1,9 @@
 """
-Translation service — English to Russian via Helsinki-NLP/opus-mt-en-ru.
+Translation service — English to Russian.
+
+Supports two backends:
+  - "opus": Helsinki-NLP/opus-mt-en-ru (local MarianMT model)
+  - "lmstudio": LM Studio chat completions API (e.g. qwen models)
 
 Protects technical terms (snapshot IDs, feature names, symbols, etc.)
 from translation using a placeholder approach:
@@ -10,10 +14,13 @@ from translation using a placeholder approach:
 
 from __future__ import annotations
 
+import json
 import logging
 import re
 from collections import OrderedDict
+from http.client import HTTPConnection
 from pathlib import Path
+from urllib.parse import urlparse
 
 logger = logging.getLogger("orchestrator.translation")
 
@@ -48,23 +55,162 @@ _CACHE_MAX = 200
 # Max tokens to send to the model per chunk (leaves headroom from 512 limit).
 _MAX_TOKENS = 400
 
+# System prompt for LM Studio translation.
+_LMSTUDIO_SYSTEM_PROMPT = """You are a professional English-to-Russian translator for software monitoring notifications. Translate the user message from English to Russian.
+
+Rules:
+- Translate naturally, preserving the meaning accurately
+- Keep all placeholders like __TK0__, __TK1__ exactly as-is — they are technical identifiers
+- Keep numbers, percentages, and metric values unchanged
+- Keep the same line structure — do not merge or split lines
+- Be concise — these are short status notifications, not literary text
+- Do not add any explanations, comments, or extra text — output ONLY the translation"""
+
+
+class LMStudioTranslator:
+    """Translates text via LM Studio /v1/chat/completions API."""
+
+    def __init__(
+        self,
+        base_url: str = "http://localhost:1234",
+        model: str = "",
+        max_tokens: int = 1024,
+        timeout_seconds: int = 30,
+    ) -> None:
+        self._base_url = base_url
+        self._model = model
+        self._max_tokens = max_tokens
+        self._timeout = timeout_seconds
+        self._cache: OrderedDict[str, str] = OrderedDict()
+        self._available_checked: bool = False
+        self._available: bool = False
+
+    @property
+    def is_available(self) -> bool:
+        return self._available
+
+    def check_available(self) -> bool:
+        """Check if LM Studio server is reachable."""
+        try:
+            parsed = urlparse(self._base_url)
+            conn = HTTPConnection(
+                parsed.hostname, parsed.port or 1234, timeout=5,
+            )
+            conn.request("GET", "/v1/models")
+            resp = conn.getresponse()
+            conn.close()
+            ok = resp.status == 200
+            if ok and not self._available_checked:
+                logger.info(
+                    "LM Studio translator available at %s", self._base_url,
+                )
+            self._available = ok
+            self._available_checked = True
+            return ok
+        except Exception:
+            self._available = False
+            self._available_checked = True
+            return False
+
+    def translate(self, text: str) -> str:
+        """Translate text via LM Studio chat completions."""
+        if not text.strip():
+            return text
+
+        # Check cache
+        if text in self._cache:
+            self._cache.move_to_end(text)
+            return self._cache[text]
+
+        body: dict = {
+            "messages": [
+                {"role": "system", "content": _LMSTUDIO_SYSTEM_PROMPT},
+                {"role": "user", "content": text},
+            ],
+            "temperature": 0.3,
+            "max_tokens": self._max_tokens,
+        }
+        if self._model:
+            body["model"] = self._model
+
+        try:
+            parsed = urlparse(self._base_url)
+            conn = HTTPConnection(
+                parsed.hostname, parsed.port or 1234,
+                timeout=self._timeout,
+            )
+            headers = {"Content-Type": "application/json"}
+            conn.request(
+                "POST", "/v1/chat/completions", json.dumps(body), headers,
+            )
+            resp = conn.getresponse()
+            resp_body = resp.read().decode("utf-8")
+            conn.close()
+
+            if resp.status != 200:
+                logger.warning(
+                    "LM Studio translation returned HTTP %d: %s",
+                    resp.status, resp_body[:200],
+                )
+                return text
+
+            data = json.loads(resp_body)
+            translated = (
+                data.get("choices", [{}])[0]
+                .get("message", {})
+                .get("content", "")
+            ).strip()
+
+            if not translated:
+                return text
+
+            # Cache result
+            self._cache[text] = translated
+            if len(self._cache) > _CACHE_MAX:
+                self._cache.popitem(last=False)
+
+            return translated
+
+        except Exception as e:
+            logger.warning("LM Studio translation failed: %s", e)
+            return text
+
 
 class TranslationService:
-    """Translates English text to Russian, preserving technical terms."""
+    """Translates English text to Russian, preserving technical terms.
+
+    Supports two backends:
+      - "opus": local MarianMT model (Helsinki-NLP/opus-mt-en-ru)
+      - "lmstudio": LM Studio chat completions API
+    """
 
     def __init__(
         self,
         translate_to_russian: bool = False,
         model_dir: str = "models/opus-mt-en-ru",
         model_name: str = "Helsinki-NLP/opus-mt-en-ru",
+        backend: str = "opus",
+        lmstudio_base_url: str = "http://localhost:1234",
+        lmstudio_model: str = "",
+        lmstudio_max_tokens: int = 1024,
+        lmstudio_timeout_seconds: int = 30,
     ) -> None:
         self._translate = translate_to_russian
+        self._backend = backend
         self._model_dir = Path(model_dir)
         self._model_name = model_name
         self._tokenizer = None
         self._model = None
         self._model_loaded = False
         self._cache: OrderedDict[str, str] = OrderedDict()
+        self._lmstudio_translator: LMStudioTranslator | None = None
+        if backend == "lmstudio" and translate_to_russian:
+            self._lmstudio_translator = LMStudioTranslator(
+                base_url=lmstudio_base_url,
+                model=lmstudio_model,
+                max_tokens=lmstudio_max_tokens,
+                timeout_seconds=lmstudio_timeout_seconds,
+            )
 
     @property
     def is_enabled(self) -> bool:
@@ -72,19 +218,47 @@ class TranslationService:
 
     @property
     def is_ready(self) -> bool:
+        if self._backend == "lmstudio":
+            return self._model_loaded and self._lmstudio_translator is not None
         return self._model_loaded and self._model is not None
 
     def load_model(self) -> None:
-        """Download (if needed) and load the translation model.
+        """Load the translation backend.
 
-        On first call, downloads the model from HuggingFace
-        and saves it to model_dir. On subsequent calls, loads from disk.
-        Called at startup from main.py when translate_to_russian is True.
+        For "opus" backend: downloads/loads the MarianMT model.
+        For "lmstudio" backend: checks LM Studio server availability.
 
-        Raises RuntimeError if required packages are missing or model fails to load.
+        Raises RuntimeError if required packages are missing or backend fails.
         """
         if not self._translate:
             return
+
+        if self._backend == "lmstudio":
+            self._load_lmstudio()
+        else:
+            self._load_opus()
+
+    def _load_lmstudio(self) -> None:
+        """Check LM Studio availability for translation."""
+        if self._lmstudio_translator is None:
+            raise RuntimeError(
+                "LM Studio translator not configured. "
+                "Set translation_backend='lmstudio' and translate_to_russian=true."
+            )
+        if not self._lmstudio_translator.check_available():
+            raise RuntimeError(
+                f"LM Studio server not reachable at "
+                f"{self._lmstudio_translator._base_url}. "
+                f"Start LM Studio with a loaded model first."
+            )
+        self._model_loaded = True
+        logger.info(
+            "LM Studio translation backend ready (%s)",
+            self._lmstudio_translator._base_url,
+        )
+
+    def _load_opus(self) -> None:
+        """Download (if needed) and load the MarianMT translation model."""
 
         try:
             from transformers import MarianMTModel, MarianTokenizer
@@ -128,14 +302,46 @@ class TranslationService:
     def translate(self, text: str) -> str:
         """Translate English text to Russian, preserving technical terms.
 
-        Returns original text if translation is disabled or model is not loaded.
+        Returns original text if translation is disabled or backend is not loaded.
         """
-        if not self._translate or not self._model_loaded or self._model is None:
+        if not self._translate or not self._model_loaded:
             return text
 
         if not text.strip():
             return text
 
+        if self._backend == "lmstudio":
+            return self._translate_lmstudio(text)
+        return self._translate_opus(text)
+
+    def _translate_lmstudio(self, text: str) -> str:
+        """Translate via LM Studio with term protection."""
+        if self._lmstudio_translator is None:
+            return text
+        try:
+            protected, placeholders = self._protect_terms(text)
+
+            # Check cache
+            if protected in self._cache:
+                self._cache.move_to_end(protected)
+                return self._restore_terms(self._cache[protected], placeholders)
+
+            translated = self._lmstudio_translator.translate(protected)
+
+            # Store in cache
+            self._cache[protected] = translated
+            if len(self._cache) > _CACHE_MAX:
+                self._cache.popitem(last=False)
+
+            return self._restore_terms(translated, placeholders)
+        except Exception as e:
+            logger.error("LM Studio translation failed, sending English: %s", e)
+            return text
+
+    def _translate_opus(self, text: str) -> str:
+        """Translate via MarianMT (opus) with term protection."""
+        if self._model is None:
+            return text
         try:
             protected, placeholders = self._protect_terms(text)
 

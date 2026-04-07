@@ -252,6 +252,7 @@ class PlanLifecycleMixin:
             return
 
         reports = self._plan_store.load_reports_for_plan(self._current_plan.version)
+        compressed_reports_text = self._report_compressor.compress_reports(reports)
         anti_patterns = self._plan_store.load_all_anti_patterns()
 
         logger.info(
@@ -280,6 +281,7 @@ class PlanLifecycleMixin:
             research_history=self._plan_store.load_all_reports_compact(
                 current_plan_version=self._current_plan.version,
             ) if self._plan_store else None,
+            compressed_reports=compressed_reports_text,
         )
 
     def _get_validation_warnings(self) -> list[dict] | None:
@@ -308,12 +310,10 @@ class PlanLifecycleMixin:
         request_version = int(data.get("_request_version", self.state.current_plan_version + 1) or (self.state.current_plan_version + 1))
         attempt_number = int(data.get("_attempt_number", self.state.current_plan_attempt or 1) or 1)
         failure_class = str(data.get("_failure_class", "none") or "none")
-        if request_type == "repair":
-            # Repair must target the originally requested version — ignore the
-            # planner's plan_version which is often wrong after repair.
-            version = request_version
-        else:
-            version = int(data.get("plan_version", request_version) or request_version)
+        # Always use the orchestrator's request_version — the planner's
+        # plan_version output is unreliable (the schema example hardcodes 1
+        # and models frequently echo it regardless of actual version).
+        version = request_version
         if data.get("_parse_failed"):
             version = request_version
         data["plan_version"] = version
@@ -498,4 +498,45 @@ class PlanLifecycleMixin:
         self.state.last_change_at = datetime.now(timezone.utc).isoformat()
         self.state.empty_cycles = 0
 
+        # Execution time prediction via LMStudio
+        if self._lmstudio and self._lmstudio.is_available():
+            self._predict_and_notify(plan)
 
+    def _predict_and_notify(self, plan: ResearchPlan) -> None:
+        """Predict execution time for a new plan and send notification."""
+        try:
+            from app.services.lmstudio_assistant import TaskHistoryEntry
+
+            history: list[TaskHistoryEntry] = []
+            for task in self.state.tasks:
+                if task.status != TaskStatus.COMPLETED:
+                    continue
+                if not task.metadata.get("plan_mode"):
+                    continue
+                created = task.created_at
+                updated = task.updated_at
+                if not created or not updated:
+                    continue
+                try:
+                    c = datetime.fromisoformat(created)
+                    u = datetime.fromisoformat(updated)
+                    duration = (u - c).total_seconds() / 60.0
+                except (ValueError, TypeError):
+                    duration = 0.0
+                history.append(TaskHistoryEntry(
+                    stage_number=task.metadata.get("stage_number", 0),
+                    stage_name=task.metadata.get("stage_name", ""),
+                    execution_minutes=max(duration, 0.0),
+                ))
+
+            prediction = self._lmstudio.predict_execution_time(history, plan)  # type: ignore[union-attr]
+            if prediction:
+                self.notification_service.send_execution_prediction(
+                    prediction.raw_response, plan.version,
+                )
+                logger.info(
+                    "Execution prediction sent for plan v%d (%.1f min estimated)",
+                    plan.version, prediction.total_estimated_minutes,
+                )
+        except Exception as e:
+            logger.warning("Execution prediction failed: %s", e)

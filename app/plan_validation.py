@@ -25,11 +25,6 @@ HARD_ERROR_CODES = frozenset({
 })
 
 REPAIR_ERROR_CODES = frozenset({
-    "tool_alias_invalid",
-    "tool_name_missing",
-    "action_invalid",
-    "arg_invalid",
-    "non_executable_tool_call",
     "step_ref_invalid",
 })
 
@@ -232,17 +227,6 @@ def validate_plan(plan: ResearchPlan) -> PlanValidationResult:
                     )
                 )
 
-            if _looks_like_broken_tool_call(stripped):
-                result.errors.append(
-                    PlanValidationError(
-                        stage_number=task.stage_number,
-                        instruction_index=idx,
-                        code="non_executable_tool_call",
-                        message="Instruction looks like an incomplete tool call",
-                        offending_text=stripped,
-                    )
-                )
-
     return result
 
 
@@ -373,36 +357,6 @@ def _stringify_surface_values(value: Any) -> list[str]:
             out.extend(_stringify_surface_values(item))
         return out
     return []
-
-
-def _looks_like_broken_tool_call(text: str) -> bool:
-    """Heuristic: flag instructions that look like malformed tool calls.
-
-    Only triggers when the text starts with a known MCP tool name prefix,
-    avoiding false positives on natural language containing parentheses.
-    """
-    # Quick check: must contain tool-call markers
-    if "action=" not in text and "(" not in text:
-        return False
-
-    # Only check texts that start with something resembling a tool name
-    text_stripped = text.lstrip()
-    from app.planner_contract import TOOL_ACTIONS
-    tool_prefixes = set()
-    for tool_name in TOOL_ACTIONS:
-        # Take first segment before any underscore
-        tool_prefixes.add(tool_name.split("_")[0])
-    first_word = text_stripped.split("(")[0].split("_")[0].strip().lower()
-    if first_word not in tool_prefixes:
-        return False
-
-    if "(" in text and ")" not in text:
-        return True
-    if text.count("(") != text.count(")"):
-        return True
-    if "action=" in text and "(" not in text:
-        return True
-    return False
 
 
 def validate_integration_result(

@@ -1,0 +1,57 @@
+{
+  "task_id": "35cd49e3af5f",
+  "worker_id": "qwen-1",
+  "plan_version": 2,
+  "status": "partial",
+  "what_was_requested": "Validate, publish, build, clone, save, and backtest cf_cumulative_delta feature through the full research pipeline",
+  "what_was_done": "Successfully completed steps s1_validate through s1_save: (1) Validated cf_cumulative_delta custom feature after fixing API from ctx['close'] to ctx.series('close') — 337 non-null values out of 348, range ~0.03-0.036; (2) Published cf_cumulative_delta to feature registry; (3) Built feature dataset — 54864 rows processed, active column count increased from 24 to 25; (4) Cloned baseline strategy active-signal-v1 to candidate_cumulative_delta; (5) Saved version 2 with cf_cumulative_delta entry confirmation filter: long requires cf_cumulative_delta > 0.05, short requires cf_cumulative_delta < -0.05. Steps s1_backtest and s1_inspect could not complete because the MCP session corrupted after backtests_plan timeout — all dev_space1 tools disappeared from registry.",
+  "results_table": [
+    {
+      "run_id": "N/A - MCP session corrupted before backtest could start",
+      "net_pnl": 0,
+      "trades": 0,
+      "PF": 0,
+      "WR": 0,
+      "verdict": "PENDING"
+    }
+  ],
+  "key_metrics": {
+    "cf_cumulative_delta_validation_rows": 337,
+    "cf_cumulative_delta_published": true,
+    "feature_dataset_columns_count": 25,
+    "feature_dataset_rows_count": 54864,
+    "snapshot_id": "candidate_cumulative_delta",
+    "snapshot_version": 2,
+    "signal_long_logic": "dow in [0,1,2,3,6] and sum([iv_est in [3,4], rsi in [1], hour in [6], cl_1h in [2]])>=3 and cf_cumulative_delta > 0.05",
+    "signal_short_logic": "dow in [3] and sum([cl_1d in [2], cl_15m in [3], cl_1h in [1], hour in [15]])>=2 and cf_cumulative_delta < -0.05",
+    "baseline_pnl": 1308.65,
+    "baseline_sharpe": 1.056,
+    "baseline_trades": 498,
+    "baseline_dd": 2.44,
+    "mcp_session_status": "corrupted"
+  },
+  "artifacts": [
+    "custom_feature:cf_cumulative_delta",
+    "snapshot:candidate_cumulative_delta@2",
+    "feature_dataset:BTCUSDT:1h (25 columns)"
+  ],
+  "confidence": 0.7,
+  "verdict": "PENDING",
+  "error": "MCP session corrupted after backtests_plan timeout — all dev_space1 tools disappeared from registry. Backtest could not be launched. Feature pipeline (validate → publish → build → clone → save) completed successfully, but the critical backtest validation step remains incomplete.",
+  "raw_output": "MCP сессия действительно повреждена - все инструменты dev_space1 исчезли из реестра. Это соответствует правилу #8 из руководства: \"If any MCP tool call returns a timeout error or 'tool not found in registry', do NOT retry the same call — the MCP session is corrupted.\"\n\nПодведу итоги того, что было выполнено до сбоя:\n\n```json\n{\n  \"status\": \"partial\",\n  \"what_was_requested\": \"Validate, publish, build, clone, save, and backtest cf_cumulative_delta feature through the full research pipeline\",\n  \"what_was_done\": \"Successfully completed steps s1_validate through s1_save: (1) Validated cf_cumulative_delta custom feature after fixing API from ctx['close'] to ctx.series('close') — 337 non-null values out of 348, range ~0.03-0.036; (2) Published cf_cumulative_delta to feature registry; (3) Built feature dataset — 54864 rows processed, active column count increased from 24 to 25; (4) Cloned baseline strategy active-signal-v1 to candidate_cumulative_delta; (5) Saved version 2 with cf_cumulative_delta entry confirmation filter: long requires cf_cumulative_delta > 0.05, short requires cf_cumulative_delta < -0.05. Steps s1_backtest and s1_inspect could not complete because the MCP session corrupted after backtests_plan timeout — all dev_space1 tools disappeared from registry.\",\n  \"results_table\": [\n    {\n      \"run_id\": \"N/A - MCP session corrupted before backtest could start\",\n      \"net_pnl\": 0,\n      \"trades\": 0,\n      \"PF\": 0,\n      \"WR\": 0,\n      \"verdict\": \"PENDING\"\n    }\n  ],\n  \"key_metrics\": {\n    \"cf_cumulative_delta_validation_rows\": 337,\n    \"cf_cumulative_delta_published\": true,\n    \"feature_dataset_columns_count\": 25,\n    \"feature_dataset_rows_count\": 54864,\n    \"snapshot_id\": \"candidate_cumulative_delta\",\n    \"snapshot_version\": 2,\n    \"signal_long_logic\": \"dow in [0,1,2,3,6] and sum([iv_est in [3,4], rsi in [1], hour in [6], cl_1h in [2]])>=3 and cf_cumulative_delta > 0.05\",\n    \"signal_short_logic\": \"dow in [3] and sum([cl_1d in [2], cl_15m in [3], cl_1h in [1], hour in [15]])>=2 and cf_cumulative_delta < -0.05\",\n    \"baseline_pnl\": 1308.65,\n    \"baseline_sharpe\": 1.056,\n    \"baseline_trades\": 498,\n    \"baseline_dd\": 2.44,\n    \"mcp_session_status\": \"corrupted\"\n  },\n  \"artifacts\": [\n    \"custom_feature:cf_cumulative_delta\",\n    \"snapshot:candidate_cumulative_delta@2\",\n    \"feature_dataset:BTCUSDT:1h (25 columns)\"\n  ],\n  \"verdict\": \"PENDING\",\n  \"confidence\": 0.7,\n  \"error\": \"MCP session corrupted after backtests_plan timeout — all dev_space1 tools disappeared from registry. Backtest could not be launched. Feature pipeline (validate → publish → build → clone → save) completed successfully, but the critical backtest validation step remains incomplete.\",\n  \"mcp_problems\": [\n    {\n      \"tool_name\": \"backtests_plan\",\n      \"description\": \"Request timed out with MCP error -32001\",\n      \"suggestion\": \"MCP session likely overloaded or connection dropped. Retry in a new session.\",\n      \"severity\": \"high\"\n    },\n    {\n      \"tool_name\": \"all dev_space1 tools\",\n      \"description\": \"All tools disappeared from registry after the timeout, making further MCP calls impossible\",\n      \"suggestion\": \"Restart MCP connection or wait for session recovery before continuing with backtests_runs\",\n      \"severity\": \"high\"\n    }\n  ]\n}\n```",
+  "mcp_problems": [
+    {
+      "tool_name": "backtests_plan",
+      "description": "Request timed out with MCP error -32001",
+      "suggestion": "MCP session likely overloaded or connection dropped. Retry in a new session.",
+      "severity": "high"
+    },
+    {
+      "tool_name": "all dev_space1 tools",
+      "description": "All tools disappeared from registry after the timeout, making further MCP calls impossible",
+      "suggestion": "Restart MCP connection or wait for session recovery before continuing with backtests_runs",
+      "severity": "high"
+    }
+  ],
+  "timestamp": "2026-04-07T20:19:59.182101+00:00"
+}

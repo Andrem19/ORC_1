@@ -236,6 +236,42 @@ def test_process_plan_data_accepts_steps_only_tasks() -> None:
     assert svc._current_plan.tasks[0].agent_instructions == []
 
 
+def test_process_plan_data_ignores_wrong_plan_version_from_planner():
+    """Planner may echo plan_version: 1 from the schema example even for
+    revision requests.  The orchestrator must always use request_version."""
+    svc = _make_plan_service()
+    data = {
+        "plan_action": "update",
+        "plan_version": 1,  # planner echoes schema example (wrong)
+        "_request_type": "revision",
+        "_request_version": 3,  # orchestrator's correct version
+        "_attempt_number": 1,
+        "_failure_class": "none",
+        "tasks": [
+            {
+                "stage_number": 0,
+                "stage_name": "Baseline",
+                "theory": "test",
+                "steps": [
+                    {
+                        "step_id": "s0",
+                        "kind": "tool_call",
+                        "instruction": "run",
+                        "tool_name": "backtests_runs",
+                        "args": {"action": "start", "snapshot_id": "snap1", "version": "1"},
+                    }
+                ],
+                "decision_gates": [],
+            },
+        ],
+    }
+    svc._process_plan_data(data)
+
+    assert svc._current_plan is not None
+    assert svc._current_plan.version == 3
+    assert svc._current_plan.tasks[0].plan_version == 3
+
+
 def test_process_plan_data_defaults_execution_order_when_missing():
     svc = _make_plan_service()
     data = {
@@ -523,8 +559,8 @@ def test_validate_plan_rejects_invalid_tool_alias_and_action() -> None:
     validation = validate_plan(plan)
     codes = {error.code for error in validation.errors}
 
-    assert "tool_alias_invalid" in codes
-    assert "action_invalid" in codes
+    assert "tool_alias_invalid" not in codes  # tool name validation removed
+    assert "action_invalid" not in codes  # action validation removed
 
 
 def test_build_plan_repair_prompt_compacts_large_invalid_payload() -> None:
@@ -611,6 +647,19 @@ def test_build_plan_revision_prompt_omits_cross_stage_refs() -> None:
     assert "Do NOT use cross-stage refs" in prompt
     assert "concrete IDs" in prompt
     assert "schema_version\": 4" in prompt
+    # Revision from v1 should show plan_version: 2 in schema
+    assert '"plan_version": 2' in prompt
+
+
+def test_build_plan_revision_prompt_increments_plan_version() -> None:
+    from app.plan_prompts import build_plan_revision_prompt
+
+    plan_v2 = ResearchPlan(schema_version=4, version=2, goal="test")
+    prompt = build_plan_revision_prompt(goal="test", current_plan=plan_v2, reports=[])
+
+    # Revision from v2 should show plan_version: 3 in schema
+    assert '"plan_version": 3' in prompt
+    assert "plan_v3" in prompt
 
 
 def test_build_plan_repair_prompt_omits_cross_stage_refs() -> None:
@@ -695,6 +744,11 @@ def test_plan_schema_generates_correct_version_numbers() -> None:
     # Both should contain the same task structure
     assert '"steps":' in v4
     assert '"steps":' in v3
+    # Default plan_version is 1
+    assert '"plan_version": 1' in v4
+    # Explicit plan_version overrides the default
+    v4_pv3 = _plan_schema(4, plan_version=3)
+    assert '"plan_version": 3' in v4_pv3
 
 
 def test_build_plan_task_prompt_non_dict_results_table_no_crash() -> None:
@@ -748,14 +802,3 @@ def test_topological_sort_with_unknown_deps_and_cycles() -> None:
     assert len(result_cycle) <= 2
 
 
-def test_looks_like_broken_tool_call_no_false_positives() -> None:
-    """_looks_like_broken_tool_call should not flag natural language."""
-    from app.plan_validation import _looks_like_broken_tool_call
-
-    # Natural language with parens — should NOT be flagged
-    assert not _looks_like_broken_tool_call("Review the results (see above)")
-    assert not _looks_like_broken_tool_call("Analyze (and compare) results (see attached)")
-    assert not _looks_like_broken_tool_call("set action=promote for the next step")
-
-    # Actual broken tool calls — SHOULD be flagged
-    assert _looks_like_broken_tool_call('backtests_runs(action="start"')  # missing closing paren

@@ -103,6 +103,12 @@ def create_real_orchestrator(config: OrchestratorConfig) -> Orchestrator:
     state_store = StateStore(config.state_path)
     notification_service = NotificationService(config.notifications)
 
+    if config.lmstudio.enabled:
+        logger.info(
+            "LMStudio assistant enabled (url=%s, interval=%d cycles)",
+            config.lmstudio.base_url, config.lmstudio.analysis_interval_cycles,
+        )
+
     return Orchestrator(
         config=config,
         state_store=state_store,

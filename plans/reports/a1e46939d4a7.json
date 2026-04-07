@@ -1,0 +1,54 @@
+{
+  "task_id": "a1e46939d4a7",
+  "worker_id": "qwen-2",
+  "plan_version": 2,
+  "status": "success",
+  "what_was_requested": "ETAP 3: cf_session_momentum branch — validate, publish, build, clone strategy, save version with session momentum bias, backtest, and record results",
+  "what_was_done": "1. Validated cf_session_momentum custom feature (session-weighted rolling return: US hours +1, Asian hours -1, European 0, rolling 288-bar mean). Fixed API from ctx['close'] to ctx.frame() with timestamp_utc extraction. 2. Published to feature registry successfully. 3. Feature dataset already contained cf_session_momentum (26 total columns). 4. Cloned baseline strategy 'active-signal-v1' into 'candidate_session_momentum'. 5. Saved version 2 with cf_session_momentum as directional bias: long when >0.001, short when <-0.001. 6. Ran full-history backtest (2021-03-24 to 2024-12-31). 7. Results: catastrophic degradation — only 4 trades (all short, all stop_loss), -$43.62 PnL, 0% win rate, PF=0.0 vs baseline $1308.65/498 trades/PF=1.29. 8. Recorded result in research memory with REJECT verdict. Root cause: threshold ±0.001 is far too strict, filtering out ~99% of signals.",
+  "results_table": [
+    {
+      "run_id": "20260407-202356-0cd53057",
+      "net_pnl": -43.62,
+      "trades": 4,
+      "PF": 0.0,
+      "WR": 0.0,
+      "verdict": "REJECT"
+    }
+  ],
+  "key_metrics": {
+    "cf_session_momentum_pnl": -43.62,
+    "cf_session_momentum_trades": 4,
+    "cf_session_momentum_win_rate": 0.0,
+    "cf_session_momentum_profit_factor": 0.0,
+    "cf_session_momentum_max_drawdown_pct": 0.44,
+    "baseline_pnl": 1308.65,
+    "baseline_trades": 498,
+    "baseline_pf": 1.29,
+    "baseline_dd_pct": 2.44,
+    "pnl_change_pct": -103.3,
+    "trades_change_pct": -99.2,
+    "feature_coverage_rows": 516,
+    "feature_dtype": "float64",
+    "snapshot_id": "candidate_session_momentum",
+    "snapshot_version": 2
+  },
+  "artifacts": [
+    "custom_feature:cf_session_momentum",
+    "snapshot:candidate_session_momentum@v2",
+    "run:20260407-202356-0cd53057",
+    "research_record:node-ff7293b0a316484abae19d13c98ffbc4"
+  ],
+  "confidence": 0.95,
+  "verdict": "REJECT",
+  "error": "",
+  "raw_output": "```json\n{\n  \"status\": \"success\",\n  \"what_was_requested\": \"ETAP 3: cf_session_momentum branch — validate, publish, build, clone strategy, save version with session momentum bias, backtest, and record results\",\n  \"what_was_done\": \"1. Validated cf_session_momentum custom feature (session-weighted rolling return: US hours +1, Asian hours -1, European 0, rolling 288-bar mean). Fixed API from ctx['close'] to ctx.frame() with timestamp_utc extraction. 2. Published to feature registry successfully. 3. Feature dataset already contained cf_session_momentum (26 total columns). 4. Cloned baseline strategy 'active-signal-v1' into 'candidate_session_momentum'. 5. Saved version 2 with cf_session_momentum as directional bias: long when >0.001, short when <-0.001. 6. Ran full-history backtest (2021-03-24 to 2024-12-31). 7. Results: catastrophic degradation — only 4 trades (all short, all stop_loss), -$43.62 PnL, 0% win rate, PF=0.0 vs baseline $1308.65/498 trades/PF=1.29. 8. Recorded result in research memory with REJECT verdict. Root cause: threshold ±0.001 is far too strict, filtering out ~99% of signals.\",\n  \"results_table\": [\n    {\n      \"run_id\": \"20260407-202356-0cd53057\",\n      \"net_pnl\": -43.62,\n      \"trades\": 4,\n      \"PF\": 0.0,\n      \"WR\": 0.0,\n      \"verdict\": \"REJECT\"\n    }\n  ],\n  \"key_metrics\": {\n    \"cf_session_momentum_pnl\": -43.62,\n    \"cf_session_momentum_trades\": 4,\n    \"cf_session_momentum_win_rate\": 0.0,\n    \"cf_session_momentum_profit_factor\": 0.0,\n    \"cf_session_momentum_max_drawdown_pct\": 0.44,\n    \"baseline_pnl\": 1308.65,\n    \"baseline_trades\": 498,\n    \"baseline_pf\": 1.29,\n    \"baseline_dd_pct\": 2.44,\n    \"pnl_change_pct\": -103.3,\n    \"trades_change_pct\": -99.2,\n    \"feature_coverage_rows\": 516,\n    \"feature_dtype\": \"float64\",\n    \"snapshot_id\": \"candidate_session_momentum\",\n    \"snapshot_version\": 2\n  },\n  \"artifacts\": [\n    \"custom_feature:cf_session_momentum\",\n    \"snapshot:candidate_session_momentum@v2\",\n    \"run:20260407-202356-0cd53057\",\n    \"research_record:node-ff7293b0a316484abae19d13c98ffbc4\"\n  ],\n  \"verdict\": \"REJECT\",\n  \"confidence\": 0.95,\n  \"error\": \"\",\n  \"mcp_problems\": [\n    {\n      \"tool_name\": \"features_dataset\",\n      \"description\": \"build action timed out with MCP error -32001\",\n      \"suggestion\": \"Dataset was already updated; cf_session_momentum appeared in columns without explicit build\",\n      \"severity\": \"low\"\n    }\n  ]\n}\n```",
+  "mcp_problems": [
+    {
+      "tool_name": "features_dataset",
+      "description": "build action timed out with MCP error -32001",
+      "suggestion": "Dataset was already updated; cf_session_momentum appeared in columns without explicit build",
+      "severity": "low"
+    }
+  ],
+  "timestamp": "2026-04-07T20:25:33.040001+00:00"
+}

@@ -60,3 +60,28 @@ def test_config_to_dict():
     assert d["goal"] == "test"
     assert "workers" in d
     assert "poll_interval_seconds" in d
+
+
+def test_load_config_with_lmstudio():
+    data = {
+        "lmstudio": {
+            "enabled": True,
+            "base_url": "http://localhost:9999",
+            "model": "qwen-test",
+            "analysis_interval_cycles": 25,
+            "max_log_lines": 100,
+        },
+    }
+    cfg = load_config_from_dict(data)
+    assert cfg.lmstudio.enabled is True
+    assert cfg.lmstudio.base_url == "http://localhost:9999"
+    assert cfg.lmstudio.model == "qwen-test"
+    assert cfg.lmstudio.analysis_interval_cycles == 25
+    assert cfg.lmstudio.max_log_lines == 100
+
+
+def test_lmstudio_defaults_when_not_in_config():
+    cfg = load_config_from_dict({"goal": "test"})
+    assert cfg.lmstudio.enabled is False
+    assert cfg.lmstudio.base_url == "http://localhost:1234"
+    assert cfg.lmstudio.analysis_interval_cycles == 50

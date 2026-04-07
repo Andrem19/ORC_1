@@ -117,7 +117,7 @@ class TestRateLimiting:
 class TestHtmlFormatting:
     def _make_svc(self):
         with patch.dict(os.environ, {"ALGO_BOT": "tok", "CHAT_ID": "1"}):
-            cfg = NotificationConfig(enabled=True, min_interval_seconds=0)
+            cfg = NotificationConfig(enabled=True, min_interval_seconds=0, batch_enabled=False)
             return NotificationService(cfg)
 
     def _mock_conn(self):
@@ -318,3 +318,134 @@ class TestTranslationIntegration:
             with patch.object(svc._translator, "load_model") as mock_load:
                 svc.init_translation()
                 mock_load.assert_called_once()
+
+
+# ---------------------------------------------------------------------------
+# Tests: batch notifications
+# ---------------------------------------------------------------------------
+
+
+def _make_batch_svc(**overrides):
+    """Create an enabled NotificationService with batch config."""
+    with patch.dict(os.environ, {"ALGO_BOT": "tok", "CHAT_ID": "1"}):
+        defaults = dict(enabled=True, min_interval_seconds=0, batch_enabled=True)
+        defaults.update(overrides)
+        cfg = NotificationConfig(**defaults)
+        return NotificationService(cfg)
+
+
+def _mock_telegram_ok():
+    """Patch HTTPSConnection to return 200."""
+    return patch(
+        "app.services.notification_service.HTTPSConnection",
+        return_value=type(
+            "Conn", (),
+            {
+                "getresponse": lambda self: type(
+                    "R", (), {"status": 200, "read": lambda self: b'{"ok":true}'}
+                )(),
+                "request": lambda self, *a, **kw: None,
+                "close": lambda self: None,
+            },
+        )(),
+    )
+
+
+class TestBatchNotifications:
+    def test_batch_queues_worker_result(self):
+        svc = _make_batch_svc()
+        result = TaskResult(task_id="t1", worker_id="w1", status="success", summary="ok")
+        with _mock_telegram_ok():
+            sent = svc.send_worker_result(result, cycle=1)
+        assert sent is True
+        assert len(svc._batch_queue) == 1
+        assert svc._batch_queue[0].result.task_id == "t1"
+
+    def test_flush_sends_batch_summary(self):
+        svc = _make_batch_svc(batch_debounce_seconds=0)
+        r1 = TaskResult(task_id="t1", worker_id="w1", status="success", summary="feature A")
+        r2 = TaskResult(task_id="t2", worker_id="w2", status="error", error="timeout")
+        r3 = TaskResult(task_id="t3", worker_id="w3", status="success", summary="feature B")
+        with _mock_telegram_ok():
+            svc.send_worker_result(r1, cycle=5)
+            svc.send_worker_result(r2, cycle=5)
+            svc.send_worker_result(r3, cycle=5)
+            svc._flush_batch()
+        # Queue should be empty after flush
+        assert len(svc._batch_queue) == 0
+
+    def test_single_item_sends_individually(self):
+        svc = _make_batch_svc()
+        result = TaskResult(task_id="t1", worker_id="w1", status="success")
+        with _mock_telegram_ok():
+            svc._queue_for_batch(result, cycle=1)
+            svc._flush_batch()
+        assert len(svc._batch_queue) == 0
+
+    def test_urgent_notifications_not_batched(self):
+        svc = _make_batch_svc()
+        with _mock_telegram_ok() as mock:
+            svc.send_error("critical error", context="worker")
+            svc.send_lifecycle("finished", "done")
+        # These go directly through _send_structured, not batch queue
+        assert len(svc._batch_queue) == 0
+
+    def test_batch_disabled_sends_immediately(self):
+        svc = _make_batch_svc(batch_enabled=False)
+        result = TaskResult(task_id="t1", worker_id="w1", status="success")
+        with _mock_telegram_ok():
+            sent = svc.send_worker_result(result, cycle=1)
+        assert sent is True
+        assert len(svc._batch_queue) == 0
+
+    def test_flush_on_shutdown(self):
+        svc = _make_batch_svc()
+        r1 = TaskResult(task_id="t1", worker_id="w1", status="success")
+        svc._queue_for_batch(r1, cycle=1)
+        assert len(svc._batch_queue) == 1
+        with _mock_telegram_ok():
+            svc.flush()
+        assert len(svc._batch_queue) == 0
+
+    def test_config_batch_defaults(self):
+        cfg = NotificationConfig()
+        assert cfg.batch_enabled is True
+        assert cfg.batch_debounce_seconds == 5.0
+
+
+class TestDiagnosticDigest:
+    def test_send_diagnostic_digest(self):
+        with patch.dict(os.environ, {"ALGO_BOT": "tok", "CHAT_ID": "1"}):
+            cfg = NotificationConfig(enabled=True, min_interval_seconds=0)
+            svc = NotificationService(cfg)
+            with patch.object(svc, "_send_structured", return_value=True) as mock:
+                result = svc.send_diagnostic_digest("Errors found: MCP timeout", cycle=50)
+            assert result is True
+            sections = mock.call_args[0][0]
+            body_text = "".join(s.value for s in sections if s.kind == "body")
+            assert "MCP timeout" in body_text
+
+    def test_digest_disabled_returns_false(self):
+        cfg = NotificationConfig(enabled=False)
+        svc = NotificationService(cfg)
+        assert svc.send_diagnostic_digest("test", cycle=1) is False
+
+
+class TestExecutionPrediction:
+    def test_send_execution_prediction(self):
+        with patch.dict(os.environ, {"ALGO_BOT": "tok", "CHAT_ID": "1"}):
+            cfg = NotificationConfig(enabled=True, min_interval_seconds=0)
+            svc = NotificationService(cfg)
+            with patch.object(svc, "_send_structured", return_value=True) as mock:
+                result = svc.send_execution_prediction(
+                    "Stage 1: ~8 min, Stage 2: ~15 min", plan_version=3,
+                )
+            assert result is True
+            sections = mock.call_args[0][0]
+            body_text = "".join(s.value for s in sections if s.kind == "body")
+            assert "Stage 1" in body_text
+
+    def test_prediction_disabled_returns_false(self):
+        cfg = NotificationConfig(enabled=False)
+        svc = NotificationService(cfg)
+        assert svc.send_execution_prediction("test", plan_version=1) is False

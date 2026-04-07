@@ -15,6 +15,7 @@ from typing import Any
 
 from app.plan_models import ResearchPlan, TaskReport
 from app.plan_prompt_budget import (
+    apply_global_budget,
     compact_repair_context,
     compact_reports_for_revision,
     truncate_text,
@@ -30,7 +31,7 @@ from app.plan_validation import PlanRepairRequest
 _PLAN_SCHEMA_BODY = """\
   "schema_version": {version},
   "plan_action": "create|update",
-  "plan_version": 1,
+  "plan_version": {plan_version},
   "reason": "why this plan or revision",
   "plan_markdown": "concise plan summary",
   "frozen_base": "active-signal-v1@1",
@@ -81,9 +82,9 @@ _PLAN_SCHEMA_BODY = """\
 }}"""
 
 
-def _plan_schema(version: int) -> str:
-    """Generate plan JSON schema with the given version number."""
-    return "{" + _PLAN_SCHEMA_BODY.format(version=version)
+def _plan_schema(version: int, plan_version: int = 1) -> str:
+    """Generate plan JSON schema with the given version numbers."""
+    return "{" + _PLAN_SCHEMA_BODY.format(version=version, plan_version=plan_version)
 
 
 # Single schema version for all plan operations (creation, revision, repair)
@@ -104,7 +105,11 @@ WORKER_REPORT_SCHEMA = """{
   "mcp_problems": [{"tool_name": "...", "description": "...", "suggestion": "...", "severity": "low|medium|high"}]
 }"""
 
-MAX_CREATE_TASKS = 5
+DEFAULT_STAGES_GUIDANCE = (
+    "Create 5 to 7 research stages depending on complexity. "
+    "If investigation can be parallelized across 2-3 workers, "
+    "count those parallel branches as a single time-stage."
+)
 
 
 def _planner_context(research_context: str | None) -> str:
@@ -127,6 +132,7 @@ def build_plan_creation_prompt(
     planner_system_prompt: str = "",
     operator_directives: str = "",
     research_history: list[str] | None = None,
+    stages_guidance: str = "",
 ) -> str:
     """Build the prompt for creating a new research plan (plan_v1 or after full resolution).
 
@@ -210,7 +216,7 @@ def build_plan_creation_prompt(
 
     parts.append("## Requirements")
     parts.append(
-        f"- Return at most {MAX_CREATE_TASKS} stages.\n"
+        f"- {stages_guidance or DEFAULT_STAGES_GUIDANCE}\n"
         "- Prefer fewer, higher-value stages over exhaustive plans.\n"
         "- Use `depends_on` as the only execution contract.\n"
         "- Each stage must be executable with exact MCP calls and parameters.\n"
@@ -219,8 +225,7 @@ def build_plan_creation_prompt(
         "- Stages with satisfied dependencies may run in parallel.\n"
         "- **Design parallel branches**: Create 2-3 independent investigation stages that depend\n"
         "  on the same parent stage. This allows multiple workers to run simultaneously.\n"
-        "  Example: Stage 1 explores feature A, Stage 2 explores feature B — both depend on\n"
-        "  Stage 0, so they run in PARALLEL. A later stage depends on [1, 2] to merge results.\n"
+        "  Parallel stages count as ONE time-stage toward the total.\n"
     )
     parts.append("")
 
@@ -260,10 +265,11 @@ def build_plan_creation_prompt(
     parts.append("### Parallel Branch Example")
     parts.append(
         "Stage 0: Baseline (depends_on=[])\n"
-        "Stage 1: Feature A — cf_regime_filter (depends_on=[0])\n"
-        "Stage 2: Feature B — cf_volatility_adaptive (depends_on=[0])  ← runs IN PARALLEL with Stage 1\n"
-        "Stage 3: Combine best features (depends_on=[1, 2])\n"
-        "Stage 4: Robustness validation (depends_on=[3])"
+        "Stage 1: Feature A (depends_on=[0])\n"
+        "Stage 2: Feature B (depends_on=[0])  ← runs IN PARALLEL with Stage 1\n"
+        "Stage N-1: Combine best results (depends_on=[1, 2, ...])\n"
+        "Stage N: Final validation (depends_on=[N-1])\n"
+        "NOTE: Stages 1 and 2 run in parallel (same time-stage). Adjust total stage count to the research problem."
     )
 
     return "\n".join(parts)
@@ -281,109 +287,131 @@ def build_plan_revision_prompt(
     planner_system_prompt: str = "",
     operator_directives: str = "",
     research_history: list[str] | None = None,
+    compressed_reports: str | None = None,
 ) -> str:
     """Build the prompt for revising a plan based on collected worker reports.
 
     The planner receives the current plan + all reports and generates the NEXT version.
+    Sections are collected into a budget dict and truncated via apply_global_budget.
+    If compressed_reports is provided, it is used directly instead of compact_reports_for_revision().
     """
-    parts: list[str] = []
+    sections: dict[str, str] = {}
 
     if operator_directives:
-        parts.append("## Operator Directives")
-        parts.append(operator_directives)
-        parts.append("")
+        sections["operator_directives"] = operator_directives
 
     if planner_system_prompt:
-        parts.append("## System Instructions")
-        parts.append(planner_system_prompt)
-        parts.append("")
+        sections["system_instructions"] = planner_system_prompt
 
-    parts.append("## Revision Context")
-    parts.append(
+    sections["revision_context"] = (
         "Workers have completed tasks from the current plan "
         "and returned reports. Your job is to analyze the results and write the NEXT VERSION "
         "of the research plan (plan_v" + str(current_plan.version + 1) + ")."
     )
-    parts.append("")
 
-    parts.append("## Global Goal")
-    parts.append(goal)
-    parts.append("")
+    sections["goal"] = goal
 
     context_text = _planner_context(research_context)
     if context_text:
-        parts.append("## Context")
-        parts.append(truncate_text(context_text, 3600))
-        parts.append("")
+        sections["context"] = truncate_text(context_text, 3000)
 
     if current_plan.baseline_run_id or current_plan.baseline_metrics:
-        parts.append("## Measured Baseline (source of truth)")
+        baseline_parts: list[str] = []
         if current_plan.baseline_snapshot_ref:
-            parts.append(f"- Snapshot: {current_plan.baseline_snapshot_ref}")
+            baseline_parts.append(f"- Snapshot: {current_plan.baseline_snapshot_ref}")
         if current_plan.baseline_run_id:
-            parts.append(f"- Run ID: {current_plan.baseline_run_id}")
+            baseline_parts.append(f"- Run ID: {current_plan.baseline_run_id}")
         if current_plan.baseline_metrics:
-            parts.append(f"- Metrics: {current_plan.baseline_metrics}")
-        parts.append("")
+            baseline_parts.append(f"- Metrics: {current_plan.baseline_metrics}")
+        sections["baseline"] = "\n".join(baseline_parts)
 
     # Current plan
-    parts.append(f"## Current Plan (v{current_plan.version})")
     if current_plan.plan_markdown:
-        parts.append(truncate_text(current_plan.plan_markdown, 1600))
+        sections["current_plan"] = truncate_text(current_plan.plan_markdown, 1200)
     else:
-        parts.append(f"Goal: {current_plan.goal}")
-        parts.append(f"Frozen base: {current_plan.frozen_base}")
-    parts.append("")
+        sections["current_plan"] = f"Goal: {current_plan.goal}\nFrozen base: {current_plan.frozen_base}"
 
-    parts.append("## Worker Reports")
-    parts.append(compact_reports_for_revision(reports))
-    parts.append("")
+    if compressed_reports is not None:
+        sections["worker_reports"] = compressed_reports
+    else:
+        sections["worker_reports"] = compact_reports_for_revision(reports)
 
     if research_history:
-        parts.append("## Research History (DO NOT repeat these approaches)")
-        parts.append(
-            "These approaches were already tested in previous plan versions. "
-            "DO NOT propose them again unless you have a substantially different theory."
-        )
-        for line in research_history:
-            parts.append(line)
-        parts.append("")
+        sections["research_history"] = "\n".join(research_history)
 
     # Anti-patterns
     if anti_patterns:
-        parts.append("## Anti-Patterns (carry forward + add new ones if evidence exists)")
+        ap_lines: list[str] = []
         for ap in anti_patterns:
-            parts.append(
-                f"- **{ap.get('category', '?')}**: {ap.get('description', '')} "
+            desc = truncate_text(ap.get('description', ''), 120)
+            ap_lines.append(
+                f"- **{ap.get('category', '?')}**: {desc} "
                 f"({ap.get('evidence_count', '?')} failures)"
             )
-        parts.append("")
+        sections["anti_patterns"] = "\n".join(ap_lines)
 
     if mcp_problem_summary:
-        parts.append("## Known MCP Problems")
-        parts.append(mcp_problem_summary)
-        parts.append("")
+        sections["mcp_problems"] = truncate_text(mcp_problem_summary, 500)
 
     if validation_warnings:
-        parts.append("## Previous Plan Validation Warnings")
-        parts.append(
-            "The previous plan had these issues. Avoid repeating them:"
-        )
+        warn_lines: list[str] = []
         for w in validation_warnings[:5]:
-            parts.append(
+            msg = truncate_text(w.get('message', ''), 120)
+            warn_lines.append(
                 f"- stage {w.get('stage_number', '?')} "
-                f"{w.get('code', '?')}: {w.get('message', '')}"
+                f"{w.get('code', '?')}: {msg}"
             )
-        parts.append("")
+        sections["validation_warnings"] = "\n".join(warn_lines)
 
     if worker_ids:
         shuffled = list(worker_ids)
         random.shuffle(shuffled)
-        parts.append("## Available Workers")
-        parts.append(", ".join(shuffled))
+        sections["workers"] = ", ".join(shuffled)
+
+    # Apply global budget to all collected sections
+    sections = apply_global_budget(sections)
+
+    # Section order for the final prompt
+    _SECTION_ORDER = [
+        ("operator_directives", "Operator Directives"),
+        ("system_instructions", "System Instructions"),
+        ("revision_context", "Revision Context"),
+        ("goal", "Global Goal"),
+        ("context", "Context"),
+        ("baseline", "Measured Baseline (source of truth)"),
+        ("current_plan", None),  # dynamic title below
+        ("worker_reports", "Worker Reports"),
+        ("research_history", None),  # dynamic title below
+        ("anti_patterns", "Anti-Patterns (carry forward + add new ones if evidence exists)"),
+        ("mcp_problems", "Known MCP Problems"),
+        ("validation_warnings", "Previous Plan Validation Warnings"),
+        ("workers", "Available Workers"),
+    ]
+
+    parts: list[str] = []
+    for key, title in _SECTION_ORDER:
+        content = sections.get(key, "")
+        if not content:
+            continue
+        # Dynamic titles for some sections
+        if key == "current_plan":
+            title = f"Current Plan (v{current_plan.version})"
+        elif key == "research_history":
+            title = "Research History (DO NOT repeat these approaches)"
+            parts.append(f"## {title}")
+            parts.append(
+                "These approaches were already tested in previous plan versions. "
+                "DO NOT propose them again unless you have a substantially different theory."
+            )
+            parts.append(content)
+            parts.append("")
+            continue
+
+        parts.append(f"## {title}")
+        parts.append(content)
         parts.append("")
 
-    # Revision instructions
+    # Revision instructions — fixed, not budgeted
     parts.append("## Revision Instructions")
     parts.append(
         "Analyze the reports above and write plan_v" + str(current_plan.version + 1) + ":\n"
@@ -413,7 +441,7 @@ def build_plan_revision_prompt(
     parts.append("## Output")
     parts.append("Respond with JSON only matching this schema:")
     parts.append("```json")
-    parts.append(PLANNER_PLAN_SCHEMA)
+    parts.append(_plan_schema(4, plan_version=current_plan.version + 1))
     parts.append("```")
 
     return "\n".join(parts)

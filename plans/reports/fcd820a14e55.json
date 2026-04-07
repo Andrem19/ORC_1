@@ -1,0 +1,65 @@
+{
+  "task_id": "fcd820a14e55",
+  "worker_id": "qwen-1",
+  "plan_version": 2,
+  "status": "partial",
+  "what_was_requested": "ETAP 4: Integration + Validation — combine v1 (cf_vol_term_spread) and v2 features into single integrated strategy, run backtest, walk-forward, and signal ownership analysis",
+  "what_was_done": "1. Listed all 8 strategy snapshots — confirmed no existing v1 integration snapshot with cf_vol_term_spread. 2. Cloned active-signal-v1 into candidate_v2_integrated (snapshot_id=candidate_v2_integrated, version=1). 3. Saved integrated version (v2) adding cf_vol_term_spread as confirmation gate to both long and short signals: Long: baseline AND cf_vol_term_spread > 0.05; Short: baseline AND cf_vol_term_spread < -0.05. All v2 features (cf_choppiness_index, cf_cumulative_delta, cf_session_momentum) were REJECTED in prior stages, so only cf_vol_term_spread (v1 confirmed winner) was integrated. 4. Attempted backtests_plan — MCP timeout. 5. Attempted backtests_runs(action='start') — tool not found in registry (MCP session corrupted). 6. All subsequent tools (system_health, etc.) also unavailable — MCP session fully corrupted.",
+  "results_table": [
+    {
+      "run_id": "N/A - MCP session corrupted before backtest could start",
+      "net_pnl": 0,
+      "trades": 0,
+      "PF": 0,
+      "WR": 0,
+      "verdict": "PENDING"
+    }
+  ],
+  "key_metrics": {
+    "snapshot_id": "candidate_v2_integrated",
+    "snapshot_version": 2,
+    "integrated_features": [
+      "cf_vol_term_spread"
+    ],
+    "v2_features_rejected": [
+      "cf_choppiness_index",
+      "cf_cumulative_delta",
+      "cf_session_momentum"
+    ],
+    "signal_long_logic": "dow in [0,1,2,3,6] and sum([iv_est in [3,4], rsi in [1], hour in [6], cl_1h in [2]])>=3 and cf_vol_term_spread > 0.05",
+    "signal_short_logic": "dow in [3] and sum([cl_1d in [2], cl_15m in [3], cl_1h in [1], hour in [15]])>=2 and cf_vol_term_spread < -0.05",
+    "baseline_pnl": 1308.65,
+    "baseline_sharpe": 1.056,
+    "baseline_trades": 498,
+    "baseline_dd": 2.44,
+    "mcp_session_status": "corrupted"
+  },
+  "artifacts": [
+    "snapshot:candidate_v2_integrated @2"
+  ],
+  "confidence": 0.3,
+  "verdict": "PENDING",
+  "error": "MCP session corrupted after save_version. backtests_runs, backtests_walkforward, backtests_analysis, and system_health all returned 'tool not found in registry'. Integration snapshot was successfully created and saved but backtest could not be executed.",
+  "raw_output": "MCP сессия полностью повреждена — все инструменты dev_space1 недоступны. Задокументирую частичные результаты.\n\n```json\n{\n  \"status\": \"partial\",\n  \"what_was_requested\": \"ETAP 4: Integration + Validation — combine v1 (cf_vol_term_spread) and v2 features into single integrated strategy, run backtest, walk-forward, and signal ownership analysis\",\n  \"what_was_done\": \"1. Listed all 8 strategy snapshots — confirmed no existing v1 integration snapshot with cf_vol_term_spread. 2. Cloned active-signal-v1 into candidate_v2_integrated (snapshot_id=candidate_v2_integrated, version=1). 3. Saved integrated version (v2) adding cf_vol_term_spread as confirmation gate to both long and short signals: Long: baseline AND cf_vol_term_spread > 0.05; Short: baseline AND cf_vol_term_spread < -0.05. All v2 features (cf_choppiness_index, cf_cumulative_delta, cf_session_momentum) were REJECTED in prior stages, so only cf_vol_term_spread (v1 confirmed winner) was integrated. 4. Attempted backtests_plan — MCP timeout. 5. Attempted backtests_runs(action='start') — tool not found in registry (MCP session corrupted). 6. All subsequent tools (system_health, etc.) also unavailable — MCP session fully corrupted.\",\n  \"results_table\": [\n    {\"run_id\": \"N/A - MCP session corrupted before backtest could start\", \"net_pnl\": 0, \"trades\": 0, \"PF\": 0, \"WR\": 0, \"verdict\": \"PENDING\"}\n  ],\n  \"key_metrics\": {\n    \"snapshot_id\": \"candidate_v2_integrated\",\n    \"snapshot_version\": 2,\n    \"integrated_features\": [\"cf_vol_term_spread\"],\n    \"v2_features_rejected\": [\"cf_choppiness_index\", \"cf_cumulative_delta\", \"cf_session_momentum\"],\n    \"signal_long_logic\": \"dow in [0,1,2,3,6] and sum([iv_est in [3,4], rsi in [1], hour in [6], cl_1h in [2]])>=3 and cf_vol_term_spread > 0.05\",\n    \"signal_short_logic\": \"dow in [3] and sum([cl_1d in [2], cl_15m in [3], cl_1h in [1], hour in [15]])>=2 and cf_vol_term_spread < -0.05\",\n    \"baseline_pnl\": 1308.65,\n    \"baseline_sharpe\": 1.056,\n    \"baseline_trades\": 498,\n    \"baseline_dd\": 2.44,\n    \"mcp_session_status\": \"corrupted\"\n  },\n  \"artifacts\": [\n    \"snapshot:candidate_v2_integrated @2\"\n  ],\n  \"verdict\": \"PENDING\",\n  \"confidence\": 0.3,\n  \"error\": \"MCP session corrupted after save_version. backtests_runs, backtests_walkforward, backtests_analysis, and system_health all returned 'tool not found in registry'. Integration snapshot was successfully created and saved but backtest could not be executed.\",\n  \"mcp_problems\": [\n    {\"tool_name\": \"backtests_plan\", \"description\": \"Request timed out (MCP error -32001)\", \"suggestion\": \"Retry backtests_plan or skip directly to backtests_runs\", \"severity\": \"medium\"},\n    {\"tool_name\": \"backtests_runs\", \"description\": \"Tool not found in registry — MCP session corrupted\", \"suggestion\": \"Restart MCP session and retry backtest on candidate_v2_integrated @2\", \"severity\": \"high\"},\n    {\"tool_name\": \"system_health\", \"description\": \"Tool not found in registry — MCP session fully corrupted\", \"suggestion\": \"Restart MCP server session entirely\", \"severity\": \"high\"}\n  ]\n}\n```",
+  "mcp_problems": [
+    {
+      "tool_name": "backtests_plan",
+      "description": "Request timed out (MCP error -32001)",
+      "suggestion": "Retry backtests_plan or skip directly to backtests_runs",
+      "severity": "medium"
+    },
+    {
+      "tool_name": "backtests_runs",
+      "description": "Tool not found in registry — MCP session corrupted",
+      "suggestion": "Restart MCP session and retry backtest on candidate_v2_integrated @2",
+      "severity": "high"
+    },
+    {
+      "tool_name": "system_health",
+      "description": "Tool not found in registry — MCP session fully corrupted",
+      "suggestion": "Restart MCP server session entirely",
+      "severity": "high"
+    }
+  ],
+  "timestamp": "2026-04-07T20:37:29.743695+00:00"
+}

@@ -65,6 +65,7 @@ class Orchestrator:
             timeout=config.planner_timeout_seconds,
             planner_system_prompt=config.planner_system_prompt,
             operator_directives=config.operator_directives,
+            stages_guidance=config.plan_stages_guidance,
         )
         self.worker_service = WorkerService(worker_adapter, timeout=config.worker_timeout_seconds)
         self.scheduler = scheduler or Scheduler(
@@ -661,6 +662,7 @@ class Orchestrator:
         self.state.status = "finished"
         self.state.stop_reason = reason
         self.memory_service.record_event(self.state, f"Orchestrator finished: {reason.value}")
+        self.notification_service.flush()
         self.notification_service.send_lifecycle(
             "finished", f"Reason: {reason.value}. {summary[:200]}"
         )
@@ -687,6 +689,7 @@ class Orchestrator:
             "Drain mode requested — waiting for %d running tasks to finish",
             active_count,
         )
+        self.notification_service.flush()
         self.notification_service.send_lifecycle(
             "draining",
             f"Drain mode: waiting for {active_count} running tasks to finish",

@@ -20,7 +20,7 @@ logger = logging.getLogger("orchestrator.plan")
 
 
 # Default configurable via config.silent_worker_warn_seconds
-_SILENT_WARN_SECONDS = 300
+_SILENT_WARN_SECONDS = 900
 
 
 class TaskHealthMixin:
@@ -126,22 +126,22 @@ class TaskHealthMixin:
 
         steps = pt.steps or []
         step_count = len(steps)
-        # +60s per step beyond 3
-        extra = max(0, step_count - 3) * 60
-        # +300s if stage contains heavy tools
+        # +180s per step beyond 3 (generous for long-running MCP calls)
+        extra = max(0, step_count - 3) * 180
+        # +900s if stage contains heavy tools (model training, walk-forward, etc.)
         if any(
             getattr(s, "tool_name", "") in self._HEAVY_TOOLS
             for s in steps
         ):
-            extra += 300
+            extra += 900
         return base_timeout + extra
 
     # ---------------------------------------------------------------
     # Silent worker detection
     # ---------------------------------------------------------------
 
-    _SILENT_WARN_SECONDS = 300  # 5 min of zero output before warning
-    _INTERMEDIATE_COLLECT_SECONDS = 450  # snapshot partial output before timeout
+    _SILENT_WARN_SECONDS = 900  # 15 min of zero output before warning
+    _INTERMEDIATE_COLLECT_SECONDS = 1800  # snapshot partial output before timeout
 
     def _check_silent_workers(self) -> None:
         """Diagnose silent or stalled workers without killing them."""
@@ -238,6 +238,8 @@ class TaskHealthMixin:
         NEVER spawns a CLI subprocess probe while a worker is active,
         because a second CLI process would compete for the same MCP
         stdio connection and kill the running worker's session.
+
+        Instead, when workers are active, infers health from recent results.
         """
         if self.state.current_cycle - self._mcp_check_cycle < 5:
             return
@@ -247,15 +249,6 @@ class TaskHealthMixin:
         active = self.state.active_tasks()
         if active:
             self._cycles_since_last_real_health_check += 1
-
-            # Warn if MCP health hasn't been verified for too long
-            if self._cycles_since_last_real_health_check >= 20:
-                logger.warning(
-                    "MCP health check: %d cycles since last real probe "
-                    "(%d worker(s) active) — MCP health is STALE",
-                    self._cycles_since_last_real_health_check,
-                    len(active),
-                )
 
             # Check for suspiciously silent workers (potential MCP death)
             now = datetime.now(timezone.utc)
@@ -277,11 +270,37 @@ class TaskHealthMixin:
                 except (TypeError, ValueError):
                     pass
 
-            logger.debug(
-                "MCP health check: skipped (subprocess probe) because "
-                "%d worker(s) active — inferring healthy",
-                len(active),
-            )
+            # Evidence-based inference from recent results
+            inference = self._infer_mcp_health_from_active_workers()
+
+            if inference == "likely_unhealthy":
+                logger.warning(
+                    "MCP health inferred UNHEALTHY from active workers "
+                    "(%d cycles stale, evidence of failures)",
+                    self._cycles_since_last_real_health_check,
+                )
+                self._mcp_healthy = False
+                self.state.mcp_consecutive_failures += 1
+            elif inference == "likely_healthy":
+                logger.debug(
+                    "MCP health inferred OK from active workers (%d cycles stale)",
+                    self._cycles_since_last_real_health_check,
+                )
+            else:
+                # Uncertain — use staleness warnings
+                if self._cycles_since_last_real_health_check >= 20:
+                    logger.warning(
+                        "MCP health check: %d cycles since last real probe "
+                        "(%d worker(s) active) — MCP health is STALE",
+                        self._cycles_since_last_real_health_check,
+                        len(active),
+                    )
+                else:
+                    logger.debug(
+                        "MCP health check: skipped (subprocess probe) because "
+                        "%d worker(s) active — inferring healthy (uncertain)",
+                        len(active),
+                    )
             return
 
         # No workers running — safe to probe.
@@ -299,3 +318,43 @@ class TaskHealthMixin:
                 "MCP health check: FAILED (%d consecutive) — MCP tasks will be skipped",
                 self.state.mcp_consecutive_failures,
             )
+
+    # ---------------------------------------------------------------
+    # MCP health inference helpers
+    # ---------------------------------------------------------------
+
+    _MCP_RESULT_KEYWORDS = frozenset({
+        "backtest", "snapshot", "feature", "model", "strategy",
+        "dataset", "signal", "cf_", "catboost", "lightgbm",
+    })
+
+    def _infer_mcp_health_from_active_workers(self) -> str:
+        """Infer MCP health from recent worker results.
+
+        Returns 'likely_healthy', 'uncertain', or 'likely_unhealthy'.
+        """
+        recent = self.state.results[-10:]
+        if not recent:
+            return "uncertain"
+
+        mcp_successes = 0
+        mcp_failures = 0
+
+        for r in recent:
+            summary = (r.summary or "").lower()
+            is_mcp_task = any(kw in summary for kw in self._MCP_RESULT_KEYWORDS)
+            if not is_mcp_task:
+                continue
+
+            if r.status == "success":
+                mcp_successes += 1
+            elif r.status == "partial" and r.error and (
+                "mcp" in r.error.lower() or "tool not found" in r.error.lower()
+            ):
+                mcp_failures += 1
+
+        if mcp_successes >= 1:
+            return "likely_healthy"
+        if mcp_failures >= 2:
+            return "likely_unhealthy"
+        return "uncertain"

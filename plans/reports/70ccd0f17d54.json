@@ -1,0 +1,54 @@
+{
+  "task_id": "70ccd0f17d54",
+  "worker_id": "qwen-1",
+  "plan_version": 1,
+  "status": "success",
+  "what_was_requested": "ETAP 2: Return Skewness Reversion experiment - validate, publish, and backtest cf_return_skew feature integration with baseline strategy",
+  "what_was_done": "1. Validated cf_return_skew custom feature (48-period rolling skewness of 5m returns, negated for contrarian signal). 2. Published cf_return_skew to feature registry. 3. Built feature dataset to include cf_return_skew column. 4. Cloned baseline strategy (active-signal-v1) to candidate-return-skew-v1. 5. Saved version 2 with cf_return_skew added to both signals: long entry requires cf_return_skew > 1.0 (fear dominant = bullish), short entry requires cf_return_skew < -1.0 (greed dominant = bearish). 6. Ran preflight check (passed, no blocking issues). 7. Executed full-history backtest (2021-03-24 to 2026-03-20). 8. Compared against baseline run 20260407-194505-36c2a53d. 9. Recorded results in research memory with REJECT verdict.",
+  "results_table": [
+    {
+      "run_id": "20260407-195049-978e44b3",
+      "net_pnl": 965.64,
+      "trades": 694,
+      "PF": 1.156,
+      "WR": 0.454,
+      "verdict": "REJECT"
+    }
+  ],
+  "key_metrics": {
+    "candidate_net_pnl": 965.64,
+    "baseline_net_pnl": 1308.65,
+    "delta_pnl": -343.01,
+    "delta_pnl_pct": -26.2,
+    "candidate_trades": 694,
+    "baseline_trades": 498,
+    "delta_trades": 196,
+    "candidate_profit_factor": 1.156,
+    "baseline_profit_factor": 1.305,
+    "candidate_sharpe": 0.688,
+    "baseline_sharpe": 1.056,
+    "candidate_max_drawdown_pct": 3.23,
+    "baseline_max_drawdown_pct": 2.44,
+    "long_signal_pnl_delta": -414.08,
+    "long_signal_trades_delta": 141,
+    "short_signal_pnl_delta": 71.07,
+    "short_signal_trades_delta": 55,
+    "trade_overlap_pct": 47.5,
+    "feature_name": "cf_return_skew",
+    "feature_description": "48-period rolling skewness of 5m returns, negated",
+    "snapshot_id": "candidate_return_skew_v1",
+    "snapshot_version": 2
+  },
+  "artifacts": [
+    "feature:cf_return_skew",
+    "snapshot:candidate_return_skew_v1@2",
+    "run:20260407-195049-978e44b3",
+    "research:node-e0db78631b354016ac9e1b3202e97acd"
+  ],
+  "confidence": 0.95,
+  "verdict": "REJECT",
+  "error": "",
+  "raw_output": "Perfect! Research record saved successfully. Now let me compile the final results into the required output format:\n\n```json\n{\n  \"status\": \"success\",\n  \"what_was_requested\": \"ETAP 2: Return Skewness Reversion experiment - validate, publish, and backtest cf_return_skew feature integration with baseline strategy\",\n  \"what_was_done\": \"1. Validated cf_return_skew custom feature (48-period rolling skewness of 5m returns, negated for contrarian signal). 2. Published cf_return_skew to feature registry. 3. Built feature dataset to include cf_return_skew column. 4. Cloned baseline strategy (active-signal-v1) to candidate-return-skew-v1. 5. Saved version 2 with cf_return_skew added to both signals: long entry requires cf_return_skew > 1.0 (fear dominant = bullish), short entry requires cf_return_skew < -1.0 (greed dominant = bearish). 6. Ran preflight check (passed, no blocking issues). 7. Executed full-history backtest (2021-03-24 to 2026-03-20). 8. Compared against baseline run 20260407-194505-36c2a53d. 9. Recorded results in research memory with REJECT verdict.\",\n  \"results_table\": [\n    {\n      \"run_id\": \"20260407-195049-978e44b3\",\n      \"net_pnl\": 965.64,\n      \"trades\": 694,\n      \"PF\": 1.156,\n      \"WR\": 0.454,\n      \"verdict\": \"REJECT\"\n    }\n  ],\n  \"key_metrics\": {\n    \"candidate_net_pnl\": 965.64,\n    \"baseline_net_pnl\": 1308.65,\n    \"delta_pnl\": -343.01,\n    \"delta_pnl_pct\": -26.2,\n    \"candidate_trades\": 694,\n    \"baseline_trades\": 498,\n    \"delta_trades\": 196,\n    \"candidate_profit_factor\": 1.156,\n    \"baseline_profit_factor\": 1.305,\n    \"candidate_sharpe\": 0.688,\n    \"baseline_sharpe\": 1.056,\n    \"candidate_max_drawdown_pct\": 3.23,\n    \"baseline_max_drawdown_pct\": 2.44,\n    \"long_signal_pnl_delta\": -414.08,\n    \"long_signal_trades_delta\": 141,\n    \"short_signal_pnl_delta\": 71.07,\n    \"short_signal_trades_delta\": 55,\n    \"trade_overlap_pct\": 47.5,\n    \"feature_name\": \"cf_return_skew\",\n    \"feature_description\": \"48-period rolling skewness of 5m returns, negated\",\n    \"snapshot_id\": \"candidate_return_skew_v1\",\n    \"snapshot_version\": 2\n  },\n  \"artifacts\": [\n    \"feature:cf_return_skew\",\n    \"snapshot:candidate_return_skew_v1@2\",\n    \"run:20260407-195049-978e44b3\",\n    \"research:node-e0db78631b354016ac9e1b3202e97acd\"\n  ],\n  \"verdict\": \"REJECT\",\n  \"confidence\": 0.95,\n  \"error\": \"\",\n  \"mcp_problems\": []\n}\n```",
+  "mcp_problems": [],
+  "timestamp": "2026-04-07T19:52:52.423656+00:00"
+}
