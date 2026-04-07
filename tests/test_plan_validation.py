@@ -610,7 +610,7 @@ def test_build_plan_revision_prompt_omits_cross_stage_refs() -> None:
     assert "Use {{stage:0.run_id}} only for earlier stages" not in prompt
     assert "Do NOT use cross-stage refs" in prompt
     assert "concrete IDs" in prompt
-    assert "schema_version\": 3" in prompt
+    assert "schema_version\": 4" in prompt
 
 
 def test_build_plan_repair_prompt_omits_cross_stage_refs() -> None:
@@ -631,7 +631,7 @@ def test_build_plan_repair_prompt_omits_cross_stage_refs() -> None:
     assert "Use {{stage:N.run_id}} only for earlier stages" not in prompt
     assert "Do NOT use cross-stage refs" in prompt
     assert "concrete IDs" in prompt
-    assert "schema_version\": 3" in prompt
+    assert "schema_version\": 4" in prompt
 
 
 def test_build_plan_task_prompt_includes_previous_stage_results() -> None:

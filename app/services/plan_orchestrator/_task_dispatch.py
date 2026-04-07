@@ -46,10 +46,23 @@ class TaskDispatchMixin:
                 for step in resolved_steps
             )
             if self._is_mcp_instructions(instructions_text) and not self._mcp_healthy:
-                logger.warning(
-                    "Skipping MCP-dependent stage %d — MCP unhealthy",
-                    pt.stage_number,
-                )
+                skip_count = self._mcp_skip_counts.get(pt.stage_number, 0) + 1
+                self._mcp_skip_counts[pt.stage_number] = skip_count
+                if skip_count >= 3:
+                    logger.error(
+                        "Stage %d MCP-dependent task skipped %d times — "
+                        "marking FAILED to unblock plan revision",
+                        pt.stage_number, skip_count,
+                    )
+                    pt.status = TaskStatus.FAILED
+                    pt.completed_at = datetime.now(timezone.utc).isoformat()
+                    self._persist_current_plan()
+                else:
+                    logger.warning(
+                        "Skipping MCP-dependent stage %d — MCP unhealthy "
+                        "(skip %d/3)",
+                        pt.stage_number, skip_count,
+                    )
                 continue
 
             # Per-stage retry limit — skip stages that exceeded max retries

@@ -13,7 +13,7 @@ from app.plan_symbolic_refs import has_legacy_placeholder
 
 
 # ---------------------------------------------------------------------------
-# Severity model: hard errors reject the plan, soft errors are warnings
+# Severity model: hard errors reject, repair errors trigger repair, soft=warn
 # ---------------------------------------------------------------------------
 
 HARD_ERROR_CODES = frozenset({
@@ -22,6 +22,15 @@ HARD_ERROR_CODES = frozenset({
     "unknown_dependency",
     "legacy_placeholder",
     "ellipsis_instruction",
+})
+
+REPAIR_ERROR_CODES = frozenset({
+    "tool_alias_invalid",
+    "tool_name_missing",
+    "action_invalid",
+    "arg_invalid",
+    "non_executable_tool_call",
+    "step_ref_invalid",
 })
 
 
@@ -34,11 +43,16 @@ class PlanValidationError:
     message: str
     offending_text: str = ""
     instruction_index: int | None = None
-    severity: str = ""  # set by validate_plan based on HARD_ERROR_CODES
+    severity: str = ""  # set by __post_init__ based on severity tiers
 
     def __post_init__(self) -> None:
         if not self.severity:
-            self.severity = "hard" if self.code in HARD_ERROR_CODES else "soft"
+            if self.code in HARD_ERROR_CODES:
+                self.severity = "hard"
+            elif self.code in REPAIR_ERROR_CODES:
+                self.severity = "repair"
+            else:
+                self.severity = "soft"
 
 
 @dataclass
@@ -56,20 +70,28 @@ class PlanValidationResult:
         return any(err.severity == "hard" for err in self.errors)
 
     @property
+    def has_repair_errors(self) -> bool:
+        return any(err.severity == "repair" for err in self.errors)
+
+    @property
     def is_acceptable(self) -> bool:
-        """True if no hard errors (soft errors are warnings only)."""
-        return not self.has_hard_errors
+        """True if no hard or repair errors (soft errors are warnings only)."""
+        return not self.has_hard_errors and not self.has_repair_errors
 
     @property
     def soft_errors(self) -> list[PlanValidationError]:
         return [err for err in self.errors if err.severity == "soft"]
+
+    @property
+    def repair_errors(self) -> list[PlanValidationError]:
+        return [err for err in self.errors if err.severity == "repair"]
 
     def summary(self, max_items: int = 3) -> str:
         if not self.errors:
             return "valid"
         shown = self.errors[:max_items]
         detail = "; ".join(
-            f"stage {err.stage_number} {err.code}: {err.message}"
+            f"[{err.severity}] stage {err.stage_number} {err.code}: {err.message}"
             for err in shown
         )
         extra = len(self.errors) - len(shown)
@@ -381,3 +403,33 @@ def _looks_like_broken_tool_call(text: str) -> bool:
     if "action=" in text and "(" not in text:
         return True
     return False
+
+
+def validate_integration_result(
+    report: Any,
+    max_overlap_pct: float = 99.0,
+) -> list[str]:
+    """Validate that an integration stage actually modified signal conditions.
+
+    Returns a list of warning strings. Empty means validation passed.
+    """
+    warnings: list[str] = []
+    key_metrics = getattr(report, "key_metrics", None) or {}
+
+    overlap = key_metrics.get("trade_overlap_pct")
+    if overlap is not None and overlap >= max_overlap_pct:
+        warnings.append(
+            f"Integration produced no signal change: "
+            f"trade_overlap_pct={overlap}% >= {max_overlap_pct}%"
+        )
+
+    integration_status = key_metrics.get("integration_status")
+    if integration_status is not None and str(integration_status).upper() in (
+        "NOT_INTEGRATED", "FAILED", "SKIPPED",
+    ):
+        warnings.append(
+            f"Integration status is '{integration_status}' — "
+            f"feature was not wired into signal logic"
+        )
+
+    return warnings

@@ -105,6 +105,7 @@ class TaskHealthMixin:
     # ---------------------------------------------------------------
 
     _SILENT_WARN_SECONDS = 300  # 5 min of zero output before warning
+    _INTERMEDIATE_COLLECT_SECONDS = 450  # snapshot partial output before timeout
 
     def _check_silent_workers(self) -> None:
         """Diagnose silent or stalled workers without killing them."""
@@ -162,6 +163,25 @@ class TaskHealthMixin:
                 pi.stderr_bytes,
                 f"{last_output_age:.0f}s" if last_output_age is not None else "n/a",
             )
+
+            # Intermediate collection: snapshot partial output at 450s
+            if (
+                state in ("stalled", "no_output", "stderr_only")
+                and elapsed_seconds >= self._INTERMEDIATE_COLLECT_SECONDS
+                and not pi.intermediate_collected
+            ):
+                pi.intermediate_collected = True
+                partial_len = len(pi.partial_output or "")
+                logger.info(
+                    "worker_intermediate_collect: task=%s pid=%s "
+                    "collecting partial output (%d bytes)",
+                    task.task_id, pi.pid, partial_len,
+                )
+                self.memory_service.record_event(
+                    self.state,
+                    f"Worker task {task.task_id} stalled at {elapsed_seconds:.0f}s, "
+                    f"partial output captured ({partial_len} bytes)",
+                )
 
     # ---------------------------------------------------------------
     # MCP health check

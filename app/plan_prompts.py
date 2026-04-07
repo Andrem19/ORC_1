@@ -72,14 +72,8 @@ def _plan_schema(version: int) -> str:
     return "{" + _PLAN_SCHEMA_BODY.format(version=version)
 
 
-def _plan_schema(version: int) -> str:
-    """Generate plan JSON schema with the given version number."""
-    return "{" + _PLAN_SCHEMA_BODY.format(version=version)
-
-
-# Convenience aliases — single source of truth via _plan_schema()
-PLANNER_PLAN_SCHEMA = _plan_schema(4)  # v4 for creation
-SCHEMA_V3 = _plan_schema(3)            # v3 for revision/repair
+# Single schema version for all plan operations (creation, revision, repair)
+PLANNER_PLAN_SCHEMA = _plan_schema(4)
 
 WORKER_REPORT_SCHEMA = """{
   "status": "success|error|partial",
@@ -115,6 +109,7 @@ def build_plan_creation_prompt(
     worker_ids: list[str] | None = None,
     mcp_problem_summary: str | None = None,
     previous_plan_markdown: str | None = None,
+    validation_warnings: list[dict[str, Any]] | None = None,
 ) -> str:
     """Build the prompt for creating a new research plan (plan_v1 or after full resolution).
 
@@ -159,6 +154,18 @@ def build_plan_creation_prompt(
     if mcp_problem_summary:
         parts.append("## Known MCP Problems (avoid these mistakes)")
         parts.append(truncate_text(mcp_problem_summary, 900))
+        parts.append("")
+
+    if validation_warnings:
+        parts.append("## Previous Plan Validation Warnings")
+        parts.append(
+            "The previous plan had these issues. Avoid repeating them:"
+        )
+        for w in validation_warnings[:5]:
+            parts.append(
+                f"- stage {w.get('stage_number', '?')} "
+                f"{w.get('code', '?')}: {w.get('message', '')}"
+            )
         parts.append("")
 
     if worker_ids:
@@ -221,6 +228,7 @@ def build_plan_revision_prompt(
     anti_patterns: list[dict[str, Any]] | None = None,
     worker_ids: list[str] | None = None,
     mcp_problem_summary: str | None = None,
+    validation_warnings: list[dict[str, Any]] | None = None,
 ) -> str:
     """Build the prompt for revising a plan based on collected worker reports.
 
@@ -284,6 +292,18 @@ def build_plan_revision_prompt(
         parts.append(mcp_problem_summary)
         parts.append("")
 
+    if validation_warnings:
+        parts.append("## Previous Plan Validation Warnings")
+        parts.append(
+            "The previous plan had these issues. Avoid repeating them:"
+        )
+        for w in validation_warnings[:5]:
+            parts.append(
+                f"- stage {w.get('stage_number', '?')} "
+                f"{w.get('code', '?')}: {w.get('message', '')}"
+            )
+        parts.append("")
+
     if worker_ids:
         shuffled = list(worker_ids)
         random.shuffle(shuffled)
@@ -307,7 +327,7 @@ def build_plan_revision_prompt(
         "Stages whose dependencies are resolved may run in parallel.\n"
         "8. **Future outputs**: Use {{step:step_id.run_id}} for earlier steps within the same stage. "
         "Do NOT use cross-stage refs like {{stage:N.run_id}} — the orchestrator resolves those at dispatch time.\n"
-        "9. Emit schema v3 with `steps`, not free-form `agent_instructions`.\n"
+        "9. Emit schema v4 with `steps`, not free-form `agent_instructions`.\n"
         "10. **Concrete IDs**: Use concrete IDs (run_id, snapshot_id) only when they are already known "
         "from worker reports or context. Do not invent or guess IDs.\n"
     )
@@ -316,7 +336,7 @@ def build_plan_revision_prompt(
     parts.append("## Output")
     parts.append("Respond with JSON only matching this schema:")
     parts.append("```json")
-    parts.append(SCHEMA_V3)
+    parts.append(PLANNER_PLAN_SCHEMA)
     parts.append("```")
 
     return "\n".join(parts)
@@ -364,7 +384,7 @@ def build_plan_repair_prompt(
         "- Preserve valid stages and the overall investigation direction\n"
         "- Only repair the invalid stages/instructions listed below\n"
         "- Use `depends_on` as the only dependency contract\n"
-        "- Re-emit the full plan in schema v3 with `steps`\n"
+        "- Re-emit the full plan in schema v4 with `steps`\n"
         "- Use {{step:step_id.run_id}} for previous steps inside the same stage\n"
         "- Do NOT use cross-stage refs like {{stage:N.run_id}} — the orchestrator resolves those at dispatch time\n"
         "- Use concrete IDs only when they are already known from context\n"
@@ -403,7 +423,7 @@ def build_plan_repair_prompt(
     parts.append("## Output")
     parts.append("Respond with JSON only matching this schema:")
     parts.append("```json")
-    parts.append(SCHEMA_V3)
+    parts.append(PLANNER_PLAN_SCHEMA)
     parts.append("```")
     parts.append("")
     parts.append("`plan_markdown` must be concise and summarize the corrected plan rather than duplicating every task detail.")

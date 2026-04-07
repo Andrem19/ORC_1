@@ -206,6 +206,7 @@ class ProcessInfo:
     stderr_bytes: int = 0
     monitor_state: str = ""
     monitor_warning_sent: bool = False
+    intermediate_collected: bool = False
     prompt: str = ""
     returncode: int | None = None
 

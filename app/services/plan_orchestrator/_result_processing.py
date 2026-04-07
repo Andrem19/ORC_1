@@ -72,6 +72,9 @@ class ResultProcessingMixin:
             if result.status == "success":
                 pt.status = TaskStatus.COMPLETED
                 self._maybe_update_plan_baseline(pt, report)
+                # Integration validation for integration stages
+                if pt.stage_name and "integration" in pt.stage_name.lower():
+                    self._check_integration_result(pt, report)
                 orch._log_event(
                     OrchestratorEvent.WORKER_COMPLETED,
                     f"task={task.task_id} stage={stage_num}",
@@ -83,6 +86,18 @@ class ResultProcessingMixin:
                     "Stage %d completed with partial status (verdict=%s)",
                     stage_num, pt.verdict,
                 )
+                # Scan partial results for MCP failure indicators
+                if self._is_mcp_failure(report):
+                    self._mcp_healthy = False
+                    self.state.mcp_consecutive_failures += 1
+                    logger.warning(
+                        "MCP failure detected in partial result for stage %d — "
+                        "marking MCP unhealthy (consecutive=%d)",
+                        stage_num, self.state.mcp_consecutive_failures,
+                    )
+                # Integration validation for integration stages
+                if pt.stage_name and "integration" in pt.stage_name.lower():
+                    self._check_integration_result(pt, report)
                 orch._log_event(
                     OrchestratorEvent.WORKER_COMPLETED,
                     f"task={task.task_id} stage={stage_num} (partial)",
@@ -127,10 +142,12 @@ class ResultProcessingMixin:
                     pt.status = TaskStatus.FAILED
                     if self._is_mcp_failure(report):
                         self._mcp_healthy = False
+                        self.state.mcp_consecutive_failures += 1
                         logger.warning(
                             "MCP failure on stage %d after %d retries — "
-                            "marking MCP unhealthy",
+                            "marking MCP unhealthy (consecutive=%d)",
                             pt.stage_number, task.attempts,
+                            self.state.mcp_consecutive_failures,
                         )
                     orch._log_event(
                         OrchestratorEvent.WORKER_FAILED,
@@ -186,3 +203,22 @@ class ResultProcessingMixin:
             self._current_plan.baseline_snapshot_ref = baseline_snapshot_ref
         if report.key_metrics:
             self._current_plan.baseline_metrics = dict(report.key_metrics)
+
+    def _check_integration_result(self, plan_task: PlanTask, report: Any) -> None:
+        """Validate that an integration stage actually modified signal conditions."""
+        from app.plan_validation import validate_integration_result
+
+        warnings = validate_integration_result(report)
+        if warnings:
+            for w in warnings:
+                logger.warning(
+                    "Integration validation: stage %d — %s",
+                    plan_task.stage_number, w,
+                )
+            if plan_task.verdict == "PROMOTE":
+                plan_task.verdict = "WATCHLIST"
+                logger.warning(
+                    "Integration stage %d verdict downgraded PROMOTE → WATCHLIST "
+                    "due to validation warnings",
+                    plan_task.stage_number,
+                )

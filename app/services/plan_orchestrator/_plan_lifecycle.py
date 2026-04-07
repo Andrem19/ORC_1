@@ -101,6 +101,7 @@ class PlanLifecycleMixin:
             previous_plan_markdown=prev_md,
             plan_version=plan_version,
             attempt_number=1,
+            validation_warnings=self._get_validation_warnings(),
         )
 
 
@@ -180,8 +181,27 @@ class PlanLifecycleMixin:
             anti_patterns=anti_patterns if anti_patterns else None,
             worker_ids=self._worker_ids,
             mcp_problem_summary=self._get_mcp_summary(),
+            validation_warnings=self._get_validation_warnings(),
         )
 
+    def _get_validation_warnings(self) -> list[dict] | None:
+        """Get previous plan validation warnings as dicts for prompt inclusion."""
+        errors = getattr(self.state, "current_plan_validation_errors", None)
+        if not errors:
+            return None
+        from app.plan_validation import PlanValidationResult
+        if isinstance(errors, PlanValidationResult):
+            return errors.as_dicts()
+        if isinstance(errors, list):
+            return [
+                e if isinstance(e, dict) else {
+                    "stage_number": getattr(e, "stage_number", "?"),
+                    "code": getattr(e, "code", "?"),
+                    "message": getattr(e, "message", ""),
+                }
+                for e in errors
+            ]
+        return None
 
     def _process_plan_data(self, data: dict) -> None:
         """Process parsed plan data from the planner."""
@@ -350,6 +370,7 @@ class PlanLifecycleMixin:
         self._current_plan = plan
         self.state.current_plan_version = version
         self._stage_retry_counts.clear()
+        self._mcp_skip_counts.clear()
         self._persist_current_plan()
         self._clear_invalid_plan_state()
 

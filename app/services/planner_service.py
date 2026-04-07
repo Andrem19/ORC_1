@@ -219,6 +219,7 @@ class PlannerService:
         previous_plan_markdown: str | None = None,
         plan_version: int = 1,
         attempt_number: int = 1,
+        validation_warnings: list[dict] | None = None,
     ) -> None:
         """Launch planner to CREATE a new research plan."""
         from app.plan_prompts import build_plan_creation_prompt
@@ -246,6 +247,7 @@ class PlannerService:
             worker_ids=worker_ids,
             mcp_problem_summary=mcp_problem_summary,
             previous_plan_markdown=previous_plan_markdown,
+            validation_warnings=validation_warnings,
         )
         logger.info(
             "Starting plan creation via planner (version=%d attempt=%d, %d chars)",
@@ -271,6 +273,7 @@ class PlannerService:
         anti_patterns: list[dict] | None = None,
         worker_ids: list[str] | None = None,
         mcp_problem_summary: str | None = None,
+        validation_warnings: list[dict] | None = None,
     ) -> None:
         """Launch planner to REVISE the current plan based on worker reports."""
         from app.plan_prompts import build_plan_revision_prompt
@@ -296,6 +299,7 @@ class PlannerService:
             anti_patterns=anti_patterns,
             worker_ids=worker_ids,
             mcp_problem_summary=mcp_problem_summary,
+            validation_warnings=validation_warnings,
         )
         next_version = current_plan.version + 1
         logger.info(

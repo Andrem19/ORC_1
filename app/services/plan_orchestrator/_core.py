@@ -67,6 +67,7 @@ class PlanOrchestratorCore:
 
         # Per-stage retry tracking (prevents infinite retry on one stage)
         self._stage_retry_counts: dict[int, int] = {}
+        self._mcp_skip_counts: dict[int, int] = {}
         self._max_stage_retries: int = 3
         self._max_plan_attempts: int = 3  # 1 create + 2 repairs
         self._terminal_stop_reason: StopReason | None = None
