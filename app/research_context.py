@@ -65,7 +65,7 @@ Pipeline: Data -> Features -> Models -> Strategy -> Backtest -> Analysis -> Live
 
 ### Events & Experiments
 - events(view='catalog'|'align_preview') — funding/expiry event stores
-- events_sync(family=, scope=) — sync event data
+- events_sync(family='funding'|'expiry'|'all', scope=) — sync event data
 - experiments_run(action='describe'|'start') — run ad-hoc Python experiments
 
 ### Live Deployment

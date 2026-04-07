@@ -71,6 +71,13 @@ class ResultProcessingMixin:
 
             if result.status == "success":
                 pt.status = TaskStatus.COMPLETED
+                # Downgrade PROMOTE → WATCHLIST for low-confidence results
+                if report.confidence is not None and report.confidence < 0.5 and pt.verdict == "PROMOTE":
+                    logger.warning(
+                        "Stage %d low confidence (%.2f) — downgrading PROMOTE → WATCHLIST",
+                        stage_num, report.confidence,
+                    )
+                    pt.verdict = "WATCHLIST"
                 self._maybe_update_plan_baseline(pt, report)
                 # Integration validation for integration stages
                 if pt.stage_name and "integration" in pt.stage_name.lower():
@@ -81,6 +88,13 @@ class ResultProcessingMixin:
                 )
             elif result.status == "partial":
                 pt.status = TaskStatus.COMPLETED
+                # Downgrade PROMOTE → WATCHLIST for partial results
+                if pt.verdict == "PROMOTE":
+                    logger.warning(
+                        "Stage %d partial result with PROMOTE — downgrading to WATCHLIST",
+                        stage_num,
+                    )
+                    pt.verdict = "WATCHLIST"
                 self._maybe_update_plan_baseline(pt, report)
                 logger.warning(
                     "Stage %d completed with partial status (verdict=%s)",

@@ -69,9 +69,10 @@ class PlanOrchestratorCore:
         self._stage_retry_counts: dict[int, int] = {}
         self._mcp_skip_counts: dict[int, int] = {}
         self._max_stage_retries: int = 3
-        self._max_plan_attempts: int = 3  # 1 create + 2 repairs
+        self._max_plan_attempts: int = 5  # 1 create + 4 repairs
         self._terminal_stop_reason: StopReason | None = None
         self._terminal_stop_summary: str = ""
+        self._last_repair_error_count: int = 0
 
     def set_research_context(self, text: str | None) -> None:
         orch = self.orch
@@ -328,6 +329,7 @@ class PlanOrchestratorCore:
         self.state.last_rejected_plan_version = None
         self.state.last_rejected_plan_attempt_at = None
         self.state.last_rejected_plan_artifact = None
+        self._last_repair_error_count = 0
 
     def _validate_plan(self, plan: ResearchPlan) -> PlanValidationResult:
         """Validate plan structure and executable instructions."""

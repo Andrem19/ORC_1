@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import re
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -26,6 +27,86 @@ if TYPE_CHECKING:
     pass
 
 logger = logging.getLogger("orchestrator.plan")
+
+# Policy-locked defaults auto-injected into tool call args when missing.
+POLICY_DEFAULTS: dict[tuple[str, str], dict[str, str]] = {
+    ("backtests_plan", "plan"): {
+        "symbol": "BTCUSDT",
+        "anchor_timeframe": "1h",
+        "execution_timeframe": "5m",
+        "version": "1",
+    },
+    ("backtests_runs", "start"): {
+        "symbol": "BTCUSDT",
+        "anchor_timeframe": "1h",
+        "execution_timeframe": "5m",
+        "version": "1",
+    },
+    ("backtests_walkforward", "start"): {
+        "symbol": "BTCUSDT",
+        "anchor_timeframe": "1h",
+        "execution_timeframe": "5m",
+    },
+    ("backtests_conditions", "run"): {
+        "symbol": "BTCUSDT",
+    },
+}
+
+
+def _inject_policy_defaults(plan: ResearchPlan) -> None:
+    """Auto-fill POLICY-LOCKED args into tool_call steps when missing.
+
+    Also fixes common arg-name mistakes (e.g. snapshot_id instead of
+    source_snapshot_id for backtests_strategy clone).
+    """
+    for task in plan.tasks:
+        for step in task.steps:
+            if step.kind != "tool_call" or not step.tool_name or not isinstance(step.args, dict):
+                continue
+
+            # Auto-fix common arg-name mistakes
+            if step.tool_name == "backtests_strategy" and step.args.get("action") == "clone":
+                if "snapshot_id" in step.args and "source_snapshot_id" not in step.args:
+                    step.args["source_snapshot_id"] = step.args.pop("snapshot_id")
+
+            action = step.args.get("action")
+            if action is None:
+                from app.planner_contract import ACTION_PARAM_BY_TOOL, DEFAULT_ACTION_BY_TOOL
+                action_param = ACTION_PARAM_BY_TOOL.get(step.tool_name)
+                if action_param:
+                    action = step.args.get(action_param)
+                if action is None:
+                    action = DEFAULT_ACTION_BY_TOOL.get(step.tool_name)
+            if not action:
+                continue
+            defaults = POLICY_DEFAULTS.get((step.tool_name, str(action)))
+            if defaults:
+                for key, value in defaults.items():
+                    if key not in step.args:
+                        step.args[key] = value
+
+
+_LEGACY_PLACEHOLDER_RE = re.compile(r"<[^>]+>")
+
+
+def _strip_legacy_placeholders(plan: ResearchPlan) -> int:
+    """Remove <...> angle-bracket placeholders from step instructions.
+
+    Replaces them with a clean instruction derived from the tool call if
+    available, or a generic placeholder.  Returns the number of fixes applied.
+    """
+    fixes = 0
+    for task in plan.tasks:
+        for step in task.steps:
+            if not step.instruction or not _LEGACY_PLACEHOLDER_RE.search(step.instruction):
+                continue
+            if step.tool_name and step.args:
+                from app.planner_contract import format_step_as_tool_call
+                step.instruction = f"Execute {format_step_as_tool_call(step.tool_name, step.args)}"
+            else:
+                step.instruction = _LEGACY_PLACEHOLDER_RE.sub("[see args]", step.instruction)
+            fixes += 1
+    return fixes
 
 
 def _topological_sort_stages(tasks: list[PlanTask]) -> list[int]:
@@ -210,9 +291,15 @@ class PlanLifecycleMixin:
         request_version = int(data.get("_request_version", self.state.current_plan_version + 1) or (self.state.current_plan_version + 1))
         attempt_number = int(data.get("_attempt_number", self.state.current_plan_attempt or 1) or 1)
         failure_class = str(data.get("_failure_class", "none") or "none")
-        version = int(data.get("plan_version", request_version) or request_version)
+        if request_type == "repair":
+            # Repair must target the originally requested version — ignore the
+            # planner's plan_version which is often wrong after repair.
+            version = request_version
+        else:
+            version = int(data.get("plan_version", request_version) or request_version)
         if data.get("_parse_failed"):
             version = request_version
+        data["plan_version"] = version
 
         planner_run_artifact = self._persist_completed_planner_run()
         structured_payload = data.get("_structured_payload")
@@ -342,6 +429,14 @@ class PlanLifecycleMixin:
                 structured_payload=structured_payload if isinstance(structured_payload, dict) else None,
             )
             return
+
+        # Auto-fill POLICY-LOCKED defaults before validation
+        _inject_policy_defaults(plan)
+
+        # Auto-fix legacy <...> placeholders in instructions
+        placeholder_fixes = _strip_legacy_placeholders(plan)
+        if placeholder_fixes:
+            logger.info("Auto-fixed %d legacy placeholder(s) in plan instructions", placeholder_fixes)
 
         validation = self._validate_plan(plan)
         if not validation.is_acceptable:

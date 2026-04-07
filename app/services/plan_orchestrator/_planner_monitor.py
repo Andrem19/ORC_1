@@ -264,6 +264,28 @@ class PlannerMonitorMixin:
             memory_text = f"Plan v{plan_version} repair needed: validation failed"
         self.memory_service.record_event(self.state, memory_text)
 
+        # Convergence check: stop repair if errors did not decrease
+        current_error_count = len(validation.errors)
+        if attempt_number > 1 and self._last_repair_error_count > 0:
+            if current_error_count >= self._last_repair_error_count:
+                reason_word = "diverged" if current_error_count > self._last_repair_error_count else "stalled"
+                logger.warning(
+                    "Repair %s: %d errors → %d errors. Stopping repair loop.",
+                    reason_word,
+                    self._last_repair_error_count,
+                    current_error_count,
+                )
+                final_message = (
+                    f"Plan v{plan_version} repair {reason_word}: "
+                    f"{self._last_repair_error_count} → {current_error_count} errors. {summary}"
+                )
+                self.notification_service.send_error(final_message, context="plan_mode")
+                self._terminal_stop_reason = StopReason.INVALID_PLAN_LOOP
+                self._terminal_stop_summary = final_message
+                self._last_repair_error_count = current_error_count
+                return
+        self._last_repair_error_count = current_error_count
+
         if attempt_number >= self._max_plan_attempts:
             final_message = (
                 f"Planner produced invalid plan v{plan_version} "

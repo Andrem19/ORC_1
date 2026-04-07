@@ -52,15 +52,38 @@ FORBIDDEN_ARG_PATTERNS: dict[tuple[str, str], set[str]] = {
 }
 
 REQUIRED_ARGS: dict[tuple[str, str], set[str]] = {
-    ("backtests_plan", "plan"): {"snapshot_id", "symbol", "anchor_timeframe", "execution_timeframe"},
-    ("backtests_runs", "start"): {"snapshot_id", "version", "symbol", "anchor_timeframe", "execution_timeframe"},
+    ("backtests_plan", "plan"): {"snapshot_id"},
+    ("backtests_runs", "start"): {"snapshot_id", "version"},
     ("backtests_strategy", "clone"): {"source_snapshot_id"},
 }
+
+# Tools whose primary selector uses a parameter name OTHER than "action".
+# The validator uses this to look up the correct key in args.
+ACTION_PARAM_BY_TOOL: dict[str, str] = {
+    "features_catalog": "scope",
+    "backtests_strategy_validate": "mode",
+    "datasets": "view",
+    "datasets_preview": "view",
+    "events": "view",
+    "events_sync": "family",
+}
+
+# Tools that have no real action selector — their args contain data parameters
+# (like `query` for research_search), not an action selector. These always
+# resolve to their single TOOL_ACTIONS entry via the default.
+NO_ACTION_TOOLS: frozenset[str] = frozenset({"research_search"})
 
 DEFAULT_ACTION_BY_TOOL: dict[str, str] = {
     "backtests_plan": "plan",
     "models_compare": "compare",
     "signal_api_binding_apply": "apply",
+    "features_catalog": "available",
+    "backtests_strategy_validate": "signal",
+    "datasets": "catalog",
+    "datasets_preview": "rows",
+    "events": "catalog",
+    "events_sync": "all",
+    "research_search": "search",
 }
 
 CANONICAL_TOOL_TEMPLATES = """## Canonical MCP Tool Templates
@@ -206,7 +229,11 @@ def format_step_as_tool_call(tool_name: str, args: dict[str, Any]) -> str:
 
 
 def _normalize_action(tool_name: str, args: dict[str, Any]) -> str:
-    action = args.get("action")
+    # Tools with no action selector — always use default
+    if tool_name in NO_ACTION_TOOLS:
+        return DEFAULT_ACTION_BY_TOOL.get(tool_name, "")
+    action_param = ACTION_PARAM_BY_TOOL.get(tool_name, "action")
+    action = args.get(action_param)
     if action is None:
         return DEFAULT_ACTION_BY_TOOL.get(tool_name, "")
     return str(action)

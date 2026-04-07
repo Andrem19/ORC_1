@@ -23,7 +23,8 @@ def truncate_text(text: str, limit: int) -> str:
 def compact_reports_for_revision(reports: list[TaskReport], *, max_reports: int = 5) -> str:
     lines: list[str] = []
     for report in reports[:max_reports]:
-        lines.append(f"- stage plan_v{report.plan_version} | worker={report.worker_id} | status={report.status} | verdict={report.verdict}")
+        conf_flag = f" conf={report.confidence:.0%}" if report.confidence is not None and report.confidence < 0.8 else ""
+        lines.append(f"- stage plan_v{report.plan_version} | worker={report.worker_id} | status={report.status} | verdict={report.verdict}{conf_flag}")
         if report.what_was_done:
             lines.append(f"  done: {truncate_text(report.what_was_done, 220)}")
         if report.key_metrics:

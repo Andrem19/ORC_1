@@ -39,25 +39,39 @@ _PLAN_SCHEMA_BODY = """\
   "tasks": [
     {{
       "stage_number": 0,
-      "stage_name": "Stage name",
-      "theory": "Why this hypothesis is worth testing",
+      "stage_name": "Baseline",
+      "theory": "Confirm baseline metrics and gather context",
       "depends_on": [],
       "steps": [
         {{
-          "step_id": "baseline_preflight",
-          "kind": "tool_call",
-          "instruction": "Validate readiness before starting the run",
-          "tool_name": "backtests_plan",
-          "args": {{"snapshot_id": "active-signal-v1", "version": "1"}}
-        }},
-        {{
           "step_id": "baseline_run",
           "kind": "tool_call",
-          "instruction": "Start the baseline run",
+          "instruction": "Run baseline backtest",
           "tool_name": "backtests_runs",
           "args": {{"action": "start", "snapshot_id": "active-signal-v1", "version": "1"}}
         }}
       ]
+    }},
+    {{
+      "stage_number": 1,
+      "stage_name": "Feature A",
+      "theory": "Test feature A independently",
+      "depends_on": [0],
+      "steps": []
+    }},
+    {{
+      "stage_number": 2,
+      "stage_name": "Feature B",
+      "theory": "Test feature B independently (parallel with stage 1)",
+      "depends_on": [0],
+      "steps": []
+    }},
+    {{
+      "stage_number": 3,
+      "stage_name": "Integration",
+      "theory": "Combine best features from parallel branches",
+      "depends_on": [1, 2],
+      "steps": []
     }}
   ],
   "cumulative_summary": "updated knowledge summary",
@@ -184,6 +198,10 @@ def build_plan_creation_prompt(
         "- Each stage must define `steps`, not `agent_instructions`.\n"
         "- `plan_markdown` must be concise and summarize the plan instead of duplicating every detail.\n"
         "- Stages with satisfied dependencies may run in parallel.\n"
+        "- **Design parallel branches**: Create 2-3 independent investigation stages that depend\n"
+        "  on the same parent stage. This allows multiple workers to run simultaneously.\n"
+        "  Example: Stage 1 explores feature A, Stage 2 explores feature B — both depend on\n"
+        "  Stage 0, so they run in PARALLEL. A later stage depends on [1, 2] to merge results.\n"
     )
     parts.append("")
 
@@ -192,9 +210,12 @@ def build_plan_creation_prompt(
         "- Use intra-stage refs for outputs of previous steps in the same stage: {{step:step_id.run_id}}, {{step:step_id.snapshot_ref}}, {{step:step_id.results_table[0].column}}\n"
         "- NEVER emit placeholders like <best_snapshot_id>, <run_id>, <v>, ellipses, or incomplete tool calls.\n"
         "- NEVER use tool aliases like snapshots(...), or backtests_runs(action='run').\n"
+        "- You do NOT need to specify `symbol`, `anchor_timeframe`, or `execution_timeframe` in backtests_plan, backtests_runs, backtests_walkforward, or backtests_conditions args — the system auto-fills BTCUSDT/1h/5m.\n"
         "- Use concrete IDs only when already known from context.\n"
         "- Do NOT use symbolic cross-stage refs like {{stage:N.run_id}} — the orchestrator resolves those at dispatch time.\n"
         "- Define clear verdict criteria: PROMOTE, WATCHLIST, REJECT.\n"
+        "- backtests_strategy(action='clone') uses `source_snapshot_id` (not snapshot_id).\n"
+        "- backtests_runs(action='start') requires `version` — use the version from the snapshot ref (e.g. '1').\n"
     )
     parts.append("")
 
@@ -216,6 +237,15 @@ def build_plan_creation_prompt(
     parts.append("Valid step ref: backtests_runs(action='inspect', run_id='{{step:baseline_run.run_id}}', view='detail')")
     parts.append("Invalid: snapshots(action='fork', snapshot_ref='<run_id>')")
     parts.append("Invalid: backtests_runs(action='inspect', run_id='{{stage:0.run_id}}', view='detail') — do NOT use cross-stage refs")
+    parts.append("")
+    parts.append("### Parallel Branch Example")
+    parts.append(
+        "Stage 0: Baseline (depends_on=[])\n"
+        "Stage 1: Feature A — cf_regime_filter (depends_on=[0])\n"
+        "Stage 2: Feature B — cf_volatility_adaptive (depends_on=[0])  ← runs IN PARALLEL with Stage 1\n"
+        "Stage 3: Combine best features (depends_on=[1, 2])\n"
+        "Stage 4: Robustness validation (depends_on=[3])"
+    )
 
     return "\n".join(parts)
 
@@ -323,13 +353,18 @@ def build_plan_revision_prompt(
         "4. **New stages**: Add new investigation stages based on what was learned\n"
         "5. **Update cumulative summary**: Incorporate new findings\n"
         "6. **Frozen base**: Keep the same frozen base — NEVER modify it\n"
-        "7. **Dependencies**: Use `depends_on` as the only execution contract. "
-        "Stages whose dependencies are resolved may run in parallel.\n"
+        "7. **Dependencies**: Use `depends_on` as the ONLY execution contract. "
+        "Stages with the same depends_on WILL run simultaneously on separate workers. "
+        "Always design a DAG with parallel branches, never a linear chain.\n"
         "8. **Future outputs**: Use {{step:step_id.run_id}} for earlier steps within the same stage. "
         "Do NOT use cross-stage refs like {{stage:N.run_id}} — the orchestrator resolves those at dispatch time.\n"
         "9. Emit schema v4 with `steps`, not free-form `agent_instructions`.\n"
         "10. **Concrete IDs**: Use concrete IDs (run_id, snapshot_id) only when they are already known "
         "from worker reports or context. Do not invent or guess IDs.\n"
+        "11. **Parallel branches**: When adding new investigation stages, create 2-3 independent branches "
+        "that depend on the same parent stage so workers can run in parallel.\n"
+        "12. backtests_strategy(action='clone') uses `source_snapshot_id` (not snapshot_id).\n"
+        "13. backtests_runs(action='start') requires `version`.\n"
     )
     parts.append("")
 
@@ -384,6 +419,7 @@ def build_plan_repair_prompt(
         "- Preserve valid stages and the overall investigation direction\n"
         "- Only repair the invalid stages/instructions listed below\n"
         "- Use `depends_on` as the only dependency contract\n"
+        "- **Preserve the parallel branch structure** — keep depends_on values of valid stages unchanged\n"
         "- Re-emit the full plan in schema v4 with `steps`\n"
         "- Use {{step:step_id.run_id}} for previous steps inside the same stage\n"
         "- Do NOT use cross-stage refs like {{stage:N.run_id}} — the orchestrator resolves those at dispatch time\n"
@@ -391,7 +427,9 @@ def build_plan_repair_prompt(
         "- NEVER emit <...> placeholders, ellipses, or incomplete tool calls\n"
         "- Replace tool aliases with canonical facades from the MCP contract\n"
         f"- Keep the existing stage count; do not expand beyond {len(repair_request.invalid_plan_data.get('tasks', []))} stages\n"
-        "- Respond with a COMPLETE corrected plan JSON, not a patch diff"
+        "- Respond with a COMPLETE corrected plan JSON, not a patch diff\n"
+        "- backtests_runs(action='start') requires `version` — use '1' if not known from context\n"
+        "- The instruction text in a step is informational; tool_name and args are what execute. Ensure tool_name and args are complete, even if instruction is brief"
     )
     parts.append("")
 
