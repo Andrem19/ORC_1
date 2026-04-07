@@ -1,0 +1,53 @@
+{
+  "task_id": "eccfa9532d26",
+  "worker_id": "qwen-1",
+  "plan_version": 4,
+  "status": "partial",
+  "what_was_requested": "ETAP 3: Settlement Cycle (cf_settlement_cycle) feature development, validation, and standalone backtest",
+  "what_was_done": "1. Inspected events catalog - confirmed funding settlement events exist (7143 rows, last refreshed 2026-04-07T17:13:08)\n2. Validated cf_settlement_cycle custom feature code - initially failed due to wrong function signature (compute_series vs compute), then failed due to ctx.df accessor (needed ctx.series)\n3. Published cf_settlement_cycle feature - FAILED with error 'Managed feature event input is missing for family=funding selector=anchor_symbol'. Event sync was initiated (events_sync family=funding) but the publish operation timed out before event store was fully refreshed\n4. Cloned active-signal-v1-regime-gate strategy to cf-settlement-cycle-test snapshot\n5. Validated signal logic with bars_until_funding_settlement builtin column - PASSED\n6. Ran backtest plan - confirmed readiness with valid window 2021-03-24 to 2026-03-20\n7. Executed backtest run 20260407-174738-e49952ea - COMPLETED SUCCESSFULLY\n8. Retrieved final backtest results with full metrics",
+  "results_table": [
+    {
+      "run_id": "20260407-174738-e49952ea",
+      "snapshot_id": "cf-settlement-cycle-test@1",
+      "net_pnl": 1520.78,
+      "total_return_pct": 15.21,
+      "trades": 388,
+      "PF": 1.494,
+      "WR": 0.503,
+      "sharpe": 1.385,
+      "max_dd_pct": 3.08,
+      "long_count": 216,
+      "short_count": 172,
+      "verdict": "WATCHLIST"
+    }
+  ],
+  "key_metrics": {
+    "net_pnl": 1520.78,
+    "total_return_pct": 15.21,
+    "sharpe_ratio": 1.385,
+    "profit_factor": 1.494,
+    "win_rate": 0.503,
+    "total_trades": 388,
+    "max_drawdown_pct": 3.08,
+    "exposure_pct": 11.27,
+    "annualized_return_pct": 15.21
+  },
+  "artifacts": [
+    "snapshot:cf-settlement-cycle-test@1",
+    "run:20260407-174738-e49952ea",
+    "feature:cf_settlement_cycle (validation attempted, publish blocked on event sync)"
+  ],
+  "confidence": 0.6,
+  "verdict": "WATCHLIST",
+  "error": "cf_settlement_cycle custom feature publication failed due to event store timing issue (family=funding selector=anchor_symbol missing). The backtest used the cloned regime-gate strategy WITHOUT the cf_settlement_cycle feature in signal logic, so results are identical to baseline (Shrpe=1.385, PnL=$1520.78). The feature itself needs event sync completion before it can be published and integrated into strategy logic.",
+  "raw_output": "I see the project list. Since this is ETAP 3 for settlement cycle testing, let me create a new research record. I'll use the most relevant existing project or create a result record. Let me record the cf_settlement_cycle standalone test result:\n\n```json\n{\n  \"status\": \"partial\",\n  \"what_was_requested\": \"ETAP 3: Settlement Cycle (cf_settlement_cycle) feature development, validation, and standalone backtest\",\n  \"what_was_done\": \"1. Inspected events catalog - confirmed funding settlement events exist (7143 rows, last refreshed 2026-04-07T17:13:08)\\n2. Validated cf_settlement_cycle custom feature code - initially failed due to wrong function signature (compute_series vs compute), then failed due to ctx.df accessor (needed ctx.series)\\n3. Published cf_settlement_cycle feature - FAILED with error 'Managed feature event input is missing for family=funding selector=anchor_symbol'. Event sync was initiated (events_sync family=funding) but the publish operation timed out before event store was fully refreshed\\n4. Cloned active-signal-v1-regime-gate strategy to cf-settlement-cycle-test snapshot\\n5. Validated signal logic with bars_until_funding_settlement builtin column - PASSED\\n6. Ran backtest plan - confirmed readiness with valid window 2021-03-24 to 2026-03-20\\n7. Executed backtest run 20260407-174738-e49952ea - COMPLETED SUCCESSFULLY\\n8. Retrieved final backtest results with full metrics\",\n  \"results_table\": [\n    {\n      \"run_id\": \"20260407-174738-e49952ea\",\n      \"snapshot_id\": \"cf-settlement-cycle-test@1\",\n      \"net_pnl\": 1520.78,\n      \"total_return_pct\": 15.21,\n      \"trades\": 388,\n      \"PF\": 1.494,\n      \"WR\": 0.503,\n      \"sharpe\": 1.385,\n      \"max_dd_pct\": 3.08,\n      \"long_count\": 216,\n      \"short_count\": 172,\n      \"verdict\": \"WATCHLIST\"\n    }\n  ],\n  \"key_metrics\": {\n    \"net_pnl\": 1520.78,\n    \"total_return_pct\": 15.21,\n    \"sharpe_ratio\": 1.385,\n    \"profit_factor\": 1.494,\n    \"win_rate\": 0.503,\n    \"total_trades\": 388,\n    \"max_drawdown_pct\": 3.08,\n    \"exposure_pct\": 11.27,\n    \"annualized_return_pct\": 15.21\n  },\n  \"artifacts\": [\n    \"snapshot:cf-settlement-cycle-test@1\",\n    \"run:20260407-174738-e49952ea\",\n    \"feature:cf_settlement_cycle (validation attempted, publish blocked on event sync)\"\n  ],\n  \"verdict\": \"WATCHLIST\",\n  \"confidence\": 0.6,\n  \"error\": \"cf_settlement_cycle custom feature publication failed due to event store timing issue (family=funding selector=anchor_symbol missing). The backtest used the cloned regime-gate strategy WITHOUT the cf_settlement_cycle feature in signal logic, so results are identical to baseline (Shrpe=1.385, PnL=$1520.78). The feature itself needs event sync completion before it can be published and integrated into strategy logic.\",\n  \"mcp_problems\": [\n    {\n      \"tool_name\": \"features_custom\",\n      \"description\": \"Publish operation for cf_settlement_cycle failed with 'Managed feature event input is missing for family=funding selector=anchor_symbol' despite events_sync being initiated. The async event refresh may not have completed before the feature publish attempt.\",\n      \"suggestion\": \"Retry events_sync with wait='completed' or poll events(view='catalog') to confirm last_refreshed_at is current, then retry features_custom(action='publish') for cf_settlement_cycle\",\n      \"severity\": \"medium\"\n    }\n  ]\n}\n```",
+  "mcp_problems": [
+    {
+      "tool_name": "features_custom",
+      "description": "Publish operation for cf_settlement_cycle failed with 'Managed feature event input is missing for family=funding selector=anchor_symbol' despite events_sync being initiated. The async event refresh may not have completed before the feature publish attempt.",
+      "suggestion": "Retry events_sync with wait='completed' or poll events(view='catalog') to confirm last_refreshed_at is current, then retry features_custom(action='publish') for cf_settlement_cycle",
+      "severity": "medium"
+    }
+  ],
+  "timestamp": "2026-04-07T17:48:34.255141+00:00"
+}

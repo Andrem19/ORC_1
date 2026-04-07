@@ -281,24 +281,35 @@ def main() -> None:
         if config.research_config:
             orch.load_research_context()
 
-        # Graceful shutdown on SIGTERM / SIGINT
+        # Graceful shutdown on SIGTERM / SIGINT (3 phases)
         import signal as _signal
 
-        _force_stop = False
+        _stop_phase = 0  # 0=running, 1=drain, 2=immediate stop, 3+=KeyboardInterrupt
 
         def _signal_handler(signum: int, _frame: Any) -> None:
-            nonlocal _force_stop
+            nonlocal _stop_phase
             sig_name = _signal.Signals(signum).name
-            if not _force_stop:
-                logger.warning("Received %s, initiating graceful shutdown...", sig_name)
-                orch.request_stop()
-                # Wake up the scheduler sleep immediately
+            if _stop_phase == 0:
+                # First press — enter drain mode (let running tasks finish)
+                logger.warning(
+                    "Received %s, entering drain mode (waiting for running tasks to finish)...",
+                    sig_name,
+                )
+                logger.warning("Press Ctrl+C again to force immediate stop.")
+                orch.request_drain()
                 from app.scheduler import Scheduler
                 Scheduler._wake.set()
-                _force_stop = True
-            else:
-                # Second press — force immediate stop via KeyboardInterrupt
+                _stop_phase = 1
+            elif _stop_phase == 1:
+                # Second press — force immediate stop
                 logger.warning("Received second %s, forcing immediate shutdown!", sig_name)
+                orch.request_stop()
+                from app.scheduler import Scheduler
+                Scheduler._wake.set()
+                _stop_phase = 2
+            else:
+                # Third+ press — hard interrupt
+                logger.warning("Received third %s, raising KeyboardInterrupt!", sig_name)
                 raise KeyboardInterrupt
 
         _signal.signal(_signal.SIGTERM, _signal_handler)

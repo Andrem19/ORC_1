@@ -1,0 +1,59 @@
+{
+  "task_id": "de46bd8841c2",
+  "worker_id": "qwen-2",
+  "plan_version": 1,
+  "status": "success",
+  "what_was_requested": "ETAP 1: Regime-Aware Volatility Gating Feature — create cf_regime_vol_gate ATR-percentile classifier, integrate into strategy, run backtest, and record results",
+  "what_was_done": "1. Inspected existing custom features (cf_chop_filter_1h, cf_regime_strength_1h, cf_vol_regime_1h). 2. Validated and published new custom feature cf_regime_vol_gate: ATR-percentile regime classifier that gates long entries when ATR is in bottom quartile (choppy regime). 3. Built feature dataset with new column. 4. Cloned baseline strategy active-signal-v1 → research_regime_gating_v1. 5. Updated long entry logic to require cf_regime_vol_gate==1. 6. Saved version 2 with validated signal. 7. Preflight passed. 8. Ran backtest (run_id: 20260407-152226-361601e8). 9. Recorded research result and added to Gold Collection.",
+  "results_table": [
+    {
+      "run_id": "20260407-152226-361601e8",
+      "net_pnl": 1644.0,
+      "trades": 428,
+      "PF": 1.491,
+      "WR": 0.488,
+      "verdict": "PROMOTE"
+    }
+  ],
+  "key_metrics": {
+    "sharpe_ratio": 1.449,
+    "sortino_ratio": 1.341,
+    "calmar_ratio": 6.104,
+    "max_drawdown_pct": 2.69,
+    "profit_factor": 1.491,
+    "win_rate": 0.488,
+    "total_return_pct": 16.44,
+    "long_count": 215,
+    "short_count": 213,
+    "exit_reasons": {
+      "take_profit": 51,
+      "stop_loss": 172,
+      "time_limit": 205
+    },
+    "baseline_comparison": {
+      "baseline_net_pnl": 1308.65,
+      "baseline_trades": 498,
+      "baseline_pf": 1.305,
+      "baseline_wr": 0.478,
+      "baseline_sharpe": 1.056,
+      "baseline_max_dd_pct": 2.44,
+      "delta_pnl_pct": 25.6,
+      "delta_trades": -70,
+      "delta_pf": 0.186,
+      "delta_sharpe": 0.393
+    }
+  },
+  "artifacts": [
+    "feature:cf_regime_vol_gate",
+    "snapshot:research_regime_gating_v1@2",
+    "run:20260407-152226-361601e8",
+    "record:node-956516e555764b359c0a49beb0a7d3fa",
+    "gold:research_regime_gating_v1@2"
+  ],
+  "confidence": 0.95,
+  "verdict": "PROMOTE",
+  "error": "",
+  "raw_output": "All steps completed. Let me now compile the final results.\n\n```json\n{\n  \"status\": \"success\",\n  \"what_was_requested\": \"ETAP 1: Regime-Aware Volatility Gating Feature — create cf_regime_vol_gate ATR-percentile classifier, integrate into strategy, run backtest, and record results\",\n  \"what_was_done\": \"1. Inspected existing custom features (cf_chop_filter_1h, cf_regime_strength_1h, cf_vol_regime_1h). 2. Validated and published new custom feature cf_regime_vol_gate: ATR-percentile regime classifier that gates long entries when ATR is in bottom quartile (choppy regime). 3. Built feature dataset with new column. 4. Cloned baseline strategy active-signal-v1 → research_regime_gating_v1. 5. Updated long entry logic to require cf_regime_vol_gate==1. 6. Saved version 2 with validated signal. 7. Preflight passed. 8. Ran backtest (run_id: 20260407-152226-361601e8). 9. Recorded research result and added to Gold Collection.\",\n  \"results_table\": [\n    {\"run_id\": \"20260407-152226-361601e8\", \"net_pnl\": 1644.0, \"trades\": 428, \"PF\": 1.491, \"WR\": 0.488, \"verdict\": \"PROMOTE\"}\n  ],\n  \"key_metrics\": {\n    \"sharpe_ratio\": 1.449,\n    \"sortino_ratio\": 1.341,\n    \"calmar_ratio\": 6.104,\n    \"max_drawdown_pct\": 2.69,\n    \"profit_factor\": 1.491,\n    \"win_rate\": 0.488,\n    \"total_return_pct\": 16.44,\n    \"long_count\": 215,\n    \"short_count\": 213,\n    \"exit_reasons\": {\"take_profit\": 51, \"stop_loss\": 172, \"time_limit\": 205},\n    \"baseline_comparison\": {\n      \"baseline_net_pnl\": 1308.65,\n      \"baseline_trades\": 498,\n      \"baseline_pf\": 1.305,\n      \"baseline_wr\": 0.478,\n      \"baseline_sharpe\": 1.056,\n      \"baseline_max_dd_pct\": 2.44,\n      \"delta_pnl_pct\": 25.6,\n      \"delta_trades\": -70,\n      \"delta_pf\": 0.186,\n      \"delta_sharpe\": 0.393\n    }\n  },\n  \"artifacts\": [\n    \"feature:cf_regime_vol_gate\",\n    \"snapshot:research_regime_gating_v1@2\",\n    \"run:20260407-152226-361601e8\",\n    \"record:node-956516e555764b359c0a49beb0a7d3fa\",\n    \"gold:research_regime_gating_v1@2\"\n  ],\n  \"verdict\": \"PROMOTE\",\n  \"confidence\": 0.95,\n  \"error\": \"\",\n  \"mcp_problems\": []\n}\n```",
+  "mcp_problems": [],
+  "timestamp": "2026-04-07T15:24:31.894346+00:00"
+}

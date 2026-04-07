@@ -134,6 +134,48 @@ class PlanStore:
             return ""
         return plan.cumulative_summary
 
+    def load_all_reports_compact(
+        self, current_plan_version: int = 0, max_lines: int = 20
+    ) -> list[str]:
+        """Return compact one-line verdicts from ALL plan versions' reports.
+
+        Skips the current plan version (those reports are already in the
+        Worker Reports section of the prompt).
+        """
+        lines: list[str] = []
+        versions = self.list_plan_versions()
+        for ver in versions:
+            if ver == current_plan_version:
+                continue
+            reports = self.load_reports_for_plan(ver)
+            for report in reports:
+                verdict = report.verdict or "PENDING"
+                # Extract feature name and key metrics
+                detail_parts: list[str] = []
+                if report.results_table:
+                    for row in report.results_table[:1]:
+                        name = row.get("name", row.get("feature", row.get("snapshot_ref", "")))
+                        if name:
+                            detail_parts.append(str(name))
+                        pnl = row.get("net_pnl", row.get("pnl", ""))
+                        if pnl != "":
+                            detail_parts.append(f"PnL {pnl}")
+                        trades = row.get("trades", row.get("total_trades", ""))
+                        if trades != "":
+                            detail_parts.append(f"{trades} trades")
+                elif report.what_was_done:
+                    detail_parts.append(report.what_was_done[:60])
+                else:
+                    detail_parts.append(f"status={report.status}")
+                detail = ", ".join(detail_parts)
+                line = f"- v{ver}: {detail} -> {verdict}"
+                if len(line) > 140:
+                    line = line[:137] + "..."
+                lines.append(line)
+                if len(lines) >= max_lines:
+                    return lines
+        return lines
+
     # ---------------------------------------------------------------
     # Report persistence
     # ---------------------------------------------------------------

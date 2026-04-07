@@ -124,6 +124,9 @@ def build_plan_creation_prompt(
     mcp_problem_summary: str | None = None,
     previous_plan_markdown: str | None = None,
     validation_warnings: list[dict[str, Any]] | None = None,
+    planner_system_prompt: str = "",
+    operator_directives: str = "",
+    research_history: list[str] | None = None,
 ) -> str:
     """Build the prompt for creating a new research plan (plan_v1 or after full resolution).
 
@@ -131,9 +134,15 @@ def build_plan_creation_prompt(
     """
     parts: list[str] = []
 
-    parts.append("## Role")
-    parts.append("Write a concise, executable research plan for worker agents.")
-    parts.append("")
+    if operator_directives:
+        parts.append("## Operator Directives")
+        parts.append(operator_directives)
+        parts.append("")
+
+    if planner_system_prompt:
+        parts.append("## System Instructions")
+        parts.append(planner_system_prompt)
+        parts.append("")
 
     parts.append("## Goal")
     parts.append(truncate_text(goal, 500))
@@ -158,6 +167,16 @@ def build_plan_creation_prompt(
                 f"{truncate_text(str(ap.get('description', '')), 140)} "
                 f"({ap.get('evidence_count', '?')} failures)"
             )
+        parts.append("")
+
+    if research_history:
+        parts.append("## Research History (DO NOT repeat these approaches)")
+        parts.append(
+            "These approaches were already tested in previous plan versions. "
+            "DO NOT propose them again unless you have a substantially different theory."
+        )
+        for line in research_history:
+            parts.append(line)
         parts.append("")
 
     if previous_plan_markdown:
@@ -259,6 +278,9 @@ def build_plan_revision_prompt(
     worker_ids: list[str] | None = None,
     mcp_problem_summary: str | None = None,
     validation_warnings: list[dict[str, Any]] | None = None,
+    planner_system_prompt: str = "",
+    operator_directives: str = "",
+    research_history: list[str] | None = None,
 ) -> str:
     """Build the prompt for revising a plan based on collected worker reports.
 
@@ -266,9 +288,19 @@ def build_plan_revision_prompt(
     """
     parts: list[str] = []
 
-    parts.append("## Your Role")
+    if operator_directives:
+        parts.append("## Operator Directives")
+        parts.append(operator_directives)
+        parts.append("")
+
+    if planner_system_prompt:
+        parts.append("## System Instructions")
+        parts.append(planner_system_prompt)
+        parts.append("")
+
+    parts.append("## Revision Context")
     parts.append(
-        "You are the research director. Workers have completed tasks from the current plan "
+        "Workers have completed tasks from the current plan "
         "and returned reports. Your job is to analyze the results and write the NEXT VERSION "
         "of the research plan (plan_v" + str(current_plan.version + 1) + ")."
     )
@@ -306,6 +338,16 @@ def build_plan_revision_prompt(
     parts.append("## Worker Reports")
     parts.append(compact_reports_for_revision(reports))
     parts.append("")
+
+    if research_history:
+        parts.append("## Research History (DO NOT repeat these approaches)")
+        parts.append(
+            "These approaches were already tested in previous plan versions. "
+            "DO NOT propose them again unless you have a substantially different theory."
+        )
+        for line in research_history:
+            parts.append(line)
+        parts.append("")
 
     # Anti-patterns
     if anti_patterns:
@@ -382,12 +424,27 @@ def build_plan_repair_prompt(
     research_context: str | None = None,
     worker_ids: list[str] | None = None,
     mcp_problem_summary: str | None = None,
+    planner_system_prompt: str = "",
+    operator_directives: str = "",
 ) -> str:
     """Build the prompt for repairing one invalid planner output."""
     invalid_payload, valid_summary = compact_repair_context(repair_request)
     parts: list[str] = []
 
-    parts.append("## Role")
+    if operator_directives:
+        parts.append("## Operator Directives")
+        parts.append(
+            "Apply these operator directives where they don't conflict with repair constraints:"
+        )
+        parts.append(operator_directives)
+        parts.append("")
+
+    if planner_system_prompt:
+        parts.append("## System Instructions")
+        parts.append(planner_system_prompt)
+        parts.append("")
+
+    parts.append("## Repair Task")
     parts.append(
         "Repair an invalid research plan. Patch only the broken parts and keep the overall intent."
     )

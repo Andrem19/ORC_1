@@ -1,0 +1,54 @@
+{
+  "task_id": "9638de88e204",
+  "worker_id": "qwen-1",
+  "plan_version": 4,
+  "status": "success",
+  "what_was_requested": "ETAP 2: Trend Exhaustion (cf_trend_exhaustion) - validate, publish, build features, test standalone backtest, and run diagnostics",
+  "what_was_done": "1. Validated cf_trend_exhaustion custom feature (ADX>40 + RSI extremes >75/<25) - operation_id=ff0301be76d7, completed successfully\n2. Published cf_trend_exhaustion as custom feature - operation_id=6a27cd82c99a, completed successfully\n3. Built features dataset including cf_trend_exhaustion - operation_id=364715cd3d15, completed: 54,864 rows, 30 active columns\n4. Checked analytics heatmap: short direction with cf_trend_exhaustion=-1 shows +0.27% mean return, 11.2% win rate (profitable signal); long direction shows losses\n5. Cloned active-signal-v1-regime-gate to trend-exhaustion-test snapshot with cf_trend_exhaustion integrated into entry logic (gates out exhaustion signals)\n6. Saved version 2 with updated signal logic incorporating cf_trend_exhaustion\n7. Ran backtest: run_id=20260407-173846-1fc17b82, completed in 4.26s\n8. Ran diagnostics analysis: job_id=analysis-956a1e3e7158, completed successfully\n9. Recorded results in research memory: node-701ee0411a74488a9a4e0d96c3e43b62",
+  "results_table": [
+    {
+      "run_id": "20260407-173846-1fc17b82",
+      "net_pnl": 1384.36,
+      "trades": 384,
+      "PF": 1.45,
+      "WR": 0.5,
+      "verdict": "WATCHLIST"
+    }
+  ],
+  "key_metrics": {
+    "net_pnl": 1384.36,
+    "total_return_pct": 13.84,
+    "sharpe_ratio": 1.28,
+    "sortino_ratio": 1.16,
+    "calmar_ratio": 4.5,
+    "profit_factor": 1.45,
+    "win_rate": 0.5,
+    "max_drawdown_pct": 3.08,
+    "max_drawdown": 312.62,
+    "total_trades": 384,
+    "long_count": 215,
+    "short_count": 169,
+    "avg_trade": 3.61,
+    "exposure_pct": 11.22,
+    "baseline_sharpe": 1.385,
+    "baseline_pnl": 1520.78,
+    "baseline_trades": 388,
+    "cf_trend_exhaustion_heatmap_short_return": 0.27,
+    "cf_trend_exhaustion_heatmap_short_winrate": 0.112,
+    "feature_dataset_rows": 54864,
+    "feature_dataset_columns": 30
+  },
+  "artifacts": [
+    "cf_trend_exhaustion (published custom feature)",
+    "trend-exhaustion-test@2 (strategy snapshot)",
+    "20260407-173846-1fc17b82 (backtest run)",
+    "analysis-956a1e3e7158 (diagnostics job)",
+    "node-701ee0411a74488a9a4e0d96c3e43b62 (research record)"
+  ],
+  "confidence": 0.65,
+  "verdict": "WATCHLIST",
+  "error": "",
+  "raw_output": "Perfect! Now let me compile the final results JSON:\n\n```json\n{\n  \"status\": \"success\",\n  \"what_was_requested\": \"ETAP 2: Trend Exhaustion (cf_trend_exhaustion) - validate, publish, build features, test standalone backtest, and run diagnostics\",\n  \"what_was_done\": \"1. Validated cf_trend_exhaustion custom feature (ADX>40 + RSI extremes >75/<25) - operation_id=ff0301be76d7, completed successfully\\n2. Published cf_trend_exhaustion as custom feature - operation_id=6a27cd82c99a, completed successfully\\n3. Built features dataset including cf_trend_exhaustion - operation_id=364715cd3d15, completed: 54,864 rows, 30 active columns\\n4. Checked analytics heatmap: short direction with cf_trend_exhaustion=-1 shows +0.27% mean return, 11.2% win rate (profitable signal); long direction shows losses\\n5. Cloned active-signal-v1-regime-gate to trend-exhaustion-test snapshot with cf_trend_exhaustion integrated into entry logic (gates out exhaustion signals)\\n6. Saved version 2 with updated signal logic incorporating cf_trend_exhaustion\\n7. Ran backtest: run_id=20260407-173846-1fc17b82, completed in 4.26s\\n8. Ran diagnostics analysis: job_id=analysis-956a1e3e7158, completed successfully\\n9. Recorded results in research memory: node-701ee0411a74488a9a4e0d96c3e43b62\",\n  \"results_table\": [\n    {\n      \"run_id\": \"20260407-173846-1fc17b82\",\n      \"net_pnl\": 1384.36,\n      \"trades\": 384,\n      \"PF\": 1.45,\n      \"WR\": 0.5,\n      \"verdict\": \"WATCHLIST\"\n    }\n  ],\n  \"key_metrics\": {\n    \"net_pnl\": 1384.36,\n    \"total_return_pct\": 13.84,\n    \"sharpe_ratio\": 1.28,\n    \"sortino_ratio\": 1.16,\n    \"calmar_ratio\": 4.5,\n    \"profit_factor\": 1.45,\n    \"win_rate\": 0.5,\n    \"max_drawdown_pct\": 3.08,\n    \"max_drawdown\": 312.62,\n    \"total_trades\": 384,\n    \"long_count\": 215,\n    \"short_count\": 169,\n    \"avg_trade\": 3.61,\n    \"exposure_pct\": 11.22,\n    \"baseline_sharpe\": 1.385,\n    \"baseline_pnl\": 1520.78,\n    \"baseline_trades\": 388,\n    \"cf_trend_exhaustion_heatmap_short_return\": 0.27,\n    \"cf_trend_exhaustion_heatmap_short_winrate\": 0.112,\n    \"feature_dataset_rows\": 54864,\n    \"feature_dataset_columns\": 30\n  },\n  \"artifacts\": [\n    \"cf_trend_exhaustion (published custom feature)\",\n    \"trend-exhaustion-test@2 (strategy snapshot)\",\n    \"20260407-173846-1fc17b82 (backtest run)\",\n    \"analysis-956a1e3e7158 (diagnostics job)\",\n    \"node-701ee0411a74488a9a4e0d96c3e43b62 (research record)\"\n  ],\n  \"verdict\": \"WATCHLIST\",\n  \"confidence\": 0.65,\n  \"error\": \"\",\n  \"mcp_problems\": []\n}\n```\n\n**Key findings:**\n\n- **cf_trend_exhaustion** was successfully validated, published, and integrated into the feature dataset\n- **Heatmap analysis**: The feature shows edge in short direction (+0.27% mean return when signal=-1), but weak in long direction\n- **Backtest results**: Net PnL $1,384 (+13.84%), Sharpe 1.28, PF 1.45, 384 trades, max DD 3.08%\n- **vs Baseline**: The baseline (active-signal-v1-regime-gate) had Sharpe 1.385, PnL $1,521, 388 trades. The trend-exhaustion version underperforms slightly on both Sharpe (-0.11) and PnL (-$136)\n- **Verdict: WATCHLIST** - The feature doesn't degrade performance significantly but also doesn't improve it enough to PROMOTE. The exhaustion logic may need threshold tuning (ADX/RSI levels) or could be combined with other features in an integrated test rather than standalone",
+  "mcp_problems": [],
+  "timestamp": "2026-04-07T17:43:28.199654+00:00"
+}

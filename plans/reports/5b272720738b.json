@@ -1,0 +1,66 @@
+{
+  "task_id": "5b272720738b",
+  "worker_id": "qwen-1",
+  "plan_version": 2,
+  "status": "partial",
+  "what_was_requested": "ETAP 3 Best-Shell Integration: integrate PROMOTED (cf_regime_vol_gate) and WATCHLIST (cf_session_weakness_filter) features into a single strategy shell, run full backtest, walk-forward, condition stability, and robustness analysis",
+  "what_was_done": "Successfully completed steps 1-7 of the integration workflow: (1) Searched research memory and identified cf_regime_vol_gate (PROMOTED, run 20260407-155116-025a75e2, net_pnl=$1520.78, PF=1.494) and cf_session_weakness_filter (WATCHLIST, run 20260407-155527-5ddd0cf8, net_pnl=$1308.65, PF=1.305). cf_volume_breakout was REJECTED. (2) Cloned base strategy active-signal-v1 to active-signal-v1-integrated. (3-4) Created integrated strategy wiring both features as sequential entry gates — signal must pass cf_regime_vol_gate>=1 AND cf_session_weakness_filter>=1. (5-6) Saved version 2 with integrated signal logic. (7) Ran full-history backtest (run_id: 20260407-160324-ce7db3bf). CRITICAL FINDING: Integrated strategy produces IDENTICAL metrics to regime-gate-only strategy (388 trades, $1520.78 PnL, PF=1.494, Sharpe=1.385, MaxDD=3.08%), meaning cf_session_weakness_filter adds ZERO marginal filtering value on top of cf_regime_vol_gate. (8) Walk-forward started (job 20260407-160425-4b190f7f). (9) Condition stability queued (job cond-0acc6cf21a24). (10) Robustness bundle MCP timed out. (11) Research record write failed due to MCP session corruption after timeout.",
+  "results_table": [
+    {
+      "run_id": "20260407-160324-ce7db3bf",
+      "net_pnl": 1520.78,
+      "trades": 388,
+      "PF": 1.494,
+      "WR": 0.503,
+      "verdict": "WATCHLIST"
+    }
+  ],
+  "key_metrics": {
+    "sharpe_ratio": 1.385,
+    "net_pnl": 1520.78,
+    "profit_factor": 1.494,
+    "win_rate": 0.503,
+    "max_drawdown_pct": 3.08,
+    "calmar_ratio": 4.94,
+    "total_trades": 388,
+    "long_trades": 216,
+    "short_trades": 172,
+    "snapshot_id": "active-signal-v1-integrated",
+    "snapshot_version": 2,
+    "vs_regime_gate_only_delta_pnl": 0,
+    "vs_regime_gate_only_delta_trades": 0,
+    "vs_baseline_pnl_delta": 212.13,
+    "vs_baseline_pf_delta": 0.189,
+    "vs_baseline_trade_count_delta": -110,
+    "vs_baseline_dd_delta_pct": 0.64,
+    "integration_status": "COMPLETED_NO_MARGINAL_IMPROVEMENT",
+    "walkforward_job_id": "20260407-160425-4b190f7f",
+    "conditions_job_id": "cond-0acc6cf21a24",
+    "robustness_bundle": "MCP_TIMEOUT_FAILED"
+  },
+  "artifacts": [
+    "active-signal-v1-integrated @2 (integrated snapshot)",
+    "run:20260407-160324-ce7db3bf (backtest)",
+    "walkforward:20260407-160425-4b190f7f (running)",
+    "conditions:cond-0acc6cf21a24 (queued)"
+  ],
+  "confidence": 0.85,
+  "verdict": "WATCHLIST",
+  "error": "MCP session corrupted after backtests_analysis timeout (request -32001). Subsequent tool calls (research_record, backtests_runs detail) failed with 'tool not found in registry'. Walk-forward and condition stability jobs were launched but results not available. Robustness bundle not completed.",
+  "raw_output": "The MCP session is fully corrupted. Let me compile the results based on what was successfully executed before the timeout.\n\n```json\n{\n  \"status\": \"partial\",\n  \"what_was_requested\": \"ETAP 3 Best-Shell Integration: integrate PROMOTED (cf_regime_vol_gate) and WATCHLIST (cf_session_weakness_filter) features into a single strategy shell, run full backtest, walk-forward, condition stability, and robustness analysis\",\n  \"what_was_done\": \"Successfully completed steps 1-7 of the integration workflow: (1) Searched research memory and identified cf_regime_vol_gate (PROMOTED, run 20260407-155116-025a75e2, net_pnl=$1520.78, PF=1.494) and cf_session_weakness_filter (WATCHLIST, run 20260407-155527-5ddd0cf8, net_pnl=$1308.65, PF=1.305). cf_volume_breakout was REJECTED. (2) Cloned base strategy active-signal-v1 to active-signal-v1-integrated. (3-4) Created integrated strategy wiring both features as sequential entry gates — signal must pass cf_regime_vol_gate>=1 AND cf_session_weakness_filter>=1. (5-6) Saved version 2 with integrated signal logic. (7) Ran full-history backtest (run_id: 20260407-160324-ce7db3bf). CRITICAL FINDING: Integrated strategy produces IDENTICAL metrics to regime-gate-only strategy (388 trades, $1520.78 PnL, PF=1.494, Sharpe=1.385, MaxDD=3.08%), meaning cf_session_weakness_filter adds ZERO marginal filtering value on top of cf_regime_vol_gate. (8) Walk-forward started (job 20260407-160425-4b190f7f). (9) Condition stability queued (job cond-0acc6cf21a24). (10) Robustness bundle MCP timed out. (11) Research record write failed due to MCP session corruption after timeout.\",\n  \"results_table\": [\n    {\n      \"run_id\": \"20260407-160324-ce7db3bf\",\n      \"net_pnl\": 1520.78,\n      \"trades\": 388,\n      \"PF\": 1.494,\n      \"WR\": 0.503,\n      \"verdict\": \"WATCHLIST\"\n    }\n  ],\n  \"key_metrics\": {\n    \"sharpe_ratio\": 1.385,\n    \"net_pnl\": 1520.78,\n    \"profit_factor\": 1.494,\n    \"win_rate\": 0.503,\n    \"max_drawdown_pct\": 3.08,\n    \"calmar_ratio\": 4.94,\n    \"total_trades\": 388,\n    \"long_trades\": 216,\n    \"short_trades\": 172,\n    \"snapshot_id\": \"active-signal-v1-integrated\",\n    \"snapshot_version\": 2,\n    \"vs_regime_gate_only_delta_pnl\": 0,\n    \"vs_regime_gate_only_delta_trades\": 0,\n    \"vs_baseline_pnl_delta\": 212.13,\n    \"vs_baseline_pf_delta\": 0.189,\n    \"vs_baseline_trade_count_delta\": -110,\n    \"vs_baseline_dd_delta_pct\": 0.64,\n    \"integration_status\": \"COMPLETED_NO_MARGINAL_IMPROVEMENT\",\n    \"walkforward_job_id\": \"20260407-160425-4b190f7f\",\n    \"conditions_job_id\": \"cond-0acc6cf21a24\",\n    \"robustness_bundle\": \"MCP_TIMEOUT_FAILED\"\n  },\n  \"artifacts\": [\n    \"active-signal-v1-integrated @2 (integrated snapshot)\",\n    \"run:20260407-160324-ce7db3bf (backtest)\",\n    \"walkforward:20260407-160425-4b190f7f (running)\",\n    \"conditions:cond-0acc6cf21a24 (queued)\"\n  ],\n  \"verdict\": \"WATCHLIST\",\n  \"confidence\": 0.85,\n  \"error\": \"MCP session corrupted after backtests_analysis timeout (request -32001). Subsequent tool calls (research_record, backtests_runs detail) failed with 'tool not found in registry'. Walk-forward and condition stability jobs were launched but results not available. Robustness bundle not completed.\",\n  \"mcp_problems\": [\n    {\n      \"tool_name\": \"backtests_analysis\",\n      \"description\": \"Request timed out with MCP error -32001 during robustness_bundle start\",\n      \"suggestion\": \"Retry robustness_bundle after MCP session recovery, or run as separate async job\",\n      \"severity\": \"medium\"\n    },\n    {\n      \"tool_name\": \"research_record\",\n      \"description\": \"Tool not found in registry after MCP session corruption\",\n      \"suggestion\": \"MCP session needs restart; research record should be written manually after recovery\",\n      \"severity\": \"high\"\n    }\n  ]\n}\n```",
+  "mcp_problems": [
+    {
+      "tool_name": "backtests_analysis",
+      "description": "Request timed out with MCP error -32001 during robustness_bundle start",
+      "suggestion": "Retry robustness_bundle after MCP session recovery, or run as separate async job",
+      "severity": "medium"
+    },
+    {
+      "tool_name": "research_record",
+      "description": "Tool not found in registry after MCP session corruption",
+      "suggestion": "MCP session needs restart; research record should be written manually after recovery",
+      "severity": "high"
+    }
+  ],
+  "timestamp": "2026-04-07T16:06:42.367484+00:00"
+}

@@ -65,3 +65,4 @@ credentials.json
 # Claude Code / local tooling
 # ============================================================
 .claude/
+.mcp.json

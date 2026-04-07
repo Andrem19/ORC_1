@@ -513,7 +513,7 @@ def test_dispatch_plan_tasks_no_dependency_reports_when_no_deps() -> None:
 
 def test_invalid_plan_loop_stops_after_max_attempts() -> None:
     svc, orch = _make_service(worker_ids=["qwen-1"])
-    svc.state.current_plan_attempt = 3
+    svc.state.current_plan_attempt = 5
     svc.state.current_plan_attempt_type = "repair"
     svc.planner_service.last_plan_raw_output = '{"tasks":[]}'
 

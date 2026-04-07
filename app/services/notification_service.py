@@ -2,7 +2,7 @@
 Notification service — sends Telegram messages via Bot API.
 
 Uses http.client (stdlib) to call the Telegram Bot API directly.
-No external dependencies required.
+Messages are formatted as HTML for rich display in Telegram.
 
 Credentials are read from environment variables:
   - ALGO_BOT: Telegram bot token
@@ -19,9 +19,20 @@ from http.client import HTTPSConnection
 
 from app.config import NotificationConfig
 from app.models import OrchestratorState, PlannerOutput, TaskResult
+from app.services.tg_html import truncate_html
+from app.services.tg_message_builder import (
+    TelegramMessageBuilder,
+    apply_translated_text,
+    render_html,
+    render_plain,
+)
 from app.services.translation_service import TranslationService
 
 logger = logging.getLogger("orchestrator.notifications")
+
+_RETRYABLE_ERRORS = (ConnectionError, OSError, TimeoutError)
+_MAX_SEND_ATTEMPTS = 3
+_RETRY_DELAY = 2.0
 
 
 class NotificationService:
@@ -40,6 +51,7 @@ class NotificationService:
         self._translator = TranslationService(
             translate_to_russian=self.config.translate_to_russian,
             model_dir=self.config.translation_model_dir,
+            model_name=self.config.translation_model_name,
         )
         if self._enabled:
             logger.info(
@@ -64,10 +76,12 @@ class NotificationService:
         """Send a lifecycle notification (start/stop/finish)."""
         if not self._enabled:
             return False
-        text = f"Orchestrator {event}"
+        builder = TelegramMessageBuilder()
+        builder.add_header("", f"Orchestrator {event}")
+        builder.add_separator()
         if detail:
-            text += f"\n{detail}"
-        return self._send(text)
+            builder.add_body(detail)
+        return self._send_structured(builder.build())
 
     def send_worker_result(self, result: TaskResult, cycle: int = 0) -> bool:
         """Send a worker result notification."""
@@ -79,45 +93,52 @@ class NotificationService:
         else:
             icon = "\u274c"
             label = "failed"
-        lines = [
-            f"{icon} Cycle #{cycle} | Worker {result.worker_id} {label}",
-            f"Task {result.task_id}",
-        ]
+
+        builder = TelegramMessageBuilder()
+        builder.add_header(icon, f"Cycle #{cycle} | Worker {result.worker_id} {label}")
+        builder.add_separator()
+        builder.add_field("Task", result.task_id)
         if result.summary:
-            lines.append(result.summary[:300])
+            builder.add_body(result.summary[:300])
         if result.error:
-            lines.append(f"Error: {result.error[:200]}")
+            builder.add_field("Error", result.error[:200])
         if result.confidence > 0:
-            lines.append(f"Confidence: {result.confidence:.2f}")
-        return self._send("\n".join(lines))
+            builder.add_field("Confidence", f"{result.confidence:.2f}")
+        return self._send_structured(builder.build())
 
     def send_planner_decision(self, output: PlannerOutput, cycle: int = 0) -> bool:
         """Send a planner decision notification."""
         if not self._enabled:
             return False
-        lines = [
-            f"\U0001f9d1\u200d\U0001f4bc Cycle #{cycle} | Planner decision",
-            f"{output.decision.value}",
-        ]
+        builder = TelegramMessageBuilder()
+        builder.add_header(
+            "\U0001f9d1\u200d\U0001f4bc",
+            f"Cycle #{cycle} | Planner decision",
+        )
+        builder.add_separator()
+        builder.add_field("Decision", output.decision.value)
         if output.reason:
-            lines.append(output.reason[:200])
+            builder.add_body(output.reason[:200])
         if output.target_worker_id:
-            lines.append(f"Worker: {output.target_worker_id}")
+            builder.add_field("Worker", output.target_worker_id)
         if output.task_instruction:
-            lines.append(f"Task: {output.task_instruction[:150]}")
+            builder.add_field("Task", output.task_instruction[:150])
         if output.memory_update:
-            lines.append(f"Memory: {output.memory_update[:100]}")
-        return self._send("\n".join(lines))
+            builder.add_field("Memory", output.memory_update[:100])
+        return self._send_structured(builder.build())
 
     def send_error(self, error: str, context: str = "") -> bool:
         """Send an error alert."""
         if not self._enabled:
             return False
-        text = f"\u26a0\ufe0f Error"
+        title = "Error"
         if context:
-            text += f" ({context})"
-        text += f"\n{error[:300]}"
-        return self._send(text)
+            title += f" ({context})"
+        builder = TelegramMessageBuilder()
+        builder.add_header("\u26a0\ufe0f", title)
+        builder.add_separator()
+        builder.add_body(error[:300])
+        return self._send_structured(builder.build())
 
     def send_research_summary(self, state: OrchestratorState) -> bool:
         """Send a periodic research summary."""
@@ -125,24 +146,40 @@ class NotificationService:
             return False
         completed = len(state.completed_tasks())
         failed = len(state.failed_tasks())
-        lines = [
-            "\U0001f4ca Research Summary",
-            f"Cycle: {state.current_cycle}",
-            f"Tasks: {completed} completed, {failed} failed",
-            f"Errors: {state.total_errors}",
-        ]
+        builder = TelegramMessageBuilder()
+        builder.add_header("\U0001f4ca", "Research Summary")
+        builder.add_separator()
+        builder.add_field("Cycle", str(state.current_cycle))
+        builder.add_field("Tasks", f"{completed} completed, {failed} failed")
+        builder.add_field("Errors", str(state.total_errors))
         if state.last_planner_decision:
-            lines.append(f"Last decision: {state.last_planner_decision.value}")
-        return self._send("\n".join(lines))
+            builder.add_field("Last decision", state.last_planner_decision.value)
+        return self._send_structured(builder.build())
 
     # ---------------------------------------------------------------
-    # Internal — Telegram API call
+    # Internal — message pipeline
     # ---------------------------------------------------------------
 
-    def _send(self, text: str) -> bool:
-        """Send a message to Telegram. Returns True if sent."""
-        # Translate if enabled
-        text = self._translator.translate(text)
+    def _send_structured(self, sections: list) -> bool:
+        """Translate plain text, render to HTML, send to Telegram."""
+        plain = render_plain(sections)
+        translated = self._translator.translate(plain)
+        translated_sections = apply_translated_text(sections, translated)
+        html = render_html(translated_sections)
+        return self._send_html(html)
+
+    def _send_html(self, html: str) -> bool:
+        """Send HTML-formatted message to Telegram with plain-text fallback."""
+        if not self._try_send(html, parse_mode="HTML"):
+            # Fallback: strip tags and send as plain text
+            import re
+            plain = re.sub(r"<[^>]+>", "", html)
+            plain = plain.replace("&lt;", "<").replace("&gt;", ">").replace("&amp;", "&")
+            return self._try_send(plain[:4096], parse_mode=None)
+        return True
+
+    def _try_send(self, text: str, parse_mode: str | None) -> bool:
+        """Send a message to Telegram with retry for transient network errors."""
         # Rate limiting
         now = time.monotonic()
         elapsed = now - self._last_send_time
@@ -154,31 +191,46 @@ class NotificationService:
             )
             return False
 
-        try:
-            conn = HTTPSConnection("api.telegram.org", timeout=10)
-            path = f"/bot{self._bot_token}/sendMessage"
-            body = json.dumps({
-                "chat_id": self._chat_id,
-                "text": text[:4096],  # Telegram message limit
-            })
-            headers = {"Content-Type": "application/json"}
-            conn.request("POST", path, body, headers)
-            resp = conn.getresponse()
-            resp_body = resp.read().decode("utf-8")
-            conn.close()
+        for attempt in range(1, _MAX_SEND_ATTEMPTS + 1):
+            try:
+                conn = HTTPSConnection("api.telegram.org", timeout=10)
+                path = f"/bot{self._bot_token}/sendMessage"
+                payload: dict = {"chat_id": self._chat_id, "text": text}
+                if parse_mode:
+                    payload["parse_mode"] = parse_mode
+                body = json.dumps(payload)
+                headers = {"Content-Type": "application/json"}
+                conn.request("POST", path, body, headers)
+                resp = conn.getresponse()
+                resp_body = resp.read().decode("utf-8")
+                conn.close()
 
-            if resp.status == 200:
-                self._last_send_time = now
-                logger.info("Telegram notification sent (%d chars)", len(text))
-                return True
-            else:
-                logger.warning(
-                    "Telegram API error %d: %s",
-                    resp.status,
-                    resp_body[:200],
+                if resp.status == 200:
+                    self._last_send_time = now
+                    logger.info("Telegram notification sent (%d chars)", len(text))
+                    return True
+                else:
+                    logger.warning(
+                        "Telegram API error %d: %s",
+                        resp.status,
+                        resp_body[:200],
+                    )
+                    return False
+
+            except _RETRYABLE_ERRORS as e:
+                if attempt < _MAX_SEND_ATTEMPTS:
+                    logger.warning(
+                        "Telegram send attempt %d/%d failed (network): %s — retrying in %.1fs",
+                        attempt, _MAX_SEND_ATTEMPTS, e, _RETRY_DELAY,
+                    )
+                    time.sleep(_RETRY_DELAY)
+                    continue
+                logger.error(
+                    "Telegram send failed after %d attempts: %s",
+                    _MAX_SEND_ATTEMPTS, e,
                 )
                 return False
-
-        except Exception as e:
-            logger.error("Failed to send Telegram notification: %s", e)
-            return False
+            except Exception as e:
+                logger.error("Failed to send Telegram notification: %s", e)
+                return False
+        return False

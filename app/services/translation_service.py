@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import logging
 import re
+from collections import OrderedDict
 from pathlib import Path
 
 logger = logging.getLogger("orchestrator.translation")
@@ -41,6 +42,12 @@ _TECH_PATTERNS = [
 
 _TECH_RE = re.compile("|".join(f"(?:{p})" for p in _TECH_PATTERNS))
 
+# Maximum cache entries for translation results.
+_CACHE_MAX = 200
+
+# Max tokens to send to the model per chunk (leaves headroom from 512 limit).
+_MAX_TOKENS = 400
+
 
 class TranslationService:
     """Translates English text to Russian, preserving technical terms."""
@@ -49,12 +56,15 @@ class TranslationService:
         self,
         translate_to_russian: bool = False,
         model_dir: str = "models/opus-mt-en-ru",
+        model_name: str = "Helsinki-NLP/opus-mt-en-ru",
     ) -> None:
         self._translate = translate_to_russian
         self._model_dir = Path(model_dir)
+        self._model_name = model_name
         self._tokenizer = None
         self._model = None
         self._model_loaded = False
+        self._cache: OrderedDict[str, str] = OrderedDict()
 
     @property
     def is_enabled(self) -> bool:
@@ -67,7 +77,7 @@ class TranslationService:
     def load_model(self) -> None:
         """Download (if needed) and load the translation model.
 
-        On first call, downloads Helsinki-NLP/opus-mt-en-ru from HuggingFace
+        On first call, downloads the model from HuggingFace
         and saves it to model_dir. On subsequent calls, loads from disk.
         Called at startup from main.py when translate_to_russian is True.
 
@@ -93,15 +103,16 @@ class TranslationService:
                 self._model = MarianMTModel.from_pretrained(self._model_dir)
             else:
                 logger.info(
-                    "Downloading Helsinki-NLP/opus-mt-en-ru to %s ...",
+                    "Downloading %s to %s ...",
+                    self._model_name,
                     self._model_dir,
                 )
                 self._model_dir.mkdir(parents=True, exist_ok=True)
                 self._tokenizer = MarianTokenizer.from_pretrained(
-                    "Helsinki-NLP/opus-mt-en-ru"
+                    self._model_name
                 )
                 self._model = MarianMTModel.from_pretrained(
-                    "Helsinki-NLP/opus-mt-en-ru"
+                    self._model_name
                 )
                 self._tokenizer.save_pretrained(self._model_dir)
                 self._model.save_pretrained(self._model_dir)
@@ -127,7 +138,21 @@ class TranslationService:
 
         try:
             protected, placeholders = self._protect_terms(text)
+
+            # Check cache
+            cache_key = protected
+            if cache_key in self._cache:
+                self._cache.move_to_end(cache_key)
+                return self._restore_terms(self._cache[cache_key], placeholders)
+
             translated = self._do_translate(protected)
+            self._restore_placeholders(translated, placeholders)
+
+            # Store in cache
+            self._cache[cache_key] = translated
+            if len(self._cache) > _CACHE_MAX:
+                self._cache.popitem(last=False)
+
             restored = self._restore_terms(translated, placeholders)
             return restored
         except Exception as e:
@@ -170,50 +195,112 @@ class TranslationService:
                 text = fuzzy.sub(original, text)
         return text
 
+    def _restore_placeholders(self, text: str, placeholder_map: dict[str, str]) -> str:
+        """In-place restore for cached translations (modifies text string is immutable,
+        but we update the cache entry). This is a no-op helper for clarity."""
+        pass
+
     def _do_translate(self, text: str) -> str:
         """Translate protected text using MarianMT model.
 
-        Splits into paragraph-level chunks to stay within the model's
-        512-token limit. Each chunk is translated independently.
+        Splits into paragraph-level chunks and batch-translates them
+        for better performance.
         """
         import torch
 
         paragraphs = text.split("\n")
-        translated_paragraphs = []
+        translated_paragraphs: list[str] = []
 
-        for para in paragraphs:
+        # Collect all translatable chunks across paragraphs, preserving structure.
+        all_chunks: list[str] = []
+        chunk_indices: list[tuple[int, int]] = []  # (para_idx, chunk_idx)
+
+        for p_idx, para in enumerate(paragraphs):
+            if not para.strip():
+                continue
+            chunks = self._split_long_text(para)
+            for c_idx, chunk in enumerate(chunks):
+                if chunk.strip():
+                    all_chunks.append(chunk)
+                    chunk_indices.append((p_idx, c_idx))
+
+        # Batch translate all chunks at once
+        if all_chunks:
+            inputs = self._tokenizer(
+                all_chunks,
+                return_tensors="pt",
+                padding=True,
+                truncation=True,
+                max_length=_MAX_TOKENS,
+            )
+            with torch.no_grad():
+                outputs = self._model.generate(**inputs)
+            decoded = self._tokenizer.batch_decode(outputs, skip_special_tokens=True)
+        else:
+            decoded = []
+
+        # Map results back to paragraph structure
+        chunk_results: dict[tuple[int, int], str] = {}
+        for i, (p_idx, c_idx) in enumerate(chunk_indices):
+            chunk_results[(p_idx, c_idx)] = decoded[i]
+
+        for p_idx, para in enumerate(paragraphs):
             if not para.strip():
                 translated_paragraphs.append(para)
                 continue
-
-            # Further split very long paragraphs at sentence boundaries
-            chunks = self._split_long_text(para, max_words=80)
+            chunks = self._split_long_text(para)
             translated_chunks = []
-
-            for chunk in chunks:
-                if not chunk.strip():
+            for c_idx, chunk in enumerate(chunks):
+                key = (p_idx, c_idx)
+                if key in chunk_results:
+                    translated_chunks.append(chunk_results[key])
+                elif chunk.strip():
                     translated_chunks.append(chunk)
-                    continue
-
-                inputs = self._tokenizer(
-                    chunk, return_tensors="pt", padding=True, truncation=True
-                )
-                with torch.no_grad():
-                    outputs = self._model.generate(**inputs)
-                decoded = self._tokenizer.decode(outputs[0], skip_special_tokens=True)
-                translated_chunks.append(decoded)
-
             translated_paragraphs.append(" ".join(translated_chunks))
 
         return "\n".join(translated_paragraphs)
 
-    def _split_long_text(self, text: str, max_words: int = 80) -> list[str]:
-        """Split text into chunks at sentence boundaries if it exceeds max_words."""
+    def _split_long_text(self, text: str, max_tokens: int = _MAX_TOKENS) -> list[str]:
+        """Split text into chunks that fit within *max_tokens*.
+
+        Uses the loaded tokenizer for accurate token counting.
+        Falls back to word-based splitting if tokenizer is unavailable.
+        """
+        if self._tokenizer is not None:
+            return self._split_by_tokens(text, max_tokens)
+        return self._split_by_words(text)
+
+    def _split_by_tokens(self, text: str, max_tokens: int) -> list[str]:
+        """Split text at sentence boundaries respecting token limits."""
+        tokens = self._tokenizer.encode(text, add_special_tokens=False)
+        if len(tokens) <= max_tokens:
+            return [text]
+
+        sentences = re.split(r"(?<=[.!?])\s+", text)
+        chunks: list[str] = []
+        current: list[str] = []
+        current_len = 0
+
+        for sentence in sentences:
+            sent_tokens = len(self._tokenizer.encode(sentence, add_special_tokens=False))
+            if current and current_len + sent_tokens > max_tokens:
+                chunks.append(" ".join(current))
+                current = []
+                current_len = 0
+            current.append(sentence)
+            current_len += sent_tokens
+
+        if current:
+            chunks.append(" ".join(current))
+
+        return chunks if chunks else [text]
+
+    def _split_by_words(self, text: str, max_words: int = 80) -> list[str]:
+        """Fallback word-based splitting when tokenizer is unavailable."""
         words = text.split()
         if len(words) <= max_words:
             return [text]
 
-        # Split at sentence boundaries (., !, ? followed by space)
         sentences = re.split(r"(?<=[.!?])\s+", text)
         chunks: list[str] = []
         current_chunk: list[str] = []

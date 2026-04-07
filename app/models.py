@@ -29,6 +29,7 @@ class TaskStatus(str, Enum):
     TIMED_OUT = "timed_out"
     STALLED = "stalled"
     CANCELLED = "cancelled"
+    INTERRUPTED = "interrupted"
 
 
 class PlannerDecision(str, Enum):
@@ -53,6 +54,7 @@ class StopReason(str, Enum):
     GOAL_REACHED = "goal_reached"
     GOAL_IMPOSSIBLE = "goal_impossible"
     MCP_UNHEALTHY = "mcp_unhealthy"
+    GRACEFUL_STOP = "graceful_stop"
 
 
 class RestartReason(str, Enum):
@@ -142,6 +144,10 @@ class Task:
 
     def mark_cancelled(self) -> None:
         self.status = TaskStatus.CANCELLED
+        self._touch()
+
+    def mark_interrupted(self) -> None:
+        self.status = TaskStatus.INTERRUPTED
         self._touch()
 
     def _touch(self) -> None:
@@ -267,7 +273,7 @@ class OrchestratorState:
         return [t for t in self.tasks if t.status == TaskStatus.COMPLETED]
 
     def failed_tasks(self) -> list[Task]:
-        return [t for t in self.tasks if t.status in (TaskStatus.FAILED, TaskStatus.TIMED_OUT, TaskStatus.STALLED)]
+        return [t for t in self.tasks if t.status in (TaskStatus.FAILED, TaskStatus.TIMED_OUT, TaskStatus.STALLED, TaskStatus.INTERRUPTED)]
 
     def find_process(self, task_id: str) -> ProcessInfo | None:
         for p in self.processes:

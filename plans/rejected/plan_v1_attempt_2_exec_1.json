@@ -1,0 +1,988 @@
+{
+  "plan_version": 1,
+  "attempt_number": 2,
+  "attempt_type": "repair",
+  "execution_seq": 1,
+  "saved_at": "2026-04-07T16:20:30.700936+00:00",
+  "raw_output": "",
+  "parsed_data": {
+    "schema_version": 4,
+    "plan_action": "create",
+    "plan_version": 1,
+    "reason": "Repair invalid plan: (1) stage 1 events_sync had no action support — removed any action param, kept only family/scope; (2) stage 2 breakout_validate_feature instruction was truncated with legacy placeholder — wrote complete feature spec; (3) stage 3 volvol_validate_feature instruction was truncated with legacy placeholder — wrote complete feature spec. Stages 0 and 4 preserved as valid.",
+    "plan_markdown": "5-stage research cycle: S0 re-validate session filter integration; S1 funding-rate event gate using synced funding events to filter unprofitable settlement windows (fixed events_sync call); S2 ATR-based breakout-consolidation pattern detector (fixed feature validation instruction); S3 vol-of-vol meta-regime via rolling stddev of ATR changes (fixed feature validation instruction); S4 integration round combining winning orthogonal features with walk-forward validation. Baseline: active-signal-v1 Sharpe 1.06, +13%, 498 trades, DD 2.4%.",
+    "frozen_base": "active-signal-v1@1",
+    "baseline_snapshot_ref": "active-signal-v1@1",
+    "baseline_metrics": {
+      "net_pnl": 13.0,
+      "sharpe": 1.06,
+      "trades": 498,
+      "max_drawdown_pct": 2.4
+    },
+    "tasks": [
+      {
+        "stage_number": 0,
+        "stage_name": "Session Filter Re-integration Check",
+        "theory": "Prior research identified session-based filters that may improve signal quality by restricting trading to high-volume sessions. Re-validating session filter integration against the active-signal-v1 baseline to confirm incremental alpha.",
+        "depends_on": [],
+        "steps": [
+          {
+            "step_id": "session_research_check",
+            "kind": "tool_call",
+            "instruction": "Search research memory for prior session filter work",
+            "tool_name": "research_search",
+            "args": {
+              "query": "session filter timezone overlap trading hours"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "session_features_catalog",
+            "kind": "tool_call",
+            "instruction": "Check available features for existing session or time columns",
+            "tool_name": "features_catalog",
+            "args": {
+              "scope": "available"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "session_validate_feature",
+            "kind": "tool_call",
+            "instruction": "Validate a custom feature cf_session_filter that maps UTC hour to session label (asian, london, ny_overlap, off_hours) using standard exchange open/close times",
+            "tool_name": "features_custom",
+            "args": {
+              "action": "validate"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "session_publish_feature",
+            "kind": "tool_call",
+            "instruction": "Publish the validated cf_session_filter feature",
+            "tool_name": "features_custom",
+            "args": {
+              "action": "publish"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "session_build_features",
+            "kind": "tool_call",
+            "instruction": "Build feature dataset including cf_session_filter",
+            "tool_name": "features_dataset",
+            "args": {
+              "action": "build"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "session_model_dataset",
+            "kind": "tool_call",
+            "instruction": "Prepare model training dataset contract",
+            "tool_name": "models_dataset",
+            "args": {
+              "action": "contract"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "session_train_model",
+            "kind": "tool_call",
+            "instruction": "Train CatBoost model with session filter feature included",
+            "tool_name": "models_train",
+            "args": {
+              "action": "start"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "session_strategy_create",
+            "kind": "tool_call",
+            "instruction": "Create strategy snapshot incorporating session-filtered model feature",
+            "tool_name": "backtests_strategy",
+            "args": {
+              "action": "create"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "session_strategy_validate",
+            "kind": "tool_call",
+            "instruction": "Validate strategy signal logic",
+            "tool_name": "backtests_strategy_validate",
+            "args": {
+              "mode": "signal"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "session_preflight",
+            "kind": "tool_call",
+            "instruction": "Run preflight readiness check for session filter strategy backtest",
+            "tool_name": "backtests_plan",
+            "args": {
+              "snapshot_id": "{{step:session_strategy_create.run_id}}",
+              "symbol": "BTCUSDT",
+              "anchor_timeframe": "1h",
+              "execution_timeframe": "5m"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "session_backtest_run",
+            "kind": "tool_call",
+            "instruction": "Run backtest on session filter strategy",
+            "tool_name": "backtests_runs",
+            "args": {
+              "action": "start",
+              "snapshot_id": "{{step:session_strategy_create.run_id}}",
+              "symbol": "BTCUSDT",
+              "anchor_timeframe": "1h",
+              "execution_timeframe": "5m"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "session_analysis",
+            "kind": "tool_call",
+            "instruction": "Run diagnostics analysis on session filter backtest",
+            "tool_name": "backtests_analysis",
+            "args": {
+              "action": "start",
+              "analysis": "diagnostics"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "session_record",
+            "kind": "tool_call",
+            "instruction": "Record session filter experiment results and decision in research memory",
+            "tool_name": "research_record",
+            "args": {
+              "action": "create"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          }
+        ],
+        "agent_instructions": []
+      },
+      {
+        "stage_number": 1,
+        "stage_name": "Funding-Rate Event Gate",
+        "theory": "BTC funding rate events (8h settlements) create predictable short-term price distortions and increased volatility. A feature that identifies historically unprofitable windows around funding settlements could gate entries and reduce losing trades. The hypothesis is that filtering out signals during high-risk funding settlement windows will improve net PnL and reduce max drawdown without significantly reducing trade count.",
+        "depends_on": [],
+        "steps": [
+          {
+            "step_id": "funding_research_check",
+            "kind": "tool_call",
+            "instruction": "Search research memory for any prior funding-rate or event-based feature work",
+            "tool_name": "research_search",
+            "args": {
+              "query": "funding rate event feature filter"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "funding_catalog_check",
+            "kind": "tool_call",
+            "instruction": "Check available event data in the catalog",
+            "tool_name": "events",
+            "args": {
+              "view": "catalog"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "funding_sync",
+            "kind": "tool_call",
+            "instruction": "Sync funding rate event data for BTCUSDT",
+            "tool_name": "events_sync",
+            "args": {
+              "family": "funding",
+              "scope": "full"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "funding_preview",
+            "kind": "tool_call",
+            "instruction": "Preview aligned funding events with price data to understand temporal structure",
+            "tool_name": "events",
+            "args": {
+              "view": "align_preview"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "funding_validate_feature",
+            "kind": "tool_call",
+            "instruction": "Validate a custom feature cf_funding_gate that: (1) checks funding settlement schedule every 8h at 00:00, 08:00, 16:00 UTC, (2) marks a 1-hour window before and after each settlement as high-risk, (3) returns 1 if current bar falls within high-risk window else 0, (4) computes rolling average of absolute returns during settlement windows over past 30 settlements to weight the gate dynamically",
+            "tool_name": "features_custom",
+            "args": {
+              "action": "validate"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "funding_publish_feature",
+            "kind": "tool_call",
+            "instruction": "Publish the validated cf_funding_gate feature",
+            "tool_name": "features_custom",
+            "args": {
+              "action": "publish"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "funding_build_features",
+            "kind": "tool_call",
+            "instruction": "Build feature dataset including cf_funding_gate",
+            "tool_name": "features_dataset",
+            "args": {
+              "action": "build"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "funding_model_dataset",
+            "kind": "tool_call",
+            "instruction": "Prepare model training dataset contract including funding gate feature",
+            "tool_name": "models_dataset",
+            "args": {
+              "action": "contract"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "funding_train_model",
+            "kind": "tool_call",
+            "instruction": "Train model with funding gate feature to evaluate predictive contribution",
+            "tool_name": "models_train",
+            "args": {
+              "action": "start"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "funding_strategy_create",
+            "kind": "tool_call",
+            "instruction": "Create strategy snapshot incorporating funding gate as entry filter",
+            "tool_name": "backtests_strategy",
+            "args": {
+              "action": "create"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "funding_strategy_validate",
+            "kind": "tool_call",
+            "instruction": "Validate funding gate strategy signal logic",
+            "tool_name": "backtests_strategy_validate",
+            "args": {
+              "mode": "signal"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "funding_preflight",
+            "kind": "tool_call",
+            "instruction": "Run preflight readiness check for funding gate strategy backtest",
+            "tool_name": "backtests_plan",
+            "args": {
+              "snapshot_id": "{{step:funding_strategy_create.run_id}}",
+              "symbol": "BTCUSDT",
+              "anchor_timeframe": "1h",
+              "execution_timeframe": "5m"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "funding_backtest_run",
+            "kind": "tool_call",
+            "instruction": "Run backtest on funding gate strategy",
+            "tool_name": "backtests_runs",
+            "args": {
+              "action": "start",
+              "snapshot_id": "{{step:funding_strategy_create.run_id}}",
+              "symbol": "BTCUSDT",
+              "anchor_timeframe": "1h",
+              "execution_timeframe": "5m"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "funding_analysis",
+            "kind": "tool_call",
+            "instruction": "Run diagnostics analysis on funding gate backtest results",
+            "tool_name": "backtests_analysis",
+            "args": {
+              "action": "start",
+              "analysis": "diagnostics"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "funding_record",
+            "kind": "tool_call",
+            "instruction": "Record funding rate event gate experiment results and decision",
+            "tool_name": "research_record",
+            "args": {
+              "action": "create"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          }
+        ],
+        "agent_instructions": []
+      },
+      {
+        "stage_number": 2,
+        "stage_name": "Breakout-Consolidation Pattern",
+        "theory": "Markets alternate between consolidation (low range) and expansion (high range) phases. A feature that detects ATR-based range compression followed by expansion could identify higher-quality entry points. This is orthogonal to the existing regime gate because it captures temporal range dynamics rather than absolute volatility level.",
+        "depends_on": [],
+        "steps": [
+          {
+            "step_id": "breakout_research_check",
+            "kind": "tool_call",
+            "instruction": "Search research memory for prior consolidation/breakout/range-compression feature work",
+            "tool_name": "research_search",
+            "args": {
+              "query": "breakout consolidation range compression ATR pattern"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "breakout_features_check",
+            "kind": "tool_call",
+            "instruction": "Inspect available features to understand what ATR/range columns exist already",
+            "tool_name": "features_catalog",
+            "args": {
+              "scope": "available"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "breakout_validate_feature",
+            "kind": "tool_call",
+            "instruction": "Validate a custom feature cf_breakout_quality that: (1) computes ATR(14) on 1h bars, (2) tracks ATR percentile rank over rolling 48-bar window, (3) identifies consolidation when ATR_rank falls below 25th percentile for at least 6 consecutive bars, (4) detects breakout when price moves more than 1.5 times ATR from the consolidation range midpoint, (5) returns a breakout quality score computed as consolidation duration multiplied by expansion magnitude normalized by ATR",
+            "tool_name": "features_custom",
+            "args": {
+              "action": "validate"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "breakout_publish_feature",
+            "kind": "tool_call",
+            "instruction": "Publish the validated cf_breakout_quality feature",
+            "tool_name": "features_custom",
+            "args": {
+              "action": "publish"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "breakout_build_features",
+            "kind": "tool_call",
+            "instruction": "Build feature dataset including cf_breakout_quality",
+            "tool_name": "features_dataset",
+            "args": {
+              "action": "build"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "breakout_model_dataset",
+            "kind": "tool_call",
+            "instruction": "Prepare model training dataset contract including breakout quality feature",
+            "tool_name": "models_dataset",
+            "args": {
+              "action": "contract"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "breakout_train_model",
+            "kind": "tool_call",
+            "instruction": "Train model with breakout quality feature to evaluate predictive contribution",
+            "tool_name": "models_train",
+            "args": {
+              "action": "start"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "breakout_strategy_create",
+            "kind": "tool_call",
+            "instruction": "Create strategy snapshot incorporating breakout quality as signal filter",
+            "tool_name": "backtests_strategy",
+            "args": {
+              "action": "create"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "breakout_strategy_validate",
+            "kind": "tool_call",
+            "instruction": "Validate breakout strategy signal logic",
+            "tool_name": "backtests_strategy_validate",
+            "args": {
+              "mode": "signal"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "breakout_preflight",
+            "kind": "tool_call",
+            "instruction": "Run preflight readiness check for breakout strategy backtest",
+            "tool_name": "backtests_plan",
+            "args": {
+              "snapshot_id": "{{step:breakout_strategy_create.run_id}}",
+              "symbol": "BTCUSDT",
+              "anchor_timeframe": "1h",
+              "execution_timeframe": "5m"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "breakout_backtest_run",
+            "kind": "tool_call",
+            "instruction": "Run backtest on breakout quality strategy",
+            "tool_name": "backtests_runs",
+            "args": {
+              "action": "start",
+              "snapshot_id": "{{step:breakout_strategy_create.run_id}}",
+              "symbol": "BTCUSDT",
+              "anchor_timeframe": "1h",
+              "execution_timeframe": "5m"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "breakout_analysis",
+            "kind": "tool_call",
+            "instruction": "Run diagnostics analysis on breakout backtest results",
+            "tool_name": "backtests_analysis",
+            "args": {
+              "action": "start",
+              "analysis": "diagnostics"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "breakout_record",
+            "kind": "tool_call",
+            "instruction": "Record breakout consolidation experiment results and decision",
+            "tool_name": "research_record",
+            "args": {
+              "action": "create"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          }
+        ],
+        "agent_instructions": []
+      },
+      {
+        "stage_number": 3,
+        "stage_name": "Vol-of-Vol Meta-Regime",
+        "theory": "The current regime gate filters by ATR percentile level, but volatility itself has regimes. Periods of stable low vol, stable high vol, and transitional unstable periods behave differently. A vol-of-vol feature measuring the standard deviation of ATR changes can detect these meta-regimes, potentially improving entry timing by filtering signals during unstable transitional periods.",
+        "depends_on": [],
+        "steps": [
+          {
+            "step_id": "volvol_research_check",
+            "kind": "tool_call",
+            "instruction": "Search research memory for prior vol-of-vol or volatility regime stability work",
+            "tool_name": "research_search",
+            "args": {
+              "query": "volatility of volatility meta regime stability ATR"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "volvol_validate_feature",
+            "kind": "tool_call",
+            "instruction": "Validate a custom feature cf_vol_stability that: (1) computes ATR(14) on 1h bars, (2) computes rolling stddev of ATR changes over 24-bar window as the vol-of-vol measure, (3) computes percentile rank of vol-of-vol over rolling 72-bar window, (4) classifies regime as stable when rank is below 30, transitional when rank is between 30 and 70 inclusive, and unstable when rank exceeds 70, (5) returns both the categorical regime label and a continuous stability score equal to 100 minus the percentile rank",
+            "tool_name": "features_custom",
+            "args": {
+              "action": "validate"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "volvol_publish_feature",
+            "kind": "tool_call",
+            "instruction": "Publish the validated cf_vol_stability feature",
+            "tool_name": "features_custom",
+            "args": {
+              "action": "publish"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "volvol_build_features",
+            "kind": "tool_call",
+            "instruction": "Build feature dataset including cf_vol_stability",
+            "tool_name": "features_dataset",
+            "args": {
+              "action": "build"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "volvol_model_dataset",
+            "kind": "tool_call",
+            "instruction": "Prepare model training dataset contract including vol stability feature",
+            "tool_name": "models_dataset",
+            "args": {
+              "action": "contract"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "volvol_train_model",
+            "kind": "tool_call",
+            "instruction": "Train model with vol stability feature to evaluate predictive contribution",
+            "tool_name": "models_train",
+            "args": {
+              "action": "start"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "volvol_strategy_create",
+            "kind": "tool_call",
+            "instruction": "Create strategy snapshot incorporating vol stability as meta-regime filter",
+            "tool_name": "backtests_strategy",
+            "args": {
+              "action": "create"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "volvol_strategy_validate",
+            "kind": "tool_call",
+            "instruction": "Validate vol stability strategy signal logic",
+            "tool_name": "backtests_strategy_validate",
+            "args": {
+              "mode": "signal"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "volvol_preflight",
+            "kind": "tool_call",
+            "instruction": "Run preflight readiness check for vol stability strategy backtest",
+            "tool_name": "backtests_plan",
+            "args": {
+              "snapshot_id": "{{step:volvol_strategy_create.run_id}}",
+              "symbol": "BTCUSDT",
+              "anchor_timeframe": "1h",
+              "execution_timeframe": "5m"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "volvol_backtest_run",
+            "kind": "tool_call",
+            "instruction": "Run backtest on vol stability strategy",
+            "tool_name": "backtests_runs",
+            "args": {
+              "action": "start",
+              "snapshot_id": "{{step:volvol_strategy_create.run_id}}",
+              "symbol": "BTCUSDT",
+              "anchor_timeframe": "1h",
+              "execution_timeframe": "5m"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "volvol_analysis",
+            "kind": "tool_call",
+            "instruction": "Run diagnostics analysis on vol stability backtest results",
+            "tool_name": "backtests_analysis",
+            "args": {
+              "action": "start",
+              "analysis": "diagnostics"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "volvol_record",
+            "kind": "tool_call",
+            "instruction": "Record vol-of-vol meta-regime experiment results and decision",
+            "tool_name": "research_record",
+            "args": {
+              "action": "create"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          }
+        ],
+        "agent_instructions": []
+      },
+      {
+        "stage_number": 4,
+        "stage_name": "Integration Round",
+        "theory": "Combine the best orthogonal features discovered in stages 0-3 into a single integrated strategy. Only features that demonstrated standalone positive contribution should be included. The integrated strategy is then validated via walk-forward analysis to ensure robustness before considering live deployment.",
+        "depends_on": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "steps": [
+          {
+            "step_id": "integration_review_results",
+            "kind": "tool_call",
+            "instruction": "Search research memory for all stage results to identify winning features",
+            "tool_name": "research_search",
+            "args": {
+              "query": "session funding breakout vol_stability feature results"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "integration_model_compare",
+            "kind": "tool_call",
+            "instruction": "Compare all trained models to identify best performing variants",
+            "tool_name": "models_registry",
+            "args": {
+              "action": "compare"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "integration_model_dataset",
+            "kind": "tool_call",
+            "instruction": "Prepare integrated model training dataset with winning features",
+            "tool_name": "models_dataset",
+            "args": {
+              "action": "contract"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "integration_train_model",
+            "kind": "tool_call",
+            "instruction": "Train integrated model with best orthogonal features combined",
+            "tool_name": "models_train",
+            "args": {
+              "action": "start"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "integration_strategy_create",
+            "kind": "tool_call",
+            "instruction": "Create integrated strategy snapshot combining all winning features",
+            "tool_name": "backtests_strategy",
+            "args": {
+              "action": "create"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "integration_strategy_validate",
+            "kind": "tool_call",
+            "instruction": "Validate integrated strategy signal logic",
+            "tool_name": "backtests_strategy_validate",
+            "args": {
+              "mode": "signal"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "integration_exit_validate",
+            "kind": "tool_call",
+            "instruction": "Validate integrated strategy exit logic",
+            "tool_name": "backtests_strategy_validate",
+            "args": {
+              "mode": "exit"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "integration_preflight",
+            "kind": "tool_call",
+            "instruction": "Run preflight readiness check for integrated strategy backtest",
+            "tool_name": "backtests_plan",
+            "args": {
+              "snapshot_id": "{{step:integration_strategy_create.run_id}}",
+              "symbol": "BTCUSDT",
+              "anchor_timeframe": "1h",
+              "execution_timeframe": "5m"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "integration_backtest_run",
+            "kind": "tool_call",
+            "instruction": "Run backtest on integrated strategy",
+            "tool_name": "backtests_runs",
+            "args": {
+              "action": "start",
+              "snapshot_id": "{{step:integration_strategy_create.run_id}}",
+              "symbol": "BTCUSDT",
+              "anchor_timeframe": "1h",
+              "execution_timeframe": "5m"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "integration_walkforward",
+            "kind": "tool_call",
+            "instruction": "Run walk-forward analysis on integrated strategy for out-of-sample validation",
+            "tool_name": "backtests_walkforward",
+            "args": {
+              "action": "start",
+              "symbol": "BTCUSDT",
+              "anchor_timeframe": "1h",
+              "execution_timeframe": "5m"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "integration_analysis",
+            "kind": "tool_call",
+            "instruction": "Run robustness bundle analysis on integrated strategy",
+            "tool_name": "backtests_analysis",
+            "args": {
+              "action": "start",
+              "analysis": "robustness_bundle"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "integration_baseline_compare",
+            "kind": "tool_call",
+            "instruction": "Compare integrated strategy with active-signal-v1 baseline on all key metrics",
+            "tool_name": "backtests_analysis",
+            "args": {
+              "action": "start",
+              "analysis": "layer_compare"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "integration_record",
+            "kind": "tool_call",
+            "instruction": "Record integration round results and final decision on whether to deploy",
+            "tool_name": "research_record",
+            "args": {
+              "action": "create"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          }
+        ],
+        "agent_instructions": []
+      }
+    ],
+    "cumulative_summary": "Research cycle exploring 4 orthogonal feature hypotheses: (S0) session filter re-integration, (S1) funding-rate event gate to filter settlement windows, (S2) ATR-based breakout-consolidation pattern detector, (S3) vol-of-vol meta-regime classifier. Each feature validated standalone then winners integrated in S4 with walk-forward robustness check. Baseline: active-signal-v1 Sharpe 1.06, +13% return, 498 trades, max DD 2.4%.",
+    "principles": [
+      "Seek orthogonal features, not cosmetic rewrites of existing rules",
+      "Test standalone first, then integrate only winners",
+      "Walk-forward out-of-sample validation required before any live deployment",
+      "Filter by standalone Sharpe improvement; reject features that do not improve risk-adjusted returns",
+      "Record all attempts including failures to avoid repeating dead ends"
+    ],
+    "check_after_seconds": 300,
+    "should_finish": false,
+    "anti_patterns_new": [],
+    "tasks_to_dispatch": [],
+    "_failure_class": "none",
+    "_request_type": "repair",
+    "_request_version": 3,
+    "_attempt_number": 2,
+    "_execution_seq": 1,
+    "_transport_errors": [],
+    "_structured_payload_source": "none",
+    "_structured_payload": null,
+    "_parse_status": "parsed_from_text"
+  },
+  "validation_errors": [
+    {
+      "stage_number": 0,
+      "instruction_index": 10,
+      "code": "arg_missing",
+      "message": "Missing required argument 'version' for backtests_runs(action='start')",
+      "offending_text": "backtests_runs",
+      "severity": "soft"
+    },
+    {
+      "stage_number": 1,
+      "instruction_index": 2,
+      "code": "action_invalid",
+      "message": "events_sync does not support action ''",
+      "offending_text": "events_sync",
+      "severity": "repair"
+    },
+    {
+      "stage_number": 1,
+      "instruction_index": 12,
+      "code": "arg_missing",
+      "message": "Missing required argument 'version' for backtests_runs(action='start')",
+      "offending_text": "backtests_runs",
+      "severity": "soft"
+    },
+    {
+      "stage_number": 2,
+      "instruction_index": 10,
+      "code": "arg_missing",
+      "message": "Missing required argument 'version' for backtests_runs(action='start')",
+      "offending_text": "backtests_runs",
+      "severity": "soft"
+    },
+    {
+      "stage_number": 3,
+      "instruction_index": 9,
+      "code": "arg_missing",
+      "message": "Missing required argument 'version' for backtests_runs(action='start')",
+      "offending_text": "backtests_runs",
+      "severity": "soft"
+    },
+    {
+      "stage_number": 4,
+      "instruction_index": 8,
+      "code": "arg_missing",
+      "message": "Missing required argument 'version' for backtests_runs(action='start')",
+      "offending_text": "backtests_runs",
+      "severity": "soft"
+    }
+  ],
+  "failure_class": "invalid_content",
+  "request_type": "repair",
+  "structured_payload": null,
+  "failure_detail": "[soft] stage 0 arg_missing: Missing required argument 'version' for backtests_runs(action='start'); [repair] stage 1 action_invalid: events_sync does not support action ''; [soft] stage 1 arg_missing: Missing required argument 'version' for backtests_runs(action='start'); +3 more",
+  "planner_run_artifact": "plans/planner_runs/repair_v3_attempt_2_exec_1.json"
+}

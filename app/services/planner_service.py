@@ -35,9 +35,17 @@ if TYPE_CHECKING:
 class PlannerService:
     """High-level service for interacting with the planner model."""
 
-    def __init__(self, adapter: BaseAdapter, timeout: int = 180) -> None:
+    def __init__(
+        self,
+        adapter: BaseAdapter,
+        timeout: int = 180,
+        planner_system_prompt: str = "",
+        operator_directives: str = "",
+    ) -> None:
         self.adapter = adapter
         self.timeout = timeout
+        self._planner_system_prompt = planner_system_prompt
+        self._operator_directives = operator_directives
         self._active_handle: ProcessHandle | None = None
         self._supports_async: bool | None = None
         self._sync_result: PlannerOutput | None = None
@@ -220,6 +228,7 @@ class PlannerService:
         plan_version: int = 1,
         attempt_number: int = 1,
         validation_warnings: list[dict] | None = None,
+        research_history: list[str] | None = None,
     ) -> None:
         """Launch planner to CREATE a new research plan."""
         from app.plan_prompts import build_plan_creation_prompt
@@ -248,6 +257,9 @@ class PlannerService:
             mcp_problem_summary=mcp_problem_summary,
             previous_plan_markdown=previous_plan_markdown,
             validation_warnings=validation_warnings,
+            planner_system_prompt=self._planner_system_prompt,
+            operator_directives=self._operator_directives,
+            research_history=research_history,
         )
         logger.info(
             "Starting plan creation via planner (version=%d attempt=%d, %d chars)",
@@ -274,6 +286,7 @@ class PlannerService:
         worker_ids: list[str] | None = None,
         mcp_problem_summary: str | None = None,
         validation_warnings: list[dict] | None = None,
+        research_history: list[str] | None = None,
     ) -> None:
         """Launch planner to REVISE the current plan based on worker reports."""
         from app.plan_prompts import build_plan_revision_prompt
@@ -300,6 +313,9 @@ class PlannerService:
             worker_ids=worker_ids,
             mcp_problem_summary=mcp_problem_summary,
             validation_warnings=validation_warnings,
+            planner_system_prompt=self._planner_system_prompt,
+            operator_directives=self._operator_directives,
+            research_history=research_history,
         )
         next_version = current_plan.version + 1
         logger.info(
@@ -342,6 +358,8 @@ class PlannerService:
             research_context=research_context,
             worker_ids=worker_ids,
             mcp_problem_summary=mcp_problem_summary,
+            planner_system_prompt=self._planner_system_prompt,
+            operator_directives=self._operator_directives,
         )
         logger.info(
             "Starting plan repair via planner (version=%d attempt=%d, %d chars)",
@@ -383,6 +401,8 @@ class PlannerService:
                 worker_ids=request.get("worker_ids"),
                 mcp_problem_summary=request.get("mcp_problem_summary"),
                 previous_plan_markdown=request.get("previous_plan_markdown"),
+                planner_system_prompt=self._planner_system_prompt,
+                operator_directives=self._operator_directives,
             )
             self._launch_plan_request(
                 prompt=prompt,
@@ -404,6 +424,8 @@ class PlannerService:
                 research_context=request.get("research_context"),
                 worker_ids=request.get("worker_ids"),
                 mcp_problem_summary=request.get("mcp_problem_summary"),
+                planner_system_prompt=self._planner_system_prompt,
+                operator_directives=self._operator_directives,
             )
             max_tasks = len(repair_request.invalid_plan_data.get("tasks", [])) or None
             self._launch_plan_request(
@@ -429,6 +451,8 @@ class PlannerService:
                 anti_patterns=request.get("anti_patterns"),
                 worker_ids=request.get("worker_ids"),
                 mcp_problem_summary=request.get("mcp_problem_summary"),
+                planner_system_prompt=self._planner_system_prompt,
+                operator_directives=self._operator_directives,
             )
             self._launch_plan_request(
                 prompt=prompt,

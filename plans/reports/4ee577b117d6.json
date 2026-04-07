@@ -1,0 +1,43 @@
+{
+  "task_id": "4ee577b117d6",
+  "worker_id": "qwen-1",
+  "plan_version": 2,
+  "status": "success",
+  "what_was_requested": "Session Weakness Filter - validate, publish cf_session_weakness_filter, add to strategy, backtest, and run diagnostics",
+  "what_was_done": "1. Searched research memory - no prior session filter work found. 2. Validated custom feature cf_session_weakness_filter (hour-of-week rolling PF classifier, output 0 for weak sessions with PF<0.9, 1 for normal). 3. Published cf_session_weakness_filter successfully. 4. Built feature dataset to materialize the column (54,864 rows). 5. Cloned active-signal-v1 to active_signal_v1_session_filter. 6. Added cf_session_weakness_filter==1 gate to both long and short signals. 7. Saved version 2 of the session-filtered strategy. 8. Ran full-history backtest (2021-03 to 2026-03): 498 trades, Net PnL=$1,308.65, PF=1.305, WR=47.8%, Sharpe=1.056, MaxDD=2.44%. 9. Ran diagnostics: weakest zone Sunday 05:00 UTC still has PF=0.68 - the dynamic rolling PF filter did not fully block this zone, likely because the trailing window calculation smooths out the weakness. 10. Recorded result in research memory.",
+  "results_table": [
+    {
+      "run_id": "20260407-155527-5ddd0cf8",
+      "net_pnl": 1308.65,
+      "trades": 498,
+      "PF": 1.305,
+      "WR": 0.478,
+      "verdict": "WATCHLIST"
+    }
+  ],
+  "key_metrics": {
+    "net_pnl": 1308.65,
+    "profit_factor": 1.305,
+    "win_rate": 0.478,
+    "sharpe_ratio": 1.056,
+    "max_drawdown": 247.23,
+    "max_drawdown_pct": 2.44,
+    "total_trades": 498,
+    "weakest_zone": "Sunday 05:00 UTC",
+    "weakest_zone_pf": 0.68,
+    "long_count": 295,
+    "short_count": 203
+  },
+  "artifacts": [
+    "cf_session_weakness_filter (custom feature)",
+    "active_signal_v1_session_filter@2 (snapshot)",
+    "20260407-155527-5ddd0cf8 (backtest run)",
+    "analysis-6293d8243fe3 (diagnostics)"
+  ],
+  "confidence": 0.7,
+  "verdict": "WATCHLIST",
+  "error": "",
+  "raw_output": "Результат записан. Теперь финальный отчёт.\n\n```json\n{\n  \"status\": \"success\",\n  \"what_was_requested\": \"Session Weakness Filter - validate, publish cf_session_weakness_filter, add to strategy, backtest, and run diagnostics\",\n  \"what_was_done\": \"1. Searched research memory - no prior session filter work found. 2. Validated custom feature cf_session_weakness_filter (hour-of-week rolling PF classifier, output 0 for weak sessions with PF<0.9, 1 for normal). 3. Published cf_session_weakness_filter successfully. 4. Built feature dataset to materialize the column (54,864 rows). 5. Cloned active-signal-v1 to active_signal_v1_session_filter. 6. Added cf_session_weakness_filter==1 gate to both long and short signals. 7. Saved version 2 of the session-filtered strategy. 8. Ran full-history backtest (2021-03 to 2026-03): 498 trades, Net PnL=$1,308.65, PF=1.305, WR=47.8%, Sharpe=1.056, MaxDD=2.44%. 9. Ran diagnostics: weakest zone Sunday 05:00 UTC still has PF=0.68 - the dynamic rolling PF filter did not fully block this zone, likely because the trailing window calculation smooths out the weakness. 10. Recorded result in research memory.\",\n  \"results_table\": [\n    {\n      \"run_id\": \"20260407-155527-5ddd0cf8\",\n      \"net_pnl\": 1308.65,\n      \"trades\": 498,\n      \"PF\": 1.305,\n      \"WR\": 0.478,\n      \"verdict\": \"WATCHLIST\"\n    }\n  ],\n  \"key_metrics\": {\n    \"net_pnl\": 1308.65,\n    \"profit_factor\": 1.305,\n    \"win_rate\": 0.478,\n    \"sharpe_ratio\": 1.056,\n    \"max_drawdown\": 247.23,\n    \"max_drawdown_pct\": 2.44,\n    \"total_trades\": 498,\n    \"weakest_zone\": \"Sunday 05:00 UTC\",\n    \"weakest_zone_pf\": 0.68,\n    \"long_count\": 295,\n    \"short_count\": 203\n  },\n  \"artifacts\": [\n    \"cf_session_weakness_filter (custom feature)\",\n    \"active_signal_v1_session_filter@2 (snapshot)\",\n    \"20260407-155527-5ddd0cf8 (backtest run)\",\n    \"analysis-6293d8243fe3 (diagnostics)\"\n  ],\n  \"verdict\": \"WATCHLIST\",\n  \"confidence\": 0.7,\n  \"error\": \"\",\n  \"mcp_problems\": []\n}\n```",
+  "mcp_problems": [],
+  "timestamp": "2026-04-07T15:57:37.495755+00:00"
+}

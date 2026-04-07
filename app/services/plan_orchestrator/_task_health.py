@@ -32,7 +32,7 @@ class TaskHealthMixin:
 
     def _check_timeouts(self) -> None:
         """Kill tasks that exceeded the timeout threshold."""
-        timeout_seconds = getattr(
+        base_timeout = getattr(
             self.config, "plan_task_timeout_seconds", 600,
         )
         now = datetime.now(timezone.utc)
@@ -49,6 +49,8 @@ class TaskHealthMixin:
                 elapsed = (now - started).total_seconds()
             except (ValueError, TypeError):
                 continue
+
+            timeout_seconds = self._estimate_stage_timeout(task, base_timeout)
 
             if elapsed >= timeout_seconds:
                 logger.warning(
@@ -101,6 +103,40 @@ class TaskHealthMixin:
                         self._persist_current_plan()
 
     # ---------------------------------------------------------------
+    # Dynamic timeout estimation
+    # ---------------------------------------------------------------
+
+    # Tools that involve heavy computation (model training, dataset builds)
+    _HEAVY_TOOLS: frozenset[str] = frozenset({
+        "models_train",
+        "features_dataset",      # build action is expensive
+        "features_analytics",    # build_outcomes is expensive
+        "backtests_walkforward", # rolling OOS is compute-heavy
+        "backtests_studies",     # multi-variant batches
+    })
+
+    def _estimate_stage_timeout(self, task, base_timeout: int) -> int:
+        """Estimate timeout for a plan task based on step count and tool types."""
+        if not task.metadata.get("plan_mode") or not self._current_plan:
+            return base_timeout
+        stage_num = task.metadata.get("stage_number", -1)
+        pt = self._current_plan.get_task_by_stage(stage_num)
+        if pt is None:
+            return base_timeout
+
+        steps = pt.steps or []
+        step_count = len(steps)
+        # +60s per step beyond 3
+        extra = max(0, step_count - 3) * 60
+        # +300s if stage contains heavy tools
+        if any(
+            getattr(s, "tool_name", "") in self._HEAVY_TOOLS
+            for s in steps
+        ):
+            extra += 300
+        return base_timeout + extra
+
+    # ---------------------------------------------------------------
     # Silent worker detection
     # ---------------------------------------------------------------
 
@@ -123,6 +159,15 @@ class TaskHealthMixin:
             except (ValueError, TypeError):
                 continue
 
+            # Dynamic warn threshold based on step count
+            warn_seconds = self._SILENT_WARN_SECONDS
+            if task.metadata.get("plan_mode") and self._current_plan:
+                stage_num = task.metadata.get("stage_number", -1)
+                pt = self._current_plan.get_task_by_stage(stage_num)
+                if pt:
+                    step_count = len(pt.steps) if pt.steps else 0
+                    warn_seconds = self._SILENT_WARN_SECONDS + max(0, step_count - 3) * 60
+
             handle = self.worker_service._active_handles.get(task.task_id)
             if not (handle and handle.process and handle.process.poll() is None):
                 continue
@@ -137,11 +182,11 @@ class TaskHealthMixin:
                     last_output_age = None
 
             state = ""
-            if pi.first_output_at is None and elapsed_seconds >= self._SILENT_WARN_SECONDS:
+            if pi.first_output_at is None and elapsed_seconds >= warn_seconds:
                 state = "stderr_only" if stderr_len > 0 else "no_output"
-            elif last_output_age is not None and last_output_age >= self._SILENT_WARN_SECONDS:
+            elif last_output_age is not None and last_output_age >= warn_seconds:
                 state = "stalled"
-            elif pi.first_output_at is not None and elapsed_seconds >= self._SILENT_WARN_SECONDS:
+            elif pi.first_output_at is not None and elapsed_seconds >= warn_seconds:
                 state = "slow_active"
 
             if not state:
@@ -201,6 +246,37 @@ class TaskHealthMixin:
         # If workers are running, do NOT spawn a competing CLI probe.
         active = self.state.active_tasks()
         if active:
+            self._cycles_since_last_real_health_check += 1
+
+            # Warn if MCP health hasn't been verified for too long
+            if self._cycles_since_last_real_health_check >= 20:
+                logger.warning(
+                    "MCP health check: %d cycles since last real probe "
+                    "(%d worker(s) active) — MCP health is STALE",
+                    self._cycles_since_last_real_health_check,
+                    len(active),
+                )
+
+            # Check for suspiciously silent workers (potential MCP death)
+            now = datetime.now(timezone.utc)
+            for task in active:
+                if task.status != TaskStatus.RUNNING:
+                    continue
+                pi = self.state.find_process(task.task_id)
+                if pi is None or not pi.last_output_at:
+                    continue
+                try:
+                    last_output = datetime.fromisoformat(pi.last_output_at)
+                    silence_seconds = (now - last_output).total_seconds()
+                    if silence_seconds >= 600:
+                        logger.warning(
+                            "MCP health suspected dead: worker task=%s "
+                            "has been silent for %.0fs while supposedly active",
+                            task.task_id, silence_seconds,
+                        )
+                except (TypeError, ValueError):
+                    pass
+
             logger.debug(
                 "MCP health check: skipped (subprocess probe) because "
                 "%d worker(s) active — inferring healthy",
@@ -209,6 +285,7 @@ class TaskHealthMixin:
             return
 
         # No workers running — safe to probe.
+        self._cycles_since_last_real_health_check = 0
         self._mcp_healthy = self.worker_service.check_mcp_health(
             self.config.worker_adapter.cli_path,
             timeout=60,

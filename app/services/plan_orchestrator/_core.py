@@ -61,9 +61,14 @@ class PlanOrchestratorCore:
         # MCP health tracking
         self._mcp_healthy: bool = True
         self._mcp_check_cycle: int = 0
+        self._cycles_since_last_real_health_check: int = 0
 
         # Graceful stop flag (set externally via request_stop)
         self._stop_requested: bool = False
+
+        # Drain mode (set externally via request_drain)
+        self._drain_mode: bool = False
+        self._drain_started_at: float | None = None
 
         # Per-stage retry tracking (prevents infinite retry on one stage)
         self._stage_retry_counts: dict[int, int] = {}
@@ -130,6 +135,34 @@ class PlanOrchestratorCore:
 
             # 1. Collect results from running workers (delegates to Orchestrator)
             new_results = orch._collect_results()
+
+            # 1b. Drain mode: wait for running tasks to finish
+            if self._drain_mode:
+                active = self.state.active_tasks()
+                elapsed = time.monotonic() - (self._drain_started_at or time.monotonic())
+                timeout = self.config.drain_timeout_seconds
+                if not active:
+                    logger.info("Drain complete — all running tasks finished")
+                    orch._finish(StopReason.GRACEFUL_STOP, "Graceful drain completed")
+                    return StopReason.GRACEFUL_STOP
+                if elapsed >= timeout:
+                    logger.warning(
+                        "Drain timeout (%ds) exceeded with %d tasks still running — forcing stop",
+                        timeout, len(active),
+                    )
+                    self._terminate_draining_tasks(active)
+                    orch._finish(
+                        StopReason.GRACEFUL_STOP,
+                        f"Drain timeout ({timeout}s), {len(active)} tasks terminated",
+                    )
+                    return StopReason.GRACEFUL_STOP
+                logger.info(
+                    "Drain mode: %d tasks still running (elapsed %.0fs / %ds timeout)",
+                    len(active), elapsed, timeout,
+                )
+                orch.save_state()
+                self._plan_sleep()
+                continue
 
             # 2. If planner is running, check on it
             if self.planner_service.is_running:
@@ -207,6 +240,26 @@ class PlanOrchestratorCore:
             self.state.empty_cycles += 1
             orch.save_state()
             self._plan_sleep()
+
+    # ---------------------------------------------------------------
+    # Drain mode helpers
+    # ---------------------------------------------------------------
+
+    def _terminate_draining_tasks(self, active_tasks: list) -> None:
+        """Terminate tasks still running after drain timeout."""
+        orch = self.orch
+        for task in active_tasks:
+            if task.status == TaskStatus.RUNNING:
+                self.worker_service.terminate_task(task.task_id)
+                orch.state.remove_process(task.task_id)
+                task.mark_cancelled()
+                if task.metadata.get("plan_mode") and self._current_plan:
+                    stage_num = task.metadata.get("stage_number", -1)
+                    pt = self._current_plan.get_task_by_stage(stage_num)
+                    if pt:
+                        pt.status = TaskStatus.CANCELLED
+                        pt.completed_at = datetime.now(timezone.utc).isoformat()
+        self._persist_current_plan()
 
     # ---------------------------------------------------------------
     # Stale task cleanup

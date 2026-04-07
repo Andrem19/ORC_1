@@ -60,7 +60,12 @@ class Orchestrator:
     ) -> None:
         self.config = config
         self.state_store = state_store
-        self.planner_service = PlannerService(planner_adapter, timeout=config.planner_timeout_seconds)
+        self.planner_service = PlannerService(
+            planner_adapter,
+            timeout=config.planner_timeout_seconds,
+            planner_system_prompt=config.planner_system_prompt,
+            operator_directives=config.operator_directives,
+        )
         self.worker_service = WorkerService(worker_adapter, timeout=config.worker_timeout_seconds)
         self.scheduler = scheduler or Scheduler(
             poll_interval_seconds=config.poll_interval_seconds,
@@ -98,6 +103,8 @@ class Orchestrator:
 
         # Graceful stop flag
         self._stop_requested: bool = False
+        self._drain_mode: bool = False
+        self._drain_started_at: float | None = None
         self._plan_service: "PlanOrchestratorService | None" = None
 
         # Plan mode (structured research plans)
@@ -108,9 +115,15 @@ class Orchestrator:
             self._plan_store = PlanStore(config.plan_dir)
             self._plan_store.ensure_dirs()
 
+    # Events that are too frequent to log at INFO every cycle
+    _DEBUG_EVENTS = frozenset({OrchestratorEvent.STATE_SAVED, OrchestratorEvent.SLEEPING})
+
     def _log_event(self, event: OrchestratorEvent, detail: str = "") -> None:
         msg = f"[{event.value}] {detail}" if detail else f"[{event.value}]"
-        logger.info(msg)
+        if event in self._DEBUG_EVENTS:
+            logger.debug(msg)
+        else:
+            logger.info(msg)
 
     # ---------------------------------------------------------------
     # Research context (MCP dev_space1 integration)
@@ -193,6 +206,40 @@ class Orchestrator:
             self.state.current_cycle += 1
             cycle_start = _time.monotonic()
             logger.info("=== Cycle %d ===", self.state.current_cycle)
+
+            # 1b. Drain mode: wait for running tasks to finish
+            if self._drain_mode:
+                active = self.state.active_tasks()
+                elapsed = _time.monotonic() - (self._drain_started_at or _time.monotonic())
+                timeout = self.config.drain_timeout_seconds
+                if not active:
+                    logger.info("Drain complete — all running tasks finished")
+                    self._finish(StopReason.GRACEFUL_STOP, "Graceful drain completed")
+                    return StopReason.GRACEFUL_STOP
+                if elapsed >= timeout:
+                    logger.warning(
+                        "Drain timeout (%ds) exceeded with %d tasks still running — forcing stop",
+                        timeout, len(active),
+                    )
+                    for task in active:
+                        if task.status == TaskStatus.RUNNING:
+                            self.worker_service.terminate_task(task.task_id)
+                    self._finish(
+                        StopReason.GRACEFUL_STOP,
+                        f"Drain timeout ({timeout}s), {len(active)} tasks terminated",
+                    )
+                    return StopReason.GRACEFUL_STOP
+                logger.info(
+                    "Drain mode: %d tasks still running (elapsed %.0fs / %ds timeout)",
+                    len(active), elapsed, timeout,
+                )
+                # Collect results from running workers, save state, sleep
+                self._collect_results()
+                self.save_state()
+                sleep_seconds = self.scheduler.sleep_interval(self.state)
+                self._log_event(OrchestratorEvent.SLEEPING, f"{sleep_seconds}s")
+                self.scheduler.sleep(seconds=sleep_seconds)
+                continue
 
             # 2. Check on running workers (non-blocking)
             new_results = self._collect_results()
@@ -572,11 +619,43 @@ class Orchestrator:
         logger.warning("Reassign requested but no eligible tasks found")
 
     def _finish(self, reason: StopReason, summary: str = "") -> None:
-        """Finish orchestrator execution."""
-        # Terminate any running workers
+        """Finish orchestrator execution, collecting partial output where possible."""
         for task in self.state.active_tasks():
-            if task.status == TaskStatus.RUNNING:
-                self.worker_service.terminate_task(task.task_id)
+            if task.status != TaskStatus.RUNNING:
+                continue
+            # Try to collect any buffered output before terminating
+            process_info = self.state.find_process(task.task_id)
+            if process_info is not None:
+                try:
+                    result, is_finished = self.worker_service.check_task(task, process_info)
+                    if is_finished and result is not None:
+                        self.state.remove_process(task.task_id)
+                        self.state.results.append(result)
+                        task.mark_completed()
+                        continue
+                except Exception:
+                    pass
+                # Save partial output if available and parseable
+                partial = process_info.partial_output or ""
+                if partial.strip() and task.metadata.get("plan_mode"):
+                    try:
+                        from app.result_parser import parse_task_report
+                        from app.plan_models import task_report_to_task_result
+                        report = parse_task_report(
+                            partial,
+                            task_id=task.task_id,
+                            worker_id=task.assigned_worker_id or "unknown",
+                            plan_version=task.metadata.get("plan_version", 0),
+                        )
+                        if report.what_was_done:
+                            report.status = "partial"
+                            result = task_report_to_task_result(report)
+                            self.state.results.append(result)
+                    except Exception:
+                        pass
+
+            self.worker_service.terminate_task(task.task_id)
+            task.mark_interrupted()
         self.state.processes.clear()
 
         self.state.status = "finished"
@@ -595,6 +674,23 @@ class Orchestrator:
         if self._plan_service is not None:
             self._plan_service._stop_requested = True
         logger.info("Stop requested via signal")
+
+    def request_drain(self) -> None:
+        """Enter drain mode: stop dispatching new tasks, let running tasks finish."""
+        self._drain_mode = True
+        self._drain_started_at = _time.monotonic()
+        if self._plan_service is not None:
+            self._plan_service._drain_mode = True
+            self._plan_service._drain_started_at = self._drain_started_at
+        active_count = len(self.state.active_tasks())
+        logger.info(
+            "Drain mode requested — waiting for %d running tasks to finish",
+            active_count,
+        )
+        self.notification_service.send_lifecycle(
+            "draining",
+            f"Drain mode: waiting for {active_count} running tasks to finish",
+        )
 
     # ---------------------------------------------------------------
     # Plan-driven mode (delegates to PlanOrchestratorService)

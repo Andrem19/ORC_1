@@ -79,28 +79,6 @@ Pipeline: Data -> Features -> Models -> Strategy -> Backtest -> Analysis -> Live
 """
 
 # ---------------------------------------------------------------------------
-# Research Rules — methodology for trading research
-# ---------------------------------------------------------------------------
-
-RESEARCH_RULES = """## Research Methodology Rules
-
-1. Seek new orthogonal features, not cosmetic rewrites of existing rules
-2. Test standalone first, then in best research shell, then with best base strategy
-3. Check cannibalization: what the new layer adds, removes, and whether net integration improves
-4. Judge improvement by SIMULTANEOUS progress in PnL, trade count, AND drawdown quality — all three
-5. Reject ideas that fail full-history, window-stability, or integration-with-base checks
-6. When one layer is exhausted, change hypothesis class: new features, gating, routing, missing-regime search
-7. Do not assume a strong standalone signal integrates well — always verify integration
-8. Use ownership analysis to separate real profit-carrying families from noise
-9. Do not break load-bearing families without strong evidence
-10. Exit signals are as important as entry signals — develop both
-11. Record every experiment while fresh, including negative and equal-outcome results
-12. Low overlap is useful but not sufficient; only integrated net improvement matters
-13. Find weak quarters first, then search for features that specifically repair those windows
-14. Repeated additive tweaks on the same short layer usually signal a research dead end
-"""
-
-# ---------------------------------------------------------------------------
 # MCP Worker Instructions — injected into worker prompts for MCP tasks
 # ---------------------------------------------------------------------------
 

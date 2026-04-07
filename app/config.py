@@ -21,6 +21,7 @@ class NotificationConfig:
     min_interval_seconds: int = 30  # rate limit between messages
     translate_to_russian: bool = False
     translation_model_dir: str = "models/opus-mt-en-ru"
+    translation_model_name: str = "Helsinki-NLP/opus-mt-en-ru"
 
 
 @dataclass
@@ -65,6 +66,7 @@ class OrchestratorConfig:
         "You are the planner. Analyze the current state and decide the next action. "
         "Return your decision as a JSON object following the required schema."
     )
+    operator_directives: str = ""
     worker_system_prompt: str = (
         "You are a worker agent. Complete the assigned task and return a structured JSON result."
     )
@@ -85,6 +87,7 @@ class OrchestratorConfig:
     max_empty_cycles: int = 12
     max_task_attempts: int = 3
     max_worker_timeout_count: int = 3
+    drain_timeout_seconds: int = 600  # timeout for graceful drain mode
 
     # --- Adapters ---
     planner_adapter: AdapterConfig = field(default_factory=lambda: AdapterConfig(
@@ -155,7 +158,7 @@ def load_config_from_dict(data: dict[str, Any]) -> OrchestratorConfig:
     cfg = OrchestratorConfig()
 
     simple_fields = {
-        "goal", "planner_system_prompt", "worker_system_prompt",
+        "goal", "planner_system_prompt", "operator_directives", "worker_system_prompt",
         "poll_interval_seconds", "planner_timeout_seconds",
         "worker_timeout_seconds", "worker_restart_delay_seconds",
         "max_errors_total", "max_empty_cycles", "max_task_attempts",
@@ -167,7 +170,7 @@ def load_config_from_dict(data: dict[str, Any]) -> OrchestratorConfig:
         "plan_mode", "plan_dir", "max_concurrent_plan_tasks",
         "plan_task_timeout_seconds", "max_mcp_failures",
         "silent_worker_warn_seconds", "max_plan_attempts",
-        "startup_mode",
+        "startup_mode", "drain_timeout_seconds",
     }
     for key in simple_fields:
         if key in data:

@@ -1,0 +1,641 @@
+{
+  "plan_id": "5018b6d1bf2b",
+  "schema_version": 4,
+  "version": 3,
+  "created_at": "2026-04-07T17:08:29.697202+00:00",
+  "frozen_base": "active-signal-v1@1",
+  "baseline_run_id": "20260407-171127-2079c480",
+  "baseline_snapshot_ref": "active-signal-v1-regime-gate@2",
+  "baseline_metrics": {
+    "sharpe_ratio": 1.385,
+    "net_pnl": 1520.78,
+    "total_trades": 388,
+    "max_drawdown_pct": 3.08,
+    "win_rate": 50.26,
+    "profit_factor": 1.494,
+    "total_return_pct": 15.21,
+    "sortino_ratio": 1.275,
+    "calmar_ratio": 4.941,
+    "long_count": 216,
+    "short_count": 172,
+    "exposure_pct": 11.27
+  },
+  "goal": "Continuously improve automated trading strategy performance on BTCUSDT via MCP dev_space1. Maximize net PnL and trade count while minimizing max drawdown. Run research cycles indefinitely, exploring new features, models, and strategies, validating them against the active-signal-v1 baseline (Sharpe 1.06, +13% return, 498 trades, max DD 2.4%).",
+  "principles": [
+    "Seek new orthogonal features from different data domains (events, momentum, cross-timeframe) — not cosmetic rewrites of existing regime/vol/time filters",
+    "Test standalone first, then integrate into best shell (active-signal-v1-regime-gate@2), then check cannibalization via layer_compare",
+    "Judge improvement by SIMULTANEOUS progress in PnL, trade count, AND drawdown quality — all three",
+    "Reject features that reduce trade count below 300 or produce fewer than 100 standalone signals — over-filtering is a known failure mode",
+    "Funding rate and event-based features are a new data domain entirely — prioritize these over yet another price-derived indicator",
+    "Volume features are an anti-pattern unless using sophisticated order-flow metrics (CVD, delta, footprint) — simple volume imbalance does not work"
+  ],
+  "anti_patterns": [],
+  "cumulative_summary": "## Completed Research\n\n### Promoted Features\n- **cf_regime_vol_gate** (PROMOTED): Volatility-regime gating filter. Integrated into active-signal-v1-regime-gate@2. Metrics: Sharpe 1.385, PnL $1520.78 (+16.7% vs original), 388 trades, max DD 3.08%, PF 1.494. Condition stability portability 0.31.\n\n### Watchlisted Features\n- **cf_session_weakness_filter** (WATCHLIST, conf=70%): Hour-of-week rolling PF classifier. Standalone: Sharpe 1.056, PnL $1308.65, maxDD 2.44%. No additive value when combined with regime gate (metrics unchanged). Retained for potential future synergy.\n\n### Rejected Features\n- **cf_volume_imbalance** (REJECTED): Volume imbalance / tick-volume profile. Standalone: PnL -$34.05, 41 trades, PF 0.92, WR 31.7%. Too few trades, net negative. Simple volume features on BTCUSDT 1h/5m do not generate actionable signals.\n\n### Anti-Patterns Identified\n1. **Simple volume microstructure**: Raw volume imbalance and tick-volume profile features produce very few signals (41 trades) with negative PnL on BTCUSDT. Volume requires much more sophisticated treatment (order flow, CVD, etc.) if revisited.\n2. **Non-additive session filters**: Time-based session filters may capture real patterns standalone but add nothing on top of regime-gate filters that already subsume intraday variation.\n\n### Current Best: active-signal-v1-regime-gate@2\n- Sharpe 1.385 | PnL $1520.78 | 388 trades | maxDD 3.08% | PF 1.494 | WR 50.3% | Calmar 4.94\n- Improvement over original baseline: +$1520.78 PnL, Sharpe 1.385 vs 1.06, fewer trades (388 vs 498) but much higher quality",
+  "tasks": [
+    {
+      "task_id": "63f874d10880",
+      "plan_version": 3,
+      "stage_number": 0,
+      "stage_name": "Verify Best Shell Baseline",
+      "theory": "Re-run backtest on active-signal-v1-regime-gate@2 to confirm comparison metrics for plan v3 evaluation gates",
+      "depends_on": [],
+      "steps": [
+        {
+          "step_id": "verify_baseline",
+          "kind": "tool_call",
+          "instruction": "Run backtest on current best shell to confirm baseline metrics",
+          "tool_name": "backtests_runs",
+          "args": {
+            "action": "start",
+            "snapshot_id": "active-signal-v1-regime-gate",
+            "version": "2",
+            "symbol": "BTCUSDT",
+            "anchor_timeframe": "1h",
+            "execution_timeframe": "5m"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "record_baseline",
+          "kind": "tool_call",
+          "instruction": "Record the confirmed baseline metrics for plan v3 comparison",
+          "tool_name": "research_record",
+          "args": {
+            "action": "create",
+            "title": "Plan v3 Baseline Confirmed",
+            "body": "Confirmed active-signal-v1-regime-gate@2 as comparison baseline. Expected: sharpe=1.385, PnL=1520.78, trades=388, max_DD=3.08%"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        }
+      ],
+      "agent_instructions": [],
+      "results_table_columns": [],
+      "results_table_rows": [
+        {
+          "run_id": "20260407-171127-2079c480",
+          "net_pnl": 1520.78,
+          "trades": 388,
+          "PF": 1.494,
+          "WR": 50.26,
+          "verdict": "PROMOTE"
+        }
+      ],
+      "decision_gates": [],
+      "verdict": "PROMOTE",
+      "assigned_worker_id": "qwen-1",
+      "status": "completed",
+      "created_at": "2026-04-07T17:08:29.697238+00:00",
+      "completed_at": "2026-04-07T17:12:50.794208+00:00"
+    },
+    {
+      "task_id": "b9a1915ab939",
+      "plan_version": 3,
+      "stage_number": 1,
+      "stage_name": "Funding Rate Regime Gate",
+      "theory": "Funding rate extremes (very high positive = crowded long, very negative = crowded short) often precede reversals. A feature that suppresses entries during adverse funding extremes could reduce drawdown and improve win rate. This is orthogonal to existing regime/vol gate because it uses on-chain/event data, not price-derived indicators.",
+      "depends_on": [
+        0
+      ],
+      "steps": [
+        {
+          "step_id": "sync_funding",
+          "kind": "tool_call",
+          "instruction": "Sync funding rate event data to ensure we have latest coverage",
+          "tool_name": "events_sync",
+          "args": {
+            "family": "funding",
+            "scope": "BTCUSDT"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "preview_funding",
+          "kind": "tool_call",
+          "instruction": "Preview funding event data to understand available columns and structure",
+          "tool_name": "events",
+          "args": {
+            "view": "align_preview"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "search_prior_funding",
+          "kind": "tool_call",
+          "instruction": "Search research memory for any prior funding rate feature work",
+          "tool_name": "research_search",
+          "args": {
+            "query": "funding rate feature regime"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "validate_funding_feature",
+          "kind": "tool_call",
+          "instruction": "Validate custom feature cf_funding_regime that classifies funding rate into regimes: 0=extreme positive (top 10th percentile, crowded long), 1=neutral, 0=extreme negative (bottom 10th percentile, crowded short). Use rolling percentile windows on funding_rate column from events store. Output 1 when funding is in normal range, 0 during extremes.",
+          "tool_name": "features_custom",
+          "args": {
+            "action": "validate",
+            "feature_name": "cf_funding_regime"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "publish_funding_feature",
+          "kind": "tool_call",
+          "instruction": "Publish the validated cf_funding_regime feature",
+          "tool_name": "features_custom",
+          "args": {
+            "action": "publish",
+            "feature_name": "cf_funding_regime"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "build_funding_dataset",
+          "kind": "tool_call",
+          "instruction": "Build feature dataset including the new cf_funding_regime column",
+          "tool_name": "features_dataset",
+          "args": {
+            "action": "build"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "clone_shell_funding",
+          "kind": "tool_call",
+          "instruction": "Clone the best shell to create a test variant with funding gate",
+          "tool_name": "backtests_strategy",
+          "args": {
+            "action": "clone",
+            "source_snapshot_id": "active-signal-v1-regime-gate"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "validate_funding_signal",
+          "kind": "tool_call",
+          "instruction": "Validate signal logic adding cf_funding_regime==1 as entry gating condition for both long and short signals",
+          "tool_name": "backtests_strategy_validate",
+          "args": {
+            "mode": "signal"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "save_funding_version",
+          "kind": "tool_call",
+          "instruction": "Save the strategy version with funding gate added",
+          "tool_name": "backtests_strategy",
+          "args": {
+            "action": "save_version"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "run_funding_backtest",
+          "kind": "tool_call",
+          "instruction": "Run full backtest on the funding-gated strategy variant",
+          "tool_name": "backtests_runs",
+          "args": {
+            "action": "start",
+            "symbol": "BTCUSDT",
+            "anchor_timeframe": "1h",
+            "execution_timeframe": "5m",
+            "version": "1"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "run_funding_walkforward",
+          "kind": "tool_call",
+          "instruction": "Run walk-forward analysis to check out-of-sample stability",
+          "tool_name": "backtests_walkforward",
+          "args": {
+            "action": "start",
+            "symbol": "BTCUSDT",
+            "anchor_timeframe": "1h",
+            "execution_timeframe": "5m"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "run_funding_conditions",
+          "kind": "tool_call",
+          "instruction": "Run condition stability analysis across time bins",
+          "tool_name": "backtests_conditions",
+          "args": {
+            "action": "run",
+            "symbol": "BTCUSDT"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "record_funding_result",
+          "kind": "tool_call",
+          "instruction": "Record the funding rate feature hypothesis and results in research memory. Compare against baseline (sharpe≥1.385, PnL≥1520.78, trades≥388, max_DD≤3.08%).",
+          "tool_name": "research_record",
+          "args": {
+            "action": "create",
+            "title": "cf_funding_regime Hypothesis Test",
+            "body": "Test whether funding rate extreme filtering improves regime-gate shell. Baseline: sharpe=1.385, PnL=1520.78, trades=388, max_DD=3.08%."
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        }
+      ],
+      "agent_instructions": [],
+      "results_table_columns": [],
+      "results_table_rows": [
+        {
+          "run_id": "20260407-171718-f7cc3794",
+          "net_pnl": 1149.62,
+          "trades": 326,
+          "PF": 1.423,
+          "WR": 50.0,
+          "verdict": "REJECT"
+        }
+      ],
+      "decision_gates": [],
+      "verdict": "REJECT",
+      "assigned_worker_id": "qwen-2",
+      "status": "completed",
+      "created_at": "2026-04-07T17:08:29.697260+00:00",
+      "completed_at": "2026-04-07T17:20:54.081714+00:00"
+    },
+    {
+      "task_id": "8864aa5a9059",
+      "plan_version": 3,
+      "stage_number": 2,
+      "stage_name": "Momentum Divergence Filter",
+      "theory": "Price making new highs while RSI makes lower highs (bearish divergence) or price making new lows while RSI makes higher lows (bullish divergence) signals trend exhaustion. A feature detecting this could filter out late-trend entries that get stopped out, improving win rate and reducing drawdown. Orthogonal to regime/vol gate and funding rate as it uses momentum dynamics.",
+      "depends_on": [
+        0
+      ],
+      "steps": [
+        {
+          "step_id": "search_prior_divergence",
+          "kind": "tool_call",
+          "instruction": "Search research memory for any prior divergence or RSI feature work",
+          "tool_name": "research_search",
+          "args": {
+            "query": "divergence RSI momentum feature"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "inspect_features",
+          "kind": "tool_call",
+          "instruction": "Inspect available features to confirm no existing divergence columns",
+          "tool_name": "features_catalog",
+          "args": {
+            "scope": "available"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "validate_divergence_feature",
+          "kind": "tool_call",
+          "instruction": "Validate custom feature cf_rsi_divergence that detects RSI-price divergence over rolling windows. Output: 1=no divergence (safe to trade), 0=bearish divergence on longs or bullish divergence on shorts (suppress signal). Use lookback of 10-20 bars on 1h timeframe for divergence detection.",
+          "tool_name": "features_custom",
+          "args": {
+            "action": "validate",
+            "feature_name": "cf_rsi_divergence"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "publish_divergence_feature",
+          "kind": "tool_call",
+          "instruction": "Publish the validated cf_rsi_divergence feature",
+          "tool_name": "features_custom",
+          "args": {
+            "action": "publish",
+            "feature_name": "cf_rsi_divergence"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "build_divergence_dataset",
+          "kind": "tool_call",
+          "instruction": "Build feature dataset including the new cf_rsi_divergence column",
+          "tool_name": "features_dataset",
+          "args": {
+            "action": "build"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "clone_shell_divergence",
+          "kind": "tool_call",
+          "instruction": "Clone the best shell to create a test variant with divergence filter",
+          "tool_name": "backtests_strategy",
+          "args": {
+            "action": "clone",
+            "source_snapshot_id": "active-signal-v1-regime-gate"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "validate_divergence_signal",
+          "kind": "tool_call",
+          "instruction": "Validate signal logic adding cf_rsi_divergence==1 as entry gating condition for both long and short signals",
+          "tool_name": "backtests_strategy_validate",
+          "args": {
+            "mode": "signal"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "save_divergence_version",
+          "kind": "tool_call",
+          "instruction": "Save the strategy version with divergence filter added",
+          "tool_name": "backtests_strategy",
+          "args": {
+            "action": "save_version"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "run_divergence_backtest",
+          "kind": "tool_call",
+          "instruction": "Run full backtest on the divergence-filtered strategy variant",
+          "tool_name": "backtests_runs",
+          "args": {
+            "action": "start",
+            "symbol": "BTCUSDT",
+            "anchor_timeframe": "1h",
+            "execution_timeframe": "5m",
+            "version": "1"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "run_divergence_walkforward",
+          "kind": "tool_call",
+          "instruction": "Run walk-forward analysis to check out-of-sample stability",
+          "tool_name": "backtests_walkforward",
+          "args": {
+            "action": "start",
+            "symbol": "BTCUSDT",
+            "anchor_timeframe": "1h",
+            "execution_timeframe": "5m"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "run_divergence_conditions",
+          "kind": "tool_call",
+          "instruction": "Run condition stability analysis across time bins",
+          "tool_name": "backtests_conditions",
+          "args": {
+            "action": "run",
+            "symbol": "BTCUSDT"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "record_divergence_result",
+          "kind": "tool_call",
+          "instruction": "Record the divergence feature hypothesis and results in research memory. Compare against baseline (sharpe≥1.385, PnL≥1520.78, trades≥388, max_DD≤3.08%).",
+          "tool_name": "research_record",
+          "args": {
+            "action": "create",
+            "title": "cf_rsi_divergence Hypothesis Test",
+            "body": "Test whether RSI-price divergence filtering improves regime-gate shell. Baseline: sharpe=1.385, PnL=1520.78, trades=388, max_DD=3.08%."
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        }
+      ],
+      "agent_instructions": [],
+      "results_table_columns": [],
+      "results_table_rows": [
+        {
+          "run_id": "20260407-171723-40f675ba",
+          "net_pnl": 1501.8,
+          "trades": 380,
+          "PF": 1.496,
+          "WR": 50.0,
+          "verdict": "REJECT"
+        }
+      ],
+      "decision_gates": [],
+      "verdict": "REJECT",
+      "assigned_worker_id": "qwen-1",
+      "status": "completed",
+      "created_at": "2026-04-07T17:08:29.697283+00:00",
+      "completed_at": "2026-04-07T17:21:56.638899+00:00"
+    },
+    {
+      "task_id": "b952f3447e60",
+      "plan_version": 3,
+      "stage_number": 3,
+      "stage_name": "Best-Shell Integration",
+      "theory": "Merge all PROMOTED and WATCHLIST features from stages 1-2 into a single shell with cf_regime_vol_gate and run full diagnostics suite (backtest + walk-forward + condition stability + layer_compare) to quantify net integration value",
+      "depends_on": [
+        1,
+        2
+      ],
+      "steps": [
+        {
+          "step_id": "search_all_results",
+          "kind": "tool_call",
+          "instruction": "Search research memory for all plan v3 results to determine which features to integrate",
+          "tool_name": "research_search",
+          "args": {
+            "query": "plan v3 funding regime divergence result"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "clone_integration_shell",
+          "kind": "tool_call",
+          "instruction": "Clone the best shell as base for integration. If any features from stages 1-2 were PROMOTED or WATCHLISTED, add them as entry conditions.",
+          "tool_name": "backtests_strategy",
+          "args": {
+            "action": "clone",
+            "source_snapshot_id": "active-signal-v1-regime-gate"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "validate_integration_signal",
+          "kind": "tool_call",
+          "instruction": "Validate signal logic with all integrated gating conditions active",
+          "tool_name": "backtests_strategy_validate",
+          "args": {
+            "mode": "signal"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "save_integration_version",
+          "kind": "tool_call",
+          "instruction": "Save the integrated strategy version",
+          "tool_name": "backtests_strategy",
+          "args": {
+            "action": "save_version"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "run_integration_backtest",
+          "kind": "tool_call",
+          "instruction": "Run full backtest on the integrated strategy",
+          "tool_name": "backtests_runs",
+          "args": {
+            "action": "start",
+            "symbol": "BTCUSDT",
+            "anchor_timeframe": "1h",
+            "execution_timeframe": "5m",
+            "version": "1"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "run_integration_diagnostics",
+          "kind": "tool_call",
+          "instruction": "Run full diagnostics suite: diagnostics, layer_compare, signal_ownership, robustness_bundle",
+          "tool_name": "backtests_analysis",
+          "args": {
+            "action": "start",
+            "analysis": "diagnostics"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "run_integration_layer_compare",
+          "kind": "tool_call",
+          "instruction": "Run layer compare to quantify each feature's additive contribution",
+          "tool_name": "backtests_analysis",
+          "args": {
+            "action": "start",
+            "analysis": "layer_compare"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "run_integration_robustness",
+          "kind": "tool_call",
+          "instruction": "Run robustness bundle for comprehensive stability assessment",
+          "tool_name": "backtests_analysis",
+          "args": {
+            "action": "start",
+            "analysis": "robustness_bundle"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "record_integration_result",
+          "kind": "tool_call",
+          "instruction": "Record final integration result with verdict (PROMOTE/WATCHLIST/REJECT) and comparison to baseline",
+          "tool_name": "research_record",
+          "args": {
+            "action": "create",
+            "title": "Plan v3 Integration Final Verdict",
+            "body": "Integration of plan v3 features into regime-gate shell. Baseline: sharpe=1.385, PnL=1520.78, trades=388, max_DD=3.08%. Must improve ≥2 of (PnL, trades, max_DD) to PROMOTE."
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        }
+      ],
+      "agent_instructions": [],
+      "results_table_columns": [],
+      "results_table_rows": [
+        {
+          "run_id": "20260407-172340-2e7b1702",
+          "net_pnl": 1520.78,
+          "trades": 388,
+          "PF": 1.494,
+          "WR": 50.26,
+          "verdict": "REJECT"
+        }
+      ],
+      "decision_gates": [],
+      "verdict": "REJECT",
+      "assigned_worker_id": "qwen-2",
+      "status": "completed",
+      "created_at": "2026-04-07T17:08:29.697297+00:00",
+      "completed_at": "2026-04-07T17:27:29.389595+00:00"
+    }
+  ],
+  "execution_order": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "status": "active",
+  "plan_markdown": "",
+  "previous_version_id": null,
+  "planner_run_artifact": "plans/planner_runs/revision_v3_attempt_1_exec_1.json"
+}

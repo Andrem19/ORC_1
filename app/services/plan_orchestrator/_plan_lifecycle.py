@@ -57,8 +57,11 @@ def _inject_policy_defaults(plan: ResearchPlan) -> None:
     """Auto-fill POLICY-LOCKED args into tool_call steps when missing.
 
     Also fixes common arg-name mistakes (e.g. snapshot_id instead of
-    source_snapshot_id for backtests_strategy clone).
+    source_snapshot_id for backtests_strategy clone) and auto-fills
+    missing action parameters from DEFAULT_ACTION_BY_TOOL.
     """
+    from app.planner_contract import ACTION_PARAM_BY_TOOL, DEFAULT_ACTION_BY_TOOL
+
     for task in plan.tasks:
         for step in task.steps:
             if step.kind != "tool_call" or not step.tool_name or not isinstance(step.args, dict):
@@ -69,14 +72,22 @@ def _inject_policy_defaults(plan: ResearchPlan) -> None:
                 if "snapshot_id" in step.args and "source_snapshot_id" not in step.args:
                     step.args["source_snapshot_id"] = step.args.pop("snapshot_id")
 
-            action = step.args.get("action")
-            if action is None:
-                from app.planner_contract import ACTION_PARAM_BY_TOOL, DEFAULT_ACTION_BY_TOOL
-                action_param = ACTION_PARAM_BY_TOOL.get(step.tool_name)
-                if action_param:
-                    action = step.args.get(action_param)
-                if action is None:
-                    action = DEFAULT_ACTION_BY_TOOL.get(step.tool_name)
+            # Resolve action parameter for this tool
+            action_param = ACTION_PARAM_BY_TOOL.get(step.tool_name, "action")
+            resolved_action = step.args.get(action_param)
+
+            if resolved_action is None:
+                # Auto-fill missing action from defaults
+                default_action = DEFAULT_ACTION_BY_TOOL.get(step.tool_name)
+                if default_action is not None:
+                    step.args[action_param] = default_action
+                    resolved_action = default_action
+                    logger.debug(
+                        "Auto-filled %s.%s='%s' from DEFAULT_ACTION_BY_TOOL",
+                        step.tool_name, action_param, default_action,
+                    )
+
+            action = resolved_action
             if not action:
                 continue
             defaults = POLICY_DEFAULTS.get((step.tool_name, str(action)))
@@ -183,6 +194,9 @@ class PlanLifecycleMixin:
             plan_version=plan_version,
             attempt_number=1,
             validation_warnings=self._get_validation_warnings(),
+            research_history=self._plan_store.load_all_reports_compact(
+                current_plan_version=self.state.current_plan_version,
+            ) if self._plan_store else None,
         )
 
 
@@ -263,6 +277,9 @@ class PlanLifecycleMixin:
             worker_ids=self._worker_ids,
             mcp_problem_summary=self._get_mcp_summary(),
             validation_warnings=self._get_validation_warnings(),
+            research_history=self._plan_store.load_all_reports_compact(
+                current_plan_version=self._current_plan.version,
+            ) if self._plan_store else None,
         )
 
     def _get_validation_warnings(self) -> list[dict] | None:

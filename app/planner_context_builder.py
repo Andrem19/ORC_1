@@ -7,7 +7,7 @@ from __future__ import annotations
 from typing import Any
 
 from app.planner_contract import summarize_templates
-from app.research_context import MCP_TOOL_CATALOG, RESEARCH_RULES
+from app.research_context import MCP_TOOL_CATALOG
 
 
 def build_planner_context(
@@ -18,8 +18,6 @@ def build_planner_context(
     sections: list[str] = []
 
     sections.append(MCP_TOOL_CATALOG)
-    sections.append("")
-    sections.append(RESEARCH_RULES)
     sections.append("")
     sections.append(summarize_templates())
 

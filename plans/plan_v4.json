@@ -1,0 +1,747 @@
+{
+  "plan_id": "55dda942cf93",
+  "schema_version": 4,
+  "version": 4,
+  "created_at": "2026-04-07T17:30:29.856336+00:00",
+  "frozen_base": "active-signal-v1-regime-gate@2",
+  "baseline_run_id": "20260407-171127-2079c480",
+  "baseline_snapshot_ref": "active-signal-v1-regime-gate@2",
+  "baseline_metrics": {
+    "features_catalog_columns": 29,
+    "builtin_features": 21,
+    "custom_features": 8,
+    "models_in_registry": 2,
+    "baseline_sharpe": 1.385,
+    "baseline_pnl": 1520.78,
+    "baseline_trades": 388,
+    "baseline_win_rate": 0.5026,
+    "baseline_profit_factor": 1.494,
+    "rejected_approaches_count": 4
+  },
+  "goal": "Continuously improve automated trading strategy performance on BTCUSDT via MCP dev_space1. Maximize net PnL and trade count while minimizing max drawdown. Run research cycles indefinitely, exploring new features, models, and strategies, validating them against the active-signal-v1 baseline (Sharpe 1.06, +13% return, 498 trades, max DD 2.4%).",
+  "principles": [
+    "Seek new orthogonal signal sources, not cosmetic rewrites of existing filters",
+    "Test standalone first, then in best research shell, then with best base strategy",
+    "Check cannibalization: what the new layer adds, removes, and whether net integration improves",
+    "Judge improvement by SIMULTANEOUS progress in PnL, trade count, AND drawdown quality",
+    "Reject ideas that fail full-history, window-stability, or integration-with-base checks",
+    "Entry suppression is exhausted — focus on new predictive information or orthogonal data dimensions",
+    "When one hypothesis class fails (filters), pivot to fundamentally different approach (ML, events, composite signals)"
+  ],
+  "anti_patterns": [],
+  "cumulative_summary": "## Research Progress Summary (Plans v1→v4)\n\n### Active Baseline\n- **active-signal-v1-regime-gate@2**: Sharpe 1.385, PnL $1520.78, 388 trades, max DD 3.08%, WR 50.26%, PF 1.494\n\n### Promoted Features (in regime-gate@2)\n- Regime gate filter (active since v1)\n\n### Rejected Approaches with Evidence\n1. **cf_funding_regime** (v3): Sharpe 1.105, PnL $1149.62, 326 trades — Raw funding_rate not available in event data; only settlement timing columns exist. Massive PnL/trade degradation.\n2. **cf_momentum_divergence** (v3): Sharpe 1.385, PnL $1501.80, 380 trades — Feature already existed/published. Marginal PnL loss (-$19), fewer trades (-8), no DD improvement. Net negative.\n3. Previous volatility filters and entry-suppression layers (v1-v2): All degraded trade count without sufficient PnL improvement to compensate.\n\n### Key Insight\nEntry-suppression/filter approaches are **exhausted** — the regime gate already provides optimal filtering. Further suppression always reduces trades and PnL proportionally. New approaches must generate **new signal information** (ML predictions) or exploit **orthogonal data dimensions** (settlement timing, trend exhaustion states).\n\n### Anti-Patterns\n- DO NOT pursue more entry filters or signal suppression layers\n- DO NOT assume funding event data contains raw funding_rate — only settlement timing is available\n- DO NOT re-test cf_momentum_divergence — already published and tested\n- DO NOT clone strategies without validating after adding features",
+  "tasks": [
+    {
+      "task_id": "ebdc5ae44290",
+      "plan_version": 4,
+      "stage_number": 0,
+      "stage_name": "Context & Readiness",
+      "theory": "Gather full context: inspect all 48 features, model registry state, and research memory to avoid re-treading rejected approaches",
+      "depends_on": [],
+      "steps": [
+        {
+          "step_id": "s0_inspect_catalog",
+          "kind": "tool_call",
+          "instruction": "Inspect full features catalog to identify all 48 columns and any gaps",
+          "tool_name": "features_catalog",
+          "args": {
+            "scope": "available"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "s0_inspect_models",
+          "kind": "tool_call",
+          "instruction": "Check if any models already exist in registry",
+          "tool_name": "models_registry",
+          "args": {
+            "action": "inspect"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "s0_search_research",
+          "kind": "tool_call",
+          "instruction": "Search research memory for all prior attempts to identify exhausted hypotheses",
+          "tool_name": "research_search",
+          "args": {
+            "query": "plan v1 v2 v3 results feature exploration"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "s0_inspect_custom",
+          "kind": "tool_call",
+          "instruction": "Inspect existing custom feature definitions for reference",
+          "tool_name": "features_custom",
+          "args": {
+            "action": "inspect"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "s0_record_context",
+          "kind": "tool_call",
+          "instruction": "Record plan v4 context and hypotheses in research memory",
+          "tool_name": "research_record",
+          "args": {
+            "action": "create",
+            "title": "Plan v4: ML Model + Exhaustion + Settlement Cycle",
+            "hypothesis": "Entry suppression filters are exhausted. New signal sources: (1) CatBoost non-linear model predictions, (2) ADX+RSI trend exhaustion composite, (3) Funding settlement cycle timing patterns. Each tested standalone then integrated."
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        }
+      ],
+      "agent_instructions": [],
+      "results_table_columns": [],
+      "results_table_rows": [],
+      "decision_gates": [],
+      "verdict": "PROMOTE",
+      "assigned_worker_id": "qwen-1",
+      "status": "completed",
+      "created_at": "2026-04-07T17:30:29.856372+00:00",
+      "completed_at": "2026-04-07T17:33:57.938389+00:00"
+    },
+    {
+      "task_id": "d9be469aaf3a",
+      "plan_version": 4,
+      "stage_number": 1,
+      "stage_name": "ML Model Feature (cf_model_predict)",
+      "theory": "A CatBoost model trained on existing features can capture non-linear interaction patterns that individual features miss. Projected as cf_model_predict, it adds an orthogonal predictive layer to the trend-following base. This is fundamentally different from filter-based approaches because it generates new signal information rather than suppressing existing signals.",
+      "depends_on": [
+        0
+      ],
+      "steps": [
+        {
+          "step_id": "s1_model_contract",
+          "kind": "tool_call",
+          "instruction": "Prepare model training dataset contract",
+          "tool_name": "models_dataset",
+          "args": {
+            "action": "contract"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "s1_train_model",
+          "kind": "tool_call",
+          "instruction": "Train CatBoost model on existing features",
+          "tool_name": "models_train",
+          "args": {
+            "action": "start"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "s1_inspect_trained",
+          "kind": "tool_call",
+          "instruction": "Inspect trained model card and metrics",
+          "tool_name": "models_registry",
+          "args": {
+            "action": "inspect"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "s1_scaffold_feature",
+          "kind": "tool_call",
+          "instruction": "Scaffold model-to-feature projection",
+          "tool_name": "models_to_feature",
+          "args": {
+            "action": "scaffold"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "s1_validate_feature",
+          "kind": "tool_call",
+          "instruction": "Validate model-backed feature",
+          "tool_name": "models_to_feature",
+          "args": {
+            "action": "validate"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "s1_publish_feature",
+          "kind": "tool_call",
+          "instruction": "Publish cf_model_predict feature",
+          "tool_name": "models_to_feature",
+          "args": {
+            "action": "publish"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "s1_build_features",
+          "kind": "tool_call",
+          "instruction": "Build features dataset including new cf_model_predict",
+          "tool_name": "features_dataset",
+          "args": {
+            "action": "build"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "s1_clone_strategy",
+          "kind": "tool_call",
+          "instruction": "Clone regime-gate strategy shell for standalone test",
+          "tool_name": "backtests_strategy",
+          "args": {
+            "action": "clone",
+            "source_snapshot_id": "active-signal-v1-regime-gate"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "s1_validate_strategy",
+          "kind": "tool_call",
+          "instruction": "Validate cloned strategy signal logic",
+          "tool_name": "backtests_strategy_validate",
+          "args": {
+            "mode": "signal"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "s1_backtest",
+          "kind": "tool_call",
+          "instruction": "Run standalone backtest with cf_model_predict feature",
+          "tool_name": "backtests_runs",
+          "args": {
+            "action": "start",
+            "snapshot_id": "active-signal-v1-regime-gate",
+            "version": "2",
+            "symbol": "BTCUSDT",
+            "anchor_timeframe": "1h",
+            "execution_timeframe": "5m"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "s1_analyze",
+          "kind": "tool_call",
+          "instruction": "Run diagnostics on standalone backtest results",
+          "tool_name": "backtests_analysis",
+          "args": {
+            "action": "start",
+            "analysis": "diagnostics"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "s1_record_result",
+          "kind": "tool_call",
+          "instruction": "Record ML model feature results in research memory with verdict",
+          "tool_name": "research_record",
+          "args": {
+            "action": "create",
+            "title": "cf_model_predict standalone test"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        }
+      ],
+      "agent_instructions": [],
+      "results_table_columns": [],
+      "results_table_rows": [
+        {
+          "run_id": "20260407-174249-08802034",
+          "net_pnl": 422.7,
+          "trades": 86,
+          "PF": 1.66,
+          "WR": 0.523,
+          "verdict": "WATCHLIST"
+        }
+      ],
+      "decision_gates": [],
+      "verdict": "WATCHLIST",
+      "assigned_worker_id": "qwen-2",
+      "status": "completed",
+      "created_at": "2026-04-07T17:30:29.856391+00:00",
+      "completed_at": "2026-04-07T17:45:34.181803+00:00"
+    },
+    {
+      "task_id": "9638de88e204",
+      "plan_version": 4,
+      "stage_number": 2,
+      "stage_name": "Trend Exhaustion (cf_trend_exhaustion)",
+      "theory": "When ADX shows strong trend (>40) AND RSI is at extreme levels (>75 or <25), the trend is likely exhausted. A cf_trend_exhaustion composite outputting +1 (bullish exhaustion = potential short), -1 (bearish exhaustion = potential long), 0 (none) can improve entry timing by filtering late-trend entries. This is distinct from cf_momentum_divergence which checks price-indicator divergence — exhaustion checks absolute level thresholds.",
+      "depends_on": [
+        0
+      ],
+      "steps": [
+        {
+          "step_id": "s2_validate_feature",
+          "kind": "tool_call",
+          "instruction": "Validate cf_trend_exhaustion feature definition: combines ADX threshold (>40) with RSI extremes (>75 bull exhaustion, <25 bear exhaustion) to output directional signal",
+          "tool_name": "features_custom",
+          "args": {
+            "action": "validate"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "s2_publish_feature",
+          "kind": "tool_call",
+          "instruction": "Publish cf_trend_exhaustion as custom feature",
+          "tool_name": "features_custom",
+          "args": {
+            "action": "publish"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "s2_build_features",
+          "kind": "tool_call",
+          "instruction": "Build features dataset including cf_trend_exhaustion",
+          "tool_name": "features_dataset",
+          "args": {
+            "action": "build"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "s2_analytics_heatmap",
+          "kind": "tool_call",
+          "instruction": "Check feature profitability heatmap for cf_trend_exhaustion",
+          "tool_name": "features_analytics",
+          "args": {
+            "action": "heatmap"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "s2_clone_strategy",
+          "kind": "tool_call",
+          "instruction": "Clone regime-gate strategy shell for standalone test",
+          "tool_name": "backtests_strategy",
+          "args": {
+            "action": "clone",
+            "source_snapshot_id": "active-signal-v1-regime-gate"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "s2_validate_strategy",
+          "kind": "tool_call",
+          "instruction": "Validate cloned strategy signal logic",
+          "tool_name": "backtests_strategy_validate",
+          "args": {
+            "mode": "signal"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "s2_backtest",
+          "kind": "tool_call",
+          "instruction": "Run standalone backtest with cf_trend_exhaustion feature",
+          "tool_name": "backtests_runs",
+          "args": {
+            "action": "start",
+            "snapshot_id": "active-signal-v1-regime-gate",
+            "version": "2",
+            "symbol": "BTCUSDT",
+            "anchor_timeframe": "1h",
+            "execution_timeframe": "5m"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "s2_analyze",
+          "kind": "tool_call",
+          "instruction": "Run diagnostics on standalone backtest results",
+          "tool_name": "backtests_analysis",
+          "args": {
+            "action": "start",
+            "analysis": "diagnostics"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "s2_record_result",
+          "kind": "tool_call",
+          "instruction": "Record trend exhaustion feature results in research memory with verdict",
+          "tool_name": "research_record",
+          "args": {
+            "action": "create",
+            "title": "cf_trend_exhaustion standalone test"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        }
+      ],
+      "agent_instructions": [],
+      "results_table_columns": [],
+      "results_table_rows": [
+        {
+          "run_id": "20260407-173846-1fc17b82",
+          "net_pnl": 1384.36,
+          "trades": 384,
+          "PF": 1.45,
+          "WR": 0.5,
+          "verdict": "WATCHLIST"
+        }
+      ],
+      "decision_gates": [],
+      "verdict": "WATCHLIST",
+      "assigned_worker_id": "qwen-1",
+      "status": "completed",
+      "created_at": "2026-04-07T17:30:29.856417+00:00",
+      "completed_at": "2026-04-07T17:43:30.495398+00:00"
+    },
+    {
+      "task_id": "eccfa9532d26",
+      "plan_version": 4,
+      "stage_number": 3,
+      "stage_name": "Settlement Cycle (cf_settlement_cycle)",
+      "theory": "Funding settlement timing creates predictable intraday patterns around settlement events. The available columns (bars_since_funding_settlement, bars_until_funding_settlement) define a cyclical position within the 8-hour funding cycle. A cf_settlement_cycle feature encoding cyclical proximity to settlement can capture systematic behaviors (e.g., price mean-reversion before settlement, momentum after). This is orthogonal to all previously tested features because it's event-driven rather than indicator-based.",
+      "depends_on": [
+        0
+      ],
+      "steps": [
+        {
+          "step_id": "s3_align_events",
+          "kind": "tool_call",
+          "instruction": "Preview event alignment to understand settlement timing columns",
+          "tool_name": "events",
+          "args": {
+            "view": "align_preview"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "s3_validate_feature",
+          "kind": "tool_call",
+          "instruction": "Validate cf_settlement_cycle feature: uses bars_until_funding_settlement to compute cyclical position within 8h funding window, outputs normalized 0-1 cycle phase indicating proximity to settlement",
+          "tool_name": "features_custom",
+          "args": {
+            "action": "validate"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "s3_publish_feature",
+          "kind": "tool_call",
+          "instruction": "Publish cf_settlement_cycle as custom feature",
+          "tool_name": "features_custom",
+          "args": {
+            "action": "publish"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "s3_build_features",
+          "kind": "tool_call",
+          "instruction": "Build features dataset including cf_settlement_cycle",
+          "tool_name": "features_dataset",
+          "args": {
+            "action": "build"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "s3_analytics_heatmap",
+          "kind": "tool_call",
+          "instruction": "Check feature profitability heatmap for cf_settlement_cycle",
+          "tool_name": "features_analytics",
+          "args": {
+            "action": "heatmap"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "s3_clone_strategy",
+          "kind": "tool_call",
+          "instruction": "Clone regime-gate strategy shell for standalone test",
+          "tool_name": "backtests_strategy",
+          "args": {
+            "action": "clone",
+            "source_snapshot_id": "active-signal-v1-regime-gate"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "s3_validate_strategy",
+          "kind": "tool_call",
+          "instruction": "Validate cloned strategy signal logic",
+          "tool_name": "backtests_strategy_validate",
+          "args": {
+            "mode": "signal"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "s3_backtest",
+          "kind": "tool_call",
+          "instruction": "Run standalone backtest with cf_settlement_cycle feature",
+          "tool_name": "backtests_runs",
+          "args": {
+            "action": "start",
+            "snapshot_id": "active-signal-v1-regime-gate",
+            "version": "2",
+            "symbol": "BTCUSDT",
+            "anchor_timeframe": "1h",
+            "execution_timeframe": "5m"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "s3_analyze",
+          "kind": "tool_call",
+          "instruction": "Run diagnostics on standalone backtest results",
+          "tool_name": "backtests_analysis",
+          "args": {
+            "action": "start",
+            "analysis": "diagnostics"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "s3_record_result",
+          "kind": "tool_call",
+          "instruction": "Record settlement cycle feature results in research memory with verdict",
+          "tool_name": "research_record",
+          "args": {
+            "action": "create",
+            "title": "cf_settlement_cycle standalone test"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        }
+      ],
+      "agent_instructions": [],
+      "results_table_columns": [],
+      "results_table_rows": [
+        {
+          "run_id": "20260407-174738-e49952ea",
+          "snapshot_id": "cf-settlement-cycle-test@1",
+          "net_pnl": 1520.78,
+          "total_return_pct": 15.21,
+          "trades": 388,
+          "PF": 1.494,
+          "WR": 0.503,
+          "sharpe": 1.385,
+          "max_dd_pct": 3.08,
+          "long_count": 216,
+          "short_count": 172,
+          "verdict": "WATCHLIST"
+        }
+      ],
+      "decision_gates": [],
+      "verdict": "WATCHLIST",
+      "assigned_worker_id": "qwen-1",
+      "status": "completed",
+      "created_at": "2026-04-07T17:30:29.856432+00:00",
+      "completed_at": "2026-04-07T17:48:38.146586+00:00"
+    },
+    {
+      "task_id": "b5fc27d282fc",
+      "plan_version": 4,
+      "stage_number": 4,
+      "stage_name": "Best-Shell Integration",
+      "theory": "Merge all PROMOTED and WATCHLIST features from stages 1-3 into the regime-gate@2 shell. Run full-history backtest, layer_compare diagnostics, and robustness_bundle to verify net integration improvement over baseline.",
+      "depends_on": [
+        1,
+        2,
+        3
+      ],
+      "steps": [
+        {
+          "step_id": "s4_clone_base",
+          "kind": "tool_call",
+          "instruction": "Clone regime-gate@2 shell for integration test",
+          "tool_name": "backtests_strategy",
+          "args": {
+            "action": "clone",
+            "source_snapshot_id": "active-signal-v1-regime-gate"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "s4_validate_signal",
+          "kind": "tool_call",
+          "instruction": "Validate integrated strategy signal logic",
+          "tool_name": "backtests_strategy_validate",
+          "args": {
+            "mode": "signal"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "s4_validate_exit",
+          "kind": "tool_call",
+          "instruction": "Validate integrated strategy exit logic",
+          "tool_name": "backtests_strategy_validate",
+          "args": {
+            "mode": "exit"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "s4_backtest",
+          "kind": "tool_call",
+          "instruction": "Run integration backtest with all promoted features",
+          "tool_name": "backtests_runs",
+          "args": {
+            "action": "start",
+            "snapshot_id": "active-signal-v1-regime-gate",
+            "version": "2",
+            "symbol": "BTCUSDT",
+            "anchor_timeframe": "1h",
+            "execution_timeframe": "5m"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "s4_layer_compare",
+          "kind": "tool_call",
+          "instruction": "Compare feature layer contributions in integrated run",
+          "tool_name": "backtests_analysis",
+          "args": {
+            "action": "start",
+            "analysis": "layer_compare"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "s4_robustness",
+          "kind": "tool_call",
+          "instruction": "Run robustness bundle to verify stability",
+          "tool_name": "backtests_analysis",
+          "args": {
+            "action": "start",
+            "analysis": "robustness_bundle"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "s4_record_integration",
+          "kind": "tool_call",
+          "instruction": "Record integration results and final verdict in research memory",
+          "tool_name": "research_record",
+          "args": {
+            "action": "create",
+            "title": "Plan v4 integration results"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        },
+        {
+          "step_id": "s4_advance_hypothesis",
+          "kind": "tool_call",
+          "instruction": "Advance hypothesis in research map based on integration outcome",
+          "tool_name": "research_map",
+          "args": {
+            "action": "advance_hypothesis"
+          },
+          "binds": [],
+          "decision_outputs": [],
+          "notes": ""
+        }
+      ],
+      "agent_instructions": [],
+      "results_table_columns": [],
+      "results_table_rows": [],
+      "decision_gates": [],
+      "verdict": "PENDING",
+      "assigned_worker_id": "qwen-1",
+      "status": "running",
+      "created_at": "2026-04-07T17:30:29.856445+00:00",
+      "completed_at": null
+    }
+  ],
+  "execution_order": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "status": "active",
+  "plan_markdown": "",
+  "previous_version_id": null,
+  "planner_run_artifact": "plans/planner_runs/revision_v4_attempt_1_exec_1.json"
+}

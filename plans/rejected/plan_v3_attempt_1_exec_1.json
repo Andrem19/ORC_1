@@ -1,0 +1,917 @@
+{
+  "plan_version": 3,
+  "attempt_number": 1,
+  "attempt_type": "revision",
+  "execution_seq": 1,
+  "saved_at": "2026-04-07T16:11:57.651722+00:00",
+  "raw_output": "",
+  "parsed_data": {
+    "schema_version": 4,
+    "plan_action": "create",
+    "plan_version": 3,
+    "reason": "Plan v2 completed: regime gate already integrated into measured baseline. Session weakness filter is WATCHLIST (improves max DD to 2.44% standalone but subsumed by regime gate in integration — identical metrics). Volume microstructure REJECTED (net negative). Need new orthogonal hypotheses: event-driven filtering, price-action confirmation, and volatility-of-volatility regime features.",
+    "plan_markdown": "## Research Plan v3: Event + Price-Action + Vol-of-Vol Orthogonal Exploration\n\n| Stage | Name | Depends | Worker | Goal |\n|-------|------|---------|--------|------|\n| 0 | Session Filter Re-integration Check | — | any | Clean re-integration of cf_session_weakness_filter into regime-gated shell; confirm or deny if it adds value beyond regime gate alone |\n| 1 | Funding-Rate Event Gate | — | qwen-1 | Build cf_* feature using funding-rate events to suppress signals during/around funding settlement windows |\n| 2 | Breakout-Consolidation Pattern | — | qwen-2 | Build cf_* feature detecting consolidation→breakout patterns using ATR-based range compression/expansion |\n| 3 | Vol-of-Vol Regime | — | any-free | Build cf_* feature using volatility-of-volatility (ADoA of ATR) to detect meta-regime shifts |\n| 4 | Integration Round | [0,1,2,3] | any | Merge all PROMOTED features into single shell, full diagnostics |\n\n**Verdict criteria**: PROMOTE if integrated backtest improves on ≥2 of (PnL, trades, max DD) vs baseline simultaneously with Sharpe ≥1.06. WATCHLIST if improves 1 metric without degrading others. REJECT if any key metric worsens.",
+    "frozen_base": "active-signal-v1@1",
+    "baseline_snapshot_ref": "active-signal-v1-regime-gate@2",
+    "baseline_metrics": {
+      "net_pnl": 1520.78,
+      "sharpe": 1.385,
+      "trades": 388,
+      "max_drawdown_pct": 3.08,
+      "profit_factor": 1.494,
+      "win_rate": 0.503,
+      "calmar_ratio": 4.94
+    },
+    "tasks": [
+      {
+        "stage_number": 0,
+        "stage_name": "Session Filter Re-integration Check",
+        "theory": "cf_session_weakness_filter showed standalone max DD improvement (2.44% vs 3.08%) but integration run produced identical metrics to regime-gated baseline — the regime gate may already subsume session effects. Need a clean integration test with full diagnostics to confirm whether it adds any marginal value. If truly subsumed, mark as NOT-PURSUED and free the hypothesis slot.",
+        "depends_on": [],
+        "steps": [
+          {
+            "step_id": "session_research_check",
+            "kind": "tool_call",
+            "instruction": "Search research memory for cf_session_weakness_filter integration results to confirm current status",
+            "tool_name": "research_search",
+            "args": {
+              "query": "cf_session_weakness_filter integration regime gate"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "session_clone_shell",
+            "kind": "tool_call",
+            "instruction": "Clone the regime-gated strategy to create a test shell for session filter integration",
+            "tool_name": "backtests_strategy",
+            "args": {
+              "action": "clone",
+              "source_snapshot_id": "active-signal-v1-regime-gate"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "session_add_condition",
+            "kind": "tool_call",
+            "instruction": "Add cf_session_weakness_filter==1 as an additional entry gating condition (AND with existing cf_regime_vol_gate==1) for both long and short signals, then save as new version",
+            "tool_name": "backtests_strategy",
+            "args": {
+              "action": "save_version"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "session_validate",
+            "kind": "tool_call",
+            "instruction": "Validate the combined signal logic before running",
+            "tool_name": "backtests_strategy_validate",
+            "args": {
+              "mode": "signal"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "session_preflight",
+            "kind": "tool_call",
+            "instruction": "Run preflight readiness check",
+            "tool_name": "backtests_plan",
+            "args": {
+              "snapshot_id": "active-signal-v1-regime-gate",
+              "symbol": "BTCUSDT",
+              "anchor_timeframe": "1h",
+              "execution_timeframe": "5m"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "session_run",
+            "kind": "tool_call",
+            "instruction": "Execute full backtest with the combined session + regime gate filter",
+            "tool_name": "backtests_runs",
+            "args": {
+              "action": "start",
+              "snapshot_id": "active-signal-v1-regime-gate",
+              "version": "3",
+              "symbol": "BTCUSDT",
+              "anchor_timeframe": "1h",
+              "execution_timeframe": "5m"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "session_diagnostics",
+            "kind": "tool_call",
+            "instruction": "Run full diagnostics on the integration run",
+            "tool_name": "backtests_analysis",
+            "args": {
+              "action": "start",
+              "analysis": "diagnostics",
+              "run_id": "{{step:session_run.run_id}}"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "session_verdict",
+            "kind": "tool_call",
+            "instruction": "Compare run metrics to baseline (net_pnl=1520.78, sharpe=1.385, trades=388, max_dd=3.08%). If metrics are identical or worse, record as SUBSUMED. If any metric improves, record as WATCHLIST or PROMOTE.",
+            "tool_name": "research_record",
+            "args": {
+              "action": "create"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          }
+        ],
+        "agent_instructions": []
+      },
+      {
+        "stage_number": 1,
+        "stage_name": "Funding-Rate Event Gate",
+        "theory": "BTC funding rate events (8h settlements) create predictable short-term price distortions and increased volatility. A feature that identifies historically unprofitable windows around funding settlements could filter out low-quality signals during these periods. This is orthogonal to both the volatility regime gate (which filters by ATR percentile) and the session filter (which filters by hour-of-week). Event data is available via the events catalog and has not been explored.",
+        "depends_on": [],
+        "steps": [
+          {
+            "step_id": "funding_research_check",
+            "kind": "tool_call",
+            "instruction": "Search research memory for any prior funding-rate or event-based feature work",
+            "tool_name": "research_search",
+            "args": {
+              "query": "funding rate event feature filter"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "funding_catalog_check",
+            "kind": "tool_call",
+            "instruction": "Check available event data in the catalog",
+            "tool_name": "events",
+            "args": {
+              "view": "catalog"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "funding_sync",
+            "kind": "tool_call",
+            "instruction": "Sync funding rate event data if not already synced",
+            "tool_name": "events_sync",
+            "args": {
+              "family": "funding",
+              "scope": "full"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "funding_preview",
+            "kind": "tool_call",
+            "instruction": "Preview aligned funding events with price data to understand temporal structure",
+            "tool_name": "events",
+            "args": {
+              "view": "align_preview"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "funding_validate_feature",
+            "kind": "tool_call",
+            "instruction": "Validate a custom feature cf_funding_event_gate that: (1) checks if current bar is within ±2 hours of a funding settlement, (2) computes rolling profitability of signals in those windows vs outside, (3) outputs 0 during historically unprofitable windows, 1 otherwise. Use the events alignment to mark settlement proximity.",
+            "tool_name": "features_custom",
+            "args": {
+              "action": "validate"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "funding_build",
+            "kind": "tool_call",
+            "instruction": "Build feature dataset including the new cf_funding_event_gate column",
+            "tool_name": "features_dataset",
+            "args": {
+              "action": "build"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "funding_publish",
+            "kind": "tool_call",
+            "instruction": "Publish the validated feature",
+            "tool_name": "features_custom",
+            "args": {
+              "action": "publish"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "funding_clone_shell",
+            "kind": "tool_call",
+            "instruction": "Clone the regime-gated strategy for funding event testing",
+            "tool_name": "backtests_strategy",
+            "args": {
+              "action": "clone",
+              "source_snapshot_id": "active-signal-v1-regime-gate"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "funding_add_gate",
+            "kind": "tool_call",
+            "instruction": "Add cf_funding_event_gate==1 as entry condition for both long and short, save as new version",
+            "tool_name": "backtests_strategy",
+            "args": {
+              "action": "save_version"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "funding_validate_logic",
+            "kind": "tool_call",
+            "instruction": "Validate signal logic",
+            "tool_name": "backtests_strategy_validate",
+            "args": {
+              "mode": "signal"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "funding_preflight",
+            "kind": "tool_call",
+            "instruction": "Run preflight check",
+            "tool_name": "backtests_plan",
+            "args": {
+              "snapshot_id": "active-signal-v1-regime-gate",
+              "symbol": "BTCUSDT",
+              "anchor_timeframe": "1h",
+              "execution_timeframe": "5m"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "funding_run",
+            "kind": "tool_call",
+            "instruction": "Execute full backtest",
+            "tool_name": "backtests_runs",
+            "args": {
+              "action": "start",
+              "snapshot_id": "active-signal-v1-regime-gate",
+              "version": "3",
+              "symbol": "BTCUSDT",
+              "anchor_timeframe": "1h",
+              "execution_timeframe": "5m"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "funding_diagnostics",
+            "kind": "tool_call",
+            "instruction": "Run diagnostics on the result",
+            "tool_name": "backtests_analysis",
+            "args": {
+              "action": "start",
+              "analysis": "diagnostics",
+              "run_id": "{{step:funding_run.run_id}}"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "funding_walkforward",
+            "kind": "tool_call",
+            "instruction": "Run walk-forward evaluation for temporal robustness",
+            "tool_name": "backtests_walkforward",
+            "args": {
+              "action": "start",
+              "run_id": "{{step:funding_run.run_id}}",
+              "symbol": "BTCUSDT",
+              "anchor_timeframe": "1h",
+              "execution_timeframe": "5m"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "funding_verdict",
+            "kind": "tool_call",
+            "instruction": "Compare metrics to baseline. PROMOTE if ≥2 of (PnL, trades, max DD) improve with Sharpe ≥1.06. WATCHLIST if 1 improves without degradation. REJECT if any key metric worsens. Record in research memory.",
+            "tool_name": "research_record",
+            "args": {
+              "action": "create"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          }
+        ],
+        "agent_instructions": []
+      },
+      {
+        "stage_number": 2,
+        "stage_name": "Breakout-Consolidation Pattern",
+        "theory": "Markets alternate between consolidation (low range) and expansion (high range) phases. A feature that detects ATR-based range compression followed by expansion could identify higher-quality entry points — signals that fire during breakout phases (after consolidation) may have better follow-through than signals in already-expanded volatility. This is orthogonal to the regime gate (which filters by absolute volatility level) because it focuses on the transition/dynamics of volatility rather than its level.",
+        "depends_on": [],
+        "steps": [
+          {
+            "step_id": "breakout_research_check",
+            "kind": "tool_call",
+            "instruction": "Search research memory for prior consolidation/breakout/range-compression feature work",
+            "tool_name": "research_search",
+            "args": {
+              "query": "breakout consolidation range compression ATR pattern"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "breakout_features_check",
+            "kind": "tool_call",
+            "instruction": "Inspect available features to understand what ATR/range columns exist already",
+            "tool_name": "features_catalog",
+            "args": {
+              "scope": "available"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "breakout_validate_feature",
+            "kind": "tool_call",
+            "instruction": "Validate a custom feature cf_breakout_quality that: (1) computes ATR(14) on 1h bars, (2) tracks ATR percentile rank over rolling 48-bar window, (3) identifies consolidation as ATR_rank < 25th percentile for ≥6 bars, (4) breakout = transition from consolidation to ATR_rank > 50th, (5) outputs: 1 during breakout phase (first 6 bars after consolidation exit), 0.5 during normal volatility, 0 during fatigue (ATR_rank > 90th percentile). This creates a quality gate for signal entry.",
+            "tool_name": "features_custom",
+            "args": {
+              "action": "validate"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "breakout_build",
+            "kind": "tool_call",
+            "instruction": "Build feature dataset including the new cf_breakout_quality column",
+            "tool_name": "features_dataset",
+            "args": {
+              "action": "build"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "breakout_publish",
+            "kind": "tool_call",
+            "instruction": "Publish the validated feature",
+            "tool_name": "features_custom",
+            "args": {
+              "action": "publish"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "breakout_clone_shell",
+            "kind": "tool_call",
+            "instruction": "Clone the regime-gated strategy for breakout pattern testing",
+            "tool_name": "backtests_strategy",
+            "args": {
+              "action": "clone",
+              "source_snapshot_id": "active-signal-v1-regime-gate"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "breakout_add_gate",
+            "kind": "tool_call",
+            "instruction": "Add cf_breakout_quality>=0.5 as entry condition for both long and short signals, save as new version",
+            "tool_name": "backtests_strategy",
+            "args": {
+              "action": "save_version"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "breakout_validate_logic",
+            "kind": "tool_call",
+            "instruction": "Validate signal logic",
+            "tool_name": "backtests_strategy_validate",
+            "args": {
+              "mode": "signal"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "breakout_preflight",
+            "kind": "tool_call",
+            "instruction": "Run preflight check",
+            "tool_name": "backtests_plan",
+            "args": {
+              "snapshot_id": "active-signal-v1-regime-gate",
+              "symbol": "BTCUSDT",
+              "anchor_timeframe": "1h",
+              "execution_timeframe": "5m"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "breakout_run",
+            "kind": "tool_call",
+            "instruction": "Execute full backtest",
+            "tool_name": "backtests_runs",
+            "args": {
+              "action": "start",
+              "snapshot_id": "active-signal-v1-regime-gate",
+              "version": "3",
+              "symbol": "BTCUSDT",
+              "anchor_timeframe": "1h",
+              "execution_timeframe": "5m"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "breakout_diagnostics",
+            "kind": "tool_call",
+            "instruction": "Run diagnostics on the result",
+            "tool_name": "backtests_analysis",
+            "args": {
+              "action": "start",
+              "analysis": "diagnostics",
+              "run_id": "{{step:breakout_run.run_id}}"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "breakout_walkforward",
+            "kind": "tool_call",
+            "instruction": "Run walk-forward evaluation",
+            "tool_name": "backtests_walkforward",
+            "args": {
+              "action": "start",
+              "run_id": "{{step:breakout_run.run_id}}",
+              "symbol": "BTCUSDT",
+              "anchor_timeframe": "1h",
+              "execution_timeframe": "5m"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "breakout_verdict",
+            "kind": "tool_call",
+            "instruction": "Compare metrics to baseline. PROMOTE if ≥2 of (PnL, trades, max DD) improve with Sharpe ≥1.06. WATCHLIST if 1 improves without degradation. REJECT if any key metric worsens. Record in research memory.",
+            "tool_name": "research_record",
+            "args": {
+              "action": "create"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          }
+        ],
+        "agent_instructions": []
+      },
+      {
+        "stage_number": 3,
+        "stage_name": "Vol-of-Vol Meta-Regime",
+        "theory": "The current regime gate filters by ATR percentile level. But volatility itself has regimes — periods of stable low vol, stable high vol, and transitional (unstable) periods. A vol-of-vol feature (standard deviation of ATR changes, or ATR of ATR) could detect these meta-regimes. Suppressing signals during vol-of-vol spikes (unstable transitions) could reduce whipsaw losses. This is orthogonal because it measures the second derivative of volatility, not the level.",
+        "depends_on": [],
+        "steps": [
+          {
+            "step_id": "volvol_research_check",
+            "kind": "tool_call",
+            "instruction": "Search research memory for prior vol-of-vol or volatility regime stability work",
+            "tool_name": "research_search",
+            "args": {
+              "query": "volatility of volatility meta regime stability ATR"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "volvol_validate_feature",
+            "kind": "tool_call",
+            "instruction": "Validate a custom feature cf_vol_stability that: (1) computes ATR(14) on 1h bars, (2) computes rolling stddev of ATR changes over 24-bar window (vol-of-vol), (3) computes percentile rank of vol-of-vol over 120-bar lookback, (4) outputs 1 when vol-of-vol rank < 70 (stable volatility regime), 0 when rank >= 70 (volatile transitions). This filters out signals during unstable volatility transitions.",
+            "tool_name": "features_custom",
+            "args": {
+              "action": "validate"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "volvol_build",
+            "kind": "tool_call",
+            "instruction": "Build feature dataset including cf_vol_stability",
+            "tool_name": "features_dataset",
+            "args": {
+              "action": "build"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "volvol_publish",
+            "kind": "tool_call",
+            "instruction": "Publish the validated feature",
+            "tool_name": "features_custom",
+            "args": {
+              "action": "publish"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "volvol_clone_shell",
+            "kind": "tool_call",
+            "instruction": "Clone the regime-gated strategy for vol-of-vol testing",
+            "tool_name": "backtests_strategy",
+            "args": {
+              "action": "clone",
+              "source_snapshot_id": "active-signal-v1-regime-gate"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "volvol_add_gate",
+            "kind": "tool_call",
+            "instruction": "Add cf_vol_stability==1 as entry condition for both long and short, save as new version",
+            "tool_name": "backtests_strategy",
+            "args": {
+              "action": "save_version"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "volvol_validate_logic",
+            "kind": "tool_call",
+            "instruction": "Validate signal logic",
+            "tool_name": "backtests_strategy_validate",
+            "args": {
+              "mode": "signal"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "volvol_preflight",
+            "kind": "tool_call",
+            "instruction": "Run preflight check",
+            "tool_name": "backtests_plan",
+            "args": {
+              "snapshot_id": "active-signal-v1-regime-gate",
+              "symbol": "BTCUSDT",
+              "anchor_timeframe": "1h",
+              "execution_timeframe": "5m"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "volvol_run",
+            "kind": "tool_call",
+            "instruction": "Execute full backtest",
+            "tool_name": "backtests_runs",
+            "args": {
+              "action": "start",
+              "snapshot_id": "active-signal-v1-regime-gate",
+              "version": "3",
+              "symbol": "BTCUSDT",
+              "anchor_timeframe": "1h",
+              "execution_timeframe": "5m"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "volvol_diagnostics",
+            "kind": "tool_call",
+            "instruction": "Run diagnostics on the result",
+            "tool_name": "backtests_analysis",
+            "args": {
+              "action": "start",
+              "analysis": "diagnostics",
+              "run_id": "{{step:volvol_run.run_id}}"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "volvol_walkforward",
+            "kind": "tool_call",
+            "instruction": "Run walk-forward evaluation",
+            "tool_name": "backtests_walkforward",
+            "args": {
+              "action": "start",
+              "run_id": "{{step:volvol_run.run_id}}",
+              "symbol": "BTCUSDT",
+              "anchor_timeframe": "1h",
+              "execution_timeframe": "5m"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "volvol_verdict",
+            "kind": "tool_call",
+            "instruction": "Compare metrics to baseline. PROMOTE if ≥2 of (PnL, trades, max DD) improve with Sharpe ≥1.06. WATCHLIST if 1 improves without degradation. REJECT if any key metric worsens. Record in research memory.",
+            "tool_name": "research_record",
+            "args": {
+              "action": "create"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          }
+        ],
+        "agent_instructions": []
+      },
+      {
+        "stage_number": 4,
+        "stage_name": "Integration Round",
+        "theory": "Merge all PROMOTED features from stages 0-3 into a single strategy shell. Test whether orthogonal filtering layers compound benefits without excessive trade reduction or mutual cancellation. Run full diagnostics + walk-forward + condition stability.",
+        "depends_on": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "steps": [
+          {
+            "step_id": "integration_search",
+            "kind": "tool_call",
+            "instruction": "Search research memory for all PROMOTED and WATCHLIST features from stages 0-3",
+            "tool_name": "research_search",
+            "args": {
+              "query": "plan_v3 PROMOTE WATCHLIST feature verdict"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "integration_clone",
+            "kind": "tool_call",
+            "instruction": "Clone the regime-gated strategy as integration base",
+            "tool_name": "backtests_strategy",
+            "args": {
+              "action": "clone",
+              "source_snapshot_id": "active-signal-v1-regime-gate"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "integration_add_layers",
+            "kind": "tool_call",
+            "instruction": "Add all PROMOTED cf_* features as AND entry conditions. For WATCHLIST features, add them separately and test both with and without. Save as new version.",
+            "tool_name": "backtests_strategy",
+            "args": {
+              "action": "save_version"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "integration_validate",
+            "kind": "tool_call",
+            "instruction": "Validate the combined signal logic",
+            "tool_name": "backtests_strategy_validate",
+            "args": {
+              "mode": "signal"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "integration_preflight",
+            "kind": "tool_call",
+            "instruction": "Run preflight check",
+            "tool_name": "backtests_plan",
+            "args": {
+              "snapshot_id": "active-signal-v1-regime-gate",
+              "symbol": "BTCUSDT",
+              "anchor_timeframe": "1h",
+              "execution_timeframe": "5m"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "integration_run",
+            "kind": "tool_call",
+            "instruction": "Execute full backtest",
+            "tool_name": "backtests_runs",
+            "args": {
+              "action": "start",
+              "snapshot_id": "active-signal-v1-regime-gate",
+              "version": "4",
+              "symbol": "BTCUSDT",
+              "anchor_timeframe": "1h",
+              "execution_timeframe": "5m"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "integration_diagnostics",
+            "kind": "tool_call",
+            "instruction": "Run full diagnostics suite",
+            "tool_name": "backtests_analysis",
+            "args": {
+              "action": "start",
+              "analysis": "diagnostics",
+              "run_id": "{{step:integration_run.run_id}}"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "integration_walkforward",
+            "kind": "tool_call",
+            "instruction": "Run walk-forward for temporal robustness",
+            "tool_name": "backtests_walkforward",
+            "args": {
+              "action": "start",
+              "run_id": "{{step:integration_run.run_id}}",
+              "symbol": "BTCUSDT",
+              "anchor_timeframe": "1h",
+              "execution_timeframe": "5m"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "integration_conditions",
+            "kind": "tool_call",
+            "instruction": "Run condition stability analysis",
+            "tool_name": "backtests_conditions",
+            "args": {
+              "action": "run",
+              "run_id": "{{step:integration_run.run_id}}",
+              "symbol": "BTCUSDT"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "integration_layer_compare",
+            "kind": "tool_call",
+            "instruction": "Run layer comparison analysis to check each feature's marginal contribution",
+            "tool_name": "backtests_analysis",
+            "args": {
+              "action": "start",
+              "analysis": "layer_compare",
+              "run_id": "{{step:integration_run.run_id}}"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          },
+          {
+            "step_id": "integration_verdict",
+            "kind": "tool_call",
+            "instruction": "Final verdict: PROMOTE only if integrated run improves ≥2 of (PnL, trades, max DD) vs baseline with Sharpe ≥1.06. Record comprehensive results in research memory. If PROMOTED, record as candidate for live deployment.",
+            "tool_name": "research_record",
+            "args": {
+              "action": "create"
+            },
+            "binds": [],
+            "decision_outputs": [],
+            "notes": ""
+          }
+        ],
+        "agent_instructions": []
+      }
+    ],
+    "cumulative_summary": "## Research State after Plan v2\n\n### Active Baseline\n- active-signal-v1-regime-gate@2: sharpe=1.385, net_pnl=$1520.78, PF=1.494, WR=0.503, max_dd=3.08%, trades=388, calmar=4.94\n- This includes cf_regime_vol_gate==1 entry filter (ATR-percentile volatility gating)\n\n### PROMOTED\n- **cf_regime_vol_gate**: Filters signals when ATR(14) is in bottom 30th percentile. Now integrated into baseline shell.\n\n### WATCHLIST\n- **cf_session_weakness_filter**: Hour-of-week rolling PF classifier, suppresses weak sessions (PF<0.9). Standalone: sharpe=1.056, PnL=$1308, max_dd=2.44%, trades=498. Integration attempt produced IDENTICAL metrics to regime-gated baseline — likely subsumed by regime gate. Stage 0 of v3 will do clean re-check.\n\n### REJECTED / Anti-patterns\n- **cf_volume_microstructure_signal**: Raw volume-imbalance with aggressive thresholding. Net negative (-$34), PF=0.92, only 41 trades. Anti-pattern: raw volume features with hard thresholds don't work — too sparse, no predictive power.\n\n### Key Insights\n1. Volatility regime filtering (level-based) is effective and now in baseline\n2. Session-based filtering may be subsumed by volatility regime gate\n3. Raw volume features are unreliable — need transformed/relative volume approaches\n4. The baseline has room for improvement in max DD (3.08%) and trade count (388 vs original 498)\n5. Sharpe 1.385 is strong — new features must not degrade it",
+    "principles": [
+      "Seek orthogonal features (event-driven, volatility dynamics, price-action patterns) — not cosmetic rewrites of volatility level gating",
+      "Test standalone first, then in best research shell, then with best base strategy",
+      "Check cannibalization: what the new layer adds, removes, and whether net integration improves",
+      "Judge by SIMULTANEOUS progress in PnL, trade count, AND drawdown — all three",
+      "Reject ideas that fail full-history, walk-forward, or condition-stability checks",
+      "Volume features must use relative/normalized transforms, not raw absolute values",
+      "Session and time-based filters must demonstrate value BEYOND what volatility regime already captures",
+      "Record all results — negative results prevent repeated exploration of dead ends"
+    ],
+    "check_after_seconds": 300,
+    "should_finish": false,
+    "anti_patterns_new": [],
+    "tasks_to_dispatch": [],
+    "_failure_class": "none",
+    "_request_type": "revision",
+    "_request_version": 3,
+    "_attempt_number": 1,
+    "_execution_seq": 1,
+    "_transport_errors": [],
+    "_structured_payload_source": "none",
+    "_structured_payload": null,
+    "_parse_status": "parsed_from_text"
+  },
+  "validation_errors": [
+    {
+      "stage_number": 1,
+      "instruction_index": 2,
+      "code": "action_invalid",
+      "message": "events_sync does not support action ''",
+      "offending_text": "events_sync",
+      "severity": "repair"
+    },
+    {
+      "stage_number": 2,
+      "instruction_index": 2,
+      "code": "legacy_placeholder",
+      "message": "Legacy <...> placeholder is not allowed",
+      "offending_text": "Validate a custom feature cf_breakout_quality that: (1) computes ATR(14) on 1h bars, (2) tracks ATR percentile rank over rolling 48-bar window, (3) identifies consolidation as ATR_rank < 25th percentile for ≥6 bars, (4) breakout = transition from consolidation to ATR_rank > 50th, (5) outputs: 1 during breakout phase (first 6 bars after consolidation exit), 0.5 during normal volatility, 0 during fatigue (ATR_rank > 90th percentile). This creates a quality gate for signal entry.",
+      "severity": "hard"
+    },
+    {
+      "stage_number": 3,
+      "instruction_index": 1,
+      "code": "legacy_placeholder",
+      "message": "Legacy <...> placeholder is not allowed",
+      "offending_text": "Validate a custom feature cf_vol_stability that: (1) computes ATR(14) on 1h bars, (2) computes rolling stddev of ATR changes over 24-bar window (vol-of-vol), (3) computes percentile rank of vol-of-vol over 120-bar lookback, (4) outputs 1 when vol-of-vol rank < 70 (stable volatility regime), 0 when rank >= 70 (volatile transitions). This filters out signals during unstable volatility transitions.",
+      "severity": "hard"
+    }
+  ],
+  "failure_class": "invalid_content",
+  "request_type": "revision",
+  "structured_payload": null,
+  "failure_detail": "[repair] stage 1 action_invalid: events_sync does not support action ''; [hard] stage 2 legacy_placeholder: Legacy <...> placeholder is not allowed; [hard] stage 3 legacy_placeholder: Legacy <...> placeholder is not allowed",
+  "planner_run_artifact": "plans/planner_runs/revision_v3_attempt_1_exec_1.json"
+}

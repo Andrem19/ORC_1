@@ -32,6 +32,10 @@ class TaskDispatchMixin:
            gives the worker complete context (results tables, verdicts, metrics)
            for human-like decision making.
         """
+        if self._drain_mode:
+            logger.info("Drain mode active — skipping dispatch of %d plan tasks", len(plan_tasks))
+            return
+
         orch = self.orch
         reports_by_stage = self._reports_by_stage()
 

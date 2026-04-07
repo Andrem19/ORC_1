@@ -74,6 +74,7 @@ class PlanTask:
             TaskStatus.FAILED,
             TaskStatus.CANCELLED,
             TaskStatus.TIMED_OUT,
+            TaskStatus.INTERRUPTED,
         )
 
     def normalized_steps(self) -> list["PlanStep"]:

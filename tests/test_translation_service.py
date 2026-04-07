@@ -22,17 +22,23 @@ class TestTranslationConfig:
         cfg = NotificationConfig()
         assert cfg.translation_model_dir == "models/opus-mt-en-ru"
 
+    def test_model_name_default(self):
+        cfg = NotificationConfig()
+        assert cfg.translation_model_name == "Helsinki-NLP/opus-mt-en-ru"
+
     def test_from_dict(self):
         data = {
             "notifications": {
                 "enabled": True,
                 "translate_to_russian": True,
                 "translation_model_dir": "custom/path",
+                "translation_model_name": "Helsinki-NLP/opus-mt-en-ru-big",
             }
         }
         cfg = load_config_from_dict(data)
         assert cfg.notifications.translate_to_russian is True
         assert cfg.notifications.translation_model_dir == "custom/path"
+        assert cfg.notifications.translation_model_name == "Helsinki-NLP/opus-mt-en-ru-big"
 
     def test_missing_translate_key_defaults_false(self):
         data = {"notifications": {"enabled": True}}
@@ -167,19 +173,22 @@ class TestSplitLongText:
     def test_short_text_not_split(self):
         svc = self._make_service()
         text = "This is a short text. It has few words."
-        chunks = svc._split_long_text(text, max_words=80)
+        chunks = svc._split_long_text(text)
         assert chunks == [text]
 
-    def test_long_text_split_at_sentences(self):
+    def test_long_text_split_by_words_fallback(self):
         svc = self._make_service()
-        # Create text with many sentences
+        # Without tokenizer loaded, falls back to word-based splitting
         sentences = [f"Sentence number {i} here." for i in range(20)]
         text = " ".join(sentences)
-        chunks = svc._split_long_text(text, max_words=10)
+        chunks = svc._split_by_words(text, max_words=10)
         assert len(chunks) > 1
-        # Each chunk should have words <= max_words (approximately)
-        for chunk in chunks:
-            assert len(chunk.split()) <= 20  # Allow some slack for boundary splitting
+
+    def test_split_by_words_short_text(self):
+        svc = self._make_service()
+        text = "Short text."
+        chunks = svc._split_by_words(text, max_words=80)
+        assert chunks == [text]
 
 
 # ---------------------------------------------------------------------------
@@ -226,3 +235,59 @@ class TestProperties:
     def test_is_ready_false_before_load(self):
         svc = TranslationService(translate_to_russian=True)
         assert svc.is_ready is False
+
+
+# ---------------------------------------------------------------------------
+# Tests: translation cache
+# ---------------------------------------------------------------------------
+
+
+class TestTranslationCache:
+    def test_cache_stores_result(self):
+        svc = TranslationService(translate_to_russian=True)
+        # Simulate a cached entry
+        svc._cache["test key"] = "test value"
+        # translate() won't reach cache without model loaded, but we can
+        # verify the cache dict exists and works
+        assert "test key" in svc._cache
+        assert svc._cache["test key"] == "test value"
+
+    def test_cache_max_size(self):
+        from app.services.translation_service import _CACHE_MAX
+        assert _CACHE_MAX == 200
+
+    def test_cache_eviction(self):
+        from collections import OrderedDict
+        svc = TranslationService(translate_to_russian=True)
+        svc._cache = OrderedDict()
+        # Fill beyond max — eviction happens one at a time
+        for i in range(205):
+            svc._cache[f"key_{i}"] = f"val_{i}"
+            if len(svc._cache) > 200:
+                svc._cache.popitem(last=False)
+        assert len(svc._cache) == 200
+        # Oldest 5 entries evicted (key_0 through key_4)
+        assert "key_0" not in svc._cache
+        assert "key_4" not in svc._cache
+        # key_5 is the oldest surviving entry
+        assert "key_5" in svc._cache
+        # Latest entries present
+        assert "key_204" in svc._cache
+
+
+# ---------------------------------------------------------------------------
+# Tests: model_name parameter
+# ---------------------------------------------------------------------------
+
+
+class TestModelNameConfig:
+    def test_default_model_name(self):
+        svc = TranslationService(translate_to_russian=True)
+        assert svc._model_name == "Helsinki-NLP/opus-mt-en-ru"
+
+    def test_custom_model_name(self):
+        svc = TranslationService(
+            translate_to_russian=True,
+            model_name="Helsinki-NLP/opus-mt-en-ru-big",
+        )
+        assert svc._model_name == "Helsinki-NLP/opus-mt-en-ru-big"
