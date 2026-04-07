@@ -606,12 +606,17 @@ def test_parse_error_does_not_enter_repair_flow() -> None:
         }
     )
 
-    assert svc._terminal_stop_reason == StopReason.INVALID_OUTPUT
-    svc.planner_service.start_plan_repair.assert_not_called()
-    svc.planner_service.restart_plan_request.assert_not_called()
+    # Parse errors now route through repair loop (attempt 2/3).
+    # The repair path attempts to load the rejected artifact from the mock
+    # store path (which fails in unit tests), then falls back to create.
+    # Either way, the planner is relaunched instead of stopping immediately.
+    assert svc._terminal_stop_reason is None
     kwargs = svc._plan_store.save_rejected_plan_attempt.call_args.kwargs
     assert kwargs["failure_class"] == "parse_error"
     assert kwargs["plan_version"] == 1
+    # Parse errors get a synthetic json_parse_error validation entry
+    assert len(kwargs["validation_errors"]) == 1
+    assert kwargs["validation_errors"][0]["code"] == "json_parse_error"
 
 
 def test_build_plan_revision_prompt_includes_measured_baseline() -> None:

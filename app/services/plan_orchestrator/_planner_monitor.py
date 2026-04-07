@@ -304,7 +304,12 @@ class PlannerMonitorMixin:
         transport_errors: list[Any] | None = None,
         structured_payload: dict[str, Any] | None = None,
     ) -> None:
-        """Handle transport/parse failures without consuming the repair loop."""
+        """Handle transport/parse failures.
+
+        Parse errors are routed through the repair loop (up to _max_plan_attempts)
+        so the planner gets feedback about what went wrong. Transport errors get
+        one simple retry with the same prompt.
+        """
         attempt_number = max(1, attempt_number)
         request_type = request_type or self.state.current_plan_attempt_type or "create"
         transport_errors = [str(err) for err in (transport_errors or []) if str(err).strip()]
@@ -321,6 +326,21 @@ class PlannerMonitorMixin:
 
         artifact_path = None
         if self._plan_store:
+            # For parse errors, add a synthetic validation error so the repair
+            # prompt tells the planner what went wrong.
+            validation_errors_for_artifact: list[dict[str, Any]] = []
+            if failure_class == "parse_error":
+                validation_errors_for_artifact = [{
+                    "stage_number": -1,
+                    "code": "json_parse_error",
+                    "message": (
+                        "The plan JSON could not be parsed. Common causes: "
+                        "trailing commas, unquoted keys, single quotes instead "
+                        "of double quotes, or extra text outside the JSON. "
+                        f"Parser error: {summary}"
+                    ),
+                    "offending_text": raw_output[:500] if raw_output else "",
+                }]
             artifact_path = self._plan_store.save_rejected_plan_attempt(
                 plan_version=plan_version,
                 attempt_number=attempt_number,
@@ -328,7 +348,7 @@ class PlannerMonitorMixin:
                 execution_seq=int(parsed_data.get("_execution_seq", 1) or 1),
                 raw_output=raw_output,
                 parsed_data=parsed_data,
-                validation_errors=[],
+                validation_errors=validation_errors_for_artifact,
                 failure_class=failure_class,
                 request_type=request_type,
                 structured_payload=structured_payload,
@@ -350,6 +370,27 @@ class PlannerMonitorMixin:
             f"Planner {failure_class} on {request_type} v{plan_version} attempt {attempt_number}: {summary}",
         )
 
+        # Parse errors: route through repair loop (planner gets feedback)
+        next_attempt = attempt_number + 1
+        if failure_class == "parse_error" and next_attempt <= self._max_plan_attempts:
+            logger.info(
+                "Routing parse_error to repair loop (attempt %d/%d)",
+                next_attempt, self._max_plan_attempts,
+            )
+            self.state.current_plan_attempt = next_attempt
+            self.state.current_plan_attempt_type = "repair"
+            self._repair_plan()
+            self.notification_service.send_error(
+                (
+                    f"Planner parse error on v{plan_version} attempt {attempt_number}. "
+                    f"Launching repair attempt {next_attempt}."
+                ),
+                context="plan_mode",
+            )
+            self._sync_planner_runtime_state()
+            return
+
+        # Transport errors: one simple retry with the same prompt
         transport_retry_count = getattr(self.planner_service, "plan_transport_retry_count", 0)
         if transport_retry_count < 1 and self.planner_service.restart_plan_request(reason="transport_error"):
             self.notification_service.send_error(

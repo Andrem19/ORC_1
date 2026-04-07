@@ -360,3 +360,65 @@ class TestPerStageRetryEnforcement:
         assert len(action_errors) > 0
         assert action_errors[0].severity == "repair"
         assert result.is_acceptable is False
+
+
+# ===================================================================
+# JSON repair — trailing comma tolerance
+# ===================================================================
+
+class TestJSONRepair:
+    """Test that trailing commas in LLM JSON output are handled."""
+
+    def test_trailing_comma_before_brace(self) -> None:
+        """Trailing comma before } is stripped and JSON parses."""
+        from app.result_parser import _repair_json
+        text = '{"a": 1, "b": 2,}'
+        assert _repair_json(text) == '{"a": 1, "b": 2}'
+
+    def test_trailing_comma_before_bracket(self) -> None:
+        """Trailing comma before ] is stripped."""
+        from app.result_parser import _repair_json
+        text = '["a", "b",]'
+        assert _repair_json(text) == '["a", "b"]'
+
+    def test_trailing_comma_nested(self) -> None:
+        """Trailing commas in nested structures are stripped."""
+        from app.result_parser import _repair_json
+        text = '{"tasks": [{"a": 1,},], "plan_action": "create",}'
+        assert '"tasks": [{"a": 1}]' in _repair_json(text)
+
+    def test_no_trailing_comma_unchanged(self) -> None:
+        """Valid JSON passes through unchanged."""
+        from app.result_parser import _repair_json
+        text = '{"a": 1, "b": 2}'
+        assert _repair_json(text) == text
+
+    def test_extract_json_block_repairs_trailing_comma(self) -> None:
+        """_extract_json_block can parse JSON with trailing commas."""
+        from app.result_parser import _extract_json_block
+        text = '```json\n{"plan_action": "create", "tasks": [],}\n```'
+        result = _extract_json_block(
+            text,
+            required_keys={"plan_action", "tasks"},
+        )
+        assert result is not None
+        import json
+        data = json.loads(result)
+        assert data["plan_action"] == "create"
+
+    def test_parse_plan_output_repairs_trailing_comma(self) -> None:
+        """parse_plan_output handles a realistic plan with trailing commas."""
+        from app.result_parser import parse_plan_output
+        raw = '```json\n{"plan_action": "create", "plan_version": 1, "tasks": [{"stage_number": 0, "stage_name": "test", "depends_on": [], "steps": [{"step_id": "s1", "kind": "work", "instruction": "do it",},],},],}\n```'
+        result = parse_plan_output(raw)
+        assert result.get("_parse_failed") is None
+        assert result["plan_action"] == "create"
+        assert len(result["tasks"]) == 1
+
+    def test_parse_plan_output_without_trailing_comma_still_works(self) -> None:
+        """Valid JSON without trailing commas still parses correctly."""
+        from app.result_parser import parse_plan_output
+        raw = '{"plan_action": "create", "plan_version": 1, "tasks": []}'
+        result = parse_plan_output(raw)
+        assert result.get("_parse_failed") is None
+        assert result["plan_action"] == "create"

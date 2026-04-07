@@ -23,6 +23,23 @@ from app.models import (
 logger = logging.getLogger("orchestrator.parser")
 
 
+# ---------------------------------------------------------------------------
+# Lenient JSON repair — handles common LLM output issues
+# ---------------------------------------------------------------------------
+
+# Matches a comma followed by optional whitespace then ] or }
+_TRAILING_COMMA_RE = re.compile(r",\s*([}\]])")
+
+
+def _repair_json(text: str) -> str:
+    """Attempt lightweight repairs on JSON text that fails strict parsing.
+
+    Handles the most common LLM JSON generation errors:
+    - Trailing commas before } or ]
+    """
+    return _TRAILING_COMMA_RE.sub(r"\1", text)
+
+
 def _extract_json_block(
     text: str,
     *,
@@ -45,22 +62,34 @@ def _extract_json_block(
 
     best_candidate: str | None = None
     best_score = -1
+    repaired = False
     for candidate in _iter_json_candidates(text):
         try:
             data = json.loads(candidate)
+            usable_text = candidate
         except json.JSONDecodeError:
-            continue
+            # Try lenient parsing — strip trailing commas and retry
+            repaired_text = _repair_json(candidate)
+            try:
+                data = json.loads(repaired_text)
+                usable_text = repaired_text
+                repaired = True
+            except json.JSONDecodeError:
+                continue
 
         score = _score_json_candidate(
             data,
-            candidate,
+            usable_text,
             required_keys=required_keys,
             preferred_keys=preferred_keys,
             min_preferred_keys=min_preferred_keys,
         )
         if score > best_score:
-            best_candidate = candidate
+            best_candidate = usable_text
             best_score = score
+
+    if best_candidate and repaired:
+        logger.info("JSON repaired successfully (trailing comma stripping)")
 
     return best_candidate
 
