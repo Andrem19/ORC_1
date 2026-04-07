@@ -22,6 +22,19 @@ You instruct workers to call these tools — you do NOT call them yourself.
 13. Find weak quarters first, then search for features that specifically repair those windows
 14. Repeated additive tweaks on the same short layer usually signal a research dead end
 
+## dev_space1 — шпаргалка (46 инструментов, все здоровы)
+
+**Таймфреймы заблокированы политикой**: anchor_timeframe='1h', execution_timeframe='5m' — другие значения отклоняются.                                                          
+**Старт сессии**: `system_bootstrap` → `system_health(validate_tools=true)` — обязательно перед длинными операциями.
+**Порядок фич**: `features_catalog` → `features_custom(validate→publish)` → `features_dataset(build)` для добавления в датасет. Классификаторы `cl_*` автоматически             
+пропускаются; `force=True` для перерасчёта.                                                                                                                                   
+**Бэктесты**: `backtests_strategy` (снапшоты) → `backtests_plan` (префлайт) → `backtests_runs(start)` → `backtests_analysis(diagnostics|layer_compare|signal_ownership)`.     
+**Модели**: `models_dataset(contract→preview→materialize)` → `models_train(start)` → `models_to_feature(publish)` → `features_dataset(build)` — пайплайн от данных до фичи.     
+**Исследования**: `research_project(create→open)` → `research_record(note|hypothesis|result)` + `research_map(define→record_attempt)`. Записывай ВСЕ результаты, включая
+негативные.                                                                                                                                                                     
+**Ключевое правило**: никаких плейсхолдеров — если id/version неизвестны, сначала inspect/list. `features_dataset(action='refresh')` НЕ подхватывает новые кастомные фичи,    
+используй `action='build'`.
+
 ## Decision Principles
 - Be specific: tell workers exactly which MCP tool to call, with which snapshot_id, version, and parameters
 - Be grounded: reference actual snapshot IDs, run IDs, model IDs, and feature names from the research context
@@ -41,7 +54,7 @@ Always add to Gold Collection BEFORE deploying or moving on.
 All improvements measured against active-signal-v1@1 (Sharpe 1.06, +13.1% return, 498 trades, max DD 2.4%).
 A genuine improvement requires simultaneous progress in PnL, trade count, AND drawdown quality."""
 
-operator_directives = ""
+operator_directives = "Твоя задача найти новые features которые бы давали новые сигналы которые мы не получаем от сигналов в baseline т е чтобы не было канибазизма а добавлялись реально новые сигналы дающие прибыль. Составляй качественные продуманные планы. Продумывай их так чтобы workers не простаивали (у тебя 3 работника) чтобы они могли большую часть делать параллельно."
 
 worker_system_prompt = "You are a trading research worker. Execute the assigned task by calling MCP dev_space1 tools. You have full access to the MCP server. Call tools directly. Return a structured JSON result."
 
@@ -116,8 +129,8 @@ max_concurrent_research_tracks = 3
 enabled = true
 min_interval_seconds = 30
 translate_to_russian = true
-translation_model_name = "Helsinki-NLP/opus-mt-en-ru-big"
-translation_model_dir = "models/opus-mt-en-ru-big"
+translation_model_name = "Helsinki-NLP/opus-mt-en-ru"
+translation_model_dir = "models/opus-mt-en-ru"
 
 [mcp_review]
 enabled = true
