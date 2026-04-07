@@ -28,10 +28,12 @@ class Scheduler:
         poll_interval_seconds: int = 300,
         max_empty_cycles: int = 12,
         max_errors_total: int = 20,
+        max_mcp_failures: int = 5,
     ) -> None:
         self.poll_interval_seconds = poll_interval_seconds
         self.max_empty_cycles = max_empty_cycles
         self.max_errors_total = max_errors_total
+        self.max_mcp_failures = max_mcp_failures
 
     def should_call_planner(
         self,
@@ -78,6 +80,11 @@ class Scheduler:
 
         if state.last_planner_decision == PlannerDecision.FINISH:
             return "goal_reached"
+
+        # Stop if MCP server has been unreachable for too many consecutive checks
+        mcp_failures = getattr(state, "mcp_consecutive_failures", 0)
+        if mcp_failures >= self.max_mcp_failures:
+            return "mcp_unhealthy"
 
         return None
 

@@ -20,7 +20,18 @@ class TaskDispatchMixin:
     """Dispatches plan tasks to workers with MCP health gating and symbolic reference resolution."""
 
     def _dispatch_plan_tasks(self, plan_tasks: list[PlanTask]) -> None:
-        """Dispatch PlanTasks to workers (respects MCP health)."""
+        """Dispatch PlanTasks to workers (respects MCP health).
+
+        Two channels provide dependency context to workers:
+        1. **Symbolic ref resolution** (_resolve_plan_task_steps): Replaces
+           ``{{stage:N.field}}`` placeholders in step instructions/args with
+           concrete values extracted from upstream task reports.  This is the
+           *programmatic* channel — it injects IDs directly into tool_call args.
+        2. **dependency_reports**: Full ``TaskReport`` objects passed through
+           to the worker prompt.  This is the *informational* channel — it
+           gives the worker complete context (results tables, verdicts, metrics)
+           for human-like decision making.
+        """
         orch = self.orch
         reports_by_stage = self._reports_by_stage()
 
@@ -66,6 +77,13 @@ class TaskDispatchMixin:
 
             self.state.plan_task_dispatch_map[str(pt.stage_number)] = task.task_id
 
+            # Gather dependency reports for this task's depends_on stages
+            dep_reports = [
+                reports_by_stage[dep_stage]
+                for dep_stage in pt.depends_on
+                if dep_stage in reports_by_stage
+            ]
+
             process_info = self.worker_service.start_plan_task(
                 task=task,
                 plan_version=pt.plan_version,
@@ -75,6 +93,7 @@ class TaskDispatchMixin:
                 agent_instructions=[step.instruction for step in resolved_steps],
                 steps=resolved_steps,
                 results_table_columns=pt.results_table_columns,
+                dependency_reports=dep_reports if dep_reports else None,
             )
             self.state.processes.append(process_info)
 
@@ -101,8 +120,9 @@ class TaskDispatchMixin:
     def _is_mcp_instructions(text: str) -> bool:
         """Check if task instructions reference MCP tools."""
         keywords = [
-            "backtest", "snapshot", "feature", "model", "strategy",
-            "dataset", "mcp", "signal", "heatmap", "walk-forward",
+            "backtest", "snapshot", "features_", "custom_features",
+            "models_", "strategy", "dataset", "mcp",
+            "cf_", "heatmap", "walk-forward",
             "diagnostics", "research_project", "research_record",
         ]
         text_lower = text.lower()
@@ -161,6 +181,10 @@ class TaskDispatchMixin:
                     )
                     plan_task.status = TaskStatus.FAILED
                     plan_task.completed_at = datetime.now(timezone.utc).isoformat()
+                    # Write a minimal failure report so downstream stages that
+                    # depend on this one via symbolic refs can see a report
+                    # entry instead of being permanently deadlocked.
+                    self._save_symbolic_ref_failure_report(plan_task, message)
                     self.memory_service.record_error(
                         self.state,
                         f"Plan stage {plan_task.stage_number} symbolic ref error: {message}",
@@ -170,8 +194,9 @@ class TaskDispatchMixin:
                     return None
 
                 logger.info(
-                    "Stage %d waiting on symbolic refs before dispatch: %s",
+                    "Stage %d waiting on unresolved deps %s — symbolic refs: %s",
                     plan_task.stage_number,
+                    plan_task.depends_on,
                     ", ".join(err.raw for err in blocking_errors),
                 )
                 return None
@@ -188,6 +213,24 @@ class TaskDispatchMixin:
             ))
 
         return resolved_steps
+
+    def _save_symbolic_ref_failure_report(
+        self,
+        plan_task: PlanTask,
+        error_message: str,
+    ) -> None:
+        """Write a minimal error report so downstream stages see a report entry."""
+        from app.plan_models import TaskReport
+        report = TaskReport(
+            task_id=plan_task.task_id,
+            worker_id="",
+            plan_version=plan_task.plan_version,
+            status="error",
+            error=f"symbolic ref resolution failed: {error_message}",
+            timestamp=datetime.now(timezone.utc).isoformat(),
+        )
+        if self._plan_store:
+            self._plan_store.save_report(report)
 
     def _pick_worker(self) -> str | None:
         active_workers = {t.assigned_worker_id for t in self.state.active_tasks()}

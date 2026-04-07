@@ -86,6 +86,19 @@ def _iter_stream_payloads(raw_stream_transcript: str, result: PlannerStructuredO
         try:
             payload, end = decoder.raw_decode(raw_stream_transcript, idx)
         except json.JSONDecodeError as exc:
+            # If this is the very first event, assume truncated output
+            if not payloads:
+                result.transcript_complete = False
+                result.truncation_detected = True
+                tail = raw_stream_transcript[idx:idx + 240]
+                result.failure_detail = f"stdout_truncated_mid_event: {exc}"
+                result.transport_errors.append(result.failure_detail)
+                result.transport_errors.append(f"stdout_tail={tail!r}")
+                break
+            # Non-first event: the stream is likely truncated mid-event.
+            # Record the error and stop — attempting to skip forward and
+            # re-parse is unsafe because a { inside a JSON string value can
+            # form a syntactically valid but semantically wrong event.
             result.transcript_complete = False
             result.truncation_detected = True
             tail = raw_stream_transcript[idx:idx + 240]

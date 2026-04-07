@@ -52,6 +52,7 @@ class StopReason(str, Enum):
     MAX_ERRORS = "max_errors"
     GOAL_REACHED = "goal_reached"
     GOAL_IMPOSSIBLE = "goal_impossible"
+    MCP_UNHEALTHY = "mcp_unhealthy"
 
 
 class RestartReason(str, Enum):
@@ -238,6 +239,7 @@ class OrchestratorState:
     last_rejected_plan_attempt_at: str | None = None
     last_rejected_plan_artifact: str | None = None
     plan_task_dispatch_map: dict[str, str] = field(default_factory=dict)  # stage_id -> task_id
+    mcp_consecutive_failures: int = 0
     created_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     updated_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 

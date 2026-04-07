@@ -389,6 +389,12 @@ def test_dispatch_plan_tasks_resolves_symbolic_refs_before_launch() -> None:
         "backtests_runs(action='inspect', run_id='baseline-run', view='detail')",
     ]
     assert kwargs["steps"][0].instruction == "backtests_runs(action='inspect', run_id='baseline-run', view='detail')"
+    # dependency_reports should contain the report from stage 0
+    dep_reports = kwargs.get("dependency_reports")
+    assert dep_reports is not None
+    assert len(dep_reports) == 1
+    assert dep_reports[0].task_id == "stage-0"
+    assert dep_reports[0].results_table == [{"run_id": "baseline-run"}]
 
 
 def test_dispatch_plan_tasks_marks_stage_failed_when_symbolic_field_missing() -> None:
@@ -433,6 +439,76 @@ def test_dispatch_plan_tasks_marks_stage_failed_when_symbolic_field_missing() ->
     assert stage.status == TaskStatus.FAILED
     svc.worker_service.start_plan_task.assert_not_called()
     orch.memory_service.record_error.assert_called_once()
+
+
+def test_dispatch_plan_tasks_passes_dependency_reports_to_worker() -> None:
+    svc, _orch = _make_service(worker_ids=["qwen-1"])
+    svc._current_plan = ResearchPlan(
+        version=1,
+        goal="test",
+        tasks=[
+            PlanTask(
+                task_id="stage-0",
+                plan_version=1,
+                stage_number=0,
+                stage_name="Base",
+                status=TaskStatus.COMPLETED,
+            ),
+            PlanTask(
+                task_id="stage-1",
+                plan_version=1,
+                stage_number=1,
+                stage_name="UsesBase",
+                depends_on=[0],
+                agent_instructions=["do something"],
+            ),
+        ],
+    )
+    report = TaskReport(
+        task_id="stage-0",
+        worker_id="qwen-1",
+        plan_version=1,
+        status="success",
+        results_table=[{"run_id": "r1", "snapshot_id": "snap1"}],
+        key_metrics={"sharpe": 1.2},
+        artifacts=["run:r1"],
+        verdict="PROMOTE",
+        raw_output="{}",
+    )
+    svc._plan_store.load_reports_for_plan.return_value = [report]
+    svc.worker_service.start_plan_task.return_value = ProcessInfo(task_id="stage-1", worker_id="qwen-1", pid=10)
+
+    svc._dispatch_plan_tasks([svc._current_plan.get_task_by_stage(1)])
+
+    kwargs = svc.worker_service.start_plan_task.call_args.kwargs
+    dep_reports = kwargs.get("dependency_reports")
+    assert dep_reports is not None
+    assert len(dep_reports) == 1
+    assert dep_reports[0].results_table == [{"run_id": "r1", "snapshot_id": "snap1"}]
+
+
+def test_dispatch_plan_tasks_no_dependency_reports_when_no_deps() -> None:
+    svc, _orch = _make_service(worker_ids=["qwen-1"])
+    svc._current_plan = ResearchPlan(
+        version=1,
+        goal="test",
+        tasks=[
+            PlanTask(
+                task_id="stage-0",
+                plan_version=1,
+                stage_number=0,
+                stage_name="Base",
+                agent_instructions=["do baseline"],
+            ),
+        ],
+    )
+    svc._plan_store.load_reports_for_plan.return_value = []
+    svc.worker_service.start_plan_task.return_value = ProcessInfo(task_id="stage-0", worker_id="qwen-1", pid=10)
+
+    svc._dispatch_plan_tasks([svc._current_plan.get_task_by_stage(0)])
+
+    kwargs = svc.worker_service.start_plan_task.call_args.kwargs
+    assert kwargs.get("dependency_reports") is None
 
 
 def test_invalid_plan_loop_stops_after_max_attempts() -> None:
@@ -976,3 +1052,220 @@ def test_check_planner_watchdog_hard_timeout_ignores_zero_rendered_text_when_act
         svc._check_planner_watchdog()
 
     svc._handle_planner_timeout.assert_not_called()
+
+
+# ---------------------------------------------------------------------------
+# Phase 1: Fix double status modification
+# ---------------------------------------------------------------------------
+
+
+def test_plan_mode_partial_result_task_and_plan_task_both_completed() -> None:
+    """Plan-mode partial results should mark BOTH Task and PlanTask as COMPLETED."""
+    svc, orch = _make_service(worker_ids=["qwen-1"])
+    svc._current_plan = ResearchPlan(
+        version=1,
+        goal="test",
+        tasks=[
+            PlanTask(
+                task_id="stage-0",
+                plan_version=1,
+                stage_number=0,
+                stage_name="Baseline",
+                status=TaskStatus.RUNNING,
+            ),
+        ],
+    )
+    # Simulate Task created by dispatch
+    task = Task(
+        task_id="stage-0",
+        description="baseline",
+        assigned_worker_id="qwen-1",
+        metadata={"plan_mode": True, "plan_version": 1, "stage_number": 0},
+    )
+    task.mark_running()
+    orch.state.add_task(task)
+
+    report = TaskReport(
+        task_id="stage-0",
+        worker_id="qwen-1",
+        plan_version=1,
+        status="partial",
+        what_was_done="partial baseline",
+        verdict="WATCHLIST",
+        raw_output="{}",
+    )
+    result = TaskResult(
+        task_id="stage-0",
+        worker_id="qwen-1",
+        status="partial",
+        plan_report=report,
+        raw_output="{}",
+    )
+
+    # _collect_results calls _handle_task_result → then _process_plan_results
+    from app.orchestrator import Orchestrator
+    Orchestrator._handle_task_result(orch, task, result)
+
+    assert task.status == TaskStatus.COMPLETED, f"Task should be COMPLETED, got {task.status}"
+    assert orch.state.total_errors == 0, "Partial plan-mode result should NOT increment total_errors"
+
+
+def test_reconciliation_does_not_overwrite_resolved_plan_task() -> None:
+    """_reconcile_current_plan_state should not overwrite a resolved PlanTask."""
+    svc, orch = _make_service(worker_ids=["qwen-1"])
+    pt = PlanTask(
+        task_id="stage-0",
+        plan_version=1,
+        stage_number=0,
+        stage_name="Baseline",
+        status=TaskStatus.COMPLETED,
+    )
+    svc._current_plan = ResearchPlan(version=1, goal="test", tasks=[pt])
+
+    # Simulate a Task that is FAILED (from stale state before partial fix)
+    task = Task(
+        task_id="stage-0",
+        description="baseline",
+        metadata={"plan_mode": True, "plan_version": 1},
+    )
+    task.status = TaskStatus.FAILED
+    orch.state.add_task(task)
+
+    svc._plan_store.load_reports_for_plan.return_value = []
+    svc._reconcile_current_plan_state()
+
+    # PlanTask should stay COMPLETED (it was already resolved)
+    assert pt.status == TaskStatus.COMPLETED, f"PlanTask should stay COMPLETED, got {pt.status}"
+
+
+def test_maybe_update_plan_baseline_captures_partial_stage0() -> None:
+    """_maybe_update_plan_baseline should capture baseline from partial stage 0."""
+    svc, orch = _make_service(worker_ids=["qwen-1"])
+    svc._current_plan = ResearchPlan(version=1, goal="test")
+
+    pt = PlanTask(task_id="s0", plan_version=1, stage_number=0, stage_name="Base")
+    report = TaskReport(
+        task_id="s0",
+        worker_id="qwen-1",
+        plan_version=1,
+        status="partial",
+        results_table=[{"run_id": "r-partial", "snapshot_id": "snap1", "version": "2"}],
+        key_metrics={"net_pnl": 500.0, "sharpe": 1.2},
+        artifacts=["run_id:r-partial", "snapshot:snap1@2"],
+        raw_output="{}",
+    )
+
+    svc._maybe_update_plan_baseline(pt, report)
+
+    assert svc._current_plan.baseline_run_id == "r-partial"
+    assert svc._current_plan.baseline_snapshot_ref == "snap1@2"
+    assert svc._current_plan.baseline_metrics["net_pnl"] == 500.0
+
+
+# ---------------------------------------------------------------------------
+# Phase 2: Deadlock and recovery fixes
+# ---------------------------------------------------------------------------
+
+
+def test_symbolic_ref_failure_writes_report_and_downstream_not_deadlocked() -> None:
+    """When a symbolic ref runtime error occurs, a failure report is saved so
+    downstream stages are not permanently deadlocked."""
+    svc, orch = _make_service(worker_ids=["qwen-1"])
+    pt0 = PlanTask(
+        task_id="stage-0",
+        plan_version=1,
+        stage_number=0,
+        stage_name="Base",
+        status=TaskStatus.COMPLETED,
+    )
+    pt1 = PlanTask(
+        task_id="stage-1",
+        plan_version=1,
+        stage_number=1,
+        stage_name="UsesBase",
+        depends_on=[0],
+        steps=[],
+        agent_instructions=["backtests_runs(action='inspect', run_id='{{stage:0.missing_field}}')"],
+    )
+    svc._current_plan = ResearchPlan(version=1, goal="test", tasks=[pt0, pt1])
+
+    # Stage 0 report exists but has no 'missing_field' column
+    report_s0 = TaskReport(
+        task_id="stage-0",
+        worker_id="qwen-1",
+        plan_version=1,
+        status="success",
+        results_table=[{"run_id": "r1"}],
+        raw_output="{}",
+    )
+    svc._plan_store.load_reports_for_plan.return_value = [report_s0]
+
+    svc._dispatch_plan_tasks([pt1])
+
+    # Plan store should have a failure report for stage 1
+    saved_reports = [
+        call.kwargs.get("report") or call.args[0]
+        for call in svc._plan_store.save_report.call_args_list
+    ]
+    assert any(
+        r.status == "error" and "symbolic ref" in (r.error or "").lower()
+        for r in saved_reports
+    ), "Expected a symbolic-ref failure report to be saved"
+
+
+def test_mcp_death_stop_condition() -> None:
+    """Consecutive MCP health failures should trigger MCP_UNHEALTHY stop."""
+    from app.scheduler import Scheduler
+    state = OrchestratorState(goal="test")
+    scheduler = Scheduler(max_mcp_failures=3)
+
+    # No failures → None
+    assert scheduler.should_stop_orchestrator(state) is None
+
+    # 2 failures → not enough
+    state.mcp_consecutive_failures = 2
+    assert scheduler.should_stop_orchestrator(state) is None
+
+    # 3 failures → stop
+    state.mcp_consecutive_failures = 3
+    result = scheduler.should_stop_orchestrator(state)
+    assert result == "mcp_unhealthy"
+
+
+def test_timed_out_plan_task_gets_retried() -> None:
+    """Timed-out plan tasks should be reset to PENDING when retries remain."""
+    svc, orch = _make_service(worker_ids=["qwen-1"])
+    pt = PlanTask(
+        task_id="stage-0",
+        plan_version=1,
+        stage_number=0,
+        stage_name="SlowStage",
+    )
+    svc._current_plan = ResearchPlan(version=1, goal="test", tasks=[pt])
+
+    task = Task(
+        task_id="stage-0",
+        description="slow",
+        assigned_worker_id="qwen-1",
+        attempts=1,
+        metadata={"plan_mode": True, "plan_version": 1, "stage_number": 0},
+    )
+    task.mark_running()
+    orch.state.add_task(task)
+
+    pi = ProcessInfo(
+        task_id="stage-0",
+        worker_id="qwen-1",
+        pid=42,
+        started_at=(datetime.now(timezone.utc).replace(hour=0)).isoformat(),
+    )
+    orch.state.processes.append(pi)
+
+    svc.worker_service.terminate_task = MagicMock()
+    orch.state.remove_process = MagicMock()
+
+    svc._check_timeouts()
+
+    # Task should be PENDING (retry), not TIMED_OUT
+    assert task.status == TaskStatus.PENDING, f"Task should be PENDING for retry, got {task.status}"
+    assert pt.status == TaskStatus.PENDING, f"PlanTask should be PENDING for retry, got {pt.status}"

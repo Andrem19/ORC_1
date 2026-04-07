@@ -310,6 +310,7 @@ class WorkerService:
         agent_instructions: list[str] | None = None,
         steps: list[Any] | None = None,
         results_table_columns: list[str] | None = None,
+        dependency_reports: list[Any] | None = None,
     ) -> ProcessInfo:
         """Launch a worker for a structured plan task (plan-mode)."""
         from app.plan_prompts import build_plan_task_prompt
@@ -329,6 +330,7 @@ class WorkerService:
             results_table_columns=results_table_columns,
             plan_version=plan_version,
             mcp_instructions=mcp_instructions,
+            dependency_reports=dependency_reports,
         )
 
         logger.info(

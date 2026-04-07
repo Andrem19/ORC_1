@@ -151,6 +151,17 @@ def validate_plan(plan: ResearchPlan) -> PlanValidationResult:
             step_ids_seen.append(step.step_id)
 
         if task.steps:
+            # Structured steps were validated above — skip raw instruction checks.
+            # (normalized_steps() converts agent_instructions into PlanStep objects,
+            # but when the planner already provided structured steps, the raw
+            # agent_instructions list is empty so there's nothing to validate here.)
+            continue
+
+        # Legacy path: planner sent free-form agent_instructions instead of steps.
+        # These were converted by normalized_steps() and validated as PlanStep objects
+        # in the loop above, so the checks below are supplementary (catching patterns
+        # that the step-level validation may miss for legacy-format plans).
+        if not task.agent_instructions:
             continue
 
         for idx, instruction in enumerate(task.agent_instructions):
@@ -343,6 +354,26 @@ def _stringify_surface_values(value: Any) -> list[str]:
 
 
 def _looks_like_broken_tool_call(text: str) -> bool:
+    """Heuristic: flag instructions that look like malformed tool calls.
+
+    Only triggers when the text starts with a known MCP tool name prefix,
+    avoiding false positives on natural language containing parentheses.
+    """
+    # Quick check: must contain tool-call markers
+    if "action=" not in text and "(" not in text:
+        return False
+
+    # Only check texts that start with something resembling a tool name
+    text_stripped = text.lstrip()
+    from app.planner_contract import TOOL_ACTIONS
+    tool_prefixes = set()
+    for tool_name in TOOL_ACTIONS:
+        # Take first segment before any underscore
+        tool_prefixes.add(tool_name.split("_")[0])
+    first_word = text_stripped.split("(")[0].split("_")[0].strip().lower()
+    if first_word not in tool_prefixes:
+        return False
+
     if "(" in text and ")" not in text:
         return True
     if text.count("(") != text.count(")"):

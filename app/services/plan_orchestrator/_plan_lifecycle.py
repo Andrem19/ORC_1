@@ -28,6 +28,41 @@ if TYPE_CHECKING:
 logger = logging.getLogger("orchestrator.plan")
 
 
+def _topological_sort_stages(tasks: list[PlanTask]) -> list[int]:
+    """Return stage numbers in valid execution order based on depends_on."""
+    deps_map: dict[int, set[int]] = {t.stage_number: set(t.depends_on) for t in tasks}
+    known_stages = set(deps_map)
+    result: list[int] = []
+    visited: set[int] = set()
+    visiting: set[int] = set()
+
+    def visit(stage: int) -> None:
+        if stage in visited:
+            return
+        if stage in visiting:
+            logger.warning(
+                "Cycle detected in stage dependencies involving stage %d — skipping",
+                stage,
+            )
+            return
+        if stage not in known_stages:
+            logger.warning(
+                "Stage depends on unknown stage %d which does not exist in plan — ignoring",
+                stage,
+            )
+            return
+        visiting.add(stage)
+        for dep in deps_map.get(stage, set()):
+            visit(dep)
+        visiting.discard(stage)
+        visited.add(stage)
+        result.append(stage)
+
+    for s in sorted(deps_map):
+        visit(s)
+    return result
+
+
 class PlanLifecycleMixin:
     """Handles plan creation, repair, revision, and processing of planner output."""
 
@@ -254,7 +289,11 @@ class PlanLifecycleMixin:
             if not plan.baseline_metrics:
                 plan.baseline_metrics = dict(self._current_plan.baseline_metrics)
 
-        plan.execution_order = data.get("tasks_to_dispatch", [])
+        raw_order = data.get("tasks_to_dispatch", [])
+        if raw_order:
+            plan.execution_order = raw_order
+        else:
+            plan.execution_order = _topological_sort_stages(plan.tasks)
 
         # --- Reject empty plans ---
         if len(plan.tasks) == 0:
@@ -307,11 +346,6 @@ class PlanLifecycleMixin:
             )
             self.state.current_plan_validation_errors = validation.soft_errors
 
-        # Legacy fallback for older planner outputs
-        if plan.schema_version < 2 and not plan.execution_order:
-            plan.execution_order = [
-                t.stage_number for t in sorted(plan.tasks, key=lambda t: t.stage_number)
-            ]
 
         self._current_plan = plan
         self.state.current_plan_version = version

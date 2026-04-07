@@ -19,6 +19,10 @@ if TYPE_CHECKING:
 logger = logging.getLogger("orchestrator.plan")
 
 
+# Default configurable via config.silent_worker_warn_seconds
+_SILENT_WARN_SECONDS = 300
+
+
 class TaskHealthMixin:
     """Monitors task health: timeouts, silent workers, and periodic MCP checks."""
 
@@ -69,8 +73,31 @@ class TaskHealthMixin:
                     stage_num = task.metadata.get("stage_number", -1)
                     pt = self._current_plan.get_task_by_stage(stage_num)
                     if pt:
-                        pt.status = TaskStatus.TIMED_OUT
-                        pt.completed_at = datetime.now(timezone.utc).isoformat()
+                        max_attempts = getattr(task, "max_attempts", 3)
+                        if task.attempts < max_attempts:
+                            # Retry: reset both Task and PlanTask to PENDING
+                            task.attempts += 1
+                            task.status = TaskStatus.PENDING
+                            task.assigned_worker_id = None
+                            pt.status = TaskStatus.PENDING
+                            pt.assigned_worker_id = None
+                            pt.completed_at = None
+                            self._stage_retry_counts[stage_num] = (
+                                self._stage_retry_counts.get(stage_num, 0) + 1
+                            )
+                            logger.info(
+                                "Plan task stage %d timed out, retrying "
+                                "(attempt %d/%d)",
+                                stage_num, task.attempts, max_attempts,
+                            )
+                        else:
+                            pt.status = TaskStatus.TIMED_OUT
+                            pt.completed_at = datetime.now(timezone.utc).isoformat()
+                            logger.warning(
+                                "Plan task stage %d timed out permanently "
+                                "(attempt %d/%d)",
+                                stage_num, task.attempts, max_attempts,
+                            )
                         self._persist_current_plan()
 
     # ---------------------------------------------------------------
@@ -168,5 +195,10 @@ class TaskHealthMixin:
         )
         if self._mcp_healthy:
             logger.debug("MCP health check: OK")
+            self.state.mcp_consecutive_failures = 0
         else:
-            logger.warning("MCP health check: FAILED — MCP tasks will be skipped")
+            self.state.mcp_consecutive_failures += 1
+            logger.warning(
+                "MCP health check: FAILED (%d consecutive) — MCP tasks will be skipped",
+                self.state.mcp_consecutive_failures,
+            )

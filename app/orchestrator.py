@@ -66,6 +66,7 @@ class Orchestrator:
             poll_interval_seconds=config.poll_interval_seconds,
             max_empty_cycles=config.max_empty_cycles,
             max_errors_total=config.max_errors_total,
+            max_mcp_failures=config.max_mcp_failures,
         )
         self.memory_service = memory_service or MemoryService()
         self.notification_service = notification_service or NotificationService()
@@ -415,7 +416,16 @@ class Orchestrator:
             self._log_event(OrchestratorEvent.WORKER_COMPLETED, f"task={task.task_id}")
             return
 
-        # Error or partial — check if we should force-stop
+        # Plan-mode partial results are treated as completed by the plan orchestrator.
+        # We must mark the Task COMPLETED here so Task and PlanTask statuses agree,
+        # preventing _reconcile_current_plan_state from overwriting the PlanTask later.
+        if task.metadata.get("plan_mode") and result.status == "partial":
+            task.mark_completed()
+            self.state.last_change_at = datetime.now(timezone.utc).isoformat()
+            self._log_event(OrchestratorEvent.WORKER_COMPLETED, f"task={task.task_id} (partial)")
+            return
+
+        # Error — check if we should force-stop
         stop_reason = self.task_supervisor.should_stop_task(task, result)
         if stop_reason:
             self.task_supervisor.stop_task(task, stop_reason)

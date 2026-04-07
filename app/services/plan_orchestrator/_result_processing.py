@@ -76,6 +76,17 @@ class ResultProcessingMixin:
                     OrchestratorEvent.WORKER_COMPLETED,
                     f"task={task.task_id} stage={stage_num}",
                 )
+            elif result.status == "partial":
+                pt.status = TaskStatus.COMPLETED
+                self._maybe_update_plan_baseline(pt, report)
+                logger.warning(
+                    "Stage %d completed with partial status (verdict=%s)",
+                    stage_num, pt.verdict,
+                )
+                orch._log_event(
+                    OrchestratorEvent.WORKER_COMPLETED,
+                    f"task={task.task_id} stage={stage_num} (partial)",
+                )
             else:
                 # Error — retry logic
                 max_attempts = task.max_attempts
@@ -144,7 +155,7 @@ class ResultProcessingMixin:
 
     def _maybe_update_plan_baseline(self, plan_task: PlanTask, report: Any) -> None:
         """Capture the measured baseline from ETAP 0 so later plans use real metrics."""
-        if not self._current_plan or plan_task.stage_number != 0 or report.status != "success":
+        if not self._current_plan or plan_task.stage_number != 0 or report.status not in ("success", "partial"):
             return
 
         baseline_row = report.results_table[0] if report.results_table else {}

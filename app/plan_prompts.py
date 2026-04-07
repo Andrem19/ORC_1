@@ -27,72 +27,59 @@ from app.plan_validation import PlanRepairRequest
 # JSON schemas
 # ---------------------------------------------------------------------------
 
-PLANNER_PLAN_SCHEMA = """{
-  "schema_version": 3,
+_PLAN_SCHEMA_BODY = """\
+  "schema_version": {version},
   "plan_action": "create|update",
   "plan_version": 1,
   "reason": "why this plan or revision",
-  "plan_markdown": "the full structured plan document as a single markdown string",
-  "frozen_base": "immutable reference identifier",
-  "baseline_run_id": "measured baseline run id if known",
-  "baseline_snapshot_ref": "snapshot_id@version for measured baseline",
-  "baseline_metrics": {"net_pnl": 0.0, "sharpe": 0.0, "trades": 0, "max_drawdown_pct": 0.0},
+  "plan_markdown": "concise plan summary",
+  "frozen_base": "active-signal-v1@1",
+  "baseline_snapshot_ref": "active-signal-v1@1",
+  "baseline_metrics": {{"net_pnl": 0.0, "sharpe": 0.0, "trades": 0, "max_drawdown_pct": 0.0}},
   "tasks": [
-    {
+    {{
       "stage_number": 0,
       "stage_name": "Stage name",
-      "theory": "2-5 sentences: why this hypothesis is worth testing",
+      "theory": "Why this hypothesis is worth testing",
       "depends_on": [],
       "steps": [
-        {
+        {{
           "step_id": "baseline_preflight",
           "kind": "tool_call",
           "instruction": "Validate readiness before starting the run",
           "tool_name": "backtests_plan",
-          "args": {
-            "snapshot_id": "active-signal-v1",
-            "version": "1",
-            "symbol": "BTCUSDT",
-            "anchor_timeframe": "1h",
-            "execution_timeframe": "5m"
-          },
-          "binds": [],
-          "decision_outputs": [],
-          "notes": ""
-        },
-        {
+          "args": {{"snapshot_id": "active-signal-v1", "version": "1"}}
+        }},
+        {{
           "step_id": "baseline_run",
           "kind": "tool_call",
           "instruction": "Start the baseline run",
           "tool_name": "backtests_runs",
-          "args": {
-            "action": "start",
-            "snapshot_id": "active-signal-v1",
-            "version": "1",
-            "symbol": "BTCUSDT",
-            "anchor_timeframe": "1h",
-            "execution_timeframe": "5m"
-          },
-          "binds": ["run_id"],
-          "decision_outputs": [],
-          "notes": "Later steps in this stage may use {{step:baseline_run.run_id}}"
-        }
-      ],
-      "results_table_columns": ["run_id", "net_pnl", "trades", "PF", "WR", "max_DD", "verdict"],
-      "decision_gates": [
-        {"metric": "pnl", "threshold": 0, "comparator": "gt", "verdict_pass": "PROMOTE", "verdict_fail": "REJECT"}
+          "args": {{"action": "start", "snapshot_id": "active-signal-v1", "version": "1"}}
+        }}
       ]
-    }
+    }}
   ],
-  "anti_patterns_new": [
-    {"category": "approach name", "description": "what was tried", "evidence_count": 3, "evidence_summary": "key results"}
-  ],
-  "cumulative_summary": "updated knowledge summary carrying forward from all previous plans",
+  "cumulative_summary": "updated knowledge summary",
   "principles": ["principle 1", "principle 2"],
-  "memory_update": "brief note to remember",
   "check_after_seconds": 300,
   "should_finish": false
-}"""
+}}"""
+
+
+def _plan_schema(version: int) -> str:
+    """Generate plan JSON schema with the given version number."""
+    return "{" + _PLAN_SCHEMA_BODY.format(version=version)
+
+
+def _plan_schema(version: int) -> str:
+    """Generate plan JSON schema with the given version number."""
+    return "{" + _PLAN_SCHEMA_BODY.format(version=version)
+
+
+# Convenience aliases — single source of truth via _plan_schema()
+PLANNER_PLAN_SCHEMA = _plan_schema(4)  # v4 for creation
+SCHEMA_V3 = _plan_schema(3)            # v3 for revision/repair
 
 WORKER_REPORT_SCHEMA = """{
   "status": "success|error|partial",
@@ -195,11 +182,11 @@ def build_plan_creation_prompt(
 
     parts.append("## Execution Rules")
     parts.append(
-        "- Use cross-stage refs ONLY for earlier stages in depends_on: {{stage:N.run_id}}, {{stage:N.snapshot_ref}}, {{stage:N.results_table[0].column}}\n"
         "- Use intra-stage refs for outputs of previous steps in the same stage: {{step:step_id.run_id}}, {{step:step_id.snapshot_ref}}, {{step:step_id.results_table[0].column}}\n"
         "- NEVER emit placeholders like <best_snapshot_id>, <run_id>, <v>, ellipses, or incomplete tool calls.\n"
         "- NEVER use tool aliases like snapshots(...), or backtests_runs(action='run').\n"
         "- Use concrete IDs only when already known from context.\n"
+        "- Do NOT use symbolic cross-stage refs like {{stage:N.run_id}} — the orchestrator resolves those at dispatch time.\n"
         "- Define clear verdict criteria: PROMOTE, WATCHLIST, REJECT.\n"
     )
     parts.append("")
@@ -210,21 +197,18 @@ def build_plan_creation_prompt(
     parts.append(PLANNER_PLAN_SCHEMA)
     parts.append("```")
     parts.append("")
-    parts.append("## Symbolic Reference Contract")
+    parts.append("## Intra-Stage Reference Contract")
     parts.append(
-        "- Allowed cross-stage syntax: {{stage:N.run_id}}, {{stage:N.snapshot_id}}, "
-        "{{stage:N.version}}, {{stage:N.snapshot_ref}}, {{stage:N.results_table[0].column_name}}\n"
         "- Allowed intra-stage syntax: {{step:step_id.run_id}}, {{step:step_id.snapshot_ref}}, "
         "{{step:step_id.version}}, {{step:step_id.results_table[0].column_name}}\n"
-        "- Symbolic refs MUST point to an earlier dependency listed in `depends_on`\n"
         "- Do NOT use <run_id>, <v>, <snapshot_id>, or `...`\n"
         "- Use concrete IDs only when they are already known from the provided context"
     )
     parts.append("")
     parts.append("## Examples")
-    parts.append("Valid stage ref: backtests_runs(action='inspect', run_id='{{stage:0.run_id}}', view='detail')")
     parts.append("Valid step ref: backtests_runs(action='inspect', run_id='{{step:baseline_run.run_id}}', view='detail')")
     parts.append("Invalid: snapshots(action='fork', snapshot_ref='<run_id>')")
+    parts.append("Invalid: backtests_runs(action='inspect', run_id='{{stage:0.run_id}}', view='detail') — do NOT use cross-stage refs")
 
     return "\n".join(parts)
 
@@ -321,15 +305,18 @@ def build_plan_revision_prompt(
         "6. **Frozen base**: Keep the same frozen base — NEVER modify it\n"
         "7. **Dependencies**: Use `depends_on` as the only execution contract. "
         "Stages whose dependencies are resolved may run in parallel.\n"
-        "8. **Future outputs**: Use {{stage:0.run_id}} only for earlier stages, and {{step:step_id.run_id}} for earlier steps within the same stage.\n"
+        "8. **Future outputs**: Use {{step:step_id.run_id}} for earlier steps within the same stage. "
+        "Do NOT use cross-stage refs like {{stage:N.run_id}} — the orchestrator resolves those at dispatch time.\n"
         "9. Emit schema v3 with `steps`, not free-form `agent_instructions`.\n"
+        "10. **Concrete IDs**: Use concrete IDs (run_id, snapshot_id) only when they are already known "
+        "from worker reports or context. Do not invent or guess IDs.\n"
     )
     parts.append("")
 
     parts.append("## Output")
     parts.append("Respond with JSON only matching this schema:")
     parts.append("```json")
-    parts.append(PLANNER_PLAN_SCHEMA)
+    parts.append(SCHEMA_V3)
     parts.append("```")
 
     return "\n".join(parts)
@@ -378,8 +365,9 @@ def build_plan_repair_prompt(
         "- Only repair the invalid stages/instructions listed below\n"
         "- Use `depends_on` as the only dependency contract\n"
         "- Re-emit the full plan in schema v3 with `steps`\n"
-        "- Use {{stage:N.run_id}} only for earlier stages in depends_on\n"
         "- Use {{step:step_id.run_id}} for previous steps inside the same stage\n"
+        "- Do NOT use cross-stage refs like {{stage:N.run_id}} — the orchestrator resolves those at dispatch time\n"
+        "- Use concrete IDs only when they are already known from context\n"
         "- NEVER emit <...> placeholders, ellipses, or incomplete tool calls\n"
         "- Replace tool aliases with canonical facades from the MCP contract\n"
         f"- Keep the existing stage count; do not expand beyond {len(repair_request.invalid_plan_data.get('tasks', []))} stages\n"
@@ -415,7 +403,7 @@ def build_plan_repair_prompt(
     parts.append("## Output")
     parts.append("Respond with JSON only matching this schema:")
     parts.append("```json")
-    parts.append(PLANNER_PLAN_SCHEMA)
+    parts.append(SCHEMA_V3)
     parts.append("```")
     parts.append("")
     parts.append("`plan_markdown` must be concise and summarize the corrected plan rather than duplicating every task detail.")
@@ -436,6 +424,7 @@ def build_plan_task_prompt(
     results_table_columns: list[str] | None = None,
     plan_version: int = 0,
     mcp_instructions: str | None = None,
+    dependency_reports: list[TaskReport] | None = None,
 ) -> str:
     """Build the prompt for a worker executing a single plan task.
 
@@ -453,6 +442,32 @@ def build_plan_task_prompt(
         parts.append("## Theory")
         parts.append(theory)
         parts.append("")
+
+    # Previous stage results from dependency reports
+    if dependency_reports:
+        parts.append("## Previous Stage Results")
+        parts.append(
+            "The following reports are from earlier completed stages that this stage depends on. "
+            "Use concrete IDs from these reports (e.g. run_id, snapshot_id) when needed."
+        )
+        parts.append("")
+        for dep_report in dependency_reports:
+            parts.append(f"### Stage Report (task_id={dep_report.task_id})")
+            if dep_report.verdict:
+                parts.append(f"- Verdict: {dep_report.verdict}")
+            if dep_report.results_table and isinstance(dep_report.results_table[0], dict):
+                cols = list(dep_report.results_table[0].keys())
+                if cols:
+                    parts.append("| " + " | ".join(cols) + " |")
+                    parts.append("| " + " | ".join("---" for _ in cols) + " |")
+                    for row in dep_report.results_table:
+                        parts.append("| " + " | ".join(str(row.get(c, "")) for c in cols) + " |")
+                    parts.append("")
+            if dep_report.key_metrics:
+                parts.append(f"- Key metrics: {dep_report.key_metrics}")
+            if dep_report.artifacts:
+                parts.append(f"- Artifacts: {', '.join(str(a) for a in dep_report.artifacts)}")
+            parts.append("")
 
     parts.append("## Workflow")
     parts.append("Execute steps in order. Resolve `{{step:...}}` using outputs from earlier steps in this ETAP. Do not guess missing values.")

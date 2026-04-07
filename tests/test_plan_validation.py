@@ -6,7 +6,7 @@ import json
 from unittest.mock import MagicMock, patch
 
 from app.models import OrchestratorState, TaskStatus
-from app.plan_models import PlanStep, PlanTask, ResearchPlan, decision_gate_from_dict
+from app.plan_models import PlanStep, PlanTask, ResearchPlan, TaskReport, decision_gate_from_dict
 from app.plan_validation import validate_plan
 from app.result_parser import parse_plan_output
 
@@ -582,5 +582,180 @@ def test_build_plan_creation_prompt_includes_catalog_without_research_context() 
     prompt = build_plan_creation_prompt(goal="Improve BTCUSDT strategy")
 
     assert "## MCP dev_space1 Tool Catalog" in prompt
-    assert '"schema_version": 3' in prompt
+    assert '"schema_version": 4' in prompt
     assert '"steps"' in prompt
+
+
+def test_build_plan_creation_prompt_omits_cross_stage_refs() -> None:
+    from app.plan_prompts import build_plan_creation_prompt
+
+    prompt = build_plan_creation_prompt(goal="Improve BTCUSDT strategy")
+
+    # Creation prompt should NOT contain symbolic cross-stage ref instructions
+    assert "Symbolic Reference Contract" not in prompt
+    assert "cross-stage refs ONLY" not in prompt
+    # Should instruct NOT to use cross-stage refs
+    assert "do NOT use cross-stage refs" in prompt
+    # But should still mention intra-stage refs
+    assert "{{step:" in prompt
+
+
+def test_build_plan_revision_prompt_omits_cross_stage_refs() -> None:
+    from app.plan_prompts import build_plan_revision_prompt
+
+    plan = ResearchPlan(schema_version=2, version=1, goal="test")
+    prompt = build_plan_revision_prompt(goal="test", current_plan=plan, reports=[])
+
+    # Revision prompt should NOT encourage {{stage:N.run_id}} usage
+    assert "Use {{stage:0.run_id}} only for earlier stages" not in prompt
+    assert "Do NOT use cross-stage refs" in prompt
+    assert "concrete IDs" in prompt
+    assert "schema_version\": 3" in prompt
+
+
+def test_build_plan_repair_prompt_omits_cross_stage_refs() -> None:
+    from app.plan_prompts import build_plan_repair_prompt
+    from app.plan_validation import PlanRepairRequest as PRR
+
+    prompt = build_plan_repair_prompt(
+        PRR(
+            goal="test goal",
+            plan_version=1,
+            attempt_number=1,
+            invalid_plan_data={"plan_action": "create", "tasks": []},
+            validation_errors=[],
+        )
+    )
+
+    # Repair prompt should NOT encourage {{stage:N.run_id}} usage
+    assert "Use {{stage:N.run_id}} only for earlier stages" not in prompt
+    assert "Do NOT use cross-stage refs" in prompt
+    assert "concrete IDs" in prompt
+    assert "schema_version\": 3" in prompt
+
+
+def test_build_plan_task_prompt_includes_previous_stage_results() -> None:
+    from app.plan_prompts import build_plan_task_prompt
+
+    dep_report = TaskReport(
+        task_id="stage-0",
+        worker_id="qwen-1",
+        plan_version=1,
+        status="success",
+        results_table=[{"run_id": "r1", "snapshot_id": "snap1", "verdict": "PROMOTE"}],
+        key_metrics={"sharpe": 1.2, "net_pnl": 500},
+        artifacts=["run:r1", "snapshot:snap1"],
+        verdict="PROMOTE",
+        raw_output="{}",
+    )
+
+    prompt = build_plan_task_prompt(
+        stage_number=1,
+        stage_name="Inspect Baseline",
+        theory="Check baseline results",
+        agent_instructions=["backtests_runs(action='inspect', run_id='r1', view='detail')"],
+        plan_version=1,
+        dependency_reports=[dep_report],
+    )
+
+    assert "## Previous Stage Results" in prompt
+    assert "stage-0" in prompt
+    assert "r1" in prompt
+    assert "snap1" in prompt
+    assert "PROMOTE" in prompt
+    assert "sharpe" in prompt
+
+
+def test_build_plan_task_prompt_without_dependency_reports() -> None:
+    from app.plan_prompts import build_plan_task_prompt
+
+    prompt = build_plan_task_prompt(
+        stage_number=0,
+        stage_name="Baseline",
+        theory="Run baseline",
+        agent_instructions=["do baseline"],
+        plan_version=1,
+    )
+
+    assert "## Previous Stage Results" not in prompt
+
+
+# ---------------------------------------------------------------------------
+# Phase 3: Schema DRY tests
+# ---------------------------------------------------------------------------
+
+
+def test_plan_schema_generates_correct_version_numbers() -> None:
+    """_plan_schema(N) should produce schema_version: N."""
+    from app.plan_prompts import _plan_schema
+    v4 = _plan_schema(4)
+    v3 = _plan_schema(3)
+    assert '"schema_version": 4' in v4
+    assert '"schema_version": 3' in v3
+    # Both should contain the same task structure
+    assert '"steps":' in v4
+    assert '"steps":' in v3
+
+
+def test_build_plan_task_prompt_non_dict_results_table_no_crash() -> None:
+    """build_plan_task_prompt should not crash when results_table has non-dict rows."""
+    from app.plan_prompts import build_plan_task_prompt
+
+    dep_report = TaskReport(
+        task_id="s0",
+        worker_id="qwen-1",
+        plan_version=1,
+        status="success",
+        results_table=["not a dict", 42],
+        raw_output="{}",
+    )
+
+    # Should not crash
+    prompt = build_plan_task_prompt(
+        stage_number=1,
+        stage_name="UsesBase",
+        theory="test",
+        agent_instructions=["do stuff"],
+        plan_version=1,
+        dependency_reports=[dep_report],
+    )
+
+    assert "## Previous Stage Results" in prompt
+
+
+def test_topological_sort_with_unknown_deps_and_cycles() -> None:
+    """_topological_sort_stages should handle unknown deps and cycles gracefully."""
+    from app.services.plan_orchestrator._plan_lifecycle import _topological_sort_stages
+
+    # Stage 1 depends on non-existent stage 5
+    tasks = [
+        PlanTask(stage_number=0, plan_version=1, stage_name="A"),
+        PlanTask(stage_number=1, plan_version=1, stage_name="B", depends_on=[5]),
+    ]
+    result = _topological_sort_stages(tasks)
+    assert 0 in result
+    assert 1 in result
+    # Unknown dep 5 should NOT appear in result
+    assert 5 not in result
+
+    # Cycle: stage 0 depends on 1, stage 1 depends on 0
+    tasks_cycle = [
+        PlanTask(stage_number=0, plan_version=1, stage_name="A", depends_on=[1]),
+        PlanTask(stage_number=1, plan_version=1, stage_name="B", depends_on=[0]),
+    ]
+    result_cycle = _topological_sort_stages(tasks_cycle)
+    # Should produce some result without infinite loop (at most the stages that exist)
+    assert len(result_cycle) <= 2
+
+
+def test_looks_like_broken_tool_call_no_false_positives() -> None:
+    """_looks_like_broken_tool_call should not flag natural language."""
+    from app.plan_validation import _looks_like_broken_tool_call
+
+    # Natural language with parens — should NOT be flagged
+    assert not _looks_like_broken_tool_call("Review the results (see above)")
+    assert not _looks_like_broken_tool_call("Analyze (and compare) results (see attached)")
+    assert not _looks_like_broken_tool_call("set action=promote for the next step")
+
+    # Actual broken tool calls — SHOULD be flagged
+    assert _looks_like_broken_tool_call('backtests_runs(action="start"')  # missing closing paren

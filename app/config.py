@@ -135,6 +135,11 @@ class OrchestratorConfig:
     plan_mode: bool = False
     plan_dir: str = "plans"
     max_concurrent_plan_tasks: int = 2
+    plan_task_timeout_seconds: int = 600
+    max_mcp_failures: int = 5
+    mcp_health_check_interval_cycles: int = 5
+    silent_worker_warn_seconds: int = 300
+    max_plan_attempts: int = 3
 
     @property
     def state_path(self) -> Path:
@@ -160,6 +165,8 @@ def load_config_from_dict(data: dict[str, Any]) -> OrchestratorConfig:
         "detect_duplicate_results", "require_structured_output",
         "research_config",
         "plan_mode", "plan_dir", "max_concurrent_plan_tasks",
+        "plan_task_timeout_seconds", "max_mcp_failures",
+        "silent_worker_warn_seconds", "max_plan_attempts",
         "startup_mode",
     }
     for key in simple_fields:

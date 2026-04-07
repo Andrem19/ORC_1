@@ -263,13 +263,21 @@ class PlanOrchestratorCore:
                     pt.status = TaskStatus.COMPLETED
                     pt.completed_at = report.timestamp
                     self._maybe_update_plan_baseline(pt, report)
-                elif report.status in {"error", "partial"} and pt.status == TaskStatus.PENDING:
+                elif report.status == "error" and pt.status == TaskStatus.PENDING:
                     pt.status = TaskStatus.FAILED
                     pt.completed_at = report.timestamp
+                elif report.status == "partial" and pt.status == TaskStatus.PENDING:
+                    pt.status = TaskStatus.COMPLETED
+                    pt.completed_at = report.timestamp
+                    self._maybe_update_plan_baseline(pt, report)
 
             if task is not None:
                 pt.assigned_worker_id = task.assigned_worker_id
-                pt.status = task.status
+                # Only sync Task status → PlanTask when the PlanTask is not
+                # already in a terminal state.  This prevents reconciliation
+                # from overwriting a partial-result COMPLETED back to FAILED.
+                if not pt.is_resolved:
+                    pt.status = task.status
                 if task.status in {
                     TaskStatus.COMPLETED,
                     TaskStatus.FAILED,
