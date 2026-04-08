@@ -68,8 +68,10 @@ def test_load_config_with_lmstudio():
             "enabled": True,
             "base_url": "http://localhost:9999",
             "model": "qwen-test",
-            "analysis_interval_cycles": 25,
-            "max_log_lines": 100,
+            "assistant": {
+                "analysis_interval_cycles": 25,
+                "max_log_lines": 100,
+            },
         },
     }
     cfg = load_config_from_dict(data)
@@ -85,3 +87,40 @@ def test_lmstudio_defaults_when_not_in_config():
     assert cfg.lmstudio.enabled is False
     assert cfg.lmstudio.base_url == "http://localhost:1234"
     assert cfg.lmstudio.analysis_interval_cycles == 50
+
+
+def test_lmstudio_nested_report_compressor():
+    data = {
+        "lmstudio": {
+            "enabled": True,
+            "base_url": "http://localhost:8080",
+            "model": "test-model",
+            "report_compressor": {"enabled": True, "max_tokens": 300},
+            "translation": {"max_tokens": 2048},
+        },
+    }
+    cfg = load_config_from_dict(data)
+    assert cfg.lmstudio.report_compressor.enabled is True
+    assert cfg.lmstudio.report_compressor.base_url == "http://localhost:8080"
+    assert cfg.lmstudio.report_compressor.model == "test-model"
+    assert cfg.lmstudio.report_compressor.max_tokens == 300
+    assert cfg.lmstudio.translation.max_tokens == 2048
+    # report_compressor alias on OrchestratorConfig
+    assert cfg.report_compressor.enabled is True
+    assert cfg.report_compressor.base_url == "http://localhost:8080"
+
+
+def test_lmstudio_legacy_flat_fields():
+    """Legacy: flat analysis_interval_cycles/max_log_lines route to assistant."""
+    data = {
+        "lmstudio": {
+            "enabled": True,
+            "base_url": "http://localhost:9999",
+            "model": "qwen-test",
+            "analysis_interval_cycles": 25,
+            "max_log_lines": 100,
+        },
+    }
+    cfg = load_config_from_dict(data)
+    assert cfg.lmstudio.analysis_interval_cycles == 25
+    assert cfg.lmstudio.max_log_lines == 100

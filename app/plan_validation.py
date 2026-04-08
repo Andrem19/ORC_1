@@ -8,8 +8,6 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from app.plan_models import PlanStep, ResearchPlan
-from app.planner_contract import inspect_legacy_instruction, validate_tool_step
-from app.plan_symbolic_refs import has_legacy_placeholder
 
 
 # ---------------------------------------------------------------------------
@@ -20,7 +18,6 @@ HARD_ERROR_CODES = frozenset({
     "empty_instructions",
     "self_dependency",
     "unknown_dependency",
-    "legacy_placeholder",
     "ellipsis_instruction",
 })
 
@@ -194,17 +191,6 @@ def validate_plan(plan: ResearchPlan) -> PlanValidationResult:
                 )
                 continue
 
-            if has_legacy_placeholder(stripped):
-                result.errors.append(
-                    PlanValidationError(
-                        stage_number=task.stage_number,
-                        instruction_index=idx,
-                        code="legacy_placeholder",
-                        message="Legacy <...> placeholder is not allowed",
-                        offending_text=stripped,
-                    )
-                )
-
             if "..." in stripped:
                 result.errors.append(
                     PlanValidationError(
@@ -212,17 +198,6 @@ def validate_plan(plan: ResearchPlan) -> PlanValidationResult:
                         instruction_index=idx,
                         code="ellipsis_instruction",
                         message="Ellipsis is not allowed in executable instructions",
-                        offending_text=stripped,
-                    )
-                )
-
-            for violation in inspect_legacy_instruction(stripped):
-                result.errors.append(
-                    PlanValidationError(
-                        stage_number=task.stage_number,
-                        instruction_index=idx,
-                        code=violation.code,
-                        message=violation.message,
                         offending_text=stripped,
                     )
                 )
@@ -269,18 +244,6 @@ def _validate_step_contract(
             )
         )
 
-    if step.kind == "tool_call":
-        for violation in validate_tool_step(tool_name=step.tool_name, args=step.args):
-            result.errors.append(
-                PlanValidationError(
-                    stage_number=task.stage_number,
-                    instruction_index=step_index,
-                    code=violation.code,
-                    message=violation.message,
-                    offending_text=step.tool_name or step.instruction,
-                )
-            )
-
     if step.kind == "decision" and not step.decision_outputs:
         result.errors.append(
             PlanValidationError(
@@ -304,16 +267,6 @@ def _validate_step_contract(
         )
 
     for text in _step_text_surfaces(step):
-        if has_legacy_placeholder(text):
-            result.errors.append(
-                PlanValidationError(
-                    stage_number=task.stage_number,
-                    instruction_index=step_index,
-                    code="legacy_placeholder",
-                    message="Legacy <...> placeholder is not allowed",
-                    offending_text=text,
-                )
-            )
         if "..." in text:
             result.errors.append(
                 PlanValidationError(
@@ -321,16 +274,6 @@ def _validate_step_contract(
                     instruction_index=step_index,
                     code="ellipsis_instruction",
                     message="Ellipsis is not allowed in executable instructions",
-                    offending_text=text,
-                )
-            )
-        for violation in inspect_legacy_instruction(text):
-            result.errors.append(
-                PlanValidationError(
-                    stage_number=task.stage_number,
-                    instruction_index=step_index,
-                    code=violation.code,
-                    message=violation.message,
                     offending_text=text,
                 )
             )

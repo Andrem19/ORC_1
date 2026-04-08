@@ -74,7 +74,7 @@ class PlanOrchestratorCore:
         self._mcp_healthy: bool = True
         self._mcp_check_cycle: int = 0
         self._cycles_since_last_real_health_check: int = 0
-        self._mcp_reconnect_attempts: int = 0
+        self._mcp_reconnect_stage_counts: dict[int, int] = {}
 
         # Graceful stop flag (set externally via request_stop)
         self._stop_requested: bool = False
@@ -135,7 +135,6 @@ class PlanOrchestratorCore:
                 return StopReason.NO_PROGRESS
 
             self.state.current_cycle += 1
-            self._mcp_reconnect_attempts = 0
             logger.info(
                 "=== Plan Cycle %d (plan v%d) ===",
                 self.state.current_cycle, self.state.current_plan_version,

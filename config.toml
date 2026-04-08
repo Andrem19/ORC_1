@@ -42,14 +42,6 @@ You instruct workers to call these tools — you do NOT call them yourself.
 - Never repeat failed approaches: note failures in memory_update and move to a different hypothesis
 - Do NOT choose 'finish' — this research runs indefinitely
 
-## Gold Collection
-When a breakthrough is confirmed, instruct a worker to add it to the Gold Collection via gold_collection(action='add'):
-- New best strategy snapshot that outperforms the baseline
-- Newly discovered profitable feature (cf_*) that materially improves backtest results
-- Any result worth preserving as a milestone or reference point
-Example: gold_collection(action='add', entity_type='snapshot', entity_id='snapshot_id', reason='New best: Sharpe 1.2, +18% return, 600 trades, max DD 2.1%')
-Always add to Gold Collection BEFORE deploying or moving on.
-
 ## Baseline Comparison
 All improvements measured against active-signal-v1@1 (Sharpe 1.06, +13.1% return, 498 trades, max DD 2.4%).
 A genuine improvement requires simultaneous progress in PnL, trade count, AND drawdown quality."""
@@ -144,11 +136,8 @@ translate_to_russian = true
 translation_backend = "opus"
 translation_model_name = "Helsinki-NLP/opus-mt-en-ru"
 translation_model_dir = "models/opus-mt-en-ru"
-# LM Studio translation settings (used when translation_backend = "lmstudio")
-translation_lmstudio_base_url = "http://localhost:1234"
-translation_lmstudio_model = ""  # empty = use currently loaded model, e.g. "qwen3.5-9b"
-translation_lmstudio_max_tokens = 1024
-translation_lmstudio_timeout_seconds = 30
+# Translation LM Studio settings are in [lmstudio.translation] below
+# (base_url and model are inherited from [lmstudio] shared section)
 
 [mcp_review]
 enabled = true
@@ -158,20 +147,28 @@ fixes_dir = "fixes"
 planner_timeout = 180
 max_problems_in_context = 10
 
-# LM Studio report compressor — uncomment when LM Studio is running
-# [report_compressor]
-# enabled = true
-# base_url = "http://localhost:1234"
-# model = ""  # uses whatever model is loaded
-# max_tokens = 200
-# timeout_seconds = 30
-
-# LM Studio assistant — log analysis & execution prediction
+# LM Studio — shared connection & all feature settings in one place
+# When LM Studio is running, set enabled = true. All features below share base_url and model.
 [lmstudio]
-enabled = false  # true when LM Studio is running
+enabled = true
 base_url = "http://localhost:1234"
-model = ""  # empty = use currently loaded model
+model = "qwen/qwen3.5-9b"  # must match model id from /v1/models; empty = use currently loaded
+reasoning_effort = "none"   # "none" disables thinking mode for fast responses; "low"/"medium"/"high" enables it
+
+# Report compressor — summarizes worker reports for plan revision
+[lmstudio.report_compressor]
+enabled = true
+max_tokens = 300
+timeout_seconds = 30
+
+# Assistant — periodic log analysis & execution time prediction
+[lmstudio.assistant]
 analysis_interval_cycles = 50
 max_log_lines = 200
-max_tokens = 1024
+max_tokens = 2048
 timeout_seconds = 60
+
+# Translation — EN→RU when translation_backend = "lmstudio"
+[lmstudio.translation]
+max_tokens = 1024
+timeout_seconds = 30

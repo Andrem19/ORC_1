@@ -97,29 +97,6 @@ def _inject_policy_defaults(plan: ResearchPlan) -> None:
                         step.args[key] = value
 
 
-_LEGACY_PLACEHOLDER_RE = re.compile(r"<[^>]+>")
-
-
-def _strip_legacy_placeholders(plan: ResearchPlan) -> int:
-    """Remove <...> angle-bracket placeholders from step instructions.
-
-    Replaces them with a clean instruction derived from the tool call if
-    available, or a generic placeholder.  Returns the number of fixes applied.
-    """
-    fixes = 0
-    for task in plan.tasks:
-        for step in task.steps:
-            if not step.instruction or not _LEGACY_PLACEHOLDER_RE.search(step.instruction):
-                continue
-            if step.tool_name and step.args:
-                from app.planner_contract import format_step_as_tool_call
-                step.instruction = f"Execute {format_step_as_tool_call(step.tool_name, step.args)}"
-            else:
-                step.instruction = _LEGACY_PLACEHOLDER_RE.sub("[see args]", step.instruction)
-            fixes += 1
-    return fixes
-
-
 def _topological_sort_stages(tasks: list[PlanTask]) -> list[int]:
     """Return stage numbers in valid execution order based on depends_on."""
     deps_map: dict[int, set[int]] = {t.stage_number: set(t.depends_on) for t in tasks}
@@ -450,11 +427,6 @@ class PlanLifecycleMixin:
         # Auto-fill POLICY-LOCKED defaults before validation
         _inject_policy_defaults(plan)
 
-        # Auto-fix legacy <...> placeholders in instructions
-        placeholder_fixes = _strip_legacy_placeholders(plan)
-        if placeholder_fixes:
-            logger.info("Auto-fixed %d legacy placeholder(s) in plan instructions", placeholder_fixes)
-
         validation = self._validate_plan(plan)
         if not validation.is_acceptable:
             self._handle_invalid_plan(
@@ -482,6 +454,7 @@ class PlanLifecycleMixin:
         self._current_plan = plan
         self.state.current_plan_version = version
         self._stage_retry_counts.clear()
+        self._mcp_reconnect_stage_counts.clear()
         self._mcp_skip_counts.clear()
         self._persist_current_plan()
         self._clear_invalid_plan_state()

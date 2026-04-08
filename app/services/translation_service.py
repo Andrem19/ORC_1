@@ -76,11 +76,13 @@ class LMStudioTranslator:
         model: str = "",
         max_tokens: int = 1024,
         timeout_seconds: int = 30,
+        reasoning_effort: str = "",
     ) -> None:
         self._base_url = base_url
         self._model = model
         self._max_tokens = max_tokens
         self._timeout = timeout_seconds
+        self._reasoning_effort = reasoning_effort
         self._cache: OrderedDict[str, str] = OrderedDict()
         self._available_checked: bool = False
         self._available: bool = False
@@ -130,6 +132,8 @@ class LMStudioTranslator:
             "temperature": 0.3,
             "max_tokens": self._max_tokens,
         }
+        if self._reasoning_effort:
+            body["reasoning_effort"] = self._reasoning_effort
         if self._model:
             body["model"] = self._model
 
@@ -194,6 +198,7 @@ class TranslationService:
         lmstudio_model: str = "",
         lmstudio_max_tokens: int = 1024,
         lmstudio_timeout_seconds: int = 30,
+        lmstudio_reasoning_effort: str = "",
     ) -> None:
         self._translate = translate_to_russian
         self._backend = backend
@@ -210,6 +215,7 @@ class TranslationService:
                 model=lmstudio_model,
                 max_tokens=lmstudio_max_tokens,
                 timeout_seconds=lmstudio_timeout_seconds,
+                reasoning_effort=lmstudio_reasoning_effort,
             )
 
     @property

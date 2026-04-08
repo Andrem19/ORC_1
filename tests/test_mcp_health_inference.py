@@ -15,7 +15,7 @@ def _make_mixin() -> TaskHealthMixin:
     mixin._mcp_healthy = True
     mixin._mcp_check_cycle = 0
     mixin._cycles_since_last_real_health_check = 0
-    mixin._mcp_reconnect_attempts = 0
+    mixin._mcp_reconnect_stage_counts = {}
     mixin.worker_service = MagicMock()
     mixin.config = MagicMock()
     mixin.config.worker_adapter.cli_path = "test-cli"

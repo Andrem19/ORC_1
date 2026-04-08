@@ -48,7 +48,7 @@ class TestConfig:
         assert cfg.enabled is False
         assert cfg.base_url == "http://localhost:1234"
         assert cfg.model == ""
-        assert cfg.max_tokens == 200
+        assert cfg.max_tokens == 300
         assert cfg.timeout_seconds == 30
 
     def test_from_dict(self):

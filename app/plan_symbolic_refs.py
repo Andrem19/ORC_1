@@ -15,7 +15,6 @@ from app.plan_models import TaskReport
 
 SYMBOLIC_REF_PATTERN = re.compile(r"\{\{stage:(\d+)\.([A-Za-z0-9_\[\]\.-]+)\}\}")
 STEP_REF_PATTERN = re.compile(r"\{\{step:([A-Za-z_][A-Za-z0-9_-]*)\.([A-Za-z0-9_\[\]\.-]+)\}\}")
-LEGACY_PLACEHOLDER_PATTERN = re.compile(r"<[^>]+>")
 RESULTS_TABLE_FIELD_PATTERN = re.compile(r"results_table\[0\]\.([A-Za-z_][\w-]*)$")
 
 SUPPORTED_DIRECT_FIELDS = {
@@ -91,10 +90,6 @@ def extract_step_references(text: str) -> list[StepReference]:
             )
         )
     return refs
-
-
-def has_legacy_placeholder(text: str) -> bool:
-    return LEGACY_PLACEHOLDER_PATTERN.search(text) is not None
 
 
 def is_supported_symbolic_field(field: str) -> bool:

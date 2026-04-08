@@ -23,10 +23,6 @@ class NotificationConfig:
     translation_backend: str = "opus"  # "opus" (Helsinki-NLP) or "lmstudio"
     translation_model_dir: str = "models/opus-mt-en-ru"
     translation_model_name: str = "Helsinki-NLP/opus-mt-en-ru"
-    translation_lmstudio_base_url: str = "http://localhost:1234"
-    translation_lmstudio_model: str = ""  # empty = use currently loaded model
-    translation_lmstudio_max_tokens: int = 1024
-    translation_lmstudio_timeout_seconds: int = 30
     batch_enabled: bool = True  # batch worker-result notifications
     batch_debounce_seconds: float = 5.0  # wait before sending batch
 
@@ -65,24 +61,61 @@ class McpReviewConfig:
 
 @dataclass
 class ReportCompressorConfig:
-    """LM Studio config for LLM-based report compression."""
+    """LM Studio config for LLM-based report compression.
+    base_url, model, reasoning_effort are injected from LMStudioConfig at load time.
+    """
     enabled: bool = False
     base_url: str = "http://localhost:1234"
-    model: str = ""  # empty = use currently loaded model
-    max_tokens: int = 200  # enough for 2-3 sentences
+    model: str = ""  # injected from lmstudio shared
+    reasoning_effort: str = ""  # injected from lmstudio shared
+    max_tokens: int = 300
     timeout_seconds: int = 30
 
 
 @dataclass
+class LMStudioTranslationConfig:
+    """LM Studio settings for EN→RU translation (per-feature overrides)."""
+    max_tokens: int = 2048
+    timeout_seconds: int = 60
+
+
+@dataclass
+class LMStudioAssistantConfig:
+    """LM Studio settings for log analysis & execution prediction."""
+    analysis_interval_cycles: int = 50
+    max_log_lines: int = 200
+    max_tokens: int = 4096  # thinking models: reasoning ~500 + JSON content ~1000
+    timeout_seconds: int = 120
+
+
+@dataclass
 class LMStudioConfig:
-    """LM Studio assistant for log analysis and execution time prediction."""
+    """LM Studio shared connection + feature-specific settings."""
     enabled: bool = False
     base_url: str = "http://localhost:1234"
     model: str = ""  # empty = use currently loaded model
-    analysis_interval_cycles: int = 50
-    max_log_lines: int = 200
-    max_tokens: int = 1024
-    timeout_seconds: int = 60
+    reasoning_effort: str = "none"  # "none" = no thinking, "low"/"medium"/"high" = thinking
+    report_compressor: ReportCompressorConfig = field(default_factory=ReportCompressorConfig)
+    assistant: LMStudioAssistantConfig = field(default_factory=LMStudioAssistantConfig)
+    translation: LMStudioTranslationConfig = field(default_factory=LMStudioTranslationConfig)
+
+    # Legacy aliases — keep max_log_lines / analysis_interval_cycles / max_tokens / timeout_seconds
+    # accessible directly for backward compatibility with code that reads config.lmstudio.*
+    @property
+    def analysis_interval_cycles(self) -> int:
+        return self.assistant.analysis_interval_cycles
+
+    @property
+    def max_log_lines(self) -> int:
+        return self.assistant.max_log_lines
+
+    @property
+    def max_tokens(self) -> int:
+        return self.assistant.max_tokens
+
+    @property
+    def timeout_seconds(self) -> int:
+        return self.assistant.timeout_seconds
 
 
 @dataclass
@@ -163,10 +196,7 @@ class OrchestratorConfig:
     # --- MCP problem review ---
     mcp_review: McpReviewConfig = field(default_factory=McpReviewConfig)
 
-    # --- Report compression ---
-    report_compressor: ReportCompressorConfig = field(default_factory=ReportCompressorConfig)
-
-    # --- LM Studio assistant ---
+    # --- LM Studio (shared connection + report compressor + assistant + translation) ---
     lmstudio: LMStudioConfig = field(default_factory=LMStudioConfig)
 
     # --- Plan mode ---
@@ -183,6 +213,11 @@ class OrchestratorConfig:
     @property
     def state_path(self) -> Path:
         return Path(self.state_dir) / self.state_file
+
+    @property
+    def report_compressor(self) -> ReportCompressorConfig:
+        """Backward-compatible alias: config.report_compressor → config.lmstudio.report_compressor."""
+        return self.lmstudio.report_compressor
 
     def to_dict(self) -> dict[str, Any]:
         import dataclasses
@@ -228,11 +263,50 @@ def load_config_from_dict(data: dict[str, Any]) -> OrchestratorConfig:
     if "mcp_review" in data:
         cfg.mcp_review = McpReviewConfig(**data["mcp_review"])
 
-    if "report_compressor" in data:
-        cfg.report_compressor = ReportCompressorConfig(**data["report_compressor"])
-
+    # LM Studio: parse nested structure, inject shared base_url/model into features
     if "lmstudio" in data:
-        cfg.lmstudio = LMStudioConfig(**data["lmstudio"])
+        lm_data = dict(data["lmstudio"])  # shallow copy
+        # Extract sub-sections before passing to LMStudioConfig constructor
+        compressor_data = lm_data.pop("report_compressor", {})
+        assistant_data = lm_data.pop("assistant", {})
+        translation_data = lm_data.pop("translation", {})
+
+        # Legacy: flat fields that now belong to assistant sub-config
+        for flat_key in ("analysis_interval_cycles", "max_log_lines",
+                         "max_tokens", "timeout_seconds"):
+            if flat_key in lm_data and flat_key not in assistant_data:
+                assistant_data[flat_key] = lm_data.pop(flat_key)
+
+        # Also handle legacy flat fields for report_compressor
+        if "max_tokens" in lm_data and "max_tokens" not in compressor_data:
+            compressor_data.setdefault("max_tokens", lm_data.get("max_tokens"))
+
+        cfg.lmstudio = LMStudioConfig(
+            **{k: v for k, v in lm_data.items()
+               if k in ("enabled", "base_url", "model", "reasoning_effort")},
+            report_compressor=ReportCompressorConfig(
+                **compressor_data,
+                base_url=lm_data.get("base_url", "http://localhost:1234"),
+                model=lm_data.get("model", ""),
+                reasoning_effort=lm_data.get("reasoning_effort", ""),
+            ),
+            assistant=LMStudioAssistantConfig(**assistant_data),
+            translation=LMStudioTranslationConfig(**translation_data),
+        )
+
+    # Legacy: standalone [report_compressor] section (pre-reorganization)
+    if "report_compressor" in data:
+        rc = data["report_compressor"]
+        cfg.lmstudio.report_compressor = ReportCompressorConfig(
+            enabled=rc.get("enabled", cfg.lmstudio.report_compressor.enabled),
+            base_url=rc.get("base_url", cfg.lmstudio.base_url),
+            model=rc.get("model", cfg.lmstudio.model),
+            max_tokens=rc.get("max_tokens", cfg.lmstudio.report_compressor.max_tokens),
+            timeout_seconds=rc.get("timeout_seconds", cfg.lmstudio.report_compressor.timeout_seconds),
+        )
+        # If legacy report_compressor.enabled was True, enable lmstudio globally
+        if rc.get("enabled"):
+            cfg.lmstudio.enabled = True
 
     if cfg.startup_mode not in ("resume", "reset", "reset_all"):
         raise ValueError(

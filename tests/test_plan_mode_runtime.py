@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import MagicMock
@@ -526,7 +526,7 @@ def test_invalid_plan_loop_stops_after_max_attempts() -> None:
                 {
                     "stage_number": 0,
                     "stage_name": "Bad",
-                    "agent_instructions": ["backtests_runs(action='inspect', run_id='<run_id>', view='detail')"],
+                    "agent_instructions": ["backtests_runs(action='inspect', run_id='...', view='detail')"],
                     "decision_gates": [],
                     "results_table_columns": [],
                 },
@@ -649,17 +649,17 @@ def test_build_plan_repair_prompt_includes_validation_errors() -> None:
                 PlanValidationError(
                     stage_number=0,
                     instruction_index=0,
-                    code="legacy_placeholder",
-                    message="Legacy <...> placeholder is not allowed",
-                    offending_text="<run_id>",
+                    code="ellipsis_instruction",
+                    message="Ellipsis is not allowed in executable instructions",
+                    offending_text="do_something(...)...",
                 )
             ],
         )
     )
 
     assert "Repair Rules" in prompt
-    assert "legacy_placeholder" in prompt
-    assert "<run_id>" in prompt
+    assert "ellipsis_instruction" in prompt
+    assert "do_something" in prompt
 
 
 def test_plan_sleep_shortens_while_planner_running() -> None:
@@ -1262,7 +1262,7 @@ def test_timed_out_plan_task_gets_retried() -> None:
         task_id="stage-0",
         worker_id="qwen-1",
         pid=42,
-        started_at=(datetime.now(timezone.utc).replace(hour=0)).isoformat(),
+        started_at=(datetime.now(timezone.utc) - timedelta(hours=2)).isoformat(),
     )
     orch.state.processes.append(pi)
 

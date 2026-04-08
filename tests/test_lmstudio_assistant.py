@@ -8,7 +8,7 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 from typing import Any
 from unittest.mock import MagicMock
 
-from app.config import LMStudioConfig
+from app.config import LMStudioAssistantConfig, LMStudioConfig
 from app.plan_models import PlanTask, ResearchPlan
 from app.services.lmstudio_assistant import (
     ExecutionPrediction,
@@ -89,7 +89,7 @@ def _make_config(port: int) -> LMStudioConfig:
         enabled=True,
         base_url=f"http://127.0.0.1:{port}",
         model="test-model",
-        timeout_seconds=5,
+        assistant=LMStudioAssistantConfig(timeout_seconds=5),
     )
 
 

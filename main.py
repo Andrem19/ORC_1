@@ -101,7 +101,9 @@ def create_real_orchestrator(config: OrchestratorConfig) -> Orchestrator:
         logger.info("Worker adapter '%s' available (cli_path='%s')", worker_adapter.name(), config.worker_adapter.cli_path or config.worker_adapter.base_url)
 
     state_store = StateStore(config.state_path)
-    notification_service = NotificationService(config.notifications)
+    notification_service = NotificationService(
+        config.notifications, lmstudio_config=config.lmstudio,
+    )
 
     if config.lmstudio.enabled:
         logger.info(
@@ -289,12 +291,17 @@ def main() -> None:
 
         # Graceful shutdown on SIGTERM / SIGINT (3 phases)
         import signal as _signal
+        import time as _time
 
         _stop_phase = 0  # 0=running, 1=drain, 2=immediate stop, 3+=KeyboardInterrupt
+        _last_signal_time = 0.0  # debounce: suppress logs if < 2s apart
 
         def _signal_handler(signum: int, _frame: Any) -> None:
-            nonlocal _stop_phase
+            nonlocal _stop_phase, _last_signal_time
             sig_name = _signal.Signals(signum).name
+            now = _time.monotonic()
+            suppressed = (now - _last_signal_time) < 2.0
+            _last_signal_time = now
             if _stop_phase == 0:
                 # First press — enter drain mode (let running tasks finish)
                 logger.warning(
@@ -308,26 +315,35 @@ def main() -> None:
                 _stop_phase = 1
             elif _stop_phase == 1:
                 # Second press — force immediate stop
-                logger.warning("Received second %s, forcing immediate shutdown!", sig_name)
                 orch.request_stop()
                 from app.scheduler import Scheduler
                 Scheduler._wake.set()
                 _stop_phase = 2
+                if not suppressed:
+                    logger.warning(
+                        "Received second %s, forcing immediate shutdown!", sig_name,
+                    )
             else:
                 # Third+ press — hard interrupt
-                logger.warning("Received third %s, raising KeyboardInterrupt!", sig_name)
+                if not suppressed:
+                    logger.warning(
+                        "Received third %s, raising KeyboardInterrupt!", sig_name,
+                    )
                 raise KeyboardInterrupt
 
         _signal.signal(_signal.SIGTERM, _signal_handler)
         # SIGINT: first press = graceful, second press = hard stop
         _signal.signal(_signal.SIGINT, _signal_handler)
 
+        _finish_called = False
         try:
             reason = orch.run()
             logger.info("Orchestrator stopped: %s", reason.value)
         except KeyboardInterrupt:
-            logger.warning("Interrupted by user — shutting down immediately")
-            orch._finish(StopReason.NO_PROGRESS, "Interrupted by user (Ctrl+C)")
+            if not _finish_called:
+                _finish_called = True
+                logger.warning("Interrupted by user — shutting down immediately")
+                orch._finish(StopReason.NO_PROGRESS, "Interrupted by user (Ctrl+C)")
     finally:
         # Stop Rich progress display
         if config.rich_console and sys.stdout.isatty():

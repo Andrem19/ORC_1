@@ -97,6 +97,7 @@ class Orchestrator:
             self._mcp_scanner = None
 
         self.state = OrchestratorState(goal=config.goal)
+        self._finish_completed = False
         self._worker_ids = [w.worker_id for w in config.workers]
         self._next_worker_idx: int = 0
         self._research_context_text: str | None = None
@@ -621,6 +622,9 @@ class Orchestrator:
 
     def _finish(self, reason: StopReason, summary: str = "") -> None:
         """Finish orchestrator execution, collecting partial output where possible."""
+        if self._finish_completed:
+            return
+        self._finish_completed = True
         for task in self.state.active_tasks():
             if task.status != TaskStatus.RUNNING:
                 continue

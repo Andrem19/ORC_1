@@ -103,6 +103,8 @@ class ReportCompressorService:
         }
         if self.config.model:
             body["model"] = self.config.model
+        if getattr(self.config, "reasoning_effort", None):
+            body["reasoning_effort"] = self.config.reasoning_effort
 
         try:
             parsed = urlparse(self.config.base_url)

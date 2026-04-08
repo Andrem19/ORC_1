@@ -30,7 +30,6 @@ from app.plan_models import PlanStep, PlanTask, ResearchPlan, TaskReport
 from app.plan_validation import PlanValidationError, PlanValidationResult, validate_plan
 from app.services.plan_orchestrator._plan_lifecycle import (
     _inject_policy_defaults,
-    _strip_legacy_placeholders,
 )
 
 
@@ -217,12 +216,15 @@ class TestRepairConvergence:
 
 
 class TestPlaceholderAutoFix:
-    """_strip_legacy_placeholders removes <...> from instructions."""
+    """Legacy placeholder auto-fix removed — math operators in args caused false positives."""
 
-    def _make_plan_with_instruction(self, instruction: str, tool_name: str | None = None, args: dict | None = None) -> ResearchPlan:
+    def test_placeholder_check_removed(self) -> None:
+        """Verify that <...> in instructions no longer triggers any error or fix."""
         step = PlanStep(
-            step_id="s1", kind="tool_call", instruction=instruction,
-            tool_name=tool_name, args=args or {},
+            step_id="s1", kind="tool_call",
+            instruction="Test signal with threshold <0.7",
+            tool_name="backtests_strategy",
+            args={"action": "save_version"},
         )
         task = PlanTask(
             plan_version=1, stage_number=0, stage_name="test",
@@ -230,38 +232,9 @@ class TestPlaceholderAutoFix:
         )
         plan = ResearchPlan(version=1, frozen_base="x@1", goal="g")
         plan.tasks.append(task)
-        return plan
-
-    def test_strips_placeholder_with_tool_call(self) -> None:
-        plan = self._make_plan_with_instruction(
-            "Validate a feature that <does something complex>",
-            tool_name="features_custom",
-            args={"action": "validate"},
-        )
-        fixes = _strip_legacy_placeholders(plan)
-        assert fixes == 1
-        assert "<" not in plan.tasks[0].steps[0].instruction
-        assert "Execute features_custom" in plan.tasks[0].steps[0].instruction
-
-    def test_strips_placeholder_without_tool_call(self) -> None:
-        step = PlanStep(
-            step_id="s1", kind="work", instruction="Do <something> with <stuff>",
-            tool_name=None, args={},
-        )
-        task = PlanTask(
-            plan_version=1, stage_number=0, stage_name="test",
-            steps=[step], depends_on=[],
-        )
-        plan = ResearchPlan(version=1, frozen_base="x@1", goal="g")
-        plan.tasks.append(task)
-        fixes = _strip_legacy_placeholders(plan)
-        assert fixes == 1
-        assert "<" not in plan.tasks[0].steps[0].instruction
-
-    def test_no_fix_for_clean_instruction(self) -> None:
-        plan = self._make_plan_with_instruction("Clean instruction with no placeholders")
-        fixes = _strip_legacy_placeholders(plan)
-        assert fixes == 0
+        validation = validate_plan(plan)
+        # No legacy_placeholder errors — math operators are fine
+        assert not any(e.code == "legacy_placeholder" for e in validation.errors)
 
 
 # ===================================================================

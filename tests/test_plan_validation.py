@@ -437,7 +437,9 @@ def test_validate_plan_accepts_symbolic_ref_with_dependency() -> None:
     assert validation.is_valid
 
 
-def test_validate_plan_rejects_legacy_placeholder() -> None:
+def test_validate_plan_accepts_legacy_placeholder() -> None:
+    """Legacy <...> placeholders are no longer rejected — math operators like
+    <0.7 or >1.3 in signal_additions caused false positives."""
     plan = ResearchPlan(
         schema_version=2,
         version=1,
@@ -445,7 +447,7 @@ def test_validate_plan_rejects_legacy_placeholder() -> None:
         tasks=[
             PlanTask(
                 stage_number=1,
-                stage_name="Bad",
+                stage_name="Ok",
                 agent_instructions=["backtests_runs(action='inspect', run_id='<run_id>', view='detail')"],
             ),
         ],
@@ -453,8 +455,7 @@ def test_validate_plan_rejects_legacy_placeholder() -> None:
 
     validation = validate_plan(plan)
 
-    assert not validation.is_valid
-    assert validation.errors[0].code == "legacy_placeholder"
+    assert validation.is_acceptable
 
 
 def test_validate_plan_accepts_symbolic_ref_in_instructions() -> None:

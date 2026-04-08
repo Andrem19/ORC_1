@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import time as _time
 from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Any
 
@@ -102,28 +103,56 @@ class ResultProcessingMixin:
                 )
                 # Scan partial results for MCP failure indicators
                 if self._is_mcp_failure(report):
-                    if self._is_session_error(report) and self._mcp_reconnect_attempts < 2:
-                        # Transient session error — retry with fresh subprocess
-                        self._mcp_reconnect_attempts += 1
-                        task.status = TaskStatus.PENDING
-                        task.assigned_worker_id = None
-                        pt.status = TaskStatus.PENDING
-                        pt.assigned_worker_id = None
-                        pt.completed_at = None
-                        logger.info(
-                            "MCP session error on stage %d — scheduling reconnect retry "
-                            "(attempt %d/2)",
-                            stage_num, self._mcp_reconnect_attempts,
+                    if self._is_session_error(report) and self._mcp_reconnect_stage_counts.get(stage_num, 0) < 2:
+                        # Probe MCP health before retry (only when no workers active
+                        # to avoid competing for MCP stdio connection)
+                        active = self.state.active_tasks()
+                        probe_ok = True
+                        if not active:
+                            probe_ok = self.worker_service.check_mcp_health(
+                                self.config.worker_adapter.cli_path, timeout=30,
+                            )
+                            if not probe_ok:
+                                logger.warning(
+                                    "MCP health probe failed before reconnect retry "
+                                    "for stage %d — marking MCP unhealthy",
+                                    stage_num,
+                                )
+                                self._mcp_healthy = False
+                                self.state.mcp_consecutive_failures += 1
+                                # Fall through — do NOT retry
+                            else:
+                                logger.info(
+                                    "MCP health probe OK before reconnect retry "
+                                    "for stage %d",
+                                    stage_num,
+                                )
+                        if probe_ok:
+                            # Transient session error — retry with fresh subprocess
+                            self._mcp_reconnect_stage_counts[stage_num] = self._mcp_reconnect_stage_counts.get(stage_num, 0) + 1
+                            task.status = TaskStatus.PENDING
+                            task.assigned_worker_id = None
+                            pt.status = TaskStatus.PENDING
+                            pt.assigned_worker_id = None
+                            pt.completed_at = None
+                            logger.info(
+                                "MCP session error on stage %d — scheduling reconnect retry "
+                                "(attempt %d/2)%s",
+                                stage_num, self._mcp_reconnect_stage_counts[stage_num],
+                                " (probe skipped: workers active)" if active else "",
+                            )
+                            # Brief delay to allow MCP server recovery
+                            _time.sleep(5)
+                            self._persist_current_plan()
+                            continue
+                    else:
+                        self._mcp_healthy = False
+                        self.state.mcp_consecutive_failures += 1
+                        logger.warning(
+                            "MCP failure detected in partial result for stage %d — "
+                            "marking MCP unhealthy (consecutive=%d)",
+                            stage_num, self.state.mcp_consecutive_failures,
                         )
-                        self._persist_current_plan()
-                        continue
-                    self._mcp_healthy = False
-                    self.state.mcp_consecutive_failures += 1
-                    logger.warning(
-                        "MCP failure detected in partial result for stage %d — "
-                        "marking MCP unhealthy (consecutive=%d)",
-                        stage_num, self.state.mcp_consecutive_failures,
-                    )
                 # Integration validation for integration stages
                 if pt.stage_name and "integration" in pt.stage_name.lower():
                     self._check_integration_result(pt, report)

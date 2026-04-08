@@ -22,31 +22,30 @@ class TestLMStudioConfig:
         cfg = NotificationConfig()
         assert cfg.translation_backend == "opus"
 
-    def test_lmstudio_fields_defaults(self):
-        cfg = NotificationConfig()
-        assert cfg.translation_lmstudio_base_url == "http://localhost:1234"
-        assert cfg.translation_lmstudio_model == ""
-        assert cfg.translation_lmstudio_max_tokens == 1024
-        assert cfg.translation_lmstudio_timeout_seconds == 30
-
-    def test_from_dict_with_lmstudio(self):
+    def test_lmstudio_translation_via_shared_config(self):
+        """LM Studio translation params come from [lmstudio.translation] sub-config."""
         data = {
             "notifications": {
                 "enabled": True,
                 "translate_to_russian": True,
                 "translation_backend": "lmstudio",
-                "translation_lmstudio_base_url": "http://192.168.1.100:1234",
-                "translation_lmstudio_model": "qwen3.5-9b",
-                "translation_lmstudio_max_tokens": 2048,
-                "translation_lmstudio_timeout_seconds": 60,
-            }
+            },
+            "lmstudio": {
+                "enabled": True,
+                "base_url": "http://192.168.1.100:1234",
+                "model": "qwen/qwen3.5-9b",
+                "translation": {
+                    "max_tokens": 2048,
+                    "timeout_seconds": 60,
+                },
+            },
         }
         cfg = load_config_from_dict(data)
         assert cfg.notifications.translation_backend == "lmstudio"
-        assert cfg.notifications.translation_lmstudio_base_url == "http://192.168.1.100:1234"
-        assert cfg.notifications.translation_lmstudio_model == "qwen3.5-9b"
-        assert cfg.notifications.translation_lmstudio_max_tokens == 2048
-        assert cfg.notifications.translation_lmstudio_timeout_seconds == 60
+        assert cfg.lmstudio.base_url == "http://192.168.1.100:1234"
+        assert cfg.lmstudio.model == "qwen/qwen3.5-9b"
+        assert cfg.lmstudio.translation.max_tokens == 2048
+        assert cfg.lmstudio.translation.timeout_seconds == 60
 
     def test_from_dict_opus_backend(self):
         data = {
@@ -361,20 +360,24 @@ class TestTranslationServiceLMStudio:
 class TestNotificationLMStudioIntegration:
     def test_notification_service_passes_lmstudio_config(self):
         from app.services.notification_service import NotificationService
+        from app.config import LMStudioConfig, LMStudioTranslationConfig
 
         with patch.dict(os.environ, {"ALGO_BOT": "tok", "CHAT_ID": "1"}):
             cfg = NotificationConfig(
                 enabled=True,
                 translate_to_russian=True,
                 translation_backend="lmstudio",
-                translation_lmstudio_base_url="http://localhost:9999",
-                translation_lmstudio_model="qwen3.5-9b",
             )
-            svc = NotificationService(cfg)
+            lm_cfg = LMStudioConfig(
+                enabled=True,
+                base_url="http://localhost:9999",
+                model="qwen/qwen3.5-9b",
+            )
+            svc = NotificationService(cfg, lmstudio_config=lm_cfg)
             assert svc._translator._backend == "lmstudio"
             assert svc._translator._lmstudio_translator is not None
             assert svc._translator._lmstudio_translator._base_url == "http://localhost:9999"
-            assert svc._translator._lmstudio_translator._model == "qwen3.5-9b"
+            assert svc._translator._lmstudio_translator._model == "qwen/qwen3.5-9b"
 
     def test_notification_service_opus_config(self):
         from app.services.notification_service import NotificationService
