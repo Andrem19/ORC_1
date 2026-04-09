@@ -66,3 +66,8 @@ credentials.json
 # ============================================================
 .claude/
 .mcp.json
+plans
+compiled_plans
+raw_plans
+logs
+fixes

@@ -204,6 +204,33 @@ def _validate_runtime_startup(orch: Orchestrator) -> str:
     return f"Planner-worker runtime requires available adapters before startup: {', '.join(missing)}."
 
 
+def _log_plan_source_startup(config: OrchestratorConfig) -> None:
+    """Log the selected runtime plan source and obvious mismatches."""
+    logger.info(
+        "Runtime plan source: %s (raw_plan_dir=%s, compiled_plan_dir=%s)",
+        config.plan_source,
+        config.raw_plan_dir,
+        config.compiled_plan_dir,
+    )
+    compiled_root = Path(config.compiled_plan_dir)
+    raw_root = Path(config.raw_plan_dir)
+    compiled_manifests = list(compiled_root.glob("*/manifest.json")) if compiled_root.exists() else []
+    raw_files = list(raw_root.glob("*.md")) if raw_root.exists() else []
+    if config.plan_source == "planner" and compiled_manifests:
+        logger.warning(
+            "Compiled plan artifacts exist (%d manifests), but plan_source=planner so runtime will invoke the planner CLI.",
+            len(compiled_manifests),
+        )
+    if config.plan_source == "compiled_raw":
+        if not raw_files:
+            logger.warning("plan_source=compiled_raw but no raw plan files were found in %s", raw_root)
+        if not compiled_manifests:
+            logger.warning(
+                "plan_source=compiled_raw but no compiled manifests were found in %s. Run `python converter.py` first.",
+                compiled_root,
+            )
+
+
 def create_real_orchestrator(config: OrchestratorConfig) -> Orchestrator:
     """Create an orchestrator with real CLI adapters."""
     planner_adapter = create_planner_adapter(config)
@@ -412,6 +439,7 @@ def main() -> None:
             logger.error("Configured log file was not created: %s", resolved_log_path)
     if detach:
         logger.warning("--detach is ignored; orchestrator now always runs in the foreground.")
+    _log_plan_source_startup(config)
 
     # Start Rich progress display if enabled
     if config.rich_console:

@@ -37,12 +37,13 @@ class PostRunReportBuilder:
         self.run_id = run_id
         self.collector = ReportCollector(config=config, run_id=run_id)
         self.store = ReportStore(plan_root=config.plan_dir, run_id=run_id)
+        narrative_enabled = not skip_llm and config.plan_source != "compiled_raw"
         self.narrative = ReportNarrativeService(
             adapter=planner_adapter,
             timeout_seconds=config.planner_decision_timeout_seconds,
             retry_attempts=config.planner_decision_retry_attempts,
             retry_backoff_seconds=config.decision_retry_backoff_seconds,
-            enabled=not skip_llm,
+            enabled=narrative_enabled,
         )
 
     async def build(self, *, state: ExecutionStateV2) -> tuple[dict[str, Any], RunSummaryReport]:

@@ -3,7 +3,7 @@ goal = "Continuously improve automated trading strategy performance on BTCUSDT v
 # --- Plan source / runtime mode ---
 # "planner"      -> normal mode, planner generates new execution plans
 # "compiled_raw" -> plannerless mode, orchestrator executes plans produced by `python converter.py`
-plan_source = "planner"
+plan_source = "compiled_raw"
 raw_plan_dir = "raw_plans"
 compiled_plan_dir = "compiled_plans"
 compiled_queue_skip_failures = true

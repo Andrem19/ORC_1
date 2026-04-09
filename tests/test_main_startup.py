@@ -9,6 +9,7 @@ from app.config import LMStudioConfig, OrchestratorConfig
 from app.orchestrator import Orchestrator
 from main import (
     _apply_terminal_safety_defaults,
+    _log_plan_source_startup,
     _print_orchestrator_status,
     _reset_logging_before_reconfigure,
     _should_force_detach,
@@ -51,6 +52,46 @@ def test_validate_runtime_startup_accepts_missing_planner_in_compiled_raw_mode()
     orch.config.plan_source = "compiled_raw"
 
     assert _validate_runtime_startup(orch) == ""
+
+
+def test_log_plan_source_startup_warns_when_compiled_manifests_exist_but_planner_mode(tmp_path):
+    cfg = OrchestratorConfig(
+        goal="test",
+        plan_source="planner",
+        raw_plan_dir=str(tmp_path / "raw_plans"),
+        compiled_plan_dir=str(tmp_path / "compiled_plans"),
+    )
+    (tmp_path / "raw_plans").mkdir()
+    compiled_dir = tmp_path / "compiled_plans" / "plan_v1"
+    compiled_dir.mkdir(parents=True)
+    (compiled_dir / "manifest.json").write_text("{}", encoding="utf-8")
+
+    with patch("main.logger") as mock_logger:
+        _log_plan_source_startup(cfg)
+
+    info_messages = [str(call.args[0]) for call in mock_logger.info.call_args_list]
+    warning_messages = [str(call.args[0]) for call in mock_logger.warning.call_args_list]
+    assert any("Runtime plan source: %s" in message for message in info_messages)
+    assert any("runtime will invoke the planner CLI" in message for message in warning_messages)
+
+
+def test_log_plan_source_startup_warns_when_compiled_raw_has_no_manifests(tmp_path):
+    cfg = OrchestratorConfig(
+        goal="test",
+        plan_source="compiled_raw",
+        raw_plan_dir=str(tmp_path / "raw_plans"),
+        compiled_plan_dir=str(tmp_path / "compiled_plans"),
+    )
+    (tmp_path / "raw_plans").mkdir()
+    (tmp_path / "raw_plans" / "plan_v1.md").write_text("# Plan", encoding="utf-8")
+
+    with patch("main.logger") as mock_logger:
+        _log_plan_source_startup(cfg)
+
+    info_messages = [str(call.args[0]) for call in mock_logger.info.call_args_list]
+    warning_messages = [str(call.args[0]) for call in mock_logger.warning.call_args_list]
+    assert any("Runtime plan source: %s" in message for message in info_messages)
+    assert any("Run `python converter.py` first." in message for message in warning_messages)
 
 
 def test_orchestrator_initializes_without_legacy_plan_flags(tmp_path):

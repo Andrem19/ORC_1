@@ -200,6 +200,51 @@ def test_postrun_builder_emits_plan_sequence_and_run_reports(tmp_path) -> None:
     assert (Path(cfg.plan_dir) / "sequence_reports" / "compiled_plan_v1.json").exists()
 
 
+def test_postrun_builder_disables_narrative_automatically_in_compiled_raw_mode(tmp_path) -> None:
+    cfg = OrchestratorConfig(
+        goal="Test reporting",
+        state_dir=str(tmp_path / "state"),
+        plan_dir=str(tmp_path / "plans"),
+        log_dir=str(tmp_path / "logs"),
+        raw_plan_dir=str(tmp_path / "raw_plans"),
+        compiled_plan_dir=str(tmp_path / "compiled_plans"),
+        plan_source="compiled_raw",
+    )
+    plan = ExecutionPlan(
+        plan_id="compiled_plan_v1_batch_1",
+        goal="Validate route",
+        baseline_ref=BaselineRef(snapshot_id="active-signal-v1", version=1),
+        global_constraints=["keep baseline fixed"],
+        plan_source_kind="compiled_raw",
+        source_sequence_id="compiled_plan_v1",
+        source_raw_plan=str(Path(cfg.raw_plan_dir) / "plan_v1.md"),
+        slices=[],
+        status="completed",
+    )
+    state = ExecutionStateV2(
+        goal="Test reporting",
+        status="finished",
+        plans=[plan],
+        current_plan_id=plan.plan_id,
+        stop_reason="goal_reached",
+    )
+
+    builder = PostRunReportBuilder(
+        config=cfg,
+        planner_adapter=FakePlanner(responses=[]),
+        run_id="",
+        skip_llm=False,
+    )
+
+    result, run_report = asyncio.run(builder.build(state=state))
+    plan_payload = json.loads((Path(cfg.plan_dir) / "plan_reports" / f"{plan.plan_id}.json").read_text(encoding="utf-8"))
+
+    assert builder.narrative.enabled is False
+    assert run_report.narrative_status == "skipped"
+    assert plan_payload["narrative_status"] == "skipped"
+    assert Path(result["run_report_json"]).exists()
+
+
 def test_postrun_builder_renders_russian_fallback_markdown(tmp_path) -> None:
     cfg = OrchestratorConfig(
         goal="Test reporting",
