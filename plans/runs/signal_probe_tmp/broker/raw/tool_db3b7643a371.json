@@ -1,0 +1,193 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\n  \"status\": \"ok\",\n  \"message\": \"Signal API binding inspect payload loaded.\",\n  \"tool_name\": \"signal_api_binding_inspect\",\n  \"request_id\": \"5\",\n  \"correlation_id\": \"5\",\n  \"server_session_id\": \"fd4d5755270e42029fe186ece371b3cb\",\n  \"response_generated_at\": \"2026-04-09T13:04:40.344537+00:00\",\n  \"data\": {\n    \"binding_present\": true,\n    \"snapshot_ref\": \"active-signal-v1@1\",\n    \"active_binding\": {\n      \"snapshot_id\": \"active-signal-v1\",\n      \"version\": 1,\n      \"symbol\": \"BTCUSDT\",\n      \"anchor_timeframe\": \"1h\",\n      \"execution_timeframe\": \"5m\",\n      \"context_path_override\": null,\n      \"notes\": \"Restored from v13 Pack C — returning to default active-signal-v1\",\n      \"updated_at\": \"2026-04-05T13:11:54.663383+00:00\"\n    },\n    \"readiness\": {\n      \"ready\": true,\n      \"issues\": [],\n      \"warnings\": []\n    },\n    \"storage_ref\": {\n      \"active_snapshot_state_path\": \"/home/ubuntu/FOUNDATION/artifacts/signal_api/active_snapshot.json\"\n    },\n    \"summary\": \"Loaded active signal-api binding for active-signal-v1@1.\",\n    \"important_warnings\": [],\n    \"next_recommended_actions\": [\n      \"Use signal_api_binding_apply to replace the current live snapshot binding.\",\n      \"Use backtests_plan when the current binding is not ready and needs more backtest-side investigation.\",\n      \"Use features_dataset or features_custom(action='publish') if readiness reports missing runtime feature artifacts.\"\n    ],\n    \"raw_refs\": [],\n    \"raw_tool_hints\": [],\n    \"details\": {\n      \"active_binding\": {\n        \"snapshot_id\": \"active-signal-v1\",\n        \"version\": 1,\n        \"symbol\": \"BTCUSDT\",\n        \"anchor_timeframe\": \"1h\",\n        \"execution_timeframe\": \"5m\",\n        \"context_path_override\": null,\n        \"notes\": \"Restored from v13 Pack C — returning to default active-signal-v1\",\n        \"updated_at\": \"2026-04-05T13:11:54.663383+00:00\"\n      },\n      \"snapshot_ref\": \"active-signal-v1@1\",\n      \"readiness\": {\n        \"ready\": true,\n        \"issues\": [],\n        \"warnings\": []\n      },\n      \"storage_ref\": {\n        \"active_snapshot_state_path\": \"/home/ubuntu/FOUNDATION/artifacts/signal_api/active_snapshot.json\"\n      },\n      \"snapshot_detail\": {\n        \"snapshot_id\": \"active-signal-v1\",\n        \"version\": 1,\n        \"name\": \"Active Signal v1\",\n        \"description\": \"System snapshot migrated from the historical active_signal runtime strategy.\",\n        \"enabled_signals\": [\n          {\n            \"signal_id\": \"feature-long\",\n            \"direction\": \"long\",\n            \"execution_profile_id\": \"long-default\",\n            \"priority\": 100\n          },\n          {\n            \"signal_id\": \"feature-short\",\n            \"direction\": \"short\",\n            \"execution_profile_id\": \"short-default\",\n            \"priority\": 100\n          }\n        ],\n        \"execution_profiles\": [\n          {\n            \"execution_profile_id\": null,\n            \"direction\": null,\n            \"take_profit_pct\": 0.05,\n            \"stop_loss_pct\": 0.03,\n            \"max_duration_bars\": null,\n            \"notional_usd\": 1000.0\n          },\n          {\n            \"execution_profile_id\": null,\n            \"direction\": null,\n            \"take_profit_pct\": 0.05,\n            \"stop_loss_pct\": 0.01,\n            \"max_duration_bars\": null,\n            \"notional_usd\": 1000.0\n          }\n        ],\n        \"feature_source\": {\n          \"source_kind\": \"managed_feature_dataset\",\n          \"symbol\": null,\n          \"anchor_timeframe\": \"1h\",\n          \"source_path\": \"/home/ubuntu/MARKET_DATA/_crypto_data/features/binance/um/BTCUSDT/1h/features.parquet\",\n          \"field_names\": [\n            \"atr_1\",\n            \"cl_15m\",\n            \"cl_1d\",\n            \"cl_1h\",\n            \"cl_4h\",\n            \"dow\",\n            \"hour\",\n            \"iv_est\",\n            \"iv_est_1\",\n            \"rsi\",\n            \"rsi_1\"\n          ]\n        }\n      },\n      \"recent_saved_runs\": [\n        {\n          \"run_id\": \"20260409-125851-07b99d24\",\n          \"started_at\": \"2026-04-09T12:59:02.393553+00:00\",\n          \"status\": \"completed\",\n          \"symbol\": \"BTCUSDT\",\n          \"execution_timeframe\": \"5m\",\n          \"net_pnl\": 10.416301395955799,\n          \"return_pct\": 1.0416301395955798,\n          \"total_trades\": 1,\n          \"max_drawdown_pct\": 0.0\n        },\n        {\n          \"run_id\": \"20260409-125733-396729a4\",\n          \"started_at\": \"2026-04-09T12:57:43.740194+00:00\",\n          \"status\": \"completed\",\n          \"symbol\": \"BTCUSDT\",\n          \"execution_timeframe\": \"5m\",\n          \"net_pnl\": 10.416301395955799,\n          \"return_pct\": 1.0416301395955798,\n          \"total_trades\": 1,\n          \"max_drawdown_pct\": 0.0\n        },\n        {\n          \"run_id\": \"20260409-125620-8c9a1311\",\n          \"started_at\": \"2026-04-09T12:56:30.847701+00:00\",\n          \"status\": \"completed\",\n          \"symbol\": \"BTCUSDT\",\n          \"execution_timeframe\": \"5m\",\n          \"net_pnl\": 10.416301395955799,\n          \"return_pct\": 1.0416301395955798,\n          \"total_trades\": 1,\n          \"max_drawdown_pct\": 0.0\n        },\n        {\n          \"run_id\": \"20260409-125447-51fc3e9b\",\n          \"started_at\": \"2026-04-09T12:54:56.657991+00:00\",\n          \"status\": \"completed\",\n          \"symbol\": \"BTCUSDT\",\n          \"execution_timeframe\": \"5m\",\n          \"net_pnl\": 10.416301395955799,\n          \"return_pct\": 1.0416301395955798,\n          \"total_trades\": 1,\n          \"max_drawdown_pct\": 0.0\n        },\n        {\n          \"run_id\": \"20260409-125336-84d7293b\",\n          \"started_at\": \"2026-04-09T12:53:46.647398+00:00\",\n          \"status\": \"completed\",\n          \"symbol\": \"BTCUSDT\",\n          \"execution_timeframe\": \"5m\",\n          \"net_pnl\": 10.416301395955799,\n          \"return_pct\": 1.0416301395955798,\n          \"total_trades\": 1,\n          \"max_drawdown_pct\": 0.0\n        }\n      ],\n      \"signal_probe_contract\": {\n        \"runtime_reads_active_binding\": true,\n        \"http_endpoint\": \"GET /signal\",\n        \"binding_mutation_surface\": \"signal_api_binding_apply\",\n        \"note\": \"The localhost signal runtime reads the active binding artifact and does not expose a public HTTP mutation endpoint.\"\n      }\n    }\n  },\n  \"warnings\": [],\n  \"refs\": [],\n  \"error\": null\n}"
+    }
+  ],
+  "structuredContent": {
+    "status": "ok",
+    "message": "Signal API binding inspect payload loaded.",
+    "tool_name": "signal_api_binding_inspect",
+    "request_id": "5",
+    "correlation_id": "5",
+    "server_session_id": "fd4d5755270e42029fe186ece371b3cb",
+    "response_generated_at": "2026-04-09T13:04:40.344537+00:00",
+    "data": {
+      "binding_present": true,
+      "snapshot_ref": "active-signal-v1@1",
+      "active_binding": {
+        "snapshot_id": "active-signal-v1",
+        "version": 1,
+        "symbol": "BTCUSDT",
+        "anchor_timeframe": "1h",
+        "execution_timeframe": "5m",
+        "context_path_override": null,
+        "notes": "Restored from v13 Pack C — returning to default active-signal-v1",
+        "updated_at": "2026-04-05T13:11:54.663383+00:00"
+      },
+      "readiness": {
+        "ready": true,
+        "issues": [],
+        "warnings": []
+      },
+      "storage_ref": {
+        "active_snapshot_state_path": "/home/ubuntu/FOUNDATION/artifacts/signal_api/active_snapshot.json"
+      },
+      "summary": "Loaded active signal-api binding for active-signal-v1@1.",
+      "important_warnings": [],
+      "next_recommended_actions": [
+        "Use signal_api_binding_apply to replace the current live snapshot binding.",
+        "Use backtests_plan when the current binding is not ready and needs more backtest-side investigation.",
+        "Use features_dataset or features_custom(action='publish') if readiness reports missing runtime feature artifacts."
+      ],
+      "raw_refs": [],
+      "raw_tool_hints": [],
+      "details": {
+        "active_binding": {
+          "snapshot_id": "active-signal-v1",
+          "version": 1,
+          "symbol": "BTCUSDT",
+          "anchor_timeframe": "1h",
+          "execution_timeframe": "5m",
+          "context_path_override": null,
+          "notes": "Restored from v13 Pack C — returning to default active-signal-v1",
+          "updated_at": "2026-04-05T13:11:54.663383+00:00"
+        },
+        "snapshot_ref": "active-signal-v1@1",
+        "readiness": {
+          "ready": true,
+          "issues": [],
+          "warnings": []
+        },
+        "storage_ref": {
+          "active_snapshot_state_path": "/home/ubuntu/FOUNDATION/artifacts/signal_api/active_snapshot.json"
+        },
+        "snapshot_detail": {
+          "snapshot_id": "active-signal-v1",
+          "version": 1,
+          "name": "Active Signal v1",
+          "description": "System snapshot migrated from the historical active_signal runtime strategy.",
+          "enabled_signals": [
+            {
+              "signal_id": "feature-long",
+              "direction": "long",
+              "execution_profile_id": "long-default",
+              "priority": 100
+            },
+            {
+              "signal_id": "feature-short",
+              "direction": "short",
+              "execution_profile_id": "short-default",
+              "priority": 100
+            }
+          ],
+          "execution_profiles": [
+            {
+              "execution_profile_id": null,
+              "direction": null,
+              "take_profit_pct": 0.05,
+              "stop_loss_pct": 0.03,
+              "max_duration_bars": null,
+              "notional_usd": 1000.0
+            },
+            {
+              "execution_profile_id": null,
+              "direction": null,
+              "take_profit_pct": 0.05,
+              "stop_loss_pct": 0.01,
+              "max_duration_bars": null,
+              "notional_usd": 1000.0
+            }
+          ],
+          "feature_source": {
+            "source_kind": "managed_feature_dataset",
+            "symbol": null,
+            "anchor_timeframe": "1h",
+            "source_path": "/home/ubuntu/MARKET_DATA/_crypto_data/features/binance/um/BTCUSDT/1h/features.parquet",
+            "field_names": [
+              "atr_1",
+              "cl_15m",
+              "cl_1d",
+              "cl_1h",
+              "cl_4h",
+              "dow",
+              "hour",
+              "iv_est",
+              "iv_est_1",
+              "rsi",
+              "rsi_1"
+            ]
+          }
+        },
+        "recent_saved_runs": [
+          {
+            "run_id": "20260409-125851-07b99d24",
+            "started_at": "2026-04-09T12:59:02.393553+00:00",
+            "status": "completed",
+            "symbol": "BTCUSDT",
+            "execution_timeframe": "5m",
+            "net_pnl": 10.416301395955799,
+            "return_pct": 1.0416301395955798,
+            "total_trades": 1,
+            "max_drawdown_pct": 0.0
+          },
+          {
+            "run_id": "20260409-125733-396729a4",
+            "started_at": "2026-04-09T12:57:43.740194+00:00",
+            "status": "completed",
+            "symbol": "BTCUSDT",
+            "execution_timeframe": "5m",
+            "net_pnl": 10.416301395955799,
+            "return_pct": 1.0416301395955798,
+            "total_trades": 1,
+            "max_drawdown_pct": 0.0
+          },
+          {
+            "run_id": "20260409-125620-8c9a1311",
+            "started_at": "2026-04-09T12:56:30.847701+00:00",
+            "status": "completed",
+            "symbol": "BTCUSDT",
+            "execution_timeframe": "5m",
+            "net_pnl": 10.416301395955799,
+            "return_pct": 1.0416301395955798,
+            "total_trades": 1,
+            "max_drawdown_pct": 0.0
+          },
+          {
+            "run_id": "20260409-125447-51fc3e9b",
+            "started_at": "2026-04-09T12:54:56.657991+00:00",
+            "status": "completed",
+            "symbol": "BTCUSDT",
+            "execution_timeframe": "5m",
+            "net_pnl": 10.416301395955799,
+            "return_pct": 1.0416301395955798,
+            "total_trades": 1,
+            "max_drawdown_pct": 0.0
+          },
+          {
+            "run_id": "20260409-125336-84d7293b",
+            "started_at": "2026-04-09T12:53:46.647398+00:00",
+            "status": "completed",
+            "symbol": "BTCUSDT",
+            "execution_timeframe": "5m",
+            "net_pnl": 10.416301395955799,
+            "return_pct": 1.0416301395955798,
+            "total_trades": 1,
+            "max_drawdown_pct": 0.0
+          }
+        ],
+        "signal_probe_contract": {
+          "runtime_reads_active_binding": true,
+          "http_endpoint": "GET /signal",
+          "binding_mutation_surface": "signal_api_binding_apply",
+          "note": "The localhost signal runtime reads the active binding artifact and does not expose a public HTTP mutation endpoint."
+        }
+      }
+    },
+    "warnings": [],
+    "refs": [],
+    "error": null
+  },
+  "isError": false
+}

@@ -1,0 +1,180 @@
+{
+  "plan_id": "compiled_plan_v5_batch_1",
+  "goal": "Построить custom features, обучить CatBoost long/short модели, прогнать OOS backtests и доказать additive value над базой active-signal-v1.",
+  "baseline_ref": {
+    "snapshot_id": "active-signal-v1",
+    "version": 1,
+    "symbol": "BTCUSDT",
+    "anchor_timeframe": "1h",
+    "execution_timeframe": "5m"
+  },
+  "global_constraints": [
+    "baseline active-signal-v1@1 is immutable and must never be modified",
+    "all features must be causally clean — no future leakage at any stage",
+    "train / selection OOS / lockbox split must be frozen before any model training begins",
+    "purge gap of 24h between consecutive windows is mandatory",
+    "long and short models must be trained independently",
+    "thresholds must be selected and frozen before lockbox is opened",
+    "every model sleeve must receive a terminal decision: PROMOTE, WATCHLIST, or REJECT",
+    "no black-box acceptance — feature importance and SHAP must be recorded for every trained model"
+  ],
+  "slices": [
+    {
+      "slice_id": "compiled_plan_v5_stage_1",
+      "title": "Старт v5 и фиксация model-research discipline",
+      "hypothesis": "Открыть новый research cycle v5 и зафиксировать строгую дисциплину: immutable reference, research axes, anti-leakage rules.",
+      "objective": "Открыть новый research cycle v5 и зафиксировать строгую дисциплину: immutable reference, research axes, anti-leakage rules.",
+      "success_criteria": [
+        "project_id создан",
+        "immutable reference зафиксирована",
+        "research_map axes определены",
+        "anti-leakage rules записаны"
+      ],
+      "allowed_tools": [
+        "research_project"
+      ],
+      "evidence_requirements": [
+        "project_id создан",
+        "immutable reference зафиксирована",
+        "research_map axes определены",
+        "anti-leakage rules записаны"
+      ],
+      "policy_tags": [
+        "setup",
+        "cheap_first"
+      ],
+      "max_turns": 4,
+      "max_tool_calls": 4,
+      "max_expensive_calls": 0,
+      "parallel_slot": 1,
+      "status": "pending",
+      "turn_count": 0,
+      "tool_call_count": 0,
+      "expensive_call_count": 0,
+      "assigned_worker_id": null,
+      "last_checkpoint_turn_id": "",
+      "last_checkpoint_summary": "",
+      "final_report_turn_id": "",
+      "last_error": "",
+      "last_summary": "",
+      "latest_tool_result_summary": "",
+      "active_operation_tool": "",
+      "active_operation_ref": "",
+      "active_operation_status": "",
+      "active_operation_arguments": {},
+      "active_resume_tool": "",
+      "active_resume_token": "",
+      "last_tool_response_status": "",
+      "artifacts": [],
+      "facts": {}
+    },
+    {
+      "slice_id": "compiled_plan_v5_stage_2",
+      "title": "Feature contract для новых custom features",
+      "hypothesis": "Перевести все planned custom feature ideas в строгий причинный contract с описанием, lookback, side bias и интерпретацией.",
+      "objective": "Перевести все planned custom feature ideas в строгий причинный contract с описанием, lookback, side bias и интерпретацией.",
+      "success_criteria": [
+        "полный feature contract по всем planned features заполнен",
+        "causality_checked и lookback_fixed подтверждены для каждой feature"
+      ],
+      "allowed_tools": [
+        "features_catalog",
+        "features_custom",
+        "features_dataset",
+        "features_analytics",
+        "research_project"
+      ],
+      "evidence_requirements": [
+        "полный feature contract по всем planned features заполнен",
+        "causality_checked и lookback_fixed подтверждены для каждой feature"
+      ],
+      "policy_tags": [
+        "setup",
+        "cheap_first"
+      ],
+      "max_turns": 4,
+      "max_tool_calls": 4,
+      "max_expensive_calls": 0,
+      "parallel_slot": 1,
+      "status": "pending",
+      "turn_count": 0,
+      "tool_call_count": 0,
+      "expensive_call_count": 0,
+      "assigned_worker_id": null,
+      "last_checkpoint_turn_id": "",
+      "last_checkpoint_summary": "",
+      "final_report_turn_id": "",
+      "last_error": "",
+      "last_summary": "",
+      "latest_tool_result_summary": "",
+      "active_operation_tool": "",
+      "active_operation_ref": "",
+      "active_operation_status": "",
+      "active_operation_arguments": {},
+      "active_resume_tool": "",
+      "active_resume_token": "",
+      "last_tool_response_status": "",
+      "artifacts": [],
+      "facts": {}
+    },
+    {
+      "slice_id": "compiled_plan_v5_stage_3",
+      "title": "Валидация, публикация и materialization custom features",
+      "hypothesis": "Сделать feature set реально доступным: валидировать, опубликовать, materialize и проверить покрытие без утечек.",
+      "objective": "Сделать feature set реально доступным: валидировать, опубликовать, materialize и проверить покрытие без утечек.",
+      "success_criteria": [
+        "все selected features materialized",
+        "общий modeling frame готов",
+        "no_leakage_detected = true",
+        "coverage_ok для всех features"
+      ],
+      "allowed_tools": [
+        "features_custom",
+        "datasets",
+        "datasets_sync",
+        "datasets_preview",
+        "events",
+        "events_sync",
+        "features_catalog",
+        "features_dataset",
+        "research_project"
+      ],
+      "evidence_requirements": [
+        "все selected features materialized",
+        "общий modeling frame готов",
+        "no_leakage_detected = true",
+        "coverage_ok для всех features"
+      ],
+      "policy_tags": [
+        "data_engineering"
+      ],
+      "max_turns": 4,
+      "max_tool_calls": 4,
+      "max_expensive_calls": 0,
+      "parallel_slot": 1,
+      "status": "pending",
+      "turn_count": 0,
+      "tool_call_count": 0,
+      "expensive_call_count": 0,
+      "assigned_worker_id": null,
+      "last_checkpoint_turn_id": "",
+      "last_checkpoint_summary": "",
+      "final_report_turn_id": "",
+      "last_error": "",
+      "last_summary": "",
+      "latest_tool_result_summary": "",
+      "active_operation_tool": "",
+      "active_operation_ref": "",
+      "active_operation_status": "",
+      "active_operation_arguments": {},
+      "active_resume_tool": "",
+      "active_resume_token": "",
+      "last_tool_response_status": "",
+      "artifacts": [],
+      "facts": {}
+    }
+  ],
+  "status": "draft",
+  "created_at": "2026-04-09T14:22:54.023132+00:00",
+  "updated_at": "2026-04-09T14:22:54.023134+00:00"
+}

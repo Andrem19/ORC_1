@@ -1,0 +1,125 @@
+{
+  "plan_id": "plan_2026-04-09_orthogonal_features_v1",
+  "plan_source_kind": "planner",
+  "source_sequence_id": "",
+  "source_raw_plan": "",
+  "status": "running",
+  "started_at": "2026-04-09T12:18:07.016343+00:00",
+  "finished_at": "2026-04-09T12:19:05.407211+00:00",
+  "duration_ms": 58390,
+  "baseline_ref": {
+    "snapshot_id": "active-signal-v1",
+    "version": 1,
+    "symbol": "BTCUSDT",
+    "anchor_timeframe": "1h",
+    "execution_timeframe": "5m"
+  },
+  "global_constraints": [
+    "keep 1h/5m timeframes fixed",
+    "do not retune baseline thresholds",
+    "every slice must start with cheap data-availability discovery before any feature engineering",
+    "new features must target signal regimes the baseline misses: sentiment, order-flow, and cross-timeframe divergence",
+    "no slice may assume a feature family or dataset exists without first confirming via catalog or preview"
+  ],
+  "slice_results": [
+    {
+      "slice_id": "slice_1_funding_sentiment",
+      "title": "Funding rate and open-interest sentiment features",
+      "status": "checkpointed",
+      "verdict": "PENDING",
+      "summary": "Feature analytics action completed.",
+      "facts": {},
+      "key_metrics": {},
+      "findings": [],
+      "rejected_findings": [],
+      "next_actions": [],
+      "risks": [],
+      "evidence_refs": [],
+      "confidence": 0.0,
+      "artifacts": [],
+      "last_error": "",
+      "incident_refs": [],
+      "report_path": ""
+    },
+    {
+      "slice_id": "slice_2_volume_microstructure",
+      "title": "Volume delta and trade-intensity microstructure features",
+      "status": "checkpointed",
+      "verdict": "PENDING",
+      "summary": "Datasets payload loaded.",
+      "facts": {},
+      "key_metrics": {},
+      "findings": [],
+      "rejected_findings": [],
+      "next_actions": [],
+      "risks": [],
+      "evidence_refs": [],
+      "confidence": 0.0,
+      "artifacts": [
+        "/home/ubuntu/MARKET_DATA/_crypto_data"
+      ],
+      "last_error": "",
+      "incident_refs": [],
+      "report_path": ""
+    },
+    {
+      "slice_id": "slice_3_cross_tf_divergence",
+      "title": "Cross-timeframe momentum and volatility divergence features",
+      "status": "checkpointed",
+      "verdict": "PENDING",
+      "summary": "Custom feature contract loaded. validate requires [description, code, symbol, timeframe] publish requires [name, description, code, symbol, timeframe].",
+      "facts": {},
+      "key_metrics": {},
+      "findings": [],
+      "rejected_findings": [],
+      "next_actions": [],
+      "risks": [],
+      "evidence_refs": [],
+      "confidence": 0.0,
+      "artifacts": [],
+      "last_error": "",
+      "incident_refs": [],
+      "report_path": ""
+    }
+  ],
+  "tool_usage_summary": {
+    "total_calls": 5,
+    "tools": {
+      "features_catalog": 2,
+      "features_analytics": 1,
+      "datasets": 1,
+      "features_custom": 1
+    },
+    "failed_calls": 0,
+    "retryable_failures": 0,
+    "total_duration_ms": 1438
+  },
+  "incident_summary": [],
+  "warnings": [
+    "shift_audit_stale:feature_fingerprint,dataset_fingerprint",
+    "narrative:narrative_generation_disabled"
+  ],
+  "final_verdict": "PENDING",
+  "final_summary": "Feature analytics action completed. | Datasets payload loaded. | Custom feature contract loaded. validate requires [description, code, symbol, timeframe] publish requires [name, description, code, symbol, timeframe].",
+  "next_actions": [],
+  "artifacts": [
+    "/home/ubuntu/MARKET_DATA/_crypto_data"
+  ],
+  "stop_reason": "graceful_stop",
+  "supporting_paths": {
+    "plan_json": "plans/runs/20260409T121624Z-ec03817d/plans/plan_2026-04-09_orthogonal_features_v1.json",
+    "slice_report_dir": "plans/runs/20260409T121624Z-ec03817d/reports/plan_2026-04-09_orthogonal_features_v1",
+    "worker_failure_dir": "plans/runs/20260409T121624Z-ec03817d/worker_failures/plan_2026-04-09_orthogonal_features_v1",
+    "report_json": "plans/runs/20260409T121624Z-ec03817d/plan_reports/plan_2026-04-09_orthogonal_features_v1.json",
+    "report_md": "plans/runs/20260409T121624Z-ec03817d/plan_reports/plan_2026-04-09_orthogonal_features_v1.md"
+  },
+  "narrative_status": "skipped",
+  "narrative_sections_ru": {
+    "executive_summary_ru": "",
+    "key_findings_ru": [],
+    "important_failures_ru": [],
+    "recommended_next_actions_ru": [],
+    "operator_notes_ru": []
+  },
+  "generated_at": "2026-04-09T15:27:08.712211+00:00"
+}

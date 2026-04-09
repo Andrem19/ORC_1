@@ -1,0 +1,73 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\n  \"status\": \"ok\",\n  \"message\": \"Experiment use-case registry loaded.\",\n  \"tool_name\": \"experiments_registry_inspect\",\n  \"request_id\": \"50\",\n  \"correlation_id\": \"50\",\n  \"server_session_id\": \"e71ae3223f614c80b0655f06cba7ad68\",\n  \"response_generated_at\": \"2026-04-09T13:06:52.783666+00:00\",\n  \"data\": {\n    \"view\": \"summary\",\n    \"project_id\": \"experiments-use-case-registry\",\n    \"total_runs_with_task_metadata\": 1,\n    \"top_repeated_tasks\": [\n      {\n        \"task_fingerprint\": \"c1f7ce7042711293\",\n        \"task_summary\": \"Live broker coverage experiment cycle 1\",\n        \"normalized_task_summary\": \"live broker coverage experiment cycle 1\",\n        \"count\": 1,\n        \"distinct_days\": 1,\n        \"first_seen\": \"2026-04-09T13:06:21.687089+00:00\",\n        \"last_seen\": \"2026-04-09T13:06:21.687089+00:00\",\n        \"categories\": [\n          \"validation\"\n        ],\n        \"tags\": [],\n        \"example_job_ids\": [\n          \"20260409-130621-e6335e91\"\n        ],\n        \"example_job_names\": [\n          \"coverage_experiment_live_coverage_07f4453564_1\"\n        ],\n        \"current_job_statuses\": [\n          \"completed\"\n        ],\n        \"status\": \"watch\",\n        \"recommended_facade_rationale\": \"Keep watching this repeated task until it crosses the candidate threshold.\"\n      }\n    ],\n    \"category_distribution\": {\n      \"validation\": 1\n    },\n    \"unclassified_share\": {\n      \"count\": 0,\n      \"fraction\": 0.0\n    },\n    \"recent_candidate_count\": 0,\n    \"important_warnings\": [],\n    \"next_recommended_actions\": [\n      \"Use experiments_registry_inspect(view='candidates') to review repeated tasks that may deserve a dedicated facade.\",\n      \"Use experiments_run(action='start') with a clear task_summary for the next ad-hoc analysis job.\"\n    ],\n    \"recommended_follow_up_tool\": null,\n    \"state_summary\": {},\n    \"exact_next_call_examples\": [],\n    \"raw_refs\": [\n      \"system_raw_call(tool_name='research_memory_nodes_add')\"\n    ],\n    \"raw_tool_hints\": [],\n    \"summary\": \"Loaded the experiments_run use-case registry.\"\n  },\n  \"warnings\": [],\n  \"refs\": [],\n  \"error\": null\n}"
+    }
+  ],
+  "structuredContent": {
+    "status": "ok",
+    "message": "Experiment use-case registry loaded.",
+    "tool_name": "experiments_registry_inspect",
+    "request_id": "50",
+    "correlation_id": "50",
+    "server_session_id": "e71ae3223f614c80b0655f06cba7ad68",
+    "response_generated_at": "2026-04-09T13:06:52.783666+00:00",
+    "data": {
+      "view": "summary",
+      "project_id": "experiments-use-case-registry",
+      "total_runs_with_task_metadata": 1,
+      "top_repeated_tasks": [
+        {
+          "task_fingerprint": "c1f7ce7042711293",
+          "task_summary": "Live broker coverage experiment cycle 1",
+          "normalized_task_summary": "live broker coverage experiment cycle 1",
+          "count": 1,
+          "distinct_days": 1,
+          "first_seen": "2026-04-09T13:06:21.687089+00:00",
+          "last_seen": "2026-04-09T13:06:21.687089+00:00",
+          "categories": [
+            "validation"
+          ],
+          "tags": [],
+          "example_job_ids": [
+            "20260409-130621-e6335e91"
+          ],
+          "example_job_names": [
+            "coverage_experiment_live_coverage_07f4453564_1"
+          ],
+          "current_job_statuses": [
+            "completed"
+          ],
+          "status": "watch",
+          "recommended_facade_rationale": "Keep watching this repeated task until it crosses the candidate threshold."
+        }
+      ],
+      "category_distribution": {
+        "validation": 1
+      },
+      "unclassified_share": {
+        "count": 0,
+        "fraction": 0.0
+      },
+      "recent_candidate_count": 0,
+      "important_warnings": [],
+      "next_recommended_actions": [
+        "Use experiments_registry_inspect(view='candidates') to review repeated tasks that may deserve a dedicated facade.",
+        "Use experiments_run(action='start') with a clear task_summary for the next ad-hoc analysis job."
+      ],
+      "recommended_follow_up_tool": null,
+      "state_summary": {},
+      "exact_next_call_examples": [],
+      "raw_refs": [
+        "system_raw_call(tool_name='research_memory_nodes_add')"
+      ],
+      "raw_tool_hints": [],
+      "summary": "Loaded the experiments_run use-case registry."
+    },
+    "warnings": [],
+    "refs": [],
+    "error": null
+  },
+  "isError": false
+}

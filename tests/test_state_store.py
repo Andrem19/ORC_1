@@ -1,19 +1,11 @@
-"""Tests for state persistence."""
+"""Tests for minimal legacy state utility used by reset/archive paths."""
 
 import json
 import tempfile
 from pathlib import Path
 
-from app.models import (
-    MemoryEntry,
-    OrchestratorState,
-    PlannerDecision,
-    StopReason,
-    Task,
-    TaskResult,
-    TaskStatus,
-    ProcessInfo,
-)
+from app.plan_models import PlanReport
+from app.models import BrokeredOrchestratorState, OrchestratorState, StopReason, TaskResult
 from app.state_store import StateStore
 
 
@@ -35,31 +27,37 @@ def test_save_and_load_empty():
     assert loaded.current_cycle == 0
 
 
-def test_save_and_load_with_tasks():
+def test_orchestrator_state_alias_points_to_brokered_state():
+    state = OrchestratorState(goal="test goal")
+
+    assert isinstance(state, BrokeredOrchestratorState)
+
+def test_save_and_load_with_results_only():
     store, path = _tmp_store()
     state = OrchestratorState(goal="test")
-    task = Task(description="Do something", status=TaskStatus.RUNNING)
-    task.mark_waiting_result()
-    state.add_task(task)
-
     result = TaskResult(
-        task_id=task.task_id,
+        task_id="t1",
         worker_id="w1",
         status="success",
         summary="Done",
+        plan_report=PlanReport(
+            task_id="t1",
+            plan_id="p1",
+            plan_version=1,
+            worker_id="w1",
+            status="success",
+            what_was_done="Done",
+        ),
     )
     state.results.append(result)
-    state.last_planner_decision = PlannerDecision.LAUNCH_WORKER
     store.save(state)
 
     loaded = store.load()
     assert loaded is not None
-    assert len(loaded.tasks) == 1
-    assert loaded.tasks[0].status == TaskStatus.WAITING_RESULT
-    assert loaded.tasks[0].description == "Do something"
     assert len(loaded.results) == 1
     assert loaded.results[0].summary == "Done"
-    assert loaded.last_planner_decision == PlannerDecision.LAUNCH_WORKER
+    assert loaded.results[0].plan_report is not None
+    assert loaded.results[0].plan_report.plan_version == 1
 
 
 def test_load_nonexistent():
@@ -83,20 +81,6 @@ def test_clear():
     assert not path.exists()
 
 
-def test_state_memory_persistence():
-    store, path = _tmp_store()
-    state = OrchestratorState(goal="test")
-    state.add_memory(MemoryEntry(content="Important note", source="planner"))
-    state.add_memory(MemoryEntry(content="Worker result", source="worker:w1"))
-    store.save(state)
-
-    loaded = store.load()
-    assert loaded is not None
-    assert len(loaded.memory) == 2
-    assert loaded.memory[0].content == "Important note"
-    assert loaded.memory[1].source == "worker:w1"
-
-
 def test_state_stop_reason_persistence():
     store, path = _tmp_store()
     state = OrchestratorState(goal="test")
@@ -107,13 +91,59 @@ def test_state_stop_reason_persistence():
     assert loaded is not None
     assert loaded.stop_reason == StopReason.GOAL_REACHED
 
-
-def test_state_process_info():
+def test_save_refreshes_state_timestamps():
     store, path = _tmp_store()
     state = OrchestratorState(goal="test")
-    state.processes.append(ProcessInfo(task_id="t1", worker_id="w1", pid=12345))
+    original_updated_at = state.updated_at
+
     store.save(state)
 
+    loaded = json.loads(path.read_text(encoding="utf-8"))
+    assert loaded["updated_at"] >= original_updated_at
+    assert loaded["last_change_at"] is not None
+
+
+def test_save_trims_large_result_raw_output():
+    store, path = _tmp_store()
+    state = OrchestratorState(goal="test")
+    raw = "x" * 50000
+    state.results.append(
+        TaskResult(
+            task_id="t1",
+            worker_id="w1",
+            status="error",
+            raw_output=raw,
+            plan_report=PlanReport(
+                task_id="t1",
+                plan_id="p1",
+                plan_version=1,
+                worker_id="w1",
+                status="error",
+                raw_output=raw,
+            ),
+        )
+    )
+
+    store.save(state)
+
+    loaded = json.loads(path.read_text(encoding="utf-8"))
+    saved = loaded["results"][0]
+    assert len(saved["raw_output"]) <= 24000
+    assert len(saved["plan_report"]["raw_output"]) <= 24000
+
+def test_state_store_uses_run_scoped_pointer():
+    tmp = Path(tempfile.mkdtemp())
+    path = tmp / "state.json"
+    store = StateStore(path, run_id="run-123")
+    state = OrchestratorState(goal="test")
+
+    store.save(state)
+
+    pointer = json.loads(path.read_text(encoding="utf-8"))
+    assert pointer["pointer_type"] == "run_state"
+    run_state_path = Path(pointer["state_path"])
+    assert run_state_path.exists()
+
     loaded = store.load()
-    assert len(loaded.processes) == 1
-    assert loaded.processes[0].pid == 12345
+    assert loaded is not None
+    assert loaded.goal == "test"

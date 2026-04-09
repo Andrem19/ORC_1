@@ -1,0 +1,42 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\n  \"status\": \"error\",\n  \"message\": \"Unknown experiment artifact: summary.json\",\n  \"tool_name\": \"experiments_read\",\n  \"request_id\": \"35\",\n  \"correlation_id\": \"35\",\n  \"server_session_id\": \"e71ae3223f614c80b0655f06cba7ad68\",\n  \"response_generated_at\": \"2026-04-09T13:06:23.026152+00:00\",\n  \"data\": null,\n  \"warnings\": [],\n  \"refs\": [],\n  \"error\": {\n    \"code\": \"not_found\",\n    \"error_type\": \"not_found\",\n    \"message\": \"Unknown experiment artifact: summary.json\",\n    \"retryable\": false,\n    \"remediation\": \"Verify the supplied identifier against the latest MCP discovery output.\",\n    \"suggested_next_step\": \"Refresh the relevant list or guide tool and retry with a valid id.\",\n    \"details\": {\n      \"tool\": \"experiments_read\",\n      \"classification\": \"agent_contract_misuse\",\n      \"correlation_id\": \"35\",\n      \"request_id\": \"35\",\n      \"server_session_id\": \"e71ae3223f614c80b0655f06cba7ad68\",\n      \"debug_context_available\": true,\n      \"recommended_debug_tools\": [\n        \"system_debug_recent_events\",\n        \"system_logs\"\n      ],\n      \"log_service_hint\": \"mcp_server\"\n    }\n  }\n}"
+    }
+  ],
+  "structuredContent": {
+    "status": "error",
+    "message": "Unknown experiment artifact: summary.json",
+    "tool_name": "experiments_read",
+    "request_id": "35",
+    "correlation_id": "35",
+    "server_session_id": "e71ae3223f614c80b0655f06cba7ad68",
+    "response_generated_at": "2026-04-09T13:06:23.026152+00:00",
+    "data": null,
+    "warnings": [],
+    "refs": [],
+    "error": {
+      "code": "not_found",
+      "error_type": "not_found",
+      "message": "Unknown experiment artifact: summary.json",
+      "retryable": false,
+      "remediation": "Verify the supplied identifier against the latest MCP discovery output.",
+      "suggested_next_step": "Refresh the relevant list or guide tool and retry with a valid id.",
+      "details": {
+        "tool": "experiments_read",
+        "classification": "agent_contract_misuse",
+        "correlation_id": "35",
+        "request_id": "35",
+        "server_session_id": "e71ae3223f614c80b0655f06cba7ad68",
+        "debug_context_available": true,
+        "recommended_debug_tools": [
+          "system_debug_recent_events",
+          "system_logs"
+        ],
+        "log_service_hint": "mcp_server"
+      }
+    }
+  },
+  "isError": false
+}

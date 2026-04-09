@@ -24,23 +24,9 @@ from app.models import OrchestratorEvent
 
 EVENT_STYLES: dict[OrchestratorEvent, tuple[Style, str]] = {
     OrchestratorEvent.STARTED:         (Style(color="green", bold=True),          "STARTED"),
-    OrchestratorEvent.CONFIG_LOADED:   (Style(color="cyan", dim=True),            "CONFIG"),
     OrchestratorEvent.STATE_RESTORED:  (Style(color="cyan"),                      "RESTORED"),
     OrchestratorEvent.STATE_SAVED:     (Style(dim=True),                          "SAVED"),
-    OrchestratorEvent.PLANNER_CALLED:  (Style(color="magenta", bold=True),        "PLANNER"),
-    OrchestratorEvent.PLANNER_RESULT:  (Style(color="yellow", bold=True),         "RESULT"),
-    OrchestratorEvent.PLANNER_ERROR:   (Style(color="red", bold=True),            "PLAN_ERR"),
-    OrchestratorEvent.WORKER_LAUNCHED: (Style(color="blue", bold=True),           "LAUNCHED"),
-    OrchestratorEvent.WORKER_COMPLETED:(Style(color="green", bold=True),          "COMPLETED"),
-    OrchestratorEvent.WORKER_FAILED:   (Style(color="red"),                       "FAILED"),
-    OrchestratorEvent.WORKER_TIMED_OUT:(Style(color="red"),                       "TIMEOUT"),
-    OrchestratorEvent.WORKER_STOPPED:  (Style(color="yellow"),                    "STOPPED"),
-    OrchestratorEvent.NEW_RESULT:      (Style(color="cyan"),                      "RESULT"),
-    OrchestratorEvent.NO_CHANGE:       (Style(dim=True),                          "IDLE"),
-    OrchestratorEvent.SLEEPING:        (Style(color="blue", dim=True),            "SLEEP"),
     OrchestratorEvent.FINISHED:        (Style(color="green", bold=True),          "FINISHED"),
-    OrchestratorEvent.ERROR:           (Style(color="red", bold=True),            "ERROR"),
-    OrchestratorEvent.RESTART_RECOVERY:(Style(color="yellow"),                    "RECOVERY"),
 }
 
 # Reverse lookup: bracket tag string → OrchestratorEvent
@@ -52,26 +38,22 @@ _TAG_TO_EVENT: dict[str, OrchestratorEvent] = {e.value: e for e in OrchestratorE
 
 _LOGGER_GROUP: list[tuple[str, str, Style]] = [
     # (prefix_match, display_tag, style)  — first match wins
+    ("orchestrator.brokered",            "SLICE",    Style(color="green")),
+    ("orchestrator.broker.transport",    "BROKER",   Style(color="yellow", dim=True)),
+    ("orchestrator.broker",              "TOOL",     Style(color="yellow")),
     ("orchestrator.plan",                "PLAN",     Style(color="magenta")),
-    ("orchestrator.planner_service",     "PLAN_SVC", Style(color="magenta")),
     ("orchestrator.adapter.claude",      "CLAUDE",   Style(color="yellow")),
     ("orchestrator.adapter.qwen",        "QWEN",     Style(color="blue")),
     ("orchestrator.adapter.lmstudio",    "LMSTUD",   Style(color="blue")),
     ("orchestrator.adapter.fake_worker", "FAKE_W",   Style(color="blue")),
     ("orchestrator.adapter.fake_planner","FAKE_P",   Style(color="blue")),
-    ("orchestrator.worker_service",      "WORKER",   Style(color="cyan")),
-    ("orchestrator.task_supervisor",     "SUPER",    Style(color="cyan")),
-    ("orchestrator.scheduler",           "SCHED",    Style(color="blue", dim=True)),
     ("orchestrator.notifications",       "TELEGRAM", Style(color="green")),
     ("orchestrator.translation",         "TRANSL",   Style(dim=True)),
     ("orchestrator.state",               "STATE",    Style(dim=True)),
     ("orchestrator.plan_store",          "PLAN_IO",  Style(color="magenta", dim=True)),
-    ("orchestrator.mcp_problem_scanner", "MCP_SCAN", Style(color="red")),
-    ("orchestrator.mcp_problem_store",   "MCP_IO",   Style(color="red", dim=True)),
     ("orchestrator.research_context",    "RESEARCH", Style(color="cyan", dim=True)),
     ("orchestrator.pid_lock",            "PID",      Style(dim=True)),
     ("orchestrator.reset",               "RESET",    Style(color="yellow", dim=True)),
-    ("orchestrator.memory_service",      "MEMORY",   Style(dim=True)),
 ]
 
 

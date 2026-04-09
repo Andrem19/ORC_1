@@ -1,0 +1,16 @@
+{
+  "source_file": "raw_plans/plan_v9.md",
+  "source_hash": "a0caa5fbcf15d619c0fd73bb12956c798e8df611b49013c38fda0eb0574d2790",
+  "sequence_id": "compiled_plan_v9",
+  "compile_status": "compiled",
+  "parser_confidence": 0.95,
+  "semantic_method": "llm",
+  "stage_count": 11,
+  "compiled_plan_count": 4,
+  "warnings": [
+    "План содержит разветвлённую gated-логику: stage_8/9 (успех) и stage_10 (фейл primary) — взаимоисключающие ветки.",
+    "Этапы 8–10 являются условными; финальный вердикт (stage_11) должен аккумулировать результаты из реально пройденной ветки."
+  ],
+  "errors": [],
+  "compiled_at": "2026-04-09T14:30:46.474472+00:00"
+}

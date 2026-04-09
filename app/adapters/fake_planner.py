@@ -1,7 +1,7 @@
 """
 Fake planner adapter for testing and demo.
 
-Simulates planner decisions without calling any real CLI.
+Simulates markdown planner responses without calling any real CLI.
 """
 
 from __future__ import annotations
@@ -21,7 +21,7 @@ class FakePlanner(BaseAdapter):
 
     def __init__(
         self,
-        responses: list[dict[str, Any]] | None = None,
+        responses: list[Any] | None = None,
         delay: float = 0.01,
     ) -> None:
         self.responses = responses or []
@@ -45,15 +45,39 @@ class FakePlanner(BaseAdapter):
             resp = self.responses[self._call_index]
             self._call_index += 1
         else:
-            # Default: finish
             resp = {
-                "decision": "finish",
-                "reason": "No more scripted responses",
-                "should_finish": True,
-                "final_summary": "Fake planner finished all scripted responses.",
+                "plan_id": "plan_demo",
+                "goal": "Default fake planner output",
+                "baseline_ref": {
+                    "snapshot_id": "active-signal-v1",
+                    "version": 1,
+                    "symbol": "BTCUSDT",
+                    "anchor_timeframe": "1h",
+                    "execution_timeframe": "5m",
+                },
+                "global_constraints": [
+                    "keep baseline fixed",
+                    "use cheap validation first",
+                ],
+                "slices": [
+                    {
+                        "slice_id": "slice_demo",
+                        "title": "Demo validation",
+                        "hypothesis": "default fake slice can be completed",
+                        "objective": "produce one brokered action flow",
+                        "success_criteria": ["one final report emitted"],
+                        "allowed_tools": ["system_health"],
+                        "evidence_requirements": ["one structured conclusion"],
+                        "policy_tags": ["cheap_first"],
+                        "max_turns": 2,
+                        "max_tool_calls": 1,
+                        "max_expensive_calls": 0,
+                        "parallel_slot": 1,
+                    }
+                ],
             }
 
-        output = json.dumps(resp)
+        output = resp if isinstance(resp, str) else json.dumps(resp)
         return AdapterResponse(
             success=True,
             raw_output=output,
@@ -71,13 +95,38 @@ class FakePlanner(BaseAdapter):
             self._call_index += 1
         else:
             resp = {
-                "decision": "finish",
-                "reason": "No more scripted responses",
-                "should_finish": True,
-                "final_summary": "Fake planner finished all scripted responses.",
+                "plan_id": "plan_demo",
+                "goal": "Default fake planner output",
+                "baseline_ref": {
+                    "snapshot_id": "active-signal-v1",
+                    "version": 1,
+                    "symbol": "BTCUSDT",
+                    "anchor_timeframe": "1h",
+                    "execution_timeframe": "5m",
+                },
+                "global_constraints": [
+                    "keep baseline fixed",
+                    "use cheap validation first",
+                ],
+                "slices": [
+                    {
+                        "slice_id": "slice_demo",
+                        "title": "Demo validation",
+                        "hypothesis": "default fake slice can be completed",
+                        "objective": "produce one brokered action flow",
+                        "success_criteria": ["one final report emitted"],
+                        "allowed_tools": ["system_health"],
+                        "evidence_requirements": ["one structured conclusion"],
+                        "policy_tags": ["cheap_first"],
+                        "max_turns": 2,
+                        "max_tool_calls": 1,
+                        "max_expensive_calls": 0,
+                        "parallel_slot": 1,
+                    }
+                ],
             }
 
-        self._pending_response = json.dumps(resp)
+        self._pending_response = resp if isinstance(resp, str) else json.dumps(resp)
         return ProcessHandle(
             process=None,
             task_id=kwargs.get("task_id", "planner"),

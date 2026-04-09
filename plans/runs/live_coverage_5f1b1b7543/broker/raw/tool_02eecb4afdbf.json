@@ -1,0 +1,60 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\n  \"status\": \"ok\",\n  \"message\": \"Research map payload loaded.\",\n  \"tool_name\": \"research_map\",\n  \"request_id\": \"139\",\n  \"correlation_id\": \"139\",\n  \"server_session_id\": \"364b8f3a7df24b48bee3c8912a3bd3c7\",\n  \"response_generated_at\": \"2026-04-09T12:58:28.097532+00:00\",\n  \"data\": {\n    \"action\": \"inspect\",\n    \"project_id\": \"coverage-project-live-coverage-5f1b1b7543-3-6861c275\",\n    \"view\": \"summary\",\n    \"initialized\": false,\n    \"dimensions\": [],\n    \"state_summary\": {\n      \"atlas_defined\": false,\n      \"coverage_gap_count\": 0,\n      \"active_violation_count\": 0\n    },\n    \"important_warnings\": [],\n    \"next_recommended_actions\": [\n      \"Define the atlas dimensions before trying to record mapped hypotheses or attempts.\"\n    ],\n    \"recommended_follow_up_tool\": \"research_map\",\n    \"exact_next_call_examples\": [\n      {\n        \"tool\": \"research_map\",\n        \"arguments\": {\n          \"action\": \"define\",\n          \"project_id\": \"coverage-project-live-coverage-5f1b1b7543-3-6861c275\",\n          \"dimensions\": [\n            {\n              \"name\": \"market_regime\",\n              \"axis_type\": \"categorical\",\n              \"values\": [\n                \"trend\",\n                \"range\"\n              ]\n            }\n          ]\n        }\n      }\n    ],\n    \"raw_refs\": [],\n    \"raw_tool_hints\": [],\n    \"summary\": \"Completed research map action inspect.\"\n  },\n  \"warnings\": [],\n  \"refs\": [],\n  \"error\": null\n}"
+    }
+  ],
+  "structuredContent": {
+    "status": "ok",
+    "message": "Research map payload loaded.",
+    "tool_name": "research_map",
+    "request_id": "139",
+    "correlation_id": "139",
+    "server_session_id": "364b8f3a7df24b48bee3c8912a3bd3c7",
+    "response_generated_at": "2026-04-09T12:58:28.097532+00:00",
+    "data": {
+      "action": "inspect",
+      "project_id": "coverage-project-live-coverage-5f1b1b7543-3-6861c275",
+      "view": "summary",
+      "initialized": false,
+      "dimensions": [],
+      "state_summary": {
+        "atlas_defined": false,
+        "coverage_gap_count": 0,
+        "active_violation_count": 0
+      },
+      "important_warnings": [],
+      "next_recommended_actions": [
+        "Define the atlas dimensions before trying to record mapped hypotheses or attempts."
+      ],
+      "recommended_follow_up_tool": "research_map",
+      "exact_next_call_examples": [
+        {
+          "tool": "research_map",
+          "arguments": {
+            "action": "define",
+            "project_id": "coverage-project-live-coverage-5f1b1b7543-3-6861c275",
+            "dimensions": [
+              {
+                "name": "market_regime",
+                "axis_type": "categorical",
+                "values": [
+                  "trend",
+                  "range"
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "raw_refs": [],
+      "raw_tool_hints": [],
+      "summary": "Completed research map action inspect."
+    },
+    "warnings": [],
+    "refs": [],
+    "error": null
+  },
+  "isError": false
+}

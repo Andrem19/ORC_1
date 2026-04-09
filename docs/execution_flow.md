@@ -1,110 +1,90 @@
 # Execution Flow
 
+## Canonical Runtime
+
+The orchestrator now has one execution model only:
+
+1. Start one planner request.
+2. Planner returns one markdown plan.
+3. Dispatch that plan to one worker.
+4. Keep asking the planner for more plans until the current wave reaches `min(3, len(workers), max_concurrent_plan_tasks)`.
+5. Wait until every dispatched plan in the wave reaches a terminal state.
+6. Aggregate the wave results and ask the planner for the next wave.
+
+There is no legacy dual-runtime planner branch anymore.
+
 ## Startup
 
-1. Orchestrator initializes with config
-2. Attempts to load saved state from `state/state.json`
-3. If state exists and has running tasks → marks them as STALLED (subprocesses died)
-4. Saves updated state
-5. Enters main loop
+1. Load `config.toml`
+2. Build planner and worker adapters
+3. Fail fast if either adapter is unavailable
+4. Load persisted state and mark stale in-flight tasks as stalled
+5. Restore saved plans, reports, planner runs, and wave summaries from `plan_dir`
+6. Enter the polling loop
 
-## Main Loop
+## Per-Cycle Loop
 
-```
+```text
 while True:
-    cycle++
-    
-    1. Collect results
-       - For each WAITING_RESULT task, call worker adapter
-       - Parse output, check for duplicates
-       - Handle result (complete/fail task)
-    
-    2. Decide: call planner?
-       - YES if: first cycle, new results, pending tasks with no active workers,
-         or all tasks settled (need next move)
-       - NO if: active workers still running, nothing changed
-    
-    3. If calling planner:
-       a. Build concise prompt (goal + memory + state + new results)
-       b. Call planner adapter (Claude CLI)
-       c. Parse JSON response into PlannerOutput
-       d. Execute decision:
-          - launch_worker: create task, set WAITING_RESULT
-          - wait: do nothing
-          - retry_worker: find failed task, reset and reassign
-          - stop_worker: cancel tasks for specified worker
-          - reassign_task: move task to different worker
-          - finish: exit loop
-       e. If WAIT decision: increment empty_cycles
-    
-    4. If NOT calling planner:
-       - Increment empty_cycles
-    
-    5. Check stop conditions:
-       - total_errors >= max_errors_total → STOP
-       - empty_cycles >= max_empty_cycles → STOP
-       - planner decided FINISH → STOP
-    
-    6. Save state to disk
-    
-    7. Sleep for poll_interval_seconds
+    cycle += 1
+    collect worker results
+    process plan reports
+    if planner is running:
+        read streamed planner output
+        classify thinking_only / tool_use_detected / visible_text_started
+        retry compact -> strict when needed
+    dispatch pending plans to idle workers
+    if current wave is complete:
+        finalize wave summary
+    if planner idle and current wave still filling:
+        request next plan slot
+    save state
+    sleep
 ```
 
-## When Planner Is Called
+## Planner Contract
 
-| Condition | Why |
-|---|---|
-| First cycle (cycle 0) | Need initial plan |
-| New results arrived | Need to decide what's next |
-| Pending tasks, no active workers | Need to assign work |
-| All tasks done/failed | Need next move or finish |
+The planner returns plain markdown only.
 
-## When Planner Is NOT Called
+Required shape:
 
-| Condition | Why |
-|---|---|
-| Active workers still running | Nothing to decide yet |
-| No new results, no pending tasks | Waiting for in-flight work |
+- Starts with `# Plan vN`
+- Includes Status and Frame, Goal, Baseline, Research Principles, and dev_space1 Capabilities
+- Includes 3-5 `## ETAP N: ...` sections
+- Each ETAP contains concrete MCP tool steps, completion criteria, and a result-table template
 
-## Planner Decision Outcomes
+## Worker Contract
 
-### `launch_worker`
-Creates a new Task, assigns it to a worker, sets status to WAITING_RESULT. Next cycle, the worker service will execute this task.
+Each worker executes one markdown plan and returns one JSON report with:
 
-### `wait`
-Does nothing. Increments empty_cycles. Useful when workers are expected to produce results soon.
+- `status`
+- `what_was_requested`
+- `what_was_done`
+- `results_table`
+- `key_metrics`
+- `artifacts`
+- `verdict`
+- `confidence`
+- `error`
+- `mcp_problems`
 
-### `retry_worker`
-Finds the most recently failed task, resets it (increments attempt counter), and sets status to WAITING_RESULT with optionally updated instructions.
+## Persistence
 
-### `stop_worker`
-Cancels all active tasks for the specified worker. Used when a worker is stuck or misbehaving.
+Canonical artifacts inside `plan_dir`:
 
-### `reassign_task`
-Moves an active/stalled task to a different worker with optionally updated instructions.
+- `plan_vN.md`
+- `plan_vN_meta.json`
+- `reports/plan_vN_report.json`
+- `waves/wave_N.json`
+- `planner_runs/*.json`
+- `cumulative_findings.txt`
 
-### `finish`
-Exits the main loop. The orchestrator saves final state and returns the stop reason.
+## Restart Recovery
 
-## Sleep Behavior
+On restart:
 
-- Default: `poll_interval_seconds` (300s = 5 minutes)
-- During sleep, no model calls are made — zero token cost
-- After wake, orchestrator checks state before deciding whether to call planner
-
-## State Saving
-
-- State is saved after every cycle
-- Uses atomic writes (temp file + rename) to prevent corruption
-- State includes: all tasks, results, memory, error counts, cycle count, planner decisions
-
-## Recovery After Restart
-
-When the orchestrator process restarts:
-
-1. Load state from disk
-2. Any task that was RUNNING or WAITING_RESULT → marked STALLED
-3. STALLED tasks are treated like FAILED tasks by the planner
-4. Planner can decide to retry, reassign, or finish
-5. No duplicate tasks are created
-6. Memory is preserved from previous run
+1. State is loaded from disk.
+2. Tasks left in `RUNNING` or `WAITING_RESULT` are marked stalled.
+3. Persisted plan metadata is restored.
+4. Plans left in `running` are reopened as `pending` so they can be dispatched again.
+5. The current wave is resumed or reconstructed from saved plan metadata.

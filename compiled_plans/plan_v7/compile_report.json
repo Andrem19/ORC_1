@@ -1,0 +1,15 @@
+{
+  "source_file": "raw_plans/plan_v7.md",
+  "source_hash": "50047c8ea7fe63bf16bf9495c6650924453fc99241a6855b73f138a0d41ba9eb",
+  "sequence_id": "compiled_plan_v7",
+  "compile_status": "compiled",
+  "parser_confidence": 0.95,
+  "semantic_method": "llm",
+  "stage_count": 11,
+  "compiled_plan_count": 4,
+  "warnings": [
+    "parse_confidence=0.95: plan written in Russian with mixed terminology; semantic mapping is inferred"
+  ],
+  "errors": [],
+  "compiled_at": "2026-04-09T14:26:06.296898+00:00"
+}

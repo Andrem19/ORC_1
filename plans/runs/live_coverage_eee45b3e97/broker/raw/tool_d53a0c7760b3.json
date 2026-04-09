@@ -1,0 +1,83 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\n  \"status\": \"ok\",\n  \"message\": \"Experiment artifact data loaded.\",\n  \"tool_name\": \"experiments_read\",\n  \"request_id\": \"32\",\n  \"correlation_id\": \"32\",\n  \"server_session_id\": \"96b060c9f65e465fb4836340e9d955d7\",\n  \"response_generated_at\": \"2026-04-09T13:27:50.770971+00:00\",\n  \"data\": {\n    \"view\": \"list\",\n    \"job_id\": \"20260409-132749-429dfe3c\",\n    \"artifacts_dir\": \"/home/ubuntu/FOUNDATION/artifacts/experiments/20260409-132749-429dfe3c/artifacts\",\n    \"path_scope\": \"server_runtime\",\n    \"path_scope_note\": \"Filesystem paths refer to the MCP server runtime host, not a shared client workspace path.\",\n    \"artifacts\": [\n      {\n        \"relative_path\": \"manifest.json\",\n        \"path\": \"/home/ubuntu/FOUNDATION/artifacts/experiments/20260409-132749-429dfe3c/manifest.json\",\n        \"size_bytes\": 1366,\n        \"mime_type\": \"application/json\"\n      },\n      {\n        \"relative_path\": \"script.py\",\n        \"path\": \"/home/ubuntu/FOUNDATION/artifacts/experiments/20260409-132749-429dfe3c/script.py\",\n        \"size_bytes\": 130,\n        \"mime_type\": \"text/x-python\"\n      },\n      {\n        \"relative_path\": \"stdout.log\",\n        \"path\": \"/home/ubuntu/FOUNDATION/artifacts/experiments/20260409-132749-429dfe3c/stdout.log\",\n        \"size_bytes\": 0,\n        \"mime_type\": null\n      },\n      {\n        \"relative_path\": \"stderr.log\",\n        \"path\": \"/home/ubuntu/FOUNDATION/artifacts/experiments/20260409-132749-429dfe3c/stderr.log\",\n        \"size_bytes\": 0,\n        \"mime_type\": null\n      }\n    ],\n    \"important_warnings\": [],\n    \"next_recommended_actions\": [\n      \"Use experiments_read(view='json') or experiments_read(view='text') to open one artifact.\",\n      \"Use experiments_inspect(view='result') to inspect the structured experiment result payload.\"\n    ],\n    \"recommended_follow_up_tool\": null,\n    \"state_summary\": {},\n    \"exact_next_call_examples\": [\n      {\n        \"tool\": \"experiments_read\",\n        \"arguments\": {\n          \"view\": \"json\",\n          \"job_id\": \"20260409-132749-429dfe3c\",\n          \"artifact_path\": \"analysis/report.json\"\n        }\n      },\n      {\n        \"tool\": \"experiments_inspect\",\n        \"arguments\": {\n          \"view\": \"result\",\n          \"job_id\": \"20260409-132749-429dfe3c\"\n        }\n      }\n    ],\n    \"raw_refs\": [\n      \"system_raw_call(tool_name='experiments_jobs_list_artifacts')\"\n    ],\n    \"raw_tool_hints\": [],\n    \"summary\": \"Loaded artifacts for experiment job 20260409-132749-429dfe3c.\"\n  },\n  \"warnings\": [],\n  \"refs\": [],\n  \"error\": null\n}"
+    }
+  ],
+  "structuredContent": {
+    "status": "ok",
+    "message": "Experiment artifact data loaded.",
+    "tool_name": "experiments_read",
+    "request_id": "32",
+    "correlation_id": "32",
+    "server_session_id": "96b060c9f65e465fb4836340e9d955d7",
+    "response_generated_at": "2026-04-09T13:27:50.770971+00:00",
+    "data": {
+      "view": "list",
+      "job_id": "20260409-132749-429dfe3c",
+      "artifacts_dir": "/home/ubuntu/FOUNDATION/artifacts/experiments/20260409-132749-429dfe3c/artifacts",
+      "path_scope": "server_runtime",
+      "path_scope_note": "Filesystem paths refer to the MCP server runtime host, not a shared client workspace path.",
+      "artifacts": [
+        {
+          "relative_path": "manifest.json",
+          "path": "/home/ubuntu/FOUNDATION/artifacts/experiments/20260409-132749-429dfe3c/manifest.json",
+          "size_bytes": 1366,
+          "mime_type": "application/json"
+        },
+        {
+          "relative_path": "script.py",
+          "path": "/home/ubuntu/FOUNDATION/artifacts/experiments/20260409-132749-429dfe3c/script.py",
+          "size_bytes": 130,
+          "mime_type": "text/x-python"
+        },
+        {
+          "relative_path": "stdout.log",
+          "path": "/home/ubuntu/FOUNDATION/artifacts/experiments/20260409-132749-429dfe3c/stdout.log",
+          "size_bytes": 0,
+          "mime_type": null
+        },
+        {
+          "relative_path": "stderr.log",
+          "path": "/home/ubuntu/FOUNDATION/artifacts/experiments/20260409-132749-429dfe3c/stderr.log",
+          "size_bytes": 0,
+          "mime_type": null
+        }
+      ],
+      "important_warnings": [],
+      "next_recommended_actions": [
+        "Use experiments_read(view='json') or experiments_read(view='text') to open one artifact.",
+        "Use experiments_inspect(view='result') to inspect the structured experiment result payload."
+      ],
+      "recommended_follow_up_tool": null,
+      "state_summary": {},
+      "exact_next_call_examples": [
+        {
+          "tool": "experiments_read",
+          "arguments": {
+            "view": "json",
+            "job_id": "20260409-132749-429dfe3c",
+            "artifact_path": "analysis/report.json"
+          }
+        },
+        {
+          "tool": "experiments_inspect",
+          "arguments": {
+            "view": "result",
+            "job_id": "20260409-132749-429dfe3c"
+          }
+        }
+      ],
+      "raw_refs": [
+        "system_raw_call(tool_name='experiments_jobs_list_artifacts')"
+      ],
+      "raw_tool_hints": [],
+      "summary": "Loaded artifacts for experiment job 20260409-132749-429dfe3c."
+    },
+    "warnings": [],
+    "refs": [],
+    "error": null
+  },
+  "isError": false
+}

@@ -1,0 +1,18 @@
+{
+  "source_file": "raw_plans/plan_v10.md",
+  "source_hash": "cee9cc01154021ea83e17fd744fe59593037d39a81537ac1a284ed1fb2d81c9b",
+  "compiled_at": "2026-04-09T14:32:33.478220+00:00",
+  "sequence_id": "compiled_plan_v10",
+  "compile_status": "compiled",
+  "warnings": [
+    "Plan is densely cross-referenced with v9 results; any change to v9 data artifacts after stage_1 may invalidate downstream stages.",
+    "Label families must be frozen before stage_5; any post-freeze label change requires restarting from stage_4."
+  ],
+  "semantic_method": "llm",
+  "plan_files": [
+    "plans/compiled_plan_v10_batch_1.json",
+    "plans/compiled_plan_v10_batch_2.json",
+    "plans/compiled_plan_v10_batch_3.json",
+    "plans/compiled_plan_v10_batch_4.json"
+  ]
+}

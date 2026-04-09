@@ -1,7 +1,7 @@
 """
 Fake worker adapter for testing and demo.
 
-Simulates worker results without calling any real CLI.
+Simulates canonical worker plan reports without calling any real CLI.
 """
 
 from __future__ import annotations
@@ -47,14 +47,15 @@ class FakeWorker(BaseAdapter):
             resp = self.responses[self._call_index]
             self._call_index += 1
         else:
-            # Default: success with generic summary
             resp = {
-                "status": "success",
-                "summary": f"Fake worker {self.worker_id} completed task.",
+                "type": "final_report",
+                "summary": f"Fake worker {self.worker_id} completed the assigned slice.",
+                "verdict": "WATCHLIST",
+                "facts": {"worker_id": self.worker_id},
                 "artifacts": [],
-                "next_hint": "",
+                "key_metrics": {},
                 "confidence": 0.9,
-                "error": "",
+                "reportable_issues": [],
             }
 
         output = json.dumps(resp)
@@ -75,12 +76,14 @@ class FakeWorker(BaseAdapter):
             self._call_index += 1
         else:
             resp = {
-                "status": "success",
-                "summary": f"Fake worker {self.worker_id} completed task.",
+                "type": "final_report",
+                "summary": f"Fake worker {self.worker_id} completed the assigned slice.",
+                "verdict": "WATCHLIST",
+                "facts": {"worker_id": self.worker_id},
                 "artifacts": [],
-                "next_hint": "",
+                "key_metrics": {},
                 "confidence": 0.9,
-                "error": "",
+                "reportable_issues": [],
             }
 
         self._pending_response = json.dumps(resp)

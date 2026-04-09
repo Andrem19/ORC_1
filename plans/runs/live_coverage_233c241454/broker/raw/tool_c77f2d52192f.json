@@ -1,0 +1,71 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\n  \"status\": \"ok\",\n  \"message\": \"Research record operation loaded.\",\n  \"tool_name\": \"research_record\",\n  \"request_id\": \"23\",\n  \"correlation_id\": \"23\",\n  \"server_session_id\": \"ea6edc17d94a4f0daf97ea812d05abc2\",\n  \"response_generated_at\": \"2026-04-09T13:30:47.510070+00:00\",\n  \"data\": {\n    \"mode\": \"research_record\",\n    \"wait\": \"started\",\n    \"wait_timeout\": false,\n    \"wait_satisfied\": true,\n    \"wait_satisfied_by_status\": \"running_compute\",\n    \"final_status\": \"running_compute\",\n    \"is_terminal\": false,\n    \"resume_tool\": \"research_record\",\n    \"resume_arguments\": {\n      \"action\": \"status\",\n      \"operation_id\": \"1278f7920778\"\n    },\n    \"resume_token\": \"1278f7920778\",\n    \"operation\": {\n      \"operation_id\": \"1278f7920778\",\n      \"operation_kind\": \"research_record_write\",\n      \"status\": \"running_compute\",\n      \"progress\": {\n        \"current\": 1.0,\n        \"total\": 1.0,\n        \"unit\": \"operation\",\n        \"message\": \"Writing research record.\"\n      },\n      \"started_at\": \"2026-04-09T13:30:47.504931+00:00\",\n      \"finished_at\": null,\n      \"result_ref\": null,\n      \"error\": null,\n      \"queue_id\": null,\n      \"scheduler_state\": null,\n      \"queue_position\": null,\n      \"queued_reason\": null,\n      \"blocking_operation_id\": null,\n      \"admitted_at\": null,\n      \"health_state\": null,\n      \"last_heartbeat_at\": null,\n      \"last_progress_at\": null,\n      \"progress_message\": null,\n      \"action_required\": null,\n      \"stop_supported\": null,\n      \"action\": \"create\",\n      \"kind\": \"note\",\n      \"project_id\": \"coverage-project-live-coverage-233c241454-1-0d1388df\",\n      \"fingerprint\": \"9ce9ac19bcc8b322b36e1230\",\n      \"duplicate_write_reused\": false,\n      \"failure_classification\": null,\n      \"timeout_budget_seconds\": 25.0\n    },\n    \"next_action\": \"Poll research_record(action='status', operation_id=...) until the write reaches a terminal state.\"\n  },\n  \"warnings\": [],\n  \"refs\": [],\n  \"error\": null\n}"
+    }
+  ],
+  "structuredContent": {
+    "status": "ok",
+    "message": "Research record operation loaded.",
+    "tool_name": "research_record",
+    "request_id": "23",
+    "correlation_id": "23",
+    "server_session_id": "ea6edc17d94a4f0daf97ea812d05abc2",
+    "response_generated_at": "2026-04-09T13:30:47.510070+00:00",
+    "data": {
+      "mode": "research_record",
+      "wait": "started",
+      "wait_timeout": false,
+      "wait_satisfied": true,
+      "wait_satisfied_by_status": "running_compute",
+      "final_status": "running_compute",
+      "is_terminal": false,
+      "resume_tool": "research_record",
+      "resume_arguments": {
+        "action": "status",
+        "operation_id": "1278f7920778"
+      },
+      "resume_token": "1278f7920778",
+      "operation": {
+        "operation_id": "1278f7920778",
+        "operation_kind": "research_record_write",
+        "status": "running_compute",
+        "progress": {
+          "current": 1.0,
+          "total": 1.0,
+          "unit": "operation",
+          "message": "Writing research record."
+        },
+        "started_at": "2026-04-09T13:30:47.504931+00:00",
+        "finished_at": null,
+        "result_ref": null,
+        "error": null,
+        "queue_id": null,
+        "scheduler_state": null,
+        "queue_position": null,
+        "queued_reason": null,
+        "blocking_operation_id": null,
+        "admitted_at": null,
+        "health_state": null,
+        "last_heartbeat_at": null,
+        "last_progress_at": null,
+        "progress_message": null,
+        "action_required": null,
+        "stop_supported": null,
+        "action": "create",
+        "kind": "note",
+        "project_id": "coverage-project-live-coverage-233c241454-1-0d1388df",
+        "fingerprint": "9ce9ac19bcc8b322b36e1230",
+        "duplicate_write_reused": false,
+        "failure_classification": null,
+        "timeout_budget_seconds": 25.0
+      },
+      "next_action": "Poll research_record(action='status', operation_id=...) until the write reaches a terminal state."
+    },
+    "warnings": [],
+    "refs": [],
+    "error": null
+  },
+  "isError": false
+}

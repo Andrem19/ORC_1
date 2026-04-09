@@ -1,0 +1,84 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\n  \"status\": \"ok\",\n  \"message\": \"Dataset sync action completed.\",\n  \"tool_name\": \"datasets_sync\",\n  \"request_id\": \"162\",\n  \"correlation_id\": \"162\",\n  \"server_session_id\": \"c9c5bbe008194274aade6046b84bbd3a\",\n  \"response_generated_at\": \"2026-04-09T13:23:50.076054+00:00\",\n  \"data\": {\n    \"action\": \"sync\",\n    \"symbol\": \"BTCUSDT\",\n    \"timeframes\": [\n      \"1h\",\n      \"5m\"\n    ],\n    \"wait\": \"started\",\n    \"wait_satisfied\": true,\n    \"wait_satisfied_by_status\": \"running_compute\",\n    \"final_status\": \"running_compute\",\n    \"operation\": {\n      \"operation_id\": \"7091f8f91624\",\n      \"operation_kind\": \"datasets_instruments_sync\",\n      \"status\": \"running_compute\",\n      \"progress\": {\n        \"current\": 1.0,\n        \"total\": 1.0,\n        \"unit\": \"operation\",\n        \"message\": \"Running for BTCUSDT\"\n      },\n      \"started_at\": \"2026-04-09T13:23:49.749791+00:00\",\n      \"finished_at\": null,\n      \"result_ref\": null,\n      \"error\": null,\n      \"queue_id\": \"80a4156f992f\",\n      \"scheduler_state\": \"admitted\",\n      \"queue_position\": null,\n      \"queued_reason\": null,\n      \"blocking_operation_id\": null,\n      \"admitted_at\": \"2026-04-09T13:23:49.751523+00:00\",\n      \"health_state\": \"healthy\",\n      \"last_heartbeat_at\": \"2026-04-09T13:23:49.916262+00:00\",\n      \"last_progress_at\": \"2026-04-09T13:23:49.916262+00:00\",\n      \"progress_message\": \"Admitted dataset operation for Queued datasets_instruments_sync for BTCUSDT.\",\n      \"action_required\": null,\n      \"stop_supported\": true\n    },\n    \"already_exists\": false,\n    \"important_warnings\": [],\n    \"next_recommended_actions\": [\n      \"Use datasets(view='list') when the dataset operation has completed and you want to inspect the resulting datasets.\"\n    ],\n    \"recommended_follow_up_tool\": null,\n    \"state_summary\": {},\n    \"exact_next_call_examples\": [],\n    \"raw_refs\": [\n      \"system_raw_call(tool_name='datasets_instruments_add')\",\n      \"system_raw_call(tool_name='datasets_operations_get')\"\n    ],\n    \"raw_tool_hints\": [\n      \"system_raw_call(tool_name='datasets_instruments_add')\",\n      \"system_raw_call(tool_name='datasets_operations_get')\"\n    ],\n    \"summary\": \"Dataset sync request for BTCUSDT is currently running_compute.\",\n    \"next_action\": \"Use datasets(view='list') when the dataset operation has completed and you want to inspect the resulting datasets.\"\n  },\n  \"warnings\": [],\n  \"refs\": [\n    {\n      \"kind\": \"instrument\",\n      \"id\": \"BTCUSDT\",\n      \"path\": null\n    }\n  ],\n  \"error\": null\n}"
+    }
+  ],
+  "structuredContent": {
+    "status": "ok",
+    "message": "Dataset sync action completed.",
+    "tool_name": "datasets_sync",
+    "request_id": "162",
+    "correlation_id": "162",
+    "server_session_id": "c9c5bbe008194274aade6046b84bbd3a",
+    "response_generated_at": "2026-04-09T13:23:50.076054+00:00",
+    "data": {
+      "action": "sync",
+      "symbol": "BTCUSDT",
+      "timeframes": [
+        "1h",
+        "5m"
+      ],
+      "wait": "started",
+      "wait_satisfied": true,
+      "wait_satisfied_by_status": "running_compute",
+      "final_status": "running_compute",
+      "operation": {
+        "operation_id": "7091f8f91624",
+        "operation_kind": "datasets_instruments_sync",
+        "status": "running_compute",
+        "progress": {
+          "current": 1.0,
+          "total": 1.0,
+          "unit": "operation",
+          "message": "Running for BTCUSDT"
+        },
+        "started_at": "2026-04-09T13:23:49.749791+00:00",
+        "finished_at": null,
+        "result_ref": null,
+        "error": null,
+        "queue_id": "80a4156f992f",
+        "scheduler_state": "admitted",
+        "queue_position": null,
+        "queued_reason": null,
+        "blocking_operation_id": null,
+        "admitted_at": "2026-04-09T13:23:49.751523+00:00",
+        "health_state": "healthy",
+        "last_heartbeat_at": "2026-04-09T13:23:49.916262+00:00",
+        "last_progress_at": "2026-04-09T13:23:49.916262+00:00",
+        "progress_message": "Admitted dataset operation for Queued datasets_instruments_sync for BTCUSDT.",
+        "action_required": null,
+        "stop_supported": true
+      },
+      "already_exists": false,
+      "important_warnings": [],
+      "next_recommended_actions": [
+        "Use datasets(view='list') when the dataset operation has completed and you want to inspect the resulting datasets."
+      ],
+      "recommended_follow_up_tool": null,
+      "state_summary": {},
+      "exact_next_call_examples": [],
+      "raw_refs": [
+        "system_raw_call(tool_name='datasets_instruments_add')",
+        "system_raw_call(tool_name='datasets_operations_get')"
+      ],
+      "raw_tool_hints": [
+        "system_raw_call(tool_name='datasets_instruments_add')",
+        "system_raw_call(tool_name='datasets_operations_get')"
+      ],
+      "summary": "Dataset sync request for BTCUSDT is currently running_compute.",
+      "next_action": "Use datasets(view='list') when the dataset operation has completed and you want to inspect the resulting datasets."
+    },
+    "warnings": [],
+    "refs": [
+      {
+        "kind": "instrument",
+        "id": "BTCUSDT",
+        "path": null
+      }
+    ],
+    "error": null
+  },
+  "isError": false
+}

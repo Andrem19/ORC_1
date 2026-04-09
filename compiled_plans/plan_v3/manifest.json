@@ -1,0 +1,18 @@
+{
+  "source_file": "raw_plans/plan_v3.md",
+  "source_hash": "5ae5c7f47d6dba65f942f9d6e3ca35863e78662922e4f57baf2e51b68788d8eb",
+  "compiled_at": "2026-04-09T14:19:48.837226+00:00",
+  "sequence_id": "compiled_plan_v3",
+  "compile_status": "compiled",
+  "warnings": [
+    "Plan text is in Russian; stage titles preserved verbatim for traceability",
+    "Stages 8–9 (A2/A3) are mutually exclusive alternatives gated on A1 not being promoted"
+  ],
+  "semantic_method": "llm",
+  "plan_files": [
+    "plans/compiled_plan_v3_batch_1.json",
+    "plans/compiled_plan_v3_batch_2.json",
+    "plans/compiled_plan_v3_batch_3.json",
+    "plans/compiled_plan_v3_batch_4.json"
+  ]
+}

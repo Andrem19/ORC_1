@@ -1,0 +1,182 @@
+{
+  "plan_id": "compiled_plan_v11_batch_1",
+  "goal": "Conduct a strict forensic audit of v10 microstructure overlay results to confirm or reject their validity before any further research.",
+  "baseline_ref": {
+    "snapshot_id": "active-signal-v1",
+    "version": 1,
+    "symbol": "BTCUSDT",
+    "anchor_timeframe": "1h",
+    "execution_timeframe": "5m"
+  },
+  "global_constraints": [
+    "Immutable reference: active-signal-v1@1 only; never modify baseline parameters, thresholds, features, or execution logic.",
+    "No new features, new directional scouts, early-cuts, or label changes are permitted in v11.",
+    "All comparisons must use identical train / selection-OOS / lockbox windows (same-window truth only).",
+    "Lockbox must never be used to choose thresholds, labels, or model hyper-parameters.",
+    "Short-only, long-only, and combined veto must be tested in separate runs; identical deltas across all three must be explained, not accepted.",
+    "Rule-based overlay must be tested before model-backed overlay.",
+    "PROMOTE status is only valid if v10 survives the entire forensic cycle."
+  ],
+  "slices": [
+    {
+      "slice_id": "compiled_plan_v11_stage_1",
+      "title": "Freeze and forensic-cycle setup",
+      "hypothesis": "Lock v11 into audit-only mode and register the immutable reference, audit axes, and open-items checklist.",
+      "objective": "Lock v11 into audit-only mode and register the immutable reference, audit axes, and open-items checklist.",
+      "success_criteria": [
+        "Dedicated v11 audit project exists with immutable reference frozen and full open-items register created."
+      ],
+      "allowed_tools": [
+        "research_project",
+        "research_map",
+        "research_record",
+        "research_search"
+      ],
+      "evidence_requirements": [
+        "Dedicated v11 audit project exists with immutable reference frozen and full open-items register created."
+      ],
+      "policy_tags": [
+        "setup",
+        "audit",
+        "freeze"
+      ],
+      "max_turns": 4,
+      "max_tool_calls": 4,
+      "max_expensive_calls": 0,
+      "parallel_slot": 1,
+      "status": "pending",
+      "turn_count": 0,
+      "tool_call_count": 0,
+      "expensive_call_count": 0,
+      "assigned_worker_id": null,
+      "last_checkpoint_turn_id": "",
+      "last_checkpoint_summary": "",
+      "final_report_turn_id": "",
+      "last_error": "",
+      "last_summary": "",
+      "latest_tool_result_summary": "",
+      "active_operation_tool": "",
+      "active_operation_ref": "",
+      "active_operation_status": "",
+      "active_operation_arguments": {},
+      "active_resume_tool": "",
+      "active_resume_token": "",
+      "last_tool_response_status": "",
+      "artifacts": [],
+      "facts": {}
+    },
+    {
+      "slice_id": "compiled_plan_v11_stage_2",
+      "title": "Exact reproduction of v10 from scratch",
+      "hypothesis": "Reproduce the v10 result without any manual adjustments or prior knowledge to establish a clean baseline truth.",
+      "objective": "Reproduce the v10 result without any manual adjustments or prior knowledge to establish a clean baseline truth.",
+      "success_criteria": [
+        "Reproduction verdict is recorded: reproduced exactly, partially reproduced, or not reproduced."
+      ],
+      "allowed_tools": [
+        "features_custom",
+        "backtests_plan",
+        "backtests_runs",
+        "backtests_studies",
+        "backtests_walkforward",
+        "backtests_conditions",
+        "backtests_analysis",
+        "datasets",
+        "datasets_sync",
+        "datasets_preview",
+        "events",
+        "events_sync",
+        "features_catalog",
+        "features_dataset"
+      ],
+      "evidence_requirements": [
+        "Reproduction verdict is recorded: reproduced exactly, partially reproduced, or not reproduced."
+      ],
+      "policy_tags": [
+        "reproduction",
+        "audit"
+      ],
+      "max_turns": 6,
+      "max_tool_calls": 5,
+      "max_expensive_calls": 1,
+      "parallel_slot": 1,
+      "status": "pending",
+      "turn_count": 0,
+      "tool_call_count": 0,
+      "expensive_call_count": 0,
+      "assigned_worker_id": null,
+      "last_checkpoint_turn_id": "",
+      "last_checkpoint_summary": "",
+      "final_report_turn_id": "",
+      "last_error": "",
+      "last_summary": "",
+      "latest_tool_result_summary": "",
+      "active_operation_tool": "",
+      "active_operation_ref": "",
+      "active_operation_status": "",
+      "active_operation_arguments": {},
+      "active_resume_tool": "",
+      "active_resume_token": "",
+      "last_tool_response_status": "",
+      "artifacts": [],
+      "facts": {}
+    },
+    {
+      "slice_id": "compiled_plan_v11_stage_3",
+      "title": "Reference integrity audit",
+      "hypothesis": "Resolve the core contradiction in v10: lockbox baseline is listed as @3 instead of the declared @1.",
+      "objective": "Resolve the core contradiction in v10: lockbox baseline is listed as @3 instead of the declared @1.",
+      "success_criteria": [
+        "Clear verdict: @1 == @3 or @1 != @3 with documented evidence."
+      ],
+      "allowed_tools": [
+        "datasets",
+        "datasets_sync",
+        "datasets_preview",
+        "events",
+        "events_sync",
+        "features_catalog",
+        "features_dataset",
+        "backtests_analysis",
+        "backtests_conditions",
+        "experiments_run",
+        "experiments_inspect",
+        "experiments_read"
+      ],
+      "evidence_requirements": [
+        "Clear verdict: @1 == @3 or @1 != @3 with documented evidence."
+      ],
+      "policy_tags": [
+        "audit",
+        "reference_integrity"
+      ],
+      "max_turns": 6,
+      "max_tool_calls": 5,
+      "max_expensive_calls": 1,
+      "parallel_slot": 3,
+      "status": "pending",
+      "turn_count": 0,
+      "tool_call_count": 0,
+      "expensive_call_count": 0,
+      "assigned_worker_id": null,
+      "last_checkpoint_turn_id": "",
+      "last_checkpoint_summary": "",
+      "final_report_turn_id": "",
+      "last_error": "",
+      "last_summary": "",
+      "latest_tool_result_summary": "",
+      "active_operation_tool": "",
+      "active_operation_ref": "",
+      "active_operation_status": "",
+      "active_operation_arguments": {},
+      "active_resume_tool": "",
+      "active_resume_token": "",
+      "last_tool_response_status": "",
+      "artifacts": [],
+      "facts": {}
+    }
+  ],
+  "status": "draft",
+  "created_at": "2026-04-09T14:34:40.635844+00:00",
+  "updated_at": "2026-04-09T14:34:40.635847+00:00"
+}

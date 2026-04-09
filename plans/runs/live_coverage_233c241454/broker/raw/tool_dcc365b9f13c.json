@@ -1,0 +1,568 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\n  \"status\": \"ok\",\n  \"message\": \"System health loaded.\",\n  \"tool_name\": \"system_health\",\n  \"request_id\": \"9\",\n  \"correlation_id\": \"9\",\n  \"server_session_id\": \"ea6edc17d94a4f0daf97ea812d05abc2\",\n  \"response_generated_at\": \"2026-04-09T13:30:42.434269+00:00\",\n  \"data\": {\n    \"summary\": \"System health returned the current server, domain, queue, path, and anomaly state.\",\n    \"runtime_health_state\": \"healthy\",\n    \"workflow_readiness_state\": \"degraded\",\n    \"server_health\": {\n      \"healthy\": true,\n      \"auth_mode\": \"none\",\n      \"protected_resource_metadata_available\": false,\n      \"oauth_enabled\": false,\n      \"legacy_bearer_enabled\": false,\n      \"issuer\": \"https://auth.remart.ovh/realms/mcp\",\n      \"audience\": \"https://mcp.remart.ovh/mcp\",\n      \"required_scopes\": {\n        \"tools\": \"mcp:tools\",\n        \"prompts\": \"mcp:prompts\",\n        \"resources\": \"mcp:resources\"\n      },\n      \"discovery_cache_ttl_seconds\": 300,\n      \"jwks_cache_ttl_seconds\": 300,\n      \"tool_surface\": {\n        \"surface_version\": \"workspace-cutover-v1\",\n        \"surface_fingerprint\": \"86486263ca96ded4\",\n        \"tool_surface_generation\": \"86486263ca96ded4\",\n        \"registry_generation\": \"86486263ca96ded4\",\n        \"registered_tool_count\": 46,\n        \"degraded\": false,\n        \"degraded_reason\": null,\n        \"discovery_expectation_note\": \"This snapshot reflects the repo-side MCP registry only. If it is healthy while an external client shows an empty tool surface, the stale layer is outside this server.\",\n        \"workspace_tool_names\": [\n          \"system_workspace\"\n        ]\n      }\n    },\n    \"domain_health\": [\n      {\n        \"domain\": \"datasets\",\n        \"health_state\": \"healthy\",\n        \"reason\": null\n      },\n      {\n        \"domain\": \"features\",\n        \"health_state\": \"healthy\",\n        \"reason\": null\n      },\n      {\n        \"domain\": \"models\",\n        \"health_state\": \"healthy\",\n        \"reason\": null\n      },\n      {\n        \"domain\": \"backtests_runs\",\n        \"health_state\": \"healthy\",\n        \"reason\": null\n      },\n      {\n        \"domain\": \"backtests_snapshots\",\n        \"health_state\": \"healthy\",\n        \"reason\": null\n      },\n      {\n        \"domain\": \"backtests_research\",\n        \"health_state\": \"healthy\",\n        \"reason\": null\n      },\n      {\n        \"domain\": \"experiments\",\n        \"health_state\": \"healthy\",\n        \"reason\": null\n      },\n      {\n        \"domain\": \"research_memory\",\n        \"health_state\": \"healthy\",\n        \"reason\": null\n      },\n      {\n        \"domain\": \"telegram\",\n        \"health_state\": \"healthy\",\n        \"reason\": null\n      },\n      {\n        \"domain\": \"system\",\n        \"health_state\": \"healthy\",\n        \"reason\": \"System discovery and status tools are registered.\"\n      }\n    ],\n    \"queue_health\": {\n      \"queue_depth\": 0,\n      \"record_count\": 200,\n      \"nonterminal_record_count\": 0,\n      \"active_operation_kind\": null,\n      \"active_operation_id\": null,\n      \"stalled_count\": 0,\n      \"recovery_required_count\": 0,\n      \"startup_recoveries_total\": 0,\n      \"manual_stop_requests_total\": 0,\n      \"queued_cancellations_total\": 0,\n      \"average_admitted_seconds\": 48.52,\n      \"control_plane_queue_degraded\": false\n    },\n    \"control_plane_queue_degraded\": false,\n    \"active_long_operation\": null,\n    \"path_health\": null,\n    \"runtime_storage\": null,\n    \"runtime_logs\": null,\n    \"canonical_probe_tool\": \"system_health\",\n    \"probe_call_form\": {\n      \"tool\": \"system_health\",\n      \"arguments\": {\n        \"validate_tools\": true,\n        \"view\": \"summary\"\n      }\n    },\n    \"surface_fingerprint\": null,\n    \"server_dispatch_generation\": null,\n    \"transport_sessions_summary\": {},\n    \"repo_side_dispatch_ok\": null,\n    \"external_bridge_state_unknown\": null,\n    \"recommended_client_action\": \"Use canonical tool names or the normalized /dev_space1/... form exposed by the current client; treat link_* mismatch as an external bridge issue when repo-side dispatch remains healthy.\",\n    \"recovery_playbook\": [\n      {\n        \"tool\": \"system_health\",\n        \"arguments\": {\n          \"validate_tools\": true,\n          \"view\": \"summary\"\n        }\n      },\n      {\n        \"tool\": \"system_debug_validate_path\",\n        \"arguments\": {\n          \"raw_path\": \"/dev_space1/system_health\"\n        }\n      },\n      {\n        \"tool\": \"system_logs\",\n        \"arguments\": {\n          \"service\": \"mcp_server\",\n          \"lines\": 50\n        }\n      },\n      {\n        \"tool\": \"incidents\",\n        \"arguments\": {\n          \"action\": \"capture\",\n          \"summary\": \"MCP runtime routing/session failure\",\n          \"affected_tool\": \"system_health\",\n          \"service\": \"mcp_server\"\n        }\n      }\n    ],\n    \"recent_anomalies\": [],\n    \"notify_readiness\": {\n      \"state\": \"ready\",\n      \"health_state\": \"healthy\",\n      \"reason\": null\n    },\n    \"incident_backlog\": {\n      \"project_id\": \"mcp-infra-incidents\",\n      \"counts_by_state\": {\n        \"open\": 60,\n        \"investigating\": 0,\n        \"fixed\": 2,\n        \"verified\": 0,\n        \"closed\": 0\n      },\n      \"latest_open_incidents\": [\n        {\n          \"node_id\": \"node-341390cefc9d413cbc8f87fc26a6b463\",\n          \"project_id\": \"mcp-infra-incidents\",\n          \"branch_id\": \"branch-52fbeb31fd074ba39daf2ed99a72d977\",\n          \"node_type\": \"note\",\n          \"title\": \"backtests_plan: backtests_plan_warning\",\n          \"summary\": \"backtests_plan_warning\",\n          \"status\": \"active\",\n          \"content\": {\n            \"error\": {\n              \"message\": \"stale_snapshot_feature_refs: snapshot feature_source.fields contains names that are not currently resolved through the feature registry/window guard.\"\n            },\n            \"events\": [],\n            \"log_excerpt\": null\n          },\n          \"metadata\": {\n            \"affected_tool\": \"backtests_plan\",\n            \"arguments\": {\n              \"anchor_timeframe\": \"1h\",\n              \"end_at\": \"2026-01-07T00:00:00+00:00\",\n              \"execution_timeframe\": \"5m\",\n              \"snapshot_id\": \"active-signal-v1\",\n              \"start_at\": \"2026-01-01T00:00:00+00:00\",\n              \"symbol\": \"BTCUSDT\",\n              \"version\": \"1\"\n            },\n            \"correlation_id\": null,\n            \"error_code\": \"unknown_error\",\n            \"evidence\": {},\n            \"first_seen_at\": \"2026-04-09T12:32:00.921177+00:00\",\n            \"kind\": \"infrastructure_incident\",\n            \"last_seen_at\": \"2026-04-09T13:28:47.399306+00:00\",\n            \"message\": \"backtests_plan_warning\",\n            \"normalized_message\": \"backtests_plan_warning\",\n            \"occurrences\": 40,\n            \"request_id\": null,\n            \"result\": {\n              \"artifact_ids\": [],\n              \"call_id\": \"tool_b36f0e823962\",\n              \"created_at\": \"2026-04-09T13:28:47.010572+00:00\",\n              \"duration_ms\": 7754,\n              \"error_class\": \"\",\n              \"key_facts\": {\n                \"summary\": \"Planned backtest run window for active-signal-v1 on BTCUSDT@1h/5m.\"\n              },\n              \"ok\": true,\n              \"operation_ref\": \"\",\n              \"plan_id\": \"live_coverage\",\n              \"raw_result_ref\": \"plans/runs/live_coverage_eee45b3e97/broker/raw/tool_b36f0e823962.json\",\n              \"request_arguments\": {\n                \"anchor_timeframe\": \"1h\",\n                \"end_at\": \"2026-01-07T00:00:00+00:00\",\n                \"execution_timeframe\": \"5m\",\n                \"snapshot_id\": \"active-signal-v1\",\n                \"start_at\": \"2026-01-01T00:00:00+00:00\",\n                \"symbol\": \"BTCUSDT\",\n                \"version\": 1\n              },\n              \"response_status\": \"\",\n              \"resume_arguments\": {},\n              \"resume_token\": \"\",\n              \"resume_tool\": \"backtests_plan\",\n              \"retryable\": false,\n              \"slice_id\": \"backtests_plan_window\",\n              \"summary\": \"Planned backtest run window for active-signal-v1 on BTCUSDT@1h/5m.\",\n              \"tool\": \"backtests_plan\",\n              \"tool_response_status\": \"ok\",\n              \"warnings\": [\n                \"Snapshot logic depends on explicit anchor-context columns; keep using the computed causal lower bound.\",\n                \"stale_snapshot_feature_refs: snapshot feature_source.fields contains names that are not currently resolved through the feature registry/window guard.\"\n              ]\n            },\n            \"server_session_id\": null,\n            \"service\": \"dev_space1\",\n            \"severity\": \"medium\",\n            \"state\": \"open\"\n          },\n          \"source_refs\": [],\n          \"external_ref\": \"incident:f8e690a485647b6bffeb3f32\",\n          \"dedupe_key\": \"f8e690a485647b6bffeb3f32\",\n          \"pinned\": false,\n          \"protection_reason\": null,\n          \"created_at\": \"2026-04-09T12:32:00.922338+00:00\",\n          \"updated_at\": \"2026-04-09T13:28:47.403211+00:00\",\n          \"incident_id\": \"incident:f8e690a485647b6bffeb3f32\"\n        },\n        {\n          \"node_id\": \"node-b9bf4bfdf9634340b214505ed850d3b3\",\n          \"project_id\": \"mcp-infra-incidents\",\n          \"branch_id\": \"branch-52fbeb31fd074ba39daf2ed99a72d977\",\n          \"node_type\": \"note\",\n          \"title\": \"features_analytics: features_analytics_warning\",\n          \"summary\": \"features_analytics_warning\",\n          \"status\": \"active\",\n          \"content\": {\n            \"error\": {\n              \"message\": \"shift_audit_custom_features_only\"\n            },\n            \"events\": [],\n            \"log_excerpt\": null\n          },\n          \"metadata\": {\n            \"affected_tool\": \"features_analytics\",\n            \"arguments\": {\n              \"action\": \"analytics\",\n              \"feature_name\": \"rsi_1\",\n              \"symbol\": \"BTCUSDT\"\n            },\n            \"correlation_id\": null,\n            \"error_code\": \"unknown_error\",\n            \"evidence\": {},\n            \"first_seen_at\": \"2026-04-09T04:19:26.773801+00:00\",\n            \"kind\": \"infrastructure_incident\",\n            \"last_seen_at\": \"2026-04-09T13:27:45.915520+00:00\",\n            \"message\": \"features_analytics_warning\",\n            \"normalized_message\": \"features_analytics_warning\",\n            \"occurrences\": 24,\n            \"request_id\": null,\n            \"result\": {\n              \"artifact_ids\": [],\n              \"call_id\": \"tool_b3efe5e1f4d2\",\n              \"created_at\": \"2026-04-09T13:27:45.812926+00:00\",\n              \"duration_ms\": 645,\n              \"error_class\": \"\",\n              \"key_facts\": {},\n              \"ok\": true,\n              \"operation_ref\": \"\",\n              \"plan_id\": \"live_coverage\",\n              \"raw_result_ref\": \"plans/runs/live_coverage_eee45b3e97/broker/raw/tool_b3efe5e1f4d2.json\",\n              \"request_arguments\": {\n                \"action\": \"analytics\",\n                \"feature_name\": \"rsi_1\",\n                \"symbol\": \"BTCUSDT\"\n              },\n              \"response_status\": \"\",\n              \"resume_arguments\": {},\n              \"resume_token\": \"\",\n              \"resume_tool\": \"features_analytics\",\n              \"retryable\": false,\n              \"slice_id\": \"features_analytics_rsi\",\n              \"summary\": \"Feature analytics action completed.\",\n              \"tool\": \"features_analytics\",\n              \"tool_response_status\": \"ok\",\n              \"warnings\": [\n                \"shift_audit_custom_features_only\"\n              ]\n            },\n            \"server_session_id\": null,\n            \"service\": \"dev_space1\",\n            \"severity\": \"medium\",\n            \"state\": \"open\"\n          },\n          \"source_refs\": [],\n          \"external_ref\": \"incident:1843cfa8b423842d7b6b6635\",\n          \"dedupe_key\": \"1843cfa8b423842d7b6b6635\",\n          \"pinned\": false,\n          \"protection_reason\": null,\n          \"created_at\": \"2026-04-09T04:19:26.774882+00:00\",\n          \"updated_at\": \"2026-04-09T13:27:45.920822+00:00\",\n          \"incident_id\": \"incident:1843cfa8b423842d7b6b6635\"\n        },\n        {\n          \"node_id\": \"node-25bf4dcce3e445ab82edb6898cb4bf13\",\n          \"project_id\": \"mcp-infra-incidents\",\n          \"branch_id\": \"branch-52fbeb31fd074ba39daf2ed99a72d977\",\n          \"node_type\": \"note\",\n          \"title\": \"system_reset_space: system_reset_space_warning\",\n          \"summary\": \"system_reset_space_warning\",\n          \"status\": \"active\",\n          \"content\": {\n            \"error\": {\n              \"message\": \"normalized_boolean:research_memory\"\n            },\n            \"events\": [],\n            \"log_excerpt\": null\n          },\n          \"metadata\": {\n            \"affected_tool\": \"system_reset_space\",\n            \"arguments\": {\n              \"action\": \"preview\",\n              \"research_memory\": \"false\"\n            },\n            \"correlation_id\": null,\n            \"error_code\": \"unknown_error\",\n            \"evidence\": {},\n            \"first_seen_at\": \"2026-04-09T12:39:26.545606+00:00\",\n            \"kind\": \"infrastructure_incident\",\n            \"last_seen_at\": \"2026-04-09T13:26:17.805970+00:00\",\n            \"message\": \"system_reset_space_warning\",\n            \"normalized_message\": \"system_reset_space_warning\",\n            \"occurrences\": 17,\n            \"request_id\": null,\n            \"result\": {\n              \"artifact_ids\": [],\n              \"call_id\": \"tool_382a7f2755a4\",\n              \"created_at\": \"2026-04-09T13:26:17.697546+00:00\",\n              \"duration_ms\": 485,\n              \"error_class\": \"\",\n              \"key_facts\": {\n                \"summary\": \"Explicit system reset preview completed.\"\n              },\n              \"ok\": true,\n              \"operation_ref\": \"\",\n              \"plan_id\": \"live_coverage\",\n              \"raw_result_ref\": \"plans/runs/live_coverage_0abad64a84/broker/raw/tool_382a7f2755a4.json\",\n              \"request_arguments\": {\n                \"action\": \"preview\",\n                \"research_memory\": \"false\"\n              },\n              \"response_status\": \"\",\n              \"resume_arguments\": {},\n              \"resume_token\": \"\",\n              \"resume_tool\": \"system_reset_space\",\n              \"retryable\": false,\n              \"slice_id\": \"system_reset_preview\",\n              \"summary\": \"Explicit system reset preview completed.\",\n              \"tool\": \"system_reset_space\",\n              \"tool_response_status\": \"ok\",\n              \"warnings\": [\n                \"normalized_boolean:research_memory\"\n              ]\n            },\n            \"server_session_id\": null,\n            \"service\": \"dev_space1\",\n            \"severity\": \"medium\",\n            \"state\": \"open\"\n          },\n          \"source_refs\": [],\n          \"external_ref\": \"incident:38282462bc82cd17ca73d5cf\",\n          \"dedupe_key\": \"38282462bc82cd17ca73d5cf\",\n          \"pinned\": false,\n          \"protection_reason\": null,\n          \"created_at\": \"2026-04-09T12:39:26.549726+00:00\",\n          \"updated_at\": \"2026-04-09T13:26:17.810944+00:00\",\n          \"incident_id\": \"incident:38282462bc82cd17ca73d5cf\"\n        }\n      ],\n      \"memory_persistence\": {\n        \"database_path\": \"/home/ubuntu/.foundation_state/research_memory/research_memory.sqlite3\",\n        \"artifacts_root\": \"/home/ubuntu/.foundation_state/research_memory\",\n        \"continuity_warning\": null\n      }\n    },\n    \"contract_risks\": [\n      {\n        \"risk_code\": \"recent_open_incident\",\n        \"severity\": \"medium\",\n        \"summary\": \"backtests_plan: backtests_plan_warning\"\n      },\n      {\n        \"risk_code\": \"recent_open_incident\",\n        \"severity\": \"medium\",\n        \"summary\": \"features_analytics: features_analytics_warning\"\n      },\n      {\n        \"risk_code\": \"recent_open_incident\",\n        \"severity\": \"medium\",\n        \"summary\": \"system_reset_space: system_reset_space_warning\"\n      },\n      {\n        \"risk_code\": \"async_argument_schema_parity\",\n        \"severity\": \"medium\",\n        \"summary\": \"Public async tool metadata no longer exposes the canonical wait/status contract consistently.\"\n      }\n    ],\n    \"workflow_risks\": [\n      {\n        \"risk_code\": \"recent_open_incident\",\n        \"severity\": \"medium\",\n        \"summary\": \"backtests_plan: backtests_plan_warning\"\n      },\n      {\n        \"risk_code\": \"recent_open_incident\",\n        \"severity\": \"medium\",\n        \"summary\": \"features_analytics: features_analytics_warning\"\n      },\n      {\n        \"risk_code\": \"recent_open_incident\",\n        \"severity\": \"medium\",\n        \"summary\": \"system_reset_space: system_reset_space_warning\"\n      },\n      {\n        \"risk_code\": \"async_argument_schema_parity\",\n        \"severity\": \"medium\",\n        \"summary\": \"Public async tool metadata no longer exposes the canonical wait/status contract consistently.\"\n      }\n    ],\n    \"known_worker_traps\": [\n      {\n        \"risk_code\": \"recent_open_incident\",\n        \"severity\": \"medium\",\n        \"summary\": \"backtests_plan: backtests_plan_warning\"\n      },\n      {\n        \"risk_code\": \"recent_open_incident\",\n        \"severity\": \"medium\",\n        \"summary\": \"features_analytics: features_analytics_warning\"\n      },\n      {\n        \"risk_code\": \"recent_open_incident\",\n        \"severity\": \"medium\",\n        \"summary\": \"system_reset_space: system_reset_space_warning\"\n      },\n      {\n        \"risk_code\": \"async_argument_schema_parity\",\n        \"severity\": \"medium\",\n        \"summary\": \"Public async tool metadata no longer exposes the canonical wait/status contract consistently.\"\n      }\n    ],\n    \"worker_traps\": [\n      {\n        \"risk_code\": \"recent_open_incident\",\n        \"severity\": \"medium\",\n        \"summary\": \"backtests_plan: backtests_plan_warning\"\n      },\n      {\n        \"risk_code\": \"recent_open_incident\",\n        \"severity\": \"medium\",\n        \"summary\": \"features_analytics: features_analytics_warning\"\n      },\n      {\n        \"risk_code\": \"recent_open_incident\",\n        \"severity\": \"medium\",\n        \"summary\": \"system_reset_space: system_reset_space_warning\"\n      },\n      {\n        \"risk_code\": \"async_argument_schema_parity\",\n        \"severity\": \"medium\",\n        \"summary\": \"Public async tool metadata no longer exposes the canonical wait/status contract consistently.\"\n      }\n    ],\n    \"runtime_rules_ref\": \"project://mcp/agent-operating-manual\",\n    \"operating_guidance\": \"Start new sessions with system_bootstrap. Use system_health(validate_tools=true) as the cheap runtime probe. For infrastructure failures follow system_health -> system_debug_validate_path -> system_logs -> incidents(action='capture').\",\n    \"important_warnings\": [],\n    \"next_recommended_actions\": [\n      \"Use system_queue(action='inspect') when queue health looks degraded. For runtime failures, follow system_health(validate_tools=true) -> system_debug_validate_path -> system_logs -> incidents(action='capture').\"\n    ],\n    \"recommended_follow_up_tool\": null,\n    \"state_summary\": {},\n    \"exact_next_call_examples\": [\n      {\n        \"tool\": \"system_health\",\n        \"arguments\": {\n          \"validate_tools\": true,\n          \"view\": \"summary\"\n        }\n      },\n      {\n        \"tool\": \"system_debug_validate_path\",\n        \"arguments\": {\n          \"raw_path\": \"/dev_space1/system_health\"\n        }\n      },\n      {\n        \"tool\": \"system_logs\",\n        \"arguments\": {\n          \"service\": \"mcp_server\",\n          \"lines\": 50\n        }\n      },\n      {\n        \"tool\": \"incidents\",\n        \"arguments\": {\n          \"action\": \"capture\",\n          \"summary\": \"MCP runtime routing/session failure\",\n          \"affected_tool\": \"system_health\",\n          \"service\": \"mcp_server\"\n        }\n      }\n    ],\n    \"raw_refs\": [\n      \"system_raw_call(tool_name='system_status_get')\",\n      \"system_raw_call(tool_name='system_debug_get_infrastructure')\",\n      \"system_raw_call(tool_name='system_debug_read_logs')\"\n    ],\n    \"raw_tool_hints\": [\n      \"system_raw_call(tool_name='system_status_get')\",\n      \"system_raw_call(tool_name='system_debug_get_infrastructure')\",\n      \"system_raw_call(tool_name='system_debug_read_logs')\"\n    ],\n    \"next_action\": \"Use system_queue(action='inspect') when queue health looks degraded. For runtime failures, follow system_health(validate_tools=true) -> system_debug_validate_path -> system_logs -> incidents(action='capture').\"\n  },\n  \"warnings\": [],\n  \"refs\": [],\n  \"error\": null\n}"
+    }
+  ],
+  "structuredContent": {
+    "status": "ok",
+    "message": "System health loaded.",
+    "tool_name": "system_health",
+    "request_id": "9",
+    "correlation_id": "9",
+    "server_session_id": "ea6edc17d94a4f0daf97ea812d05abc2",
+    "response_generated_at": "2026-04-09T13:30:42.434269+00:00",
+    "data": {
+      "summary": "System health returned the current server, domain, queue, path, and anomaly state.",
+      "runtime_health_state": "healthy",
+      "workflow_readiness_state": "degraded",
+      "server_health": {
+        "healthy": true,
+        "auth_mode": "none",
+        "protected_resource_metadata_available": false,
+        "oauth_enabled": false,
+        "legacy_bearer_enabled": false,
+        "issuer": "https://auth.remart.ovh/realms/mcp",
+        "audience": "https://mcp.remart.ovh/mcp",
+        "required_scopes": {
+          "tools": "mcp:tools",
+          "prompts": "mcp:prompts",
+          "resources": "mcp:resources"
+        },
+        "discovery_cache_ttl_seconds": 300,
+        "jwks_cache_ttl_seconds": 300,
+        "tool_surface": {
+          "surface_version": "workspace-cutover-v1",
+          "surface_fingerprint": "86486263ca96ded4",
+          "tool_surface_generation": "86486263ca96ded4",
+          "registry_generation": "86486263ca96ded4",
+          "registered_tool_count": 46,
+          "degraded": false,
+          "degraded_reason": null,
+          "discovery_expectation_note": "This snapshot reflects the repo-side MCP registry only. If it is healthy while an external client shows an empty tool surface, the stale layer is outside this server.",
+          "workspace_tool_names": [
+            "system_workspace"
+          ]
+        }
+      },
+      "domain_health": [
+        {
+          "domain": "datasets",
+          "health_state": "healthy",
+          "reason": null
+        },
+        {
+          "domain": "features",
+          "health_state": "healthy",
+          "reason": null
+        },
+        {
+          "domain": "models",
+          "health_state": "healthy",
+          "reason": null
+        },
+        {
+          "domain": "backtests_runs",
+          "health_state": "healthy",
+          "reason": null
+        },
+        {
+          "domain": "backtests_snapshots",
+          "health_state": "healthy",
+          "reason": null
+        },
+        {
+          "domain": "backtests_research",
+          "health_state": "healthy",
+          "reason": null
+        },
+        {
+          "domain": "experiments",
+          "health_state": "healthy",
+          "reason": null
+        },
+        {
+          "domain": "research_memory",
+          "health_state": "healthy",
+          "reason": null
+        },
+        {
+          "domain": "telegram",
+          "health_state": "healthy",
+          "reason": null
+        },
+        {
+          "domain": "system",
+          "health_state": "healthy",
+          "reason": "System discovery and status tools are registered."
+        }
+      ],
+      "queue_health": {
+        "queue_depth": 0,
+        "record_count": 200,
+        "nonterminal_record_count": 0,
+        "active_operation_kind": null,
+        "active_operation_id": null,
+        "stalled_count": 0,
+        "recovery_required_count": 0,
+        "startup_recoveries_total": 0,
+        "manual_stop_requests_total": 0,
+        "queued_cancellations_total": 0,
+        "average_admitted_seconds": 48.52,
+        "control_plane_queue_degraded": false
+      },
+      "control_plane_queue_degraded": false,
+      "active_long_operation": null,
+      "path_health": null,
+      "runtime_storage": null,
+      "runtime_logs": null,
+      "canonical_probe_tool": "system_health",
+      "probe_call_form": {
+        "tool": "system_health",
+        "arguments": {
+          "validate_tools": true,
+          "view": "summary"
+        }
+      },
+      "surface_fingerprint": null,
+      "server_dispatch_generation": null,
+      "transport_sessions_summary": {},
+      "repo_side_dispatch_ok": null,
+      "external_bridge_state_unknown": null,
+      "recommended_client_action": "Use canonical tool names or the normalized /dev_space1/... form exposed by the current client; treat link_* mismatch as an external bridge issue when repo-side dispatch remains healthy.",
+      "recovery_playbook": [
+        {
+          "tool": "system_health",
+          "arguments": {
+            "validate_tools": true,
+            "view": "summary"
+          }
+        },
+        {
+          "tool": "system_debug_validate_path",
+          "arguments": {
+            "raw_path": "/dev_space1/system_health"
+          }
+        },
+        {
+          "tool": "system_logs",
+          "arguments": {
+            "service": "mcp_server",
+            "lines": 50
+          }
+        },
+        {
+          "tool": "incidents",
+          "arguments": {
+            "action": "capture",
+            "summary": "MCP runtime routing/session failure",
+            "affected_tool": "system_health",
+            "service": "mcp_server"
+          }
+        }
+      ],
+      "recent_anomalies": [],
+      "notify_readiness": {
+        "state": "ready",
+        "health_state": "healthy",
+        "reason": null
+      },
+      "incident_backlog": {
+        "project_id": "mcp-infra-incidents",
+        "counts_by_state": {
+          "open": 60,
+          "investigating": 0,
+          "fixed": 2,
+          "verified": 0,
+          "closed": 0
+        },
+        "latest_open_incidents": [
+          {
+            "node_id": "node-341390cefc9d413cbc8f87fc26a6b463",
+            "project_id": "mcp-infra-incidents",
+            "branch_id": "branch-52fbeb31fd074ba39daf2ed99a72d977",
+            "node_type": "note",
+            "title": "backtests_plan: backtests_plan_warning",
+            "summary": "backtests_plan_warning",
+            "status": "active",
+            "content": {
+              "error": {
+                "message": "stale_snapshot_feature_refs: snapshot feature_source.fields contains names that are not currently resolved through the feature registry/window guard."
+              },
+              "events": [],
+              "log_excerpt": null
+            },
+            "metadata": {
+              "affected_tool": "backtests_plan",
+              "arguments": {
+                "anchor_timeframe": "1h",
+                "end_at": "2026-01-07T00:00:00+00:00",
+                "execution_timeframe": "5m",
+                "snapshot_id": "active-signal-v1",
+                "start_at": "2026-01-01T00:00:00+00:00",
+                "symbol": "BTCUSDT",
+                "version": "1"
+              },
+              "correlation_id": null,
+              "error_code": "unknown_error",
+              "evidence": {},
+              "first_seen_at": "2026-04-09T12:32:00.921177+00:00",
+              "kind": "infrastructure_incident",
+              "last_seen_at": "2026-04-09T13:28:47.399306+00:00",
+              "message": "backtests_plan_warning",
+              "normalized_message": "backtests_plan_warning",
+              "occurrences": 40,
+              "request_id": null,
+              "result": {
+                "artifact_ids": [],
+                "call_id": "tool_b36f0e823962",
+                "created_at": "2026-04-09T13:28:47.010572+00:00",
+                "duration_ms": 7754,
+                "error_class": "",
+                "key_facts": {
+                  "summary": "Planned backtest run window for active-signal-v1 on BTCUSDT@1h/5m."
+                },
+                "ok": true,
+                "operation_ref": "",
+                "plan_id": "live_coverage",
+                "raw_result_ref": "plans/runs/live_coverage_eee45b3e97/broker/raw/tool_b36f0e823962.json",
+                "request_arguments": {
+                  "anchor_timeframe": "1h",
+                  "end_at": "2026-01-07T00:00:00+00:00",
+                  "execution_timeframe": "5m",
+                  "snapshot_id": "active-signal-v1",
+                  "start_at": "2026-01-01T00:00:00+00:00",
+                  "symbol": "BTCUSDT",
+                  "version": 1
+                },
+                "response_status": "",
+                "resume_arguments": {},
+                "resume_token": "",
+                "resume_tool": "backtests_plan",
+                "retryable": false,
+                "slice_id": "backtests_plan_window",
+                "summary": "Planned backtest run window for active-signal-v1 on BTCUSDT@1h/5m.",
+                "tool": "backtests_plan",
+                "tool_response_status": "ok",
+                "warnings": [
+                  "Snapshot logic depends on explicit anchor-context columns; keep using the computed causal lower bound.",
+                  "stale_snapshot_feature_refs: snapshot feature_source.fields contains names that are not currently resolved through the feature registry/window guard."
+                ]
+              },
+              "server_session_id": null,
+              "service": "dev_space1",
+              "severity": "medium",
+              "state": "open"
+            },
+            "source_refs": [],
+            "external_ref": "incident:f8e690a485647b6bffeb3f32",
+            "dedupe_key": "f8e690a485647b6bffeb3f32",
+            "pinned": false,
+            "protection_reason": null,
+            "created_at": "2026-04-09T12:32:00.922338+00:00",
+            "updated_at": "2026-04-09T13:28:47.403211+00:00",
+            "incident_id": "incident:f8e690a485647b6bffeb3f32"
+          },
+          {
+            "node_id": "node-b9bf4bfdf9634340b214505ed850d3b3",
+            "project_id": "mcp-infra-incidents",
+            "branch_id": "branch-52fbeb31fd074ba39daf2ed99a72d977",
+            "node_type": "note",
+            "title": "features_analytics: features_analytics_warning",
+            "summary": "features_analytics_warning",
+            "status": "active",
+            "content": {
+              "error": {
+                "message": "shift_audit_custom_features_only"
+              },
+              "events": [],
+              "log_excerpt": null
+            },
+            "metadata": {
+              "affected_tool": "features_analytics",
+              "arguments": {
+                "action": "analytics",
+                "feature_name": "rsi_1",
+                "symbol": "BTCUSDT"
+              },
+              "correlation_id": null,
+              "error_code": "unknown_error",
+              "evidence": {},
+              "first_seen_at": "2026-04-09T04:19:26.773801+00:00",
+              "kind": "infrastructure_incident",
+              "last_seen_at": "2026-04-09T13:27:45.915520+00:00",
+              "message": "features_analytics_warning",
+              "normalized_message": "features_analytics_warning",
+              "occurrences": 24,
+              "request_id": null,
+              "result": {
+                "artifact_ids": [],
+                "call_id": "tool_b3efe5e1f4d2",
+                "created_at": "2026-04-09T13:27:45.812926+00:00",
+                "duration_ms": 645,
+                "error_class": "",
+                "key_facts": {},
+                "ok": true,
+                "operation_ref": "",
+                "plan_id": "live_coverage",
+                "raw_result_ref": "plans/runs/live_coverage_eee45b3e97/broker/raw/tool_b3efe5e1f4d2.json",
+                "request_arguments": {
+                  "action": "analytics",
+                  "feature_name": "rsi_1",
+                  "symbol": "BTCUSDT"
+                },
+                "response_status": "",
+                "resume_arguments": {},
+                "resume_token": "",
+                "resume_tool": "features_analytics",
+                "retryable": false,
+                "slice_id": "features_analytics_rsi",
+                "summary": "Feature analytics action completed.",
+                "tool": "features_analytics",
+                "tool_response_status": "ok",
+                "warnings": [
+                  "shift_audit_custom_features_only"
+                ]
+              },
+              "server_session_id": null,
+              "service": "dev_space1",
+              "severity": "medium",
+              "state": "open"
+            },
+            "source_refs": [],
+            "external_ref": "incident:1843cfa8b423842d7b6b6635",
+            "dedupe_key": "1843cfa8b423842d7b6b6635",
+            "pinned": false,
+            "protection_reason": null,
+            "created_at": "2026-04-09T04:19:26.774882+00:00",
+            "updated_at": "2026-04-09T13:27:45.920822+00:00",
+            "incident_id": "incident:1843cfa8b423842d7b6b6635"
+          },
+          {
+            "node_id": "node-25bf4dcce3e445ab82edb6898cb4bf13",
+            "project_id": "mcp-infra-incidents",
+            "branch_id": "branch-52fbeb31fd074ba39daf2ed99a72d977",
+            "node_type": "note",
+            "title": "system_reset_space: system_reset_space_warning",
+            "summary": "system_reset_space_warning",
+            "status": "active",
+            "content": {
+              "error": {
+                "message": "normalized_boolean:research_memory"
+              },
+              "events": [],
+              "log_excerpt": null
+            },
+            "metadata": {
+              "affected_tool": "system_reset_space",
+              "arguments": {
+                "action": "preview",
+                "research_memory": "false"
+              },
+              "correlation_id": null,
+              "error_code": "unknown_error",
+              "evidence": {},
+              "first_seen_at": "2026-04-09T12:39:26.545606+00:00",
+              "kind": "infrastructure_incident",
+              "last_seen_at": "2026-04-09T13:26:17.805970+00:00",
+              "message": "system_reset_space_warning",
+              "normalized_message": "system_reset_space_warning",
+              "occurrences": 17,
+              "request_id": null,
+              "result": {
+                "artifact_ids": [],
+                "call_id": "tool_382a7f2755a4",
+                "created_at": "2026-04-09T13:26:17.697546+00:00",
+                "duration_ms": 485,
+                "error_class": "",
+                "key_facts": {
+                  "summary": "Explicit system reset preview completed."
+                },
+                "ok": true,
+                "operation_ref": "",
+                "plan_id": "live_coverage",
+                "raw_result_ref": "plans/runs/live_coverage_0abad64a84/broker/raw/tool_382a7f2755a4.json",
+                "request_arguments": {
+                  "action": "preview",
+                  "research_memory": "false"
+                },
+                "response_status": "",
+                "resume_arguments": {},
+                "resume_token": "",
+                "resume_tool": "system_reset_space",
+                "retryable": false,
+                "slice_id": "system_reset_preview",
+                "summary": "Explicit system reset preview completed.",
+                "tool": "system_reset_space",
+                "tool_response_status": "ok",
+                "warnings": [
+                  "normalized_boolean:research_memory"
+                ]
+              },
+              "server_session_id": null,
+              "service": "dev_space1",
+              "severity": "medium",
+              "state": "open"
+            },
+            "source_refs": [],
+            "external_ref": "incident:38282462bc82cd17ca73d5cf",
+            "dedupe_key": "38282462bc82cd17ca73d5cf",
+            "pinned": false,
+            "protection_reason": null,
+            "created_at": "2026-04-09T12:39:26.549726+00:00",
+            "updated_at": "2026-04-09T13:26:17.810944+00:00",
+            "incident_id": "incident:38282462bc82cd17ca73d5cf"
+          }
+        ],
+        "memory_persistence": {
+          "database_path": "/home/ubuntu/.foundation_state/research_memory/research_memory.sqlite3",
+          "artifacts_root": "/home/ubuntu/.foundation_state/research_memory",
+          "continuity_warning": null
+        }
+      },
+      "contract_risks": [
+        {
+          "risk_code": "recent_open_incident",
+          "severity": "medium",
+          "summary": "backtests_plan: backtests_plan_warning"
+        },
+        {
+          "risk_code": "recent_open_incident",
+          "severity": "medium",
+          "summary": "features_analytics: features_analytics_warning"
+        },
+        {
+          "risk_code": "recent_open_incident",
+          "severity": "medium",
+          "summary": "system_reset_space: system_reset_space_warning"
+        },
+        {
+          "risk_code": "async_argument_schema_parity",
+          "severity": "medium",
+          "summary": "Public async tool metadata no longer exposes the canonical wait/status contract consistently."
+        }
+      ],
+      "workflow_risks": [
+        {
+          "risk_code": "recent_open_incident",
+          "severity": "medium",
+          "summary": "backtests_plan: backtests_plan_warning"
+        },
+        {
+          "risk_code": "recent_open_incident",
+          "severity": "medium",
+          "summary": "features_analytics: features_analytics_warning"
+        },
+        {
+          "risk_code": "recent_open_incident",
+          "severity": "medium",
+          "summary": "system_reset_space: system_reset_space_warning"
+        },
+        {
+          "risk_code": "async_argument_schema_parity",
+          "severity": "medium",
+          "summary": "Public async tool metadata no longer exposes the canonical wait/status contract consistently."
+        }
+      ],
+      "known_worker_traps": [
+        {
+          "risk_code": "recent_open_incident",
+          "severity": "medium",
+          "summary": "backtests_plan: backtests_plan_warning"
+        },
+        {
+          "risk_code": "recent_open_incident",
+          "severity": "medium",
+          "summary": "features_analytics: features_analytics_warning"
+        },
+        {
+          "risk_code": "recent_open_incident",
+          "severity": "medium",
+          "summary": "system_reset_space: system_reset_space_warning"
+        },
+        {
+          "risk_code": "async_argument_schema_parity",
+          "severity": "medium",
+          "summary": "Public async tool metadata no longer exposes the canonical wait/status contract consistently."
+        }
+      ],
+      "worker_traps": [
+        {
+          "risk_code": "recent_open_incident",
+          "severity": "medium",
+          "summary": "backtests_plan: backtests_plan_warning"
+        },
+        {
+          "risk_code": "recent_open_incident",
+          "severity": "medium",
+          "summary": "features_analytics: features_analytics_warning"
+        },
+        {
+          "risk_code": "recent_open_incident",
+          "severity": "medium",
+          "summary": "system_reset_space: system_reset_space_warning"
+        },
+        {
+          "risk_code": "async_argument_schema_parity",
+          "severity": "medium",
+          "summary": "Public async tool metadata no longer exposes the canonical wait/status contract consistently."
+        }
+      ],
+      "runtime_rules_ref": "project://mcp/agent-operating-manual",
+      "operating_guidance": "Start new sessions with system_bootstrap. Use system_health(validate_tools=true) as the cheap runtime probe. For infrastructure failures follow system_health -> system_debug_validate_path -> system_logs -> incidents(action='capture').",
+      "important_warnings": [],
+      "next_recommended_actions": [
+        "Use system_queue(action='inspect') when queue health looks degraded. For runtime failures, follow system_health(validate_tools=true) -> system_debug_validate_path -> system_logs -> incidents(action='capture')."
+      ],
+      "recommended_follow_up_tool": null,
+      "state_summary": {},
+      "exact_next_call_examples": [
+        {
+          "tool": "system_health",
+          "arguments": {
+            "validate_tools": true,
+            "view": "summary"
+          }
+        },
+        {
+          "tool": "system_debug_validate_path",
+          "arguments": {
+            "raw_path": "/dev_space1/system_health"
+          }
+        },
+        {
+          "tool": "system_logs",
+          "arguments": {
+            "service": "mcp_server",
+            "lines": 50
+          }
+        },
+        {
+          "tool": "incidents",
+          "arguments": {
+            "action": "capture",
+            "summary": "MCP runtime routing/session failure",
+            "affected_tool": "system_health",
+            "service": "mcp_server"
+          }
+        }
+      ],
+      "raw_refs": [
+        "system_raw_call(tool_name='system_status_get')",
+        "system_raw_call(tool_name='system_debug_get_infrastructure')",
+        "system_raw_call(tool_name='system_debug_read_logs')"
+      ],
+      "raw_tool_hints": [
+        "system_raw_call(tool_name='system_status_get')",
+        "system_raw_call(tool_name='system_debug_get_infrastructure')",
+        "system_raw_call(tool_name='system_debug_read_logs')"
+      ],
+      "next_action": "Use system_queue(action='inspect') when queue health looks degraded. For runtime failures, follow system_health(validate_tools=true) -> system_debug_validate_path -> system_logs -> incidents(action='capture')."
+    },
+    "warnings": [],
+    "refs": [],
+    "error": null
+  },
+  "isError": false
+}

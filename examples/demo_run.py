@@ -3,9 +3,9 @@ Demo run — shows the full orchestrator lifecycle with fake adapters.
 
 This demonstrates:
 1. Starting with a goal
-2. Planner breaking work into subtasks
-3. Workers executing subtasks
-4. Planner reviewing results and issuing next tasks
+2. Planner returning markdown plans
+3. Workers executing those plans
+4. Wave-based planning and result collection
 5. Final completion
 
 Run: python -m examples.demo_run
@@ -36,72 +36,115 @@ def main():
         max_empty_cycles=10,
     )
 
-    # Scripted planner responses simulating a realistic workflow
+    # Scripted planner responses simulating a realistic wave workflow
     planner_responses = [
-        {
-            "decision": "launch_worker",
-            "target_worker_id": "qwen-1",
-            "task_instruction": "Create Flask project structure: app.py, requirements.txt, config.py",
-            "reason": "Starting with project scaffolding",
-            "check_after_seconds": 0,
-        },
-        {
-            "decision": "launch_worker",
-            "target_worker_id": "qwen-1",
-            "task_instruction": "Implement User model with SQLAlchemy and password hashing",
-            "reason": "Project structure ready, now implementing the data model",
-            "memory_update": "Project structure created with Flask, SQLAlchemy",
-            "check_after_seconds": 0,
-        },
-        {
-            "decision": "launch_worker",
-            "target_worker_id": "qwen-1",
-            "task_instruction": "Implement auth routes: POST /register, POST /login, POST /logout",
-            "reason": "User model exists, adding authentication endpoints",
-            "memory_update": "User model with bcrypt password hashing done",
-            "check_after_seconds": 0,
-        },
-        {
-            "decision": "launch_worker",
-            "target_worker_id": "qwen-1",
-            "task_instruction": "Add input validation and error handlers",
-            "reason": "Auth routes working, adding safety layer",
-            "memory_update": "Auth routes with JWT tokens implemented",
-            "check_after_seconds": 0,
-        },
-        {
-            "decision": "finish",
-            "reason": "All components built and verified",
-            "should_finish": True,
-            "final_summary": "REST API built successfully: Flask app with User model, auth routes, JWT tokens, and input validation.",
-        },
+        """# Plan v1
+
+## Status and Frame
+Baseline is fixed for the demo.
+
+## Goal
+Build the Flask project skeleton and authentication base.
+
+## Baseline
+Treat the current repo state as fixed input.
+
+## Research Principles
+- Execute concrete implementation work only.
+
+## dev_space1 Capabilities
+Workers available: 1.
+
+## ETAP 1: Scaffold
+Goal: create the initial Flask project structure.
+1. Create `app.py`, `requirements.txt`, and `config.py`.
+Completion criteria: project files exist.
+| artifact | status |
+| --- | --- |
+| scaffold | pending |
+
+## ETAP 2: User Model
+Goal: implement the user model with password hashing.
+1. Add a SQLAlchemy user model with bcrypt helpers.
+Completion criteria: model and password helpers exist.
+| artifact | status |
+| --- | --- |
+| model | pending |
+
+## ETAP 3: Auth Routes
+Goal: implement auth endpoints.
+1. Add register, login, and logout routes.
+Completion criteria: all routes return JSON.
+| artifact | status |
+| --- | --- |
+| auth | pending |
+""",
+        """# Plan v2
+
+## Status and Frame
+Continue from the scaffold and auth base.
+
+## Goal
+Add validation and error handling.
+
+## Baseline
+Do not rewrite the existing structure.
+
+## Research Principles
+- Extend the system cleanly without churn.
+
+## dev_space1 Capabilities
+Workers available: 1.
+
+## ETAP 1: Validation
+Goal: validate auth inputs.
+1. Add schemas for incoming auth payloads.
+Completion criteria: invalid requests are rejected cleanly.
+| artifact | status |
+| --- | --- |
+| validation | pending |
+
+## ETAP 2: Error Handling
+Goal: normalize error responses.
+1. Add JSON error handlers for common failures.
+Completion criteria: 400/401/404/500 handlers exist.
+| artifact | status |
+| --- | --- |
+| errors | pending |
+
+## ETAP 3: Summary
+Goal: capture final integration state.
+1. Return a structured worker report with artifacts.
+Completion criteria: report includes produced files and status.
+| artifact | status |
+| --- | --- |
+| summary | pending |
+""",
     ]
 
     # Scripted worker responses
     worker_responses = [
         {
             "status": "success",
-            "summary": "Created Flask project: app.py with factory pattern, requirements.txt (Flask, flask-sqlalchemy, flask-bcrypt, pyjwt), config.py with env-based settings",
-            "artifacts": ["app.py", "requirements.txt", "config.py"],
+            "what_was_requested": "Build the Flask scaffold and auth base",
+            "what_was_done": "Created Flask project files, implemented the user model, and added auth routes returning JSON.",
+            "results_table": [{"artifact": "app.py", "status": "created"}],
+            "key_metrics": {"files_created": 4},
+            "artifacts": ["app.py", "requirements.txt", "config.py", "routes/auth.py"],
+            "verdict": "PROMOTE",
             "confidence": 0.95,
+            "error": "",
         },
         {
             "status": "success",
-            "summary": "Implemented User model with SQLAlchemy: id, username, email, password_hash fields. Added bcrypt hashing via set_password/check_password methods.",
-            "artifacts": ["models.py"],
-            "confidence": 0.9,
-        },
-        {
-            "status": "success",
-            "summary": "Implemented /register (creates user, returns 201), /login (validates credentials, returns JWT), /logout (blacklists token). All routes return JSON.",
-            "artifacts": ["routes/auth.py"],
-            "confidence": 0.88,
-        },
-        {
-            "status": "success",
-            "summary": "Added marshmallow schemas for input validation on all auth routes. Added 400/401/404/500 error handlers returning JSON responses.",
+            "what_was_requested": "Add validation and error handling",
+            "what_was_done": "Added validation schemas and JSON error handlers for common HTTP failures.",
+            "results_table": [{"artifact": "schemas.py", "status": "created"}],
+            "key_metrics": {"handlers_added": 4},
             "artifacts": ["schemas.py", "errors.py"],
+            "verdict": "PROMOTE",
             "confidence": 0.85,
+            "error": "",
         },
     ]
 
@@ -130,7 +173,6 @@ def main():
     logger.info("Cycles: %d", orch.state.current_cycle)
     logger.info("Completed tasks: %d", len(orch.state.completed_tasks()))
     logger.info("Total results: %d", len(orch.state.results))
-    logger.info("Memory entries: %d", len(orch.state.memory))
     logger.info("=" * 60)
 
     # Print task summary

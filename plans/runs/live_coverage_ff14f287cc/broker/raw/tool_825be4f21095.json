@@ -1,0 +1,45 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\n  \"status\": \"ok\",\n  \"message\": \"Server log excerpt loaded.\",\n  \"tool_name\": \"system_logs\",\n  \"request_id\": \"55\",\n  \"correlation_id\": \"55\",\n  \"server_session_id\": \"93e816c4a9c94e6c81d1c952d314071a\",\n  \"response_generated_at\": \"2026-04-09T12:49:03.165654+00:00\",\n  \"data\": {\n    \"summary\": \"Loaded recent server logs for mcp_server.\",\n    \"service\": \"mcp_server\",\n    \"source_kind\": \"journald\",\n    \"configured_target\": \"_PID=3128880\",\n    \"available\": true,\n    \"access_state\": \"ready\",\n    \"lines_returned\": 5,\n    \"truncated\": false,\n    \"important_warnings\": [],\n    \"next_recommended_actions\": [\n      \"Use system_debug_recent_events to correlate these log lines with a specific MCP error or correlation id, then capture the infrastructure issue with incidents(action='capture') when needed.\"\n    ],\n    \"recommended_follow_up_tool\": null,\n    \"state_summary\": {},\n    \"exact_next_call_examples\": [],\n    \"raw_refs\": [\n      \"system_raw_call(tool_name='system_debug_read_logs')\"\n    ],\n    \"raw_tool_hints\": [\n      \"system_raw_call(tool_name='system_debug_read_logs')\"\n    ],\n    \"next_action\": \"Use system_debug_recent_events to correlate these log lines with a specific MCP error or correlation id, then capture the infrastructure issue with incidents(action='capture') when needed.\"\n  },\n  \"warnings\": [],\n  \"refs\": [],\n  \"error\": null\n}"
+    }
+  ],
+  "structuredContent": {
+    "status": "ok",
+    "message": "Server log excerpt loaded.",
+    "tool_name": "system_logs",
+    "request_id": "55",
+    "correlation_id": "55",
+    "server_session_id": "93e816c4a9c94e6c81d1c952d314071a",
+    "response_generated_at": "2026-04-09T12:49:03.165654+00:00",
+    "data": {
+      "summary": "Loaded recent server logs for mcp_server.",
+      "service": "mcp_server",
+      "source_kind": "journald",
+      "configured_target": "_PID=3128880",
+      "available": true,
+      "access_state": "ready",
+      "lines_returned": 5,
+      "truncated": false,
+      "important_warnings": [],
+      "next_recommended_actions": [
+        "Use system_debug_recent_events to correlate these log lines with a specific MCP error or correlation id, then capture the infrastructure issue with incidents(action='capture') when needed."
+      ],
+      "recommended_follow_up_tool": null,
+      "state_summary": {},
+      "exact_next_call_examples": [],
+      "raw_refs": [
+        "system_raw_call(tool_name='system_debug_read_logs')"
+      ],
+      "raw_tool_hints": [
+        "system_raw_call(tool_name='system_debug_read_logs')"
+      ],
+      "next_action": "Use system_debug_recent_events to correlate these log lines with a specific MCP error or correlation id, then capture the infrastructure issue with incidents(action='capture') when needed."
+    },
+    "warnings": [],
+    "refs": [],
+    "error": null
+  },
+  "isError": false
+}

@@ -1,0 +1,13 @@
+{
+  "source_file": "raw_plans/plan_v2.md",
+  "source_hash": "fac2e19e9168dae13dd9e93e69327dca3275af5f9dd30e554257985ba2ef28d5",
+  "sequence_id": "compiled_plan_v2",
+  "compile_status": "compiled",
+  "parser_confidence": 0.95,
+  "semantic_method": "llm",
+  "stage_count": 12,
+  "compiled_plan_count": 4,
+  "warnings": [],
+  "errors": [],
+  "compiled_at": "2026-04-09T14:18:20.893805+00:00"
+}

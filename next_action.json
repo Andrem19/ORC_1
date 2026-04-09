@@ -1,0 +1,18 @@
+{
+  "type": "tool_call",
+  "tool": "features_catalog",
+  "arguments": {
+    "features_catalog": {
+      "symbol": "BTCUSDT",
+      "timeframe": "1h",
+      "include_metadata": true
+    }
+  },
+  "reason": "Events payload is loaded. Need to understand what baseline features exist in the catalog for BTCUSDT 1h to later verify orthogonality of event-based features.",
+  "expected_evidence": [
+    "List of existing baseline features for BTCUSDT 1h",
+    "Feature metadata showing which signals are currently active",
+    "Timestamps and feature definitions to compare against event-driven signals"
+  ],
+  "reportable_issues": []
+}

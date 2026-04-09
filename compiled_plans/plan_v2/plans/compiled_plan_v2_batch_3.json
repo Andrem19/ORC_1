@@ -1,0 +1,170 @@
+{
+  "plan_id": "compiled_plan_v2_batch_3",
+  "goal": "Find one or more new orthogonal specialist signals or conditioning layers that work primarily where the base does not trade, use genuinely new information, pass window stability, and prove additive value through new entries upon integration.",
+  "baseline_ref": {
+    "snapshot_id": "active-signal-v1",
+    "version": 1,
+    "symbol": "BTCUSDT",
+    "anchor_timeframe": "1h",
+    "execution_timeframe": "5m"
+  },
+  "global_constraints": [
+    "Base active-signal-v1@1 is immutable — no re-tuning, no hour/day/threshold variations, no cosmetic changes.",
+    "Raw single-filter event entries (H1/H2 style) are permanently forbidden.",
+    "Every new candidate must first pass complement-first mode (base_absent surface) before any other evaluation.",
+    "Every prototype must contain at least 3 logical layers: new information layer + regime confirmation + density limiter.",
+    "Model-first approaches are forbidden until the low-friction wave (Wave A) completes.",
+    "No candidate may be a renamed variation of existing hour, dow, cl_*, rsi, iv_est static, or day-of-week patterns.",
+    "If permissive integration looks good but strict additive is weak — reject for hidden cannibalism.",
+    "Record both successes and reasons for rejection in research journal."
+  ],
+  "slices": [
+    {
+      "slice_id": "compiled_plan_v2_stage_7",
+      "title": "Complement-first standalone backtests",
+      "hypothesis": "Verify whether each prototype has standalone value specifically on the space where the base does not trade.",
+      "objective": "Verify whether each prototype has standalone value specifically on the space where the base does not trade.",
+      "success_criteria": [
+        "A shortlist of prototypes exists that already look like real specialist candidates on complement-only space."
+      ],
+      "allowed_tools": [
+        "backtests_plan",
+        "backtests_runs",
+        "backtests_studies",
+        "backtests_walkforward",
+        "backtests_conditions",
+        "backtests_analysis",
+        "experiments_run",
+        "experiments_inspect",
+        "experiments_read"
+      ],
+      "evidence_requirements": [
+        "A shortlist of prototypes exists that already look like real specialist candidates on complement-only space."
+      ],
+      "policy_tags": [
+        "backtest"
+      ],
+      "max_turns": 8,
+      "max_tool_calls": 6,
+      "max_expensive_calls": 2,
+      "parallel_slot": 1,
+      "status": "pending",
+      "turn_count": 0,
+      "tool_call_count": 0,
+      "expensive_call_count": 0,
+      "assigned_worker_id": null,
+      "last_checkpoint_turn_id": "",
+      "last_checkpoint_summary": "",
+      "final_report_turn_id": "",
+      "last_error": "",
+      "last_summary": "",
+      "latest_tool_result_summary": "",
+      "active_operation_tool": "",
+      "active_operation_ref": "",
+      "active_operation_status": "",
+      "active_operation_arguments": {},
+      "active_resume_tool": "",
+      "active_resume_token": "",
+      "last_tool_response_status": "",
+      "artifacts": [],
+      "facts": {}
+    },
+    {
+      "slice_id": "compiled_plan_v2_stage_8",
+      "title": "Stability, concentration and specialist verification",
+      "hypothesis": "Retain only prototypes that genuinely work as specialist layers rather than living on a single lucky stretch of history.",
+      "objective": "Retain only prototypes that genuinely work as specialist layers rather than living on a single lucky stretch of history.",
+      "success_criteria": [
+        "Only stable specialists or honestly limited but reproducible regime-repair layers remain."
+      ],
+      "allowed_tools": [
+        "backtests_analysis",
+        "backtests_conditions",
+        "experiments_run",
+        "experiments_inspect",
+        "experiments_read"
+      ],
+      "evidence_requirements": [
+        "Only stable specialists or honestly limited but reproducible regime-repair layers remain."
+      ],
+      "policy_tags": [
+        "backtest",
+        "validation"
+      ],
+      "max_turns": 8,
+      "max_tool_calls": 6,
+      "max_expensive_calls": 2,
+      "parallel_slot": 2,
+      "status": "pending",
+      "turn_count": 0,
+      "tool_call_count": 0,
+      "expensive_call_count": 0,
+      "assigned_worker_id": null,
+      "last_checkpoint_turn_id": "",
+      "last_checkpoint_summary": "",
+      "final_report_turn_id": "",
+      "last_error": "",
+      "last_summary": "",
+      "latest_tool_result_summary": "",
+      "active_operation_tool": "",
+      "active_operation_ref": "",
+      "active_operation_status": "",
+      "active_operation_arguments": {},
+      "active_resume_tool": "",
+      "active_resume_token": "",
+      "last_tool_response_status": "",
+      "artifacts": [],
+      "facts": {}
+    },
+    {
+      "slice_id": "compiled_plan_v2_stage_9",
+      "title": "Integration with base in two modes",
+      "hypothesis": "Test each finalist in both strict additive and permissive integration to reveal true orthogonality versus hidden duplication.",
+      "objective": "Test each finalist in both strict additive and permissive integration to reveal true orthogonality versus hidden duplication.",
+      "success_criteria": [
+        "A clear picture exists of which candidates are truly additive versus merely appearing good by mixing with the base."
+      ],
+      "allowed_tools": [
+        "backtests_analysis",
+        "backtests_conditions",
+        "experiments_run",
+        "experiments_inspect",
+        "experiments_read"
+      ],
+      "evidence_requirements": [
+        "A clear picture exists of which candidates are truly additive versus merely appearing good by mixing with the base."
+      ],
+      "policy_tags": [
+        "integration",
+        "validation"
+      ],
+      "max_turns": 8,
+      "max_tool_calls": 6,
+      "max_expensive_calls": 2,
+      "parallel_slot": 3,
+      "status": "pending",
+      "turn_count": 0,
+      "tool_call_count": 0,
+      "expensive_call_count": 0,
+      "assigned_worker_id": null,
+      "last_checkpoint_turn_id": "",
+      "last_checkpoint_summary": "",
+      "final_report_turn_id": "",
+      "last_error": "",
+      "last_summary": "",
+      "latest_tool_result_summary": "",
+      "active_operation_tool": "",
+      "active_operation_ref": "",
+      "active_operation_status": "",
+      "active_operation_arguments": {},
+      "active_resume_tool": "",
+      "active_resume_token": "",
+      "last_tool_response_status": "",
+      "artifacts": [],
+      "facts": {}
+    }
+  ],
+  "status": "draft",
+  "created_at": "2026-04-09T14:18:20.893774+00:00",
+  "updated_at": "2026-04-09T14:18:20.893775+00:00"
+}

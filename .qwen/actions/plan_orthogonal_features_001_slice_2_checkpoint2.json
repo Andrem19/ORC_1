@@ -1,0 +1,29 @@
+{
+  "type": "checkpoint",
+  "tool": null,
+  "arguments": {},
+  "reason": "Dataset inspection reveals: cf_rv_ratio_6_24 exists in catalog but is NOT in the active managed dataset (34 active columns, cf_rv_ratio_6_24 absent). However cf_vol_regime_vov (vol-of-vol) and cf_vol_regime_transition (vol expansion/contraction) ARE present and ready. Need to build cf_rv_ratio_6_24 into the dataset, or check if existing vol features suffice for the hypothesis.",
+  "expected_evidence": [],
+  "status": "partial",
+  "summary": "Dataset has 34 active columns. Vol features present: cf_vol_regime_vov, cf_vol_regime_transition, cf_vol_expansion_flag, cf_vol_squeeze_breakout, cf_vol_asymmetry_1h, cf_vol_absorption_score, cf_range_compression_1h, cf_fwd_vol_regime. Missing from dataset but in catalog: cf_rv_ratio_6_24. Need to add cf_rv_ratio_6_24 to dataset or proceed with existing vol features.",
+  "facts": {
+    "dataset_row_count": 54864,
+    "dataset_active_columns_count": 34,
+    "cf_rv_ratio_6_24_in_dataset": false,
+    "cf_vol_regime_vov_in_dataset": true,
+    "cf_vol_regime_transition_in_dataset": true,
+    "cf_vol_expansion_flag_in_dataset": true,
+    "iv_est_1_in_dataset": true,
+    "baseline_cl_1h_in_dataset": true,
+    "vol_features_missing_from_dataset": "cf_rv_ratio_6_24, cf_atr_regime, cf_vol_regime_switch, cf_vol_regime_compression, cf_vol_imbalance_12, cf_vol_price_div, cf_vol_term_spread, cf_mean_rev_pressure, cf_rv_percentile_48"
+  },
+  "artifacts": [],
+  "pending_questions": [
+    "Should we build cf_rv_ratio_6_24 into the dataset?",
+    "Can we validate orthogonality with existing cf_vol_regime_vov and cf_vol_regime_transition?"
+  ],
+  "reportable_issues": [],
+  "verdict": null,
+  "key_metrics": {},
+  "confidence": 0.0
+}

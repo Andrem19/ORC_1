@@ -1,0 +1,26 @@
+{
+  "type": "checkpoint",
+  "tool": null,
+  "arguments": {},
+  "reason": "features_catalog returned rich vol-family features. Key findings: 16 vol-related custom features exist including cf_rv_ratio_6_24 (realized vol ratio 6h/24h), cf_vol_regime_vov (vol-of-vol ratio), cf_vol_regime_transition, cf_vol_regime_switch, cf_vol_regime_compression, cf_atr_regime, iv_est/iv_est_1 (implied vol estimates). The hypothesis needs to validate whether these existing features satisfy the slice requirements or if new custom features are still needed.",
+  "expected_evidence": [],
+  "status": "partial",
+  "summary": "Discovered 16 vol-family features in catalog. Key matches to hypothesis: cf_rv_ratio_6_24 (realized-vol ratio short vs long window), cf_vol_regime_vov (vol-of-vol), cf_vol_regime_transition (vol expansion/contraction), iv_est_1 (implied vol proxy). Need to inspect their analytics and check overlap with baseline signals.",
+  "facts": {
+    "vol_features_exist": "cf_rv_ratio_6_24, cf_vol_regime_vov, cf_vol_regime_transition, cf_vol_regime_switch, cf_vol_regime_compression, cf_atr_regime, cf_vol_expansion_flag, cf_vol_imbalance_12, cf_vol_absorption_score, cf_vol_asymmetry_1h, cf_vol_price_div, cf_vol_squeeze_breakout, cf_vol_term_spread, cf_fwd_vol_regime, cf_mean_rev_pressure, cf_rv_percentile_48",
+    "realized_vol_ratio_feature": "cf_rv_ratio_6_24",
+    "vol_of_vol_feature": "cf_vol_regime_vov",
+    "implied_vol_proxy": "iv_est_1",
+    "baseline_features": "cl_1h, cl_4h, cl_1d, cl_15m, rsi, rsi_1, atr_1, hour, dow, is_expiry, is_funding_settlement, is_month_end, is_quarter_end, is_week_close, is_week_open"
+  },
+  "artifacts": [],
+  "pending_questions": [
+    "Do cf_rv_ratio_6_24 and cf_vol_regime_vov have <30% overlap with baseline signal timestamps?",
+    "Does high vol-of-vol predict continuation or reversal in BTCUSDT?",
+    "Should we still build new custom features or are existing ones sufficient?"
+  ],
+  "reportable_issues": [],
+  "verdict": null,
+  "key_metrics": {},
+  "confidence": 0.0
+}

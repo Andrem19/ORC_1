@@ -1,0 +1,187 @@
+{
+  "plan_id": "compiled_plan_v7_batch_1",
+  "goal": "Довести до честного решения, может ли новый directional feature layer + CatBoost classification дать additive long/short sleeve поверх active-signal-v1@1 при правильных labels, полных sides/horizons и не обрезанном feature layer.",
+  "baseline_ref": {
+    "snapshot_id": "active-signal-v1",
+    "version": 1,
+    "symbol": "BTCUSDT",
+    "anchor_timeframe": "1h",
+    "execution_timeframe": "5m"
+  },
+  "global_constraints": [
+    "active-signal-v1@1 — immutable reference; запрещено менять базу, подбирать ей часы/дни/пороги/исполнение",
+    "запрещено выбирать feature set, label scheme, horizon, threshold или архитектуру по lockbox-окну",
+    "улучшением считается только matched OOS comparison с базой на том же окне",
+    "запрещено возвращаться к regression-предсказанию future PnL",
+    "запрещено возвращаться к IV-family как самостоятельному directional layer",
+    "label scheme frozen до training; net_pnl>0 больше не используется как primary label",
+    "short-first приоритет: short 18h → short 12h → потом long tests",
+    "сначала tail-value (top-decile lift, precision в top bucket), потом общий AUC",
+    "не обучать multiclass model; не строить router пока хотя бы один sleeve не прошёл OOS"
+  ],
+  "slices": [
+    {
+      "slice_id": "compiled_plan_v7_stage_1",
+      "title": "Closure-audit v6 и фиксация инвариантов v7",
+      "hypothesis": "Честно зафиксировать, что именно в v6 осталось недоделанным, открыть v7 project и завести research map с осями и open-items register.",
+      "objective": "Честно зафиксировать, что именно в v6 осталось недоделанным, открыть v7 project и завести research map с осями и open-items register.",
+      "success_criteria": [
+        "project_id создан и привязан к baseline_ref",
+        "v6 closure-audit node записан",
+        "open-items register содержит минимум 7 записей",
+        "atlas dimensions (research_map оси) формально определены"
+      ],
+      "allowed_tools": [
+        "research_project",
+        "research_map",
+        "research_record",
+        "research_search"
+      ],
+      "evidence_requirements": [
+        "project_id создан и привязан к baseline_ref",
+        "v6 closure-audit node записан",
+        "open-items register содержит минимум 7 записей",
+        "atlas dimensions (research_map оси) формально определены"
+      ],
+      "policy_tags": [
+        "setup",
+        "cheap_first"
+      ],
+      "max_turns": 4,
+      "max_tool_calls": 4,
+      "max_expensive_calls": 0,
+      "parallel_slot": 1,
+      "status": "pending",
+      "turn_count": 0,
+      "tool_call_count": 0,
+      "expensive_call_count": 0,
+      "assigned_worker_id": null,
+      "last_checkpoint_turn_id": "",
+      "last_checkpoint_summary": "",
+      "final_report_turn_id": "",
+      "last_error": "",
+      "last_summary": "",
+      "latest_tool_result_summary": "",
+      "active_operation_tool": "",
+      "active_operation_ref": "",
+      "active_operation_status": "",
+      "active_operation_arguments": {},
+      "active_resume_tool": "",
+      "active_resume_token": "",
+      "last_tool_response_status": "",
+      "artifacts": [],
+      "facts": {}
+    },
+    {
+      "slice_id": "compiled_plan_v7_stage_2",
+      "title": "Freeze barrier-label contract",
+      "hypothesis": "Устранить дрейф между планом и исполнением, имевший место в v6, формально утвердив ровно две label-схемы для всех horizon/side комбинаций.",
+      "objective": "Устранить дрейф между планом и исполнением, имевший место в v6, формально утвердив ровно две label-схемы для всех horizon/side комбинаций.",
+      "success_criteria": [
+        "decision_node создан с зафиксированными barrier-параметрами для long/short × 12h/18h",
+        "balanced_barrier и conservative_barrier формально описаны словесно и параметрически",
+        "net_pnl>0 явно помечен как запрещённый primary label scheme",
+        "ambiguous cases зафиксированы"
+      ],
+      "allowed_tools": [
+        "features_catalog",
+        "features_custom",
+        "features_dataset",
+        "features_analytics"
+      ],
+      "evidence_requirements": [
+        "decision_node создан с зафиксированными barrier-параметрами для long/short × 12h/18h",
+        "balanced_barrier и conservative_barrier формально описаны словесно и параметрически",
+        "net_pnl>0 явно помечен как запрещённый primary label scheme",
+        "ambiguous cases зафиксированы"
+      ],
+      "policy_tags": [
+        "setup",
+        "contract_freeze"
+      ],
+      "max_turns": 4,
+      "max_tool_calls": 4,
+      "max_expensive_calls": 0,
+      "parallel_slot": 1,
+      "status": "pending",
+      "turn_count": 0,
+      "tool_call_count": 0,
+      "expensive_call_count": 0,
+      "assigned_worker_id": null,
+      "last_checkpoint_turn_id": "",
+      "last_checkpoint_summary": "",
+      "final_report_turn_id": "",
+      "last_error": "",
+      "last_summary": "",
+      "latest_tool_result_summary": "",
+      "active_operation_tool": "",
+      "active_operation_ref": "",
+      "active_operation_status": "",
+      "active_operation_arguments": {},
+      "active_resume_tool": "",
+      "active_resume_token": "",
+      "last_tool_response_status": "",
+      "artifacts": [],
+      "facts": {}
+    },
+    {
+      "slice_id": "compiled_plan_v7_stage_3",
+      "title": "Достроить critical directional core",
+      "hypothesis": "Построить и валидировать минимально необходимый набор directional features: short-deterioration core (приоритет 1), long-recovery core (приоритет 2), context features (приоритет 3).",
+      "objective": "Построить и валидировать минимально необходимый набор directional features: short-deterioration core (приоритет 1), long-recovery core (приоритет 2), context features (приоритет 3).",
+      "success_criteria": [
+        "Все short-first features (группа 1) validated + published + materialized",
+        "Все long support features (группа 2) validated + published + materialized",
+        "Все context features (группа 3) validated + published + materialized",
+        "Coverage issues документированы, warmup_ok подтверждён для каждого feature"
+      ],
+      "allowed_tools": [
+        "features_custom",
+        "datasets",
+        "datasets_sync",
+        "datasets_preview",
+        "events",
+        "events_sync",
+        "features_catalog",
+        "features_dataset"
+      ],
+      "evidence_requirements": [
+        "Все short-first features (группа 1) validated + published + materialized",
+        "Все long support features (группа 2) validated + published + materialized",
+        "Все context features (группа 3) validated + published + materialized",
+        "Coverage issues документированы, warmup_ok подтверждён для каждого feature"
+      ],
+      "policy_tags": [
+        "short_first",
+        "cheap_first"
+      ],
+      "max_turns": 6,
+      "max_tool_calls": 5,
+      "max_expensive_calls": 1,
+      "parallel_slot": 1,
+      "status": "pending",
+      "turn_count": 0,
+      "tool_call_count": 0,
+      "expensive_call_count": 0,
+      "assigned_worker_id": null,
+      "last_checkpoint_turn_id": "",
+      "last_checkpoint_summary": "",
+      "final_report_turn_id": "",
+      "last_error": "",
+      "last_summary": "",
+      "latest_tool_result_summary": "",
+      "active_operation_tool": "",
+      "active_operation_ref": "",
+      "active_operation_status": "",
+      "active_operation_arguments": {},
+      "active_resume_tool": "",
+      "active_resume_token": "",
+      "last_tool_response_status": "",
+      "artifacts": [],
+      "facts": {}
+    }
+  ],
+  "status": "draft",
+  "created_at": "2026-04-09T14:26:06.296722+00:00",
+  "updated_at": "2026-04-09T14:26:06.296732+00:00"
+}

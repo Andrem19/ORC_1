@@ -1,0 +1,42 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\n  \"status\": \"error\",\n  \"message\": \"Canonical analysis requires persisted completed run artifacts for run_id='20260409-125059-965fdc06'.\",\n  \"tool_name\": \"backtests_analysis\",\n  \"request_id\": \"105\",\n  \"correlation_id\": \"105\",\n  \"server_session_id\": \"e09983af9aca43a09d26b21e52921957\",\n  \"response_generated_at\": \"2026-04-09T12:51:10.617186+00:00\",\n  \"data\": null,\n  \"warnings\": [],\n  \"refs\": [],\n  \"error\": {\n    \"code\": \"invalid_input\",\n    \"error_type\": \"input\",\n    \"message\": \"Canonical analysis requires persisted completed run artifacts for run_id='20260409-125059-965fdc06'.\",\n    \"retryable\": false,\n    \"remediation\": \"Correct the input payload so it matches the tool contract.\",\n    \"suggested_next_step\": \"Review the tool schema or system_tools_guide before retrying.\",\n    \"details\": {\n      \"tool\": \"backtests_analysis\",\n      \"classification\": \"agent_contract_misuse\",\n      \"correlation_id\": \"105\",\n      \"request_id\": \"105\",\n      \"server_session_id\": \"e09983af9aca43a09d26b21e52921957\",\n      \"debug_context_available\": true,\n      \"recommended_debug_tools\": [\n        \"system_debug_recent_events\",\n        \"system_logs\"\n      ],\n      \"log_service_hint\": \"mcp_server\"\n    }\n  }\n}"
+    }
+  ],
+  "structuredContent": {
+    "status": "error",
+    "message": "Canonical analysis requires persisted completed run artifacts for run_id='20260409-125059-965fdc06'.",
+    "tool_name": "backtests_analysis",
+    "request_id": "105",
+    "correlation_id": "105",
+    "server_session_id": "e09983af9aca43a09d26b21e52921957",
+    "response_generated_at": "2026-04-09T12:51:10.617186+00:00",
+    "data": null,
+    "warnings": [],
+    "refs": [],
+    "error": {
+      "code": "invalid_input",
+      "error_type": "input",
+      "message": "Canonical analysis requires persisted completed run artifacts for run_id='20260409-125059-965fdc06'.",
+      "retryable": false,
+      "remediation": "Correct the input payload so it matches the tool contract.",
+      "suggested_next_step": "Review the tool schema or system_tools_guide before retrying.",
+      "details": {
+        "tool": "backtests_analysis",
+        "classification": "agent_contract_misuse",
+        "correlation_id": "105",
+        "request_id": "105",
+        "server_session_id": "e09983af9aca43a09d26b21e52921957",
+        "debug_context_available": true,
+        "recommended_debug_tools": [
+          "system_debug_recent_events",
+          "system_logs"
+        ],
+        "log_service_hint": "mcp_server"
+      }
+    }
+  },
+  "isError": false
+}

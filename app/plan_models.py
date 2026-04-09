@@ -1,9 +1,4 @@
-"""
-Plan-mode data models.
-
-Structured research plan types that support the plan-driven orchestrator loop:
-plan → dispatch tasks → collect reports → revise plan → repeat.
-"""
+"""Legacy archival plan models retained for reset/archive compatibility."""
 
 from __future__ import annotations
 
@@ -12,118 +7,93 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any
 
-from app.models import Task, TaskResult, TaskStatus
-from app.planner_contract import format_step_as_tool_call
+@dataclass
+class PlanExecutionSlice:
+    """One bounded ETAP execution slice within a plan."""
 
+    slice_index: int
+    etap_number: int
+    title: str = ""
+    markdown: str = ""
+    status: str = "pending"  # pending | running | completed | failed | skipped
+    task_id: str | None = None
+    checkpoint_summary: str = ""
+    completed_artifacts: list[str] = field(default_factory=list)
+    worker_attempt_seq: int = 0
+    continuation_of_task_id: str | None = None
+    terminal_reason: str = ""
+    recovery_count: int = 0
+    recovery_history: list[dict[str, Any]] = field(default_factory=list)
+    checkpoint_artifacts: list[str] = field(default_factory=list)
+    last_resume_checkpoint_hash: str = ""
+    last_terminal_failure_class: str = ""
+    attempt_history: list[dict[str, Any]] = field(default_factory=list)
+    terminalized_at: str | None = None
+    terminalization_reason: str = ""
+    synthetic_report_used: bool = False
+    terminal_report_path: str = ""
 
-# ---------------------------------------------------------------------------
-# Supporting types
-# ---------------------------------------------------------------------------
 
 @dataclass
-class DecisionGate:
-    """Quantitative accept/reject criterion for a plan task."""
-    metric: str = ""          # e.g. "pnl", "sharpe", "auc"
-    threshold: float = 0.0
-    comparator: str = "gte"   # "gte" | "lte" | "gt" | "lt" | "eq"
-    verdict_pass: str = "PROMOTE"
-    verdict_fail: str = "REJECT"
-    reason: str = ""
+class Plan:
+    """One markdown research plan executed by one worker."""
 
-
-@dataclass
-class AntiPattern:
-    """A categorically rejected approach with evidence."""
-    pattern_id: str = field(default_factory=lambda: uuid.uuid4().hex[:8])
-    category: str = ""
-    description: str = ""
-    evidence_count: int = 0
-    evidence_summary: str = ""
-    verdict: str = "REJECTED"  # REJECTED | EXHAUSTED
-    source_plan_version: int = 0
-
-
-# ---------------------------------------------------------------------------
-# Plan task and report
-# ---------------------------------------------------------------------------
-
-@dataclass
-class PlanTask:
-    """A single stage within a structured research plan."""
-    task_id: str = field(default_factory=lambda: uuid.uuid4().hex[:12])
-    plan_version: int = 0
-    stage_number: int = 0
-    stage_name: str = ""
-    theory: str = ""
-    depends_on: list[int] = field(default_factory=list)
-    steps: list["PlanStep"] = field(default_factory=list)
-    agent_instructions: list[str] = field(default_factory=list)
-    results_table_columns: list[str] = field(default_factory=list)
-    results_table_rows: list[dict[str, Any]] = field(default_factory=list)
-    decision_gates: list[DecisionGate] = field(default_factory=list)
-    verdict: str = "PENDING"  # PROMOTE | WATCHLIST | REJECT | PENDING
+    plan_id: str = field(default_factory=lambda: uuid.uuid4().hex[:12])
+    version: int = 0
+    wave_id: int = 0
+    wave_target_size: int = 0
+    wave_position: int = 0
+    wave_status: str = "idle"  # idle | filling | running | awaiting_results | complete
+    markdown: str = ""
+    status: str = "pending"  # pending | running | completed | failed
     assigned_worker_id: str | None = None
-    status: TaskStatus = TaskStatus.PENDING
+    task_id: str | None = None
+    launch_failed: bool = False
+    launch_error: str = ""
+    execution_mode: str = "sequential_slices"
+    current_slice_index: int = 0
+    slice_count: int = 0
+    slices: list[PlanExecutionSlice] = field(default_factory=list)
+    slice_reports: list[dict[str, Any]] = field(default_factory=list)
     created_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     completed_at: str | None = None
 
     @property
-    def is_resolved(self) -> bool:
-        return self.status in (
-            TaskStatus.COMPLETED,
-            TaskStatus.FAILED,
-            TaskStatus.CANCELLED,
-            TaskStatus.TIMED_OUT,
-            TaskStatus.INTERRUPTED,
-        )
+    def is_terminal(self) -> bool:
+        return self.status in {"completed", "failed"}
 
-    def normalized_steps(self) -> list["PlanStep"]:
-        if self.steps:
-            return self.steps
-        return legacy_steps_from_agent_instructions(self.agent_instructions)
+    @property
+    def is_active(self) -> bool:
+        return self.status == "running"
 
-
-@dataclass
-class PlanStep:
-    """One structured sub-step within a plan stage."""
-    step_id: str = ""
-    kind: str = "work"  # tool_call | work | decision | record
-    instruction: str = ""
-    tool_name: str | None = None
-    args: dict[str, Any] = field(default_factory=dict)
-    binds: list[str] = field(default_factory=list)
-    decision_outputs: list[str] = field(default_factory=list)
-    notes: str = ""
-
-    def render_prompt_block(self) -> list[str]:
-        lines = [f"[{self.step_id}] kind={self.kind}"]
-        if self.instruction:
-            lines.append(f"instruction: {self.instruction}")
-        if self.tool_name:
-            lines.append(f"tool: {format_step_as_tool_call(self.tool_name, self.args)}")
-        if self.binds:
-            lines.append(f"binds: {', '.join(self.binds)}")
-        if self.decision_outputs:
-            lines.append(f"decision_outputs: {', '.join(self.decision_outputs)}")
-        if self.notes:
-            lines.append(f"notes: {self.notes}")
-        return lines
+    @property
+    def current_slice(self) -> PlanExecutionSlice | None:
+        if not self.slices:
+            return None
+        if self.current_slice_index < 0 or self.current_slice_index >= len(self.slices):
+            return None
+        return self.slices[self.current_slice_index]
 
 
 @dataclass
-class TaskReport:
-    """Structured report returned by a worker for a plan task."""
+class PlanReport:
+    """Structured worker report for one plan."""
+
     task_id: str = ""
-    worker_id: str = ""
+    plan_id: str = ""
     plan_version: int = 0
+    wave_id: int = 0
+    wave_position: int = 0
+    wave_target_size: int = 0
+    worker_id: str = ""
     status: str = "success"  # success | error | partial
     what_was_requested: str = ""
     what_was_done: str = ""
     results_table: list[dict[str, Any]] = field(default_factory=list)
     key_metrics: dict[str, Any] = field(default_factory=dict)
     artifacts: list[str] = field(default_factory=list)
-    confidence: float = 0.0
     verdict: str = "PENDING"
+    confidence: float = 0.0
     error: str = ""
     raw_output: str = ""
     mcp_problems: list[dict[str, str]] = field(default_factory=list)
@@ -138,172 +108,50 @@ class TaskReport:
             and not self.results_table
         )
 
-
-# ---------------------------------------------------------------------------
-# Research plan
-# ---------------------------------------------------------------------------
-
-@dataclass
-class ResearchPlan:
-    """A structured multi-task research plan — the primary planner artifact."""
-    plan_id: str = field(default_factory=lambda: uuid.uuid4().hex[:12])
-    schema_version: int = 3
-    version: int = 1
-    created_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
-    frozen_base: str = ""
-    baseline_run_id: str | None = None
-    baseline_snapshot_ref: str | None = None
-    baseline_metrics: dict[str, Any] = field(default_factory=dict)
-    goal: str = ""
-    principles: list[str] = field(default_factory=list)
-    anti_patterns: list[AntiPattern] = field(default_factory=list)
-    cumulative_summary: str = ""
-    tasks: list[PlanTask] = field(default_factory=list)
-    execution_order: list[int] = field(default_factory=list)  # stage numbers in order
-    status: str = "active"  # active | completed | superseded
-    plan_markdown: str = ""  # Full markdown text from planner
-    previous_version_id: str | None = None
-    planner_run_artifact: str | None = None
-
-    def get_task_by_stage(self, stage_number: int) -> PlanTask | None:
-        for t in self.tasks:
-            if t.stage_number == stage_number:
-                return t
-        return None
-
-    def dispatchable_tasks(self) -> list[PlanTask]:
-        """Tasks that are PENDING and whose explicit dependencies are resolved."""
-        pending = [t for t in self.tasks if t.status == TaskStatus.PENDING]
-        if not pending:
-            return []
-
-        resolved_stages = {t.stage_number for t in self.tasks if t.is_resolved}
-        ready: list[PlanTask] = []
-
-        for task in sorted(pending, key=lambda t: t.stage_number):
-            dependencies = self._dependencies_for_stage(task.stage_number)
-            if all(dep in resolved_stages for dep in dependencies):
-                ready.append(task)
-
-        return ready
-
-    def _dependencies_for_stage(self, stage_number: int) -> list[int]:
-        """Return explicit dependencies, falling back to legacy execution_order semantics."""
-        task = self.get_task_by_stage(stage_number)
-        if task is None:
-            return []
-
-        if self.schema_version >= 2:
-            return sorted(set(task.depends_on))
-
-        if not self.execution_order:
-            return []
-
-        deps: list[int] = []
-        for earlier in self.execution_order:
-            if earlier == stage_number:
-                break
-            deps.append(earlier)
-        return deps
-
-    def dispatched_tasks(self) -> list[PlanTask]:
-        """Tasks that have been dispatched (running or waiting)."""
-        return [
-            t for t in self.tasks
-            if t.status in (TaskStatus.RUNNING, TaskStatus.WAITING_RESULT)
-        ]
-
-    def resolved_tasks(self) -> list[PlanTask]:
-        """Tasks that have completed (success or failure)."""
-        return [t for t in self.tasks if t.is_resolved]
-
-    def all_dispatched_resolved(self) -> bool:
-        """True if every dispatched task is in a terminal state."""
-        dispatched = [
-            t for t in self.tasks
-            if t.status != TaskStatus.PENDING
-        ]
-        return len(dispatched) > 0 and all(t.is_resolved for t in dispatched)
-
-
-# ---------------------------------------------------------------------------
-# Bridge functions (compatibility with existing infrastructure)
-# ---------------------------------------------------------------------------
-
-def plan_task_to_task(plan_task: PlanTask) -> Task:
-    """Convert a PlanTask to a Task for the existing WorkerService."""
-    instruction_parts: list[str] = []
-    instruction_parts.append(f"# ETAP {plan_task.stage_number}: {plan_task.stage_name}")
-    instruction_parts.append("")
-    if plan_task.theory:
-        instruction_parts.append(f"## Theory")
-        instruction_parts.append(plan_task.theory)
-        instruction_parts.append("")
-    instruction_parts.append("## Steps")
-    for i, step in enumerate(plan_task.normalized_steps(), 1):
-        instruction_parts.append(f"{i}. [{step.step_id}] {step.kind}")
-        for line in step.render_prompt_block()[1:]:
-            instruction_parts.append(f"   - {line}")
-    if plan_task.results_table_columns:
-        instruction_parts.append("")
-        instruction_parts.append("## Results table columns to fill")
-        instruction_parts.append(" | ".join(plan_task.results_table_columns))
-    return Task(
-        task_id=plan_task.task_id,
-        description="\n".join(instruction_parts),
-        assigned_worker_id=plan_task.assigned_worker_id,
-        metadata={
-            "plan_version": plan_task.plan_version,
-            "stage_number": plan_task.stage_number,
-            "plan_mode": True,
-        },
-    )
-
-
-def decision_gate_from_dict(data: dict[str, Any] | DecisionGate) -> DecisionGate:
-    """Build DecisionGate safely from planner/disk payloads.
-
-    Extra keys are ignored so planner contract additions do not crash runtime.
-    """
-    if isinstance(data, DecisionGate):
-        return data
-    if not isinstance(data, dict):
-        return DecisionGate()
-
-    return DecisionGate(
-        metric=str(data.get("metric", "")),
-        threshold=float(data.get("threshold", 0.0) or 0.0),
-        comparator=str(data.get("comparator", "gte")),
-        verdict_pass=str(data.get("verdict_pass", "PROMOTE")),
-        verdict_fail=str(data.get("verdict_fail", "REJECT")),
-        reason=str(data.get("reason", "")),
-    )
-
-
-def task_report_to_task_result(report: TaskReport) -> TaskResult:
-    """Convert a TaskReport to a TaskResult for compatibility."""
-    return TaskResult(
-        task_id=report.task_id,
-        worker_id=report.worker_id,
-        status=report.status,
-        summary=report.what_was_done[:1000],
-        artifacts=report.artifacts,
-        confidence=report.confidence,
-        error=report.error,
-        raw_output=report.raw_output,
-        mcp_problems=report.mcp_problems,
-        plan_report=report,
-    )
-
-
-def legacy_steps_from_agent_instructions(instructions: list[str]) -> list[PlanStep]:
-    steps: list[PlanStep] = []
-    for idx, instruction in enumerate(instructions, 1):
-        steps.append(
-            PlanStep(
-                step_id=f"legacy_{idx}",
-                kind="work",
-                instruction=instruction,
+    @classmethod
+    def from_task_result(
+        cls,
+        result: Any,
+        *,
+        plan_id: str,
+        plan_version: int,
+        wave_id: int = 0,
+        wave_position: int = 0,
+        wave_target_size: int = 0,
+    ) -> "PlanReport":
+        report = getattr(result, "plan_report", None)
+        if report is not None:
+            payload = {
+                key: getattr(report, key)
+                for key in cls.__dataclass_fields__.keys()
+                if hasattr(report, key)
+            }
+            payload.update(
+                {
+                    "task_id": getattr(result, "task_id", payload.get("task_id", "")),
+                    "plan_id": plan_id,
+                    "plan_version": plan_version,
+                    "wave_id": wave_id or payload.get("wave_id", 0),
+                    "wave_position": wave_position or payload.get("wave_position", 0),
+                    "wave_target_size": wave_target_size or payload.get("wave_target_size", 0),
+                    "worker_id": getattr(result, "worker_id", payload.get("worker_id", "")),
+                    "raw_output": getattr(result, "raw_output", payload.get("raw_output", "")),
+                    "error": getattr(result, "error", payload.get("error", "")),
+                },
             )
+            return cls(**payload)
+        return cls(
+            task_id=getattr(result, "task_id", ""),
+            plan_id=plan_id,
+            plan_version=plan_version,
+            wave_id=wave_id,
+            wave_position=wave_position,
+            wave_target_size=wave_target_size,
+            worker_id=getattr(result, "worker_id", ""),
+            status=getattr(result, "status", "error"),
+            what_was_done=getattr(result, "summary", ""),
+            artifacts=getattr(result, "artifacts", []) or [],
+            confidence=float(getattr(result, "confidence", 0.0) or 0.0),
+            error=getattr(result, "error", ""),
+            raw_output=getattr(result, "raw_output", ""),
         )
-    return steps

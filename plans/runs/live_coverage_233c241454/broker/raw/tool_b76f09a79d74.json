@@ -1,0 +1,122 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\n  \"status\": \"ok\",\n  \"message\": \"Research search payload loaded.\",\n  \"tool_name\": \"research_search\",\n  \"request_id\": \"100\",\n  \"correlation_id\": \"100\",\n  \"server_session_id\": \"ea6edc17d94a4f0daf97ea812d05abc2\",\n  \"response_generated_at\": \"2026-04-09T13:33:10.336320+00:00\",\n  \"data\": {\n    \"project_id\": \"coverage-project-live-coverage-233c241454-2-6970a794\",\n    \"query\": \"coverage note\",\n    \"memory_matches\": {\n      \"query\": \"coverage note\",\n      \"branch_id\": null,\n      \"level\": \"normal\",\n      \"results\": [\n        {\n          \"score\": -3.078720124801168,\n          \"reason\": \"fts5_match\",\n          \"node\": {\n            \"node_id\": \"node-b97ecd2fb510458f9f6aad7be6e68bab\",\n            \"branch_id\": \"branch-74609472d5de4611afe8883f8e59526c\",\n            \"node_type\": \"note\",\n            \"title\": \"Coverage note\",\n            \"summary\": \"Live broker coverage note\",\n            \"status\": \"active\",\n            \"pinned\": false,\n            \"metadata\": {\n              \"cycle\": 2\n            },\n            \"resource_bindings\": []\n          }\n        },\n        {\n          \"score\": -2.0247887750748613e-6,\n          \"reason\": \"fts5_match\",\n          \"node\": {\n            \"node_id\": \"project-node-91e6aa25d257452a9dc3e883cb32a48d\",\n            \"branch_id\": null,\n            \"node_type\": \"project\",\n            \"title\": \"coverage-project-live_coverage_233c241454-2\",\n            \"summary\": \"Broker live coverage validation\",\n            \"status\": \"active\",\n            \"pinned\": true,\n            \"metadata\": {\n              \"baseline_snapshot_id\": \"active-signal-v1\",\n              \"baseline_version\": 1\n            },\n            \"resource_bindings\": []\n          }\n        },\n        {\n          \"score\": -1.9205008736167736e-6,\n          \"reason\": \"fts5_match\",\n          \"node\": {\n            \"node_id\": \"node-ff01978bdc34492b96a46af2770a5f9d\",\n            \"branch_id\": \"branch-74609472d5de4611afe8883f8e59526c\",\n            \"node_type\": \"branch\",\n            \"title\": \"Main branch\",\n            \"summary\": \"Broker live coverage validation\",\n            \"status\": \"active\",\n            \"pinned\": true,\n            \"metadata\": {},\n            \"resource_bindings\": []\n          }\n        }\n      ],\n      \"atlas_augmented_match_count\": 0\n    },\n    \"state_summary\": {\n      \"project_id\": \"coverage-project-live-coverage-233c241454-2-6970a794\",\n      \"query\": \"coverage note\",\n      \"include_archived\": false,\n      \"atlas_augmented_match_count\": 0\n    },\n    \"normalization_warnings\": [],\n    \"important_warnings\": [],\n    \"next_recommended_actions\": [\n      \"Re-open the project when you need the current guided state after reviewing these matches.\",\n      \"Use research_record when one of these findings should become a durable result, note, decision, or incident note.\",\n      \"If a mapped hypothesis matched through atlas discipline, inspect the project or map before changing lifecycle state again.\"\n    ],\n    \"recommended_follow_up_tool\": \"research_project\",\n    \"exact_next_call_examples\": [\n      {\n        \"tool\": \"research_project\",\n        \"arguments\": {\n          \"action\": \"open\",\n          \"project_id\": \"coverage-project-live-coverage-233c241454-2-6970a794\",\n          \"view\": \"summary\"\n        }\n      },\n      {\n        \"tool\": \"research_record\",\n        \"arguments\": {\n          \"action\": \"create\",\n          \"kind\": \"note\",\n          \"project_id\": \"coverage-project-live-coverage-233c241454-2-6970a794\",\n          \"record\": {\n            \"title\": \"Follow-up note\",\n            \"summary\": \"Record the insight from search results.\"\n          }\n        }\n      }\n    ],\n    \"raw_refs\": [],\n    \"raw_tool_hints\": [],\n    \"summary\": \"Loaded research search results.\"\n  },\n  \"warnings\": [],\n  \"refs\": [],\n  \"error\": null\n}"
+    }
+  ],
+  "structuredContent": {
+    "status": "ok",
+    "message": "Research search payload loaded.",
+    "tool_name": "research_search",
+    "request_id": "100",
+    "correlation_id": "100",
+    "server_session_id": "ea6edc17d94a4f0daf97ea812d05abc2",
+    "response_generated_at": "2026-04-09T13:33:10.336320+00:00",
+    "data": {
+      "project_id": "coverage-project-live-coverage-233c241454-2-6970a794",
+      "query": "coverage note",
+      "memory_matches": {
+        "query": "coverage note",
+        "branch_id": null,
+        "level": "normal",
+        "results": [
+          {
+            "score": -3.078720124801168,
+            "reason": "fts5_match",
+            "node": {
+              "node_id": "node-b97ecd2fb510458f9f6aad7be6e68bab",
+              "branch_id": "branch-74609472d5de4611afe8883f8e59526c",
+              "node_type": "note",
+              "title": "Coverage note",
+              "summary": "Live broker coverage note",
+              "status": "active",
+              "pinned": false,
+              "metadata": {
+                "cycle": 2
+              },
+              "resource_bindings": []
+            }
+          },
+          {
+            "score": -2.0247887750748613e-06,
+            "reason": "fts5_match",
+            "node": {
+              "node_id": "project-node-91e6aa25d257452a9dc3e883cb32a48d",
+              "branch_id": null,
+              "node_type": "project",
+              "title": "coverage-project-live_coverage_233c241454-2",
+              "summary": "Broker live coverage validation",
+              "status": "active",
+              "pinned": true,
+              "metadata": {
+                "baseline_snapshot_id": "active-signal-v1",
+                "baseline_version": 1
+              },
+              "resource_bindings": []
+            }
+          },
+          {
+            "score": -1.9205008736167736e-06,
+            "reason": "fts5_match",
+            "node": {
+              "node_id": "node-ff01978bdc34492b96a46af2770a5f9d",
+              "branch_id": "branch-74609472d5de4611afe8883f8e59526c",
+              "node_type": "branch",
+              "title": "Main branch",
+              "summary": "Broker live coverage validation",
+              "status": "active",
+              "pinned": true,
+              "metadata": {},
+              "resource_bindings": []
+            }
+          }
+        ],
+        "atlas_augmented_match_count": 0
+      },
+      "state_summary": {
+        "project_id": "coverage-project-live-coverage-233c241454-2-6970a794",
+        "query": "coverage note",
+        "include_archived": false,
+        "atlas_augmented_match_count": 0
+      },
+      "normalization_warnings": [],
+      "important_warnings": [],
+      "next_recommended_actions": [
+        "Re-open the project when you need the current guided state after reviewing these matches.",
+        "Use research_record when one of these findings should become a durable result, note, decision, or incident note.",
+        "If a mapped hypothesis matched through atlas discipline, inspect the project or map before changing lifecycle state again."
+      ],
+      "recommended_follow_up_tool": "research_project",
+      "exact_next_call_examples": [
+        {
+          "tool": "research_project",
+          "arguments": {
+            "action": "open",
+            "project_id": "coverage-project-live-coverage-233c241454-2-6970a794",
+            "view": "summary"
+          }
+        },
+        {
+          "tool": "research_record",
+          "arguments": {
+            "action": "create",
+            "kind": "note",
+            "project_id": "coverage-project-live-coverage-233c241454-2-6970a794",
+            "record": {
+              "title": "Follow-up note",
+              "summary": "Record the insight from search results."
+            }
+          }
+        }
+      ],
+      "raw_refs": [],
+      "raw_tool_hints": [],
+      "summary": "Loaded research search results."
+    },
+    "warnings": [],
+    "refs": [],
+    "error": null
+  },
+  "isError": false
+}

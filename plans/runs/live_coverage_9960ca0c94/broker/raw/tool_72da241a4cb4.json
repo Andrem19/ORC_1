@@ -1,0 +1,559 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\n  \"status\": \"ok\",\n  \"message\": \"System health loaded.\",\n  \"tool_name\": \"system_health\",\n  \"request_id\": \"7\",\n  \"correlation_id\": \"7\",\n  \"server_session_id\": \"eb6c81d3a2584a65bca1ba986dfd3222\",\n  \"response_generated_at\": \"2026-04-09T12:38:01.972601+00:00\",\n  \"data\": {\n    \"summary\": \"System health returned the current server, domain, queue, path, and anomaly state.\",\n    \"runtime_health_state\": \"healthy\",\n    \"workflow_readiness_state\": \"degraded\",\n    \"server_health\": {\n      \"healthy\": true,\n      \"auth_mode\": \"none\",\n      \"protected_resource_metadata_available\": false,\n      \"oauth_enabled\": false,\n      \"legacy_bearer_enabled\": false,\n      \"issuer\": \"https://auth.remart.ovh/realms/mcp\",\n      \"audience\": \"https://mcp.remart.ovh/mcp\",\n      \"required_scopes\": {\n        \"tools\": \"mcp:tools\",\n        \"prompts\": \"mcp:prompts\",\n        \"resources\": \"mcp:resources\"\n      },\n      \"discovery_cache_ttl_seconds\": 300,\n      \"jwks_cache_ttl_seconds\": 300,\n      \"tool_surface\": {\n        \"surface_version\": \"workspace-cutover-v1\",\n        \"surface_fingerprint\": \"86486263ca96ded4\",\n        \"tool_surface_generation\": \"86486263ca96ded4\",\n        \"registry_generation\": \"86486263ca96ded4\",\n        \"registered_tool_count\": 46,\n        \"degraded\": false,\n        \"degraded_reason\": null,\n        \"discovery_expectation_note\": \"This snapshot reflects the repo-side MCP registry only. If it is healthy while an external client shows an empty tool surface, the stale layer is outside this server.\",\n        \"workspace_tool_names\": [\n          \"system_workspace\"\n        ]\n      }\n    },\n    \"domain_health\": [\n      {\n        \"domain\": \"datasets\",\n        \"health_state\": \"healthy\",\n        \"reason\": null\n      },\n      {\n        \"domain\": \"features\",\n        \"health_state\": \"healthy\",\n        \"reason\": null\n      },\n      {\n        \"domain\": \"models\",\n        \"health_state\": \"healthy\",\n        \"reason\": null\n      },\n      {\n        \"domain\": \"backtests_runs\",\n        \"health_state\": \"healthy\",\n        \"reason\": null\n      },\n      {\n        \"domain\": \"backtests_snapshots\",\n        \"health_state\": \"healthy\",\n        \"reason\": null\n      },\n      {\n        \"domain\": \"backtests_research\",\n        \"health_state\": \"healthy\",\n        \"reason\": null\n      },\n      {\n        \"domain\": \"experiments\",\n        \"health_state\": \"healthy\",\n        \"reason\": null\n      },\n      {\n        \"domain\": \"research_memory\",\n        \"health_state\": \"healthy\",\n        \"reason\": null\n      },\n      {\n        \"domain\": \"telegram\",\n        \"health_state\": \"healthy\",\n        \"reason\": null\n      },\n      {\n        \"domain\": \"system\",\n        \"health_state\": \"healthy\",\n        \"reason\": \"System discovery and status tools are registered.\"\n      }\n    ],\n    \"queue_health\": {\n      \"queue_depth\": 0,\n      \"record_count\": 121,\n      \"nonterminal_record_count\": 0,\n      \"active_operation_kind\": null,\n      \"active_operation_id\": null,\n      \"stalled_count\": 0,\n      \"recovery_required_count\": 0,\n      \"startup_recoveries_total\": 0,\n      \"manual_stop_requests_total\": 0,\n      \"queued_cancellations_total\": 0,\n      \"average_admitted_seconds\": 64.41,\n      \"control_plane_queue_degraded\": false\n    },\n    \"control_plane_queue_degraded\": false,\n    \"active_long_operation\": null,\n    \"path_health\": null,\n    \"runtime_storage\": null,\n    \"runtime_logs\": null,\n    \"canonical_probe_tool\": \"system_health\",\n    \"probe_call_form\": {\n      \"tool\": \"system_health\",\n      \"arguments\": {\n        \"validate_tools\": true,\n        \"view\": \"summary\"\n      }\n    },\n    \"surface_fingerprint\": null,\n    \"server_dispatch_generation\": null,\n    \"transport_sessions_summary\": {},\n    \"repo_side_dispatch_ok\": null,\n    \"external_bridge_state_unknown\": null,\n    \"recommended_client_action\": \"Use canonical tool names or the normalized /dev_space1/... form exposed by the current client; treat link_* mismatch as an external bridge issue when repo-side dispatch remains healthy.\",\n    \"recovery_playbook\": [\n      {\n        \"tool\": \"system_health\",\n        \"arguments\": {\n          \"validate_tools\": true,\n          \"view\": \"summary\"\n        }\n      },\n      {\n        \"tool\": \"system_debug_validate_path\",\n        \"arguments\": {\n          \"raw_path\": \"/dev_space1/system_health\"\n        }\n      },\n      {\n        \"tool\": \"system_logs\",\n        \"arguments\": {\n          \"service\": \"mcp_server\",\n          \"lines\": 50\n        }\n      },\n      {\n        \"tool\": \"incidents\",\n        \"arguments\": {\n          \"action\": \"capture\",\n          \"summary\": \"MCP runtime routing/session failure\",\n          \"affected_tool\": \"system_health\",\n          \"service\": \"mcp_server\"\n        }\n      }\n    ],\n    \"recent_anomalies\": [],\n    \"notify_readiness\": {\n      \"state\": \"ready\",\n      \"health_state\": \"healthy\",\n      \"reason\": null\n    },\n    \"incident_backlog\": {\n      \"project_id\": \"mcp-infra-incidents\",\n      \"counts_by_state\": {\n        \"open\": 54,\n        \"investigating\": 0,\n        \"fixed\": 2,\n        \"verified\": 0,\n        \"closed\": 0\n      },\n      \"latest_open_incidents\": [\n        {\n          \"node_id\": \"node-de2310c1df544ccb9c9d586a85f9d455\",\n          \"project_id\": \"mcp-infra-incidents\",\n          \"branch_id\": \"branch-52fbeb31fd074ba39daf2ed99a72d977\",\n          \"node_type\": \"note\",\n          \"title\": \"research_map: Brokered tool call failed: research_map\",\n          \"summary\": \"Brokered tool call failed: research_map\",\n          \"status\": \"active\",\n          \"content\": {\n            \"error\": {\n              \"message\": \"research_map requires project_id.\"\n            },\n            \"events\": [],\n            \"log_excerpt\": null\n          },\n          \"metadata\": {\n            \"affected_tool\": \"research_map\",\n            \"arguments\": {\n              \"action\": \"inspect\",\n              \"project_id\": \"\",\n              \"view\": \"summary\"\n            },\n            \"correlation_id\": null,\n            \"error_code\": \"unknown_error\",\n            \"evidence\": {},\n            \"first_seen_at\": \"2026-04-09T12:37:20.521513+00:00\",\n            \"kind\": \"infrastructure_incident\",\n            \"last_seen_at\": \"2026-04-09T12:37:20.521513+00:00\",\n            \"message\": \"Brokered tool call failed: research_map\",\n            \"normalized_message\": \"brokered tool call failed: research_map\",\n            \"occurrences\": 1,\n            \"request_id\": null,\n            \"result\": {\n              \"artifact_ids\": [],\n              \"call_id\": \"tool_0237fc240944\",\n              \"created_at\": \"2026-04-09T12:37:20.427750+00:00\",\n              \"duration_ms\": 151,\n              \"error_class\": \"invalid_input\",\n              \"key_facts\": {},\n              \"ok\": false,\n              \"operation_ref\": \"\",\n              \"plan_id\": \"live_coverage\",\n              \"raw_result_ref\": \"plans/runs/live_coverage_6139b1d9e6/broker/raw/tool_0237fc240944.json\",\n              \"request_arguments\": {\n                \"action\": \"inspect\",\n                \"project_id\": \"\",\n                \"view\": \"summary\"\n              },\n              \"response_status\": \"\",\n              \"resume_arguments\": {},\n              \"resume_token\": \"\",\n              \"resume_tool\": \"research_map\",\n              \"retryable\": false,\n              \"slice_id\": \"research_map_summary\",\n              \"summary\": \"research_map requires project_id.\",\n              \"tool\": \"research_map\",\n              \"tool_response_status\": \"error\",\n              \"warnings\": []\n            },\n            \"server_session_id\": null,\n            \"service\": \"dev_space1\",\n            \"severity\": \"medium\",\n            \"state\": \"open\"\n          },\n          \"source_refs\": [],\n          \"external_ref\": \"incident:2446699d79f2baf90242056f\",\n          \"dedupe_key\": \"2446699d79f2baf90242056f\",\n          \"pinned\": false,\n          \"protection_reason\": null,\n          \"created_at\": \"2026-04-09T12:37:20.523362+00:00\",\n          \"updated_at\": \"2026-04-09T12:37:20.523367+00:00\",\n          \"incident_id\": \"incident:2446699d79f2baf90242056f\"\n        },\n        {\n          \"node_id\": \"node-04bf9be9609f4560b1dc4ebb20869188\",\n          \"project_id\": \"mcp-infra-incidents\",\n          \"branch_id\": \"branch-52fbeb31fd074ba39daf2ed99a72d977\",\n          \"node_type\": \"note\",\n          \"title\": \"research_search: Brokered tool call failed: research_search\",\n          \"summary\": \"Brokered tool call failed: research_search\",\n          \"status\": \"active\",\n          \"content\": {\n            \"error\": {\n              \"message\": \"research_search requires project_id.\"\n            },\n            \"events\": [],\n            \"log_excerpt\": null\n          },\n          \"metadata\": {\n            \"affected_tool\": \"research_search\",\n            \"arguments\": {\n              \"level\": \"compact\",\n              \"limit\": \"5\",\n              \"project_id\": \"\",\n              \"query\": \"coverage note\"\n            },\n            \"correlation_id\": null,\n            \"error_code\": \"unknown_error\",\n            \"evidence\": {},\n            \"first_seen_at\": \"2026-04-09T10:03:11.404948+00:00\",\n            \"kind\": \"infrastructure_incident\",\n            \"last_seen_at\": \"2026-04-09T12:37:20.193939+00:00\",\n            \"message\": \"Brokered tool call failed: research_search\",\n            \"normalized_message\": \"brokered tool call failed: research_search\",\n            \"occurrences\": 3,\n            \"request_id\": null,\n            \"result\": {\n              \"artifact_ids\": [],\n              \"call_id\": \"tool_93456fc6f5f2\",\n              \"created_at\": \"2026-04-09T12:37:19.704526+00:00\",\n              \"duration_ms\": 168,\n              \"error_class\": \"invalid_input\",\n              \"key_facts\": {},\n              \"ok\": false,\n              \"operation_ref\": \"\",\n              \"plan_id\": \"live_coverage\",\n              \"raw_result_ref\": \"plans/runs/live_coverage_6139b1d9e6/broker/raw/tool_93456fc6f5f2.json\",\n              \"request_arguments\": {\n                \"level\": \"normal\",\n                \"limit\": 5,\n                \"project_id\": \"\",\n                \"query\": \"coverage note\"\n              },\n              \"response_status\": \"\",\n              \"resume_arguments\": {},\n              \"resume_token\": \"\",\n              \"resume_tool\": \"research_search\",\n              \"retryable\": false,\n              \"slice_id\": \"research_search_compact_rewritten\",\n              \"summary\": \"research_search requires project_id.\",\n              \"tool\": \"research_search\",\n              \"tool_response_status\": \"error\",\n              \"warnings\": [\n                \"broker_contract_trap:research_search_compact_level_rewritten\"\n              ]\n            },\n            \"server_session_id\": null,\n            \"service\": \"dev_space1\",\n            \"severity\": \"medium\",\n            \"state\": \"open\"\n          },\n          \"source_refs\": [],\n          \"external_ref\": \"incident:33f2e956d027e2831a1ac4b3\",\n          \"dedupe_key\": \"33f2e956d027e2831a1ac4b3\",\n          \"pinned\": false,\n          \"protection_reason\": null,\n          \"created_at\": \"2026-04-09T10:03:11.406575+00:00\",\n          \"updated_at\": \"2026-04-09T12:37:20.197481+00:00\",\n          \"incident_id\": \"incident:33f2e956d027e2831a1ac4b3\"\n        },\n        {\n          \"node_id\": \"node-cab754771ee7495580959affd1d4d909\",\n          \"project_id\": \"mcp-infra-incidents\",\n          \"branch_id\": \"branch-52fbeb31fd074ba39daf2ed99a72d977\",\n          \"node_type\": \"note\",\n          \"title\": \"research_search: research_search_warning\",\n          \"summary\": \"research_search_warning\",\n          \"status\": \"active\",\n          \"content\": {\n            \"error\": {\n              \"message\": \"broker_contract_trap:research_search_compact_level_rewritten\"\n            },\n            \"events\": [],\n            \"log_excerpt\": null\n          },\n          \"metadata\": {\n            \"affected_tool\": \"research_search\",\n            \"arguments\": {\n              \"level\": \"compact\",\n              \"limit\": \"5\",\n              \"project_id\": \"\",\n              \"query\": \"coverage note\"\n            },\n            \"correlation_id\": null,\n            \"error_code\": \"unknown_error\",\n            \"evidence\": {},\n            \"first_seen_at\": \"2026-04-09T10:18:39.889269+00:00\",\n            \"kind\": \"infrastructure_incident\",\n            \"last_seen_at\": \"2026-04-09T12:37:20.001674+00:00\",\n            \"message\": \"research_search_warning\",\n            \"normalized_message\": \"research_search_warning\",\n            \"occurrences\": 2,\n            \"request_id\": null,\n            \"result\": {\n              \"artifact_ids\": [],\n              \"call_id\": \"tool_93456fc6f5f2\",\n              \"created_at\": \"2026-04-09T12:37:19.704526+00:00\",\n              \"duration_ms\": 168,\n              \"error_class\": \"invalid_input\",\n              \"key_facts\": {},\n              \"ok\": false,\n              \"operation_ref\": \"\",\n              \"plan_id\": \"live_coverage\",\n              \"raw_result_ref\": \"plans/runs/live_coverage_6139b1d9e6/broker/raw/tool_93456fc6f5f2.json\",\n              \"request_arguments\": {\n                \"level\": \"normal\",\n                \"limit\": 5,\n                \"project_id\": \"\",\n                \"query\": \"coverage note\"\n              },\n              \"response_status\": \"\",\n              \"resume_arguments\": {},\n              \"resume_token\": \"\",\n              \"resume_tool\": \"research_search\",\n              \"retryable\": false,\n              \"slice_id\": \"research_search_compact_rewritten\",\n              \"summary\": \"research_search requires project_id.\",\n              \"tool\": \"research_search\",\n              \"tool_response_status\": \"error\",\n              \"warnings\": [\n                \"broker_contract_trap:research_search_compact_level_rewritten\"\n              ]\n            },\n            \"server_session_id\": null,\n            \"service\": \"dev_space1\",\n            \"severity\": \"medium\",\n            \"state\": \"open\"\n          },\n          \"source_refs\": [],\n          \"external_ref\": \"incident:ab76138f1bb3fbd331db485e\",\n          \"dedupe_key\": \"ab76138f1bb3fbd331db485e\",\n          \"pinned\": false,\n          \"protection_reason\": null,\n          \"created_at\": \"2026-04-09T10:18:39.890958+00:00\",\n          \"updated_at\": \"2026-04-09T12:37:20.004244+00:00\",\n          \"incident_id\": \"incident:ab76138f1bb3fbd331db485e\"\n        }\n      ],\n      \"memory_persistence\": {\n        \"database_path\": \"/home/ubuntu/.foundation_state/research_memory/research_memory.sqlite3\",\n        \"artifacts_root\": \"/home/ubuntu/.foundation_state/research_memory\",\n        \"continuity_warning\": null\n      }\n    },\n    \"contract_risks\": [\n      {\n        \"risk_code\": \"recent_open_incident\",\n        \"severity\": \"medium\",\n        \"summary\": \"research_map: Brokered tool call failed: research_map\"\n      },\n      {\n        \"risk_code\": \"recent_open_incident\",\n        \"severity\": \"medium\",\n        \"summary\": \"research_search: Brokered tool call failed: research_search\"\n      },\n      {\n        \"risk_code\": \"recent_open_incident\",\n        \"severity\": \"medium\",\n        \"summary\": \"research_search: research_search_warning\"\n      },\n      {\n        \"risk_code\": \"async_argument_schema_parity\",\n        \"severity\": \"medium\",\n        \"summary\": \"Public async tool metadata no longer exposes the canonical wait/status contract consistently.\"\n      }\n    ],\n    \"workflow_risks\": [\n      {\n        \"risk_code\": \"recent_open_incident\",\n        \"severity\": \"medium\",\n        \"summary\": \"research_map: Brokered tool call failed: research_map\"\n      },\n      {\n        \"risk_code\": \"recent_open_incident\",\n        \"severity\": \"medium\",\n        \"summary\": \"research_search: Brokered tool call failed: research_search\"\n      },\n      {\n        \"risk_code\": \"recent_open_incident\",\n        \"severity\": \"medium\",\n        \"summary\": \"research_search: research_search_warning\"\n      },\n      {\n        \"risk_code\": \"async_argument_schema_parity\",\n        \"severity\": \"medium\",\n        \"summary\": \"Public async tool metadata no longer exposes the canonical wait/status contract consistently.\"\n      }\n    ],\n    \"known_worker_traps\": [\n      {\n        \"risk_code\": \"recent_open_incident\",\n        \"severity\": \"medium\",\n        \"summary\": \"research_map: Brokered tool call failed: research_map\"\n      },\n      {\n        \"risk_code\": \"recent_open_incident\",\n        \"severity\": \"medium\",\n        \"summary\": \"research_search: Brokered tool call failed: research_search\"\n      },\n      {\n        \"risk_code\": \"recent_open_incident\",\n        \"severity\": \"medium\",\n        \"summary\": \"research_search: research_search_warning\"\n      },\n      {\n        \"risk_code\": \"async_argument_schema_parity\",\n        \"severity\": \"medium\",\n        \"summary\": \"Public async tool metadata no longer exposes the canonical wait/status contract consistently.\"\n      }\n    ],\n    \"worker_traps\": [\n      {\n        \"risk_code\": \"recent_open_incident\",\n        \"severity\": \"medium\",\n        \"summary\": \"research_map: Brokered tool call failed: research_map\"\n      },\n      {\n        \"risk_code\": \"recent_open_incident\",\n        \"severity\": \"medium\",\n        \"summary\": \"research_search: Brokered tool call failed: research_search\"\n      },\n      {\n        \"risk_code\": \"recent_open_incident\",\n        \"severity\": \"medium\",\n        \"summary\": \"research_search: research_search_warning\"\n      },\n      {\n        \"risk_code\": \"async_argument_schema_parity\",\n        \"severity\": \"medium\",\n        \"summary\": \"Public async tool metadata no longer exposes the canonical wait/status contract consistently.\"\n      }\n    ],\n    \"runtime_rules_ref\": \"project://mcp/agent-operating-manual\",\n    \"operating_guidance\": \"Start new sessions with system_bootstrap. Use system_health(validate_tools=true) as the cheap runtime probe. For infrastructure failures follow system_health -> system_debug_validate_path -> system_logs -> incidents(action='capture').\",\n    \"important_warnings\": [],\n    \"next_recommended_actions\": [\n      \"Use system_queue(action='inspect') when queue health looks degraded. For runtime failures, follow system_health(validate_tools=true) -> system_debug_validate_path -> system_logs -> incidents(action='capture').\"\n    ],\n    \"recommended_follow_up_tool\": null,\n    \"state_summary\": {},\n    \"exact_next_call_examples\": [\n      {\n        \"tool\": \"system_health\",\n        \"arguments\": {\n          \"validate_tools\": true,\n          \"view\": \"summary\"\n        }\n      },\n      {\n        \"tool\": \"system_debug_validate_path\",\n        \"arguments\": {\n          \"raw_path\": \"/dev_space1/system_health\"\n        }\n      },\n      {\n        \"tool\": \"system_logs\",\n        \"arguments\": {\n          \"service\": \"mcp_server\",\n          \"lines\": 50\n        }\n      },\n      {\n        \"tool\": \"incidents\",\n        \"arguments\": {\n          \"action\": \"capture\",\n          \"summary\": \"MCP runtime routing/session failure\",\n          \"affected_tool\": \"system_health\",\n          \"service\": \"mcp_server\"\n        }\n      }\n    ],\n    \"raw_refs\": [\n      \"system_raw_call(tool_name='system_status_get')\",\n      \"system_raw_call(tool_name='system_debug_get_infrastructure')\",\n      \"system_raw_call(tool_name='system_debug_read_logs')\"\n    ],\n    \"raw_tool_hints\": [\n      \"system_raw_call(tool_name='system_status_get')\",\n      \"system_raw_call(tool_name='system_debug_get_infrastructure')\",\n      \"system_raw_call(tool_name='system_debug_read_logs')\"\n    ],\n    \"next_action\": \"Use system_queue(action='inspect') when queue health looks degraded. For runtime failures, follow system_health(validate_tools=true) -> system_debug_validate_path -> system_logs -> incidents(action='capture').\"\n  },\n  \"warnings\": [],\n  \"refs\": [],\n  \"error\": null\n}"
+    }
+  ],
+  "structuredContent": {
+    "status": "ok",
+    "message": "System health loaded.",
+    "tool_name": "system_health",
+    "request_id": "7",
+    "correlation_id": "7",
+    "server_session_id": "eb6c81d3a2584a65bca1ba986dfd3222",
+    "response_generated_at": "2026-04-09T12:38:01.972601+00:00",
+    "data": {
+      "summary": "System health returned the current server, domain, queue, path, and anomaly state.",
+      "runtime_health_state": "healthy",
+      "workflow_readiness_state": "degraded",
+      "server_health": {
+        "healthy": true,
+        "auth_mode": "none",
+        "protected_resource_metadata_available": false,
+        "oauth_enabled": false,
+        "legacy_bearer_enabled": false,
+        "issuer": "https://auth.remart.ovh/realms/mcp",
+        "audience": "https://mcp.remart.ovh/mcp",
+        "required_scopes": {
+          "tools": "mcp:tools",
+          "prompts": "mcp:prompts",
+          "resources": "mcp:resources"
+        },
+        "discovery_cache_ttl_seconds": 300,
+        "jwks_cache_ttl_seconds": 300,
+        "tool_surface": {
+          "surface_version": "workspace-cutover-v1",
+          "surface_fingerprint": "86486263ca96ded4",
+          "tool_surface_generation": "86486263ca96ded4",
+          "registry_generation": "86486263ca96ded4",
+          "registered_tool_count": 46,
+          "degraded": false,
+          "degraded_reason": null,
+          "discovery_expectation_note": "This snapshot reflects the repo-side MCP registry only. If it is healthy while an external client shows an empty tool surface, the stale layer is outside this server.",
+          "workspace_tool_names": [
+            "system_workspace"
+          ]
+        }
+      },
+      "domain_health": [
+        {
+          "domain": "datasets",
+          "health_state": "healthy",
+          "reason": null
+        },
+        {
+          "domain": "features",
+          "health_state": "healthy",
+          "reason": null
+        },
+        {
+          "domain": "models",
+          "health_state": "healthy",
+          "reason": null
+        },
+        {
+          "domain": "backtests_runs",
+          "health_state": "healthy",
+          "reason": null
+        },
+        {
+          "domain": "backtests_snapshots",
+          "health_state": "healthy",
+          "reason": null
+        },
+        {
+          "domain": "backtests_research",
+          "health_state": "healthy",
+          "reason": null
+        },
+        {
+          "domain": "experiments",
+          "health_state": "healthy",
+          "reason": null
+        },
+        {
+          "domain": "research_memory",
+          "health_state": "healthy",
+          "reason": null
+        },
+        {
+          "domain": "telegram",
+          "health_state": "healthy",
+          "reason": null
+        },
+        {
+          "domain": "system",
+          "health_state": "healthy",
+          "reason": "System discovery and status tools are registered."
+        }
+      ],
+      "queue_health": {
+        "queue_depth": 0,
+        "record_count": 121,
+        "nonterminal_record_count": 0,
+        "active_operation_kind": null,
+        "active_operation_id": null,
+        "stalled_count": 0,
+        "recovery_required_count": 0,
+        "startup_recoveries_total": 0,
+        "manual_stop_requests_total": 0,
+        "queued_cancellations_total": 0,
+        "average_admitted_seconds": 64.41,
+        "control_plane_queue_degraded": false
+      },
+      "control_plane_queue_degraded": false,
+      "active_long_operation": null,
+      "path_health": null,
+      "runtime_storage": null,
+      "runtime_logs": null,
+      "canonical_probe_tool": "system_health",
+      "probe_call_form": {
+        "tool": "system_health",
+        "arguments": {
+          "validate_tools": true,
+          "view": "summary"
+        }
+      },
+      "surface_fingerprint": null,
+      "server_dispatch_generation": null,
+      "transport_sessions_summary": {},
+      "repo_side_dispatch_ok": null,
+      "external_bridge_state_unknown": null,
+      "recommended_client_action": "Use canonical tool names or the normalized /dev_space1/... form exposed by the current client; treat link_* mismatch as an external bridge issue when repo-side dispatch remains healthy.",
+      "recovery_playbook": [
+        {
+          "tool": "system_health",
+          "arguments": {
+            "validate_tools": true,
+            "view": "summary"
+          }
+        },
+        {
+          "tool": "system_debug_validate_path",
+          "arguments": {
+            "raw_path": "/dev_space1/system_health"
+          }
+        },
+        {
+          "tool": "system_logs",
+          "arguments": {
+            "service": "mcp_server",
+            "lines": 50
+          }
+        },
+        {
+          "tool": "incidents",
+          "arguments": {
+            "action": "capture",
+            "summary": "MCP runtime routing/session failure",
+            "affected_tool": "system_health",
+            "service": "mcp_server"
+          }
+        }
+      ],
+      "recent_anomalies": [],
+      "notify_readiness": {
+        "state": "ready",
+        "health_state": "healthy",
+        "reason": null
+      },
+      "incident_backlog": {
+        "project_id": "mcp-infra-incidents",
+        "counts_by_state": {
+          "open": 54,
+          "investigating": 0,
+          "fixed": 2,
+          "verified": 0,
+          "closed": 0
+        },
+        "latest_open_incidents": [
+          {
+            "node_id": "node-de2310c1df544ccb9c9d586a85f9d455",
+            "project_id": "mcp-infra-incidents",
+            "branch_id": "branch-52fbeb31fd074ba39daf2ed99a72d977",
+            "node_type": "note",
+            "title": "research_map: Brokered tool call failed: research_map",
+            "summary": "Brokered tool call failed: research_map",
+            "status": "active",
+            "content": {
+              "error": {
+                "message": "research_map requires project_id."
+              },
+              "events": [],
+              "log_excerpt": null
+            },
+            "metadata": {
+              "affected_tool": "research_map",
+              "arguments": {
+                "action": "inspect",
+                "project_id": "",
+                "view": "summary"
+              },
+              "correlation_id": null,
+              "error_code": "unknown_error",
+              "evidence": {},
+              "first_seen_at": "2026-04-09T12:37:20.521513+00:00",
+              "kind": "infrastructure_incident",
+              "last_seen_at": "2026-04-09T12:37:20.521513+00:00",
+              "message": "Brokered tool call failed: research_map",
+              "normalized_message": "brokered tool call failed: research_map",
+              "occurrences": 1,
+              "request_id": null,
+              "result": {
+                "artifact_ids": [],
+                "call_id": "tool_0237fc240944",
+                "created_at": "2026-04-09T12:37:20.427750+00:00",
+                "duration_ms": 151,
+                "error_class": "invalid_input",
+                "key_facts": {},
+                "ok": false,
+                "operation_ref": "",
+                "plan_id": "live_coverage",
+                "raw_result_ref": "plans/runs/live_coverage_6139b1d9e6/broker/raw/tool_0237fc240944.json",
+                "request_arguments": {
+                  "action": "inspect",
+                  "project_id": "",
+                  "view": "summary"
+                },
+                "response_status": "",
+                "resume_arguments": {},
+                "resume_token": "",
+                "resume_tool": "research_map",
+                "retryable": false,
+                "slice_id": "research_map_summary",
+                "summary": "research_map requires project_id.",
+                "tool": "research_map",
+                "tool_response_status": "error",
+                "warnings": []
+              },
+              "server_session_id": null,
+              "service": "dev_space1",
+              "severity": "medium",
+              "state": "open"
+            },
+            "source_refs": [],
+            "external_ref": "incident:2446699d79f2baf90242056f",
+            "dedupe_key": "2446699d79f2baf90242056f",
+            "pinned": false,
+            "protection_reason": null,
+            "created_at": "2026-04-09T12:37:20.523362+00:00",
+            "updated_at": "2026-04-09T12:37:20.523367+00:00",
+            "incident_id": "incident:2446699d79f2baf90242056f"
+          },
+          {
+            "node_id": "node-04bf9be9609f4560b1dc4ebb20869188",
+            "project_id": "mcp-infra-incidents",
+            "branch_id": "branch-52fbeb31fd074ba39daf2ed99a72d977",
+            "node_type": "note",
+            "title": "research_search: Brokered tool call failed: research_search",
+            "summary": "Brokered tool call failed: research_search",
+            "status": "active",
+            "content": {
+              "error": {
+                "message": "research_search requires project_id."
+              },
+              "events": [],
+              "log_excerpt": null
+            },
+            "metadata": {
+              "affected_tool": "research_search",
+              "arguments": {
+                "level": "compact",
+                "limit": "5",
+                "project_id": "",
+                "query": "coverage note"
+              },
+              "correlation_id": null,
+              "error_code": "unknown_error",
+              "evidence": {},
+              "first_seen_at": "2026-04-09T10:03:11.404948+00:00",
+              "kind": "infrastructure_incident",
+              "last_seen_at": "2026-04-09T12:37:20.193939+00:00",
+              "message": "Brokered tool call failed: research_search",
+              "normalized_message": "brokered tool call failed: research_search",
+              "occurrences": 3,
+              "request_id": null,
+              "result": {
+                "artifact_ids": [],
+                "call_id": "tool_93456fc6f5f2",
+                "created_at": "2026-04-09T12:37:19.704526+00:00",
+                "duration_ms": 168,
+                "error_class": "invalid_input",
+                "key_facts": {},
+                "ok": false,
+                "operation_ref": "",
+                "plan_id": "live_coverage",
+                "raw_result_ref": "plans/runs/live_coverage_6139b1d9e6/broker/raw/tool_93456fc6f5f2.json",
+                "request_arguments": {
+                  "level": "normal",
+                  "limit": 5,
+                  "project_id": "",
+                  "query": "coverage note"
+                },
+                "response_status": "",
+                "resume_arguments": {},
+                "resume_token": "",
+                "resume_tool": "research_search",
+                "retryable": false,
+                "slice_id": "research_search_compact_rewritten",
+                "summary": "research_search requires project_id.",
+                "tool": "research_search",
+                "tool_response_status": "error",
+                "warnings": [
+                  "broker_contract_trap:research_search_compact_level_rewritten"
+                ]
+              },
+              "server_session_id": null,
+              "service": "dev_space1",
+              "severity": "medium",
+              "state": "open"
+            },
+            "source_refs": [],
+            "external_ref": "incident:33f2e956d027e2831a1ac4b3",
+            "dedupe_key": "33f2e956d027e2831a1ac4b3",
+            "pinned": false,
+            "protection_reason": null,
+            "created_at": "2026-04-09T10:03:11.406575+00:00",
+            "updated_at": "2026-04-09T12:37:20.197481+00:00",
+            "incident_id": "incident:33f2e956d027e2831a1ac4b3"
+          },
+          {
+            "node_id": "node-cab754771ee7495580959affd1d4d909",
+            "project_id": "mcp-infra-incidents",
+            "branch_id": "branch-52fbeb31fd074ba39daf2ed99a72d977",
+            "node_type": "note",
+            "title": "research_search: research_search_warning",
+            "summary": "research_search_warning",
+            "status": "active",
+            "content": {
+              "error": {
+                "message": "broker_contract_trap:research_search_compact_level_rewritten"
+              },
+              "events": [],
+              "log_excerpt": null
+            },
+            "metadata": {
+              "affected_tool": "research_search",
+              "arguments": {
+                "level": "compact",
+                "limit": "5",
+                "project_id": "",
+                "query": "coverage note"
+              },
+              "correlation_id": null,
+              "error_code": "unknown_error",
+              "evidence": {},
+              "first_seen_at": "2026-04-09T10:18:39.889269+00:00",
+              "kind": "infrastructure_incident",
+              "last_seen_at": "2026-04-09T12:37:20.001674+00:00",
+              "message": "research_search_warning",
+              "normalized_message": "research_search_warning",
+              "occurrences": 2,
+              "request_id": null,
+              "result": {
+                "artifact_ids": [],
+                "call_id": "tool_93456fc6f5f2",
+                "created_at": "2026-04-09T12:37:19.704526+00:00",
+                "duration_ms": 168,
+                "error_class": "invalid_input",
+                "key_facts": {},
+                "ok": false,
+                "operation_ref": "",
+                "plan_id": "live_coverage",
+                "raw_result_ref": "plans/runs/live_coverage_6139b1d9e6/broker/raw/tool_93456fc6f5f2.json",
+                "request_arguments": {
+                  "level": "normal",
+                  "limit": 5,
+                  "project_id": "",
+                  "query": "coverage note"
+                },
+                "response_status": "",
+                "resume_arguments": {},
+                "resume_token": "",
+                "resume_tool": "research_search",
+                "retryable": false,
+                "slice_id": "research_search_compact_rewritten",
+                "summary": "research_search requires project_id.",
+                "tool": "research_search",
+                "tool_response_status": "error",
+                "warnings": [
+                  "broker_contract_trap:research_search_compact_level_rewritten"
+                ]
+              },
+              "server_session_id": null,
+              "service": "dev_space1",
+              "severity": "medium",
+              "state": "open"
+            },
+            "source_refs": [],
+            "external_ref": "incident:ab76138f1bb3fbd331db485e",
+            "dedupe_key": "ab76138f1bb3fbd331db485e",
+            "pinned": false,
+            "protection_reason": null,
+            "created_at": "2026-04-09T10:18:39.890958+00:00",
+            "updated_at": "2026-04-09T12:37:20.004244+00:00",
+            "incident_id": "incident:ab76138f1bb3fbd331db485e"
+          }
+        ],
+        "memory_persistence": {
+          "database_path": "/home/ubuntu/.foundation_state/research_memory/research_memory.sqlite3",
+          "artifacts_root": "/home/ubuntu/.foundation_state/research_memory",
+          "continuity_warning": null
+        }
+      },
+      "contract_risks": [
+        {
+          "risk_code": "recent_open_incident",
+          "severity": "medium",
+          "summary": "research_map: Brokered tool call failed: research_map"
+        },
+        {
+          "risk_code": "recent_open_incident",
+          "severity": "medium",
+          "summary": "research_search: Brokered tool call failed: research_search"
+        },
+        {
+          "risk_code": "recent_open_incident",
+          "severity": "medium",
+          "summary": "research_search: research_search_warning"
+        },
+        {
+          "risk_code": "async_argument_schema_parity",
+          "severity": "medium",
+          "summary": "Public async tool metadata no longer exposes the canonical wait/status contract consistently."
+        }
+      ],
+      "workflow_risks": [
+        {
+          "risk_code": "recent_open_incident",
+          "severity": "medium",
+          "summary": "research_map: Brokered tool call failed: research_map"
+        },
+        {
+          "risk_code": "recent_open_incident",
+          "severity": "medium",
+          "summary": "research_search: Brokered tool call failed: research_search"
+        },
+        {
+          "risk_code": "recent_open_incident",
+          "severity": "medium",
+          "summary": "research_search: research_search_warning"
+        },
+        {
+          "risk_code": "async_argument_schema_parity",
+          "severity": "medium",
+          "summary": "Public async tool metadata no longer exposes the canonical wait/status contract consistently."
+        }
+      ],
+      "known_worker_traps": [
+        {
+          "risk_code": "recent_open_incident",
+          "severity": "medium",
+          "summary": "research_map: Brokered tool call failed: research_map"
+        },
+        {
+          "risk_code": "recent_open_incident",
+          "severity": "medium",
+          "summary": "research_search: Brokered tool call failed: research_search"
+        },
+        {
+          "risk_code": "recent_open_incident",
+          "severity": "medium",
+          "summary": "research_search: research_search_warning"
+        },
+        {
+          "risk_code": "async_argument_schema_parity",
+          "severity": "medium",
+          "summary": "Public async tool metadata no longer exposes the canonical wait/status contract consistently."
+        }
+      ],
+      "worker_traps": [
+        {
+          "risk_code": "recent_open_incident",
+          "severity": "medium",
+          "summary": "research_map: Brokered tool call failed: research_map"
+        },
+        {
+          "risk_code": "recent_open_incident",
+          "severity": "medium",
+          "summary": "research_search: Brokered tool call failed: research_search"
+        },
+        {
+          "risk_code": "recent_open_incident",
+          "severity": "medium",
+          "summary": "research_search: research_search_warning"
+        },
+        {
+          "risk_code": "async_argument_schema_parity",
+          "severity": "medium",
+          "summary": "Public async tool metadata no longer exposes the canonical wait/status contract consistently."
+        }
+      ],
+      "runtime_rules_ref": "project://mcp/agent-operating-manual",
+      "operating_guidance": "Start new sessions with system_bootstrap. Use system_health(validate_tools=true) as the cheap runtime probe. For infrastructure failures follow system_health -> system_debug_validate_path -> system_logs -> incidents(action='capture').",
+      "important_warnings": [],
+      "next_recommended_actions": [
+        "Use system_queue(action='inspect') when queue health looks degraded. For runtime failures, follow system_health(validate_tools=true) -> system_debug_validate_path -> system_logs -> incidents(action='capture')."
+      ],
+      "recommended_follow_up_tool": null,
+      "state_summary": {},
+      "exact_next_call_examples": [
+        {
+          "tool": "system_health",
+          "arguments": {
+            "validate_tools": true,
+            "view": "summary"
+          }
+        },
+        {
+          "tool": "system_debug_validate_path",
+          "arguments": {
+            "raw_path": "/dev_space1/system_health"
+          }
+        },
+        {
+          "tool": "system_logs",
+          "arguments": {
+            "service": "mcp_server",
+            "lines": 50
+          }
+        },
+        {
+          "tool": "incidents",
+          "arguments": {
+            "action": "capture",
+            "summary": "MCP runtime routing/session failure",
+            "affected_tool": "system_health",
+            "service": "mcp_server"
+          }
+        }
+      ],
+      "raw_refs": [
+        "system_raw_call(tool_name='system_status_get')",
+        "system_raw_call(tool_name='system_debug_get_infrastructure')",
+        "system_raw_call(tool_name='system_debug_read_logs')"
+      ],
+      "raw_tool_hints": [
+        "system_raw_call(tool_name='system_status_get')",
+        "system_raw_call(tool_name='system_debug_get_infrastructure')",
+        "system_raw_call(tool_name='system_debug_read_logs')"
+      ],
+      "next_action": "Use system_queue(action='inspect') when queue health looks degraded. For runtime failures, follow system_health(validate_tools=true) -> system_debug_validate_path -> system_logs -> incidents(action='capture')."
+    },
+    "warnings": [],
+    "refs": [],
+    "error": null
+  },
+  "isError": false
+}

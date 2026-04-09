@@ -1,0 +1,27 @@
+{
+  "type": "checkpoint",
+  "tool": null,
+  "arguments": {},
+  "reason": "cf_rv_ratio_6_24 build started (operation_id=2d5774a1d8ab, queue_id=1ed5a98e2a86). Status: running_compute, phase=starting, admitted at 10:35:03. Cost class: cheap. Need to poll for completion before proceeding to analytics.",
+  "expected_evidence": [],
+  "status": "partial",
+  "summary": "Feature dataset build for cf_rv_ratio_6_24 is running. Operation admitted, phase=starting. Suggested poll interval: 2 minutes. Will check status next.",
+  "facts": {
+    "build_operation_id": "2d5774a1d8ab",
+    "build_queue_id": "1ed5a98e2a86",
+    "build_status": "running_compute",
+    "build_phase": "starting",
+    "build_admitted_at": "2026-04-09T10:35:03.900392+00:00",
+    "build_admission_cost_class": "cheap",
+    "poll_interval_seconds": 120
+  },
+  "artifacts": [],
+  "pending_questions": [
+    "Has cf_rv_ratio_6_24 build completed?",
+    "Once complete, can we run features_analytics on it?"
+  ],
+  "reportable_issues": [],
+  "verdict": null,
+  "key_metrics": {},
+  "confidence": 0.0
+}

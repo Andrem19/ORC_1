@@ -1,0 +1,46 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\n  \"status\": \"ok\",\n  \"message\": \"Experiment use-case registry loaded.\",\n  \"tool_name\": \"experiments_registry_inspect\",\n  \"request_id\": \"30\",\n  \"correlation_id\": \"30\",\n  \"server_session_id\": \"82dad9bbb0ab4d0ea300cda9d21b6aae\",\n  \"response_generated_at\": \"2026-04-09T12:53:25.118576+00:00\",\n  \"data\": {\n    \"view\": \"summary\",\n    \"project_id\": \"experiments-use-case-registry\",\n    \"total_runs_with_task_metadata\": 0,\n    \"top_repeated_tasks\": [],\n    \"category_distribution\": {},\n    \"unclassified_share\": {\n      \"count\": 0,\n      \"fraction\": 0.0\n    },\n    \"recent_candidate_count\": 0,\n    \"important_warnings\": [],\n    \"next_recommended_actions\": [\n      \"Use experiments_registry_inspect(view='candidates') to review repeated tasks that may deserve a dedicated facade.\",\n      \"Use experiments_run(action='start') with a clear task_summary for the next ad-hoc analysis job.\"\n    ],\n    \"recommended_follow_up_tool\": null,\n    \"state_summary\": {},\n    \"exact_next_call_examples\": [],\n    \"raw_refs\": [\n      \"system_raw_call(tool_name='research_memory_nodes_add')\"\n    ],\n    \"raw_tool_hints\": [],\n    \"summary\": \"Loaded the experiments_run use-case registry.\"\n  },\n  \"warnings\": [],\n  \"refs\": [],\n  \"error\": null\n}"
+    }
+  ],
+  "structuredContent": {
+    "status": "ok",
+    "message": "Experiment use-case registry loaded.",
+    "tool_name": "experiments_registry_inspect",
+    "request_id": "30",
+    "correlation_id": "30",
+    "server_session_id": "82dad9bbb0ab4d0ea300cda9d21b6aae",
+    "response_generated_at": "2026-04-09T12:53:25.118576+00:00",
+    "data": {
+      "view": "summary",
+      "project_id": "experiments-use-case-registry",
+      "total_runs_with_task_metadata": 0,
+      "top_repeated_tasks": [],
+      "category_distribution": {},
+      "unclassified_share": {
+        "count": 0,
+        "fraction": 0.0
+      },
+      "recent_candidate_count": 0,
+      "important_warnings": [],
+      "next_recommended_actions": [
+        "Use experiments_registry_inspect(view='candidates') to review repeated tasks that may deserve a dedicated facade.",
+        "Use experiments_run(action='start') with a clear task_summary for the next ad-hoc analysis job."
+      ],
+      "recommended_follow_up_tool": null,
+      "state_summary": {},
+      "exact_next_call_examples": [],
+      "raw_refs": [
+        "system_raw_call(tool_name='research_memory_nodes_add')"
+      ],
+      "raw_tool_hints": [],
+      "summary": "Loaded the experiments_run use-case registry."
+    },
+    "warnings": [],
+    "refs": [],
+    "error": null
+  },
+  "isError": false
+}

@@ -1,0 +1,38 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\n  \"status\": \"ok\",\n  \"message\": \"Model registry action completed.\",\n  \"tool_name\": \"models_registry\",\n  \"request_id\": \"12\",\n  \"correlation_id\": \"12\",\n  \"server_session_id\": \"745bd6b3aaf042958914ade2c6967820\",\n  \"response_generated_at\": \"2026-04-09T12:24:58.138833+00:00\",\n  \"data\": {\n    \"view\": \"list\",\n    \"cards\": [],\n    \"important_warnings\": [],\n    \"next_recommended_actions\": [\n      \"Use models_registry(action='inspect', view='detail') for one model_id.\",\n      \"Use models_registry(action='inspect', view='registry') when you need cards plus orphan versions and model-backed feature usage together.\"\n    ],\n    \"recommended_follow_up_tool\": null,\n    \"state_summary\": {},\n    \"exact_next_call_examples\": [],\n    \"raw_refs\": [\n      \"system_raw_call(tool_name='models_cards_list')\"\n    ],\n    \"raw_tool_hints\": [],\n    \"summary\": \"Loaded 0 model cards.\"\n  },\n  \"warnings\": [],\n  \"refs\": [],\n  \"error\": null\n}"
+    }
+  ],
+  "structuredContent": {
+    "status": "ok",
+    "message": "Model registry action completed.",
+    "tool_name": "models_registry",
+    "request_id": "12",
+    "correlation_id": "12",
+    "server_session_id": "745bd6b3aaf042958914ade2c6967820",
+    "response_generated_at": "2026-04-09T12:24:58.138833+00:00",
+    "data": {
+      "view": "list",
+      "cards": [],
+      "important_warnings": [],
+      "next_recommended_actions": [
+        "Use models_registry(action='inspect', view='detail') for one model_id.",
+        "Use models_registry(action='inspect', view='registry') when you need cards plus orphan versions and model-backed feature usage together."
+      ],
+      "recommended_follow_up_tool": null,
+      "state_summary": {},
+      "exact_next_call_examples": [],
+      "raw_refs": [
+        "system_raw_call(tool_name='models_cards_list')"
+      ],
+      "raw_tool_hints": [],
+      "summary": "Loaded 0 model cards."
+    },
+    "warnings": [],
+    "refs": [],
+    "error": null
+  },
+  "isError": false
+}

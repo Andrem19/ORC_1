@@ -1,0 +1,174 @@
+{
+  "plan_id": "compiled_plan_v3_batch_1",
+  "goal": "Close the unfinished A1 branch from v2 to a definitive PROMOTE/REJECT decision, then open exactly one next low-friction branch only if A1 fails promotion.",
+  "baseline_ref": {
+    "snapshot_id": "active-signal-v1",
+    "version": 1,
+    "symbol": "BTCUSDT",
+    "anchor_timeframe": "1h",
+    "execution_timeframe": "5m"
+  },
+  "global_constraints": [
+    "active-signal-v1@1 is immutable — never modify base hours, days, thresholds, or execution logic",
+    "Nothing counts as improvement unless it passes strict additive integration, permissive integration, ownership, and cannibalization proof",
+    "Only one candidate branch open at a time; no parallel wide search",
+    "Medium-friction wave B is forbidden until A1 is closed and one low-friction branch (A2 or A3) is fully closed with no promoted candidate"
+  ],
+  "slices": [
+    {
+      "slice_id": "compiled_plan_v3_stage_1",
+      "title": "Аудит артефактов v2 и фиксация инвариантов v3",
+      "hypothesis": "Clean up organizational debt from v2 before starting the new cycle: create a fresh v3 project, lock the single immutable reference, and define the hypothesis map.",
+      "objective": "Clean up organizational debt from v2 before starting the new cycle: create a fresh v3 project, lock the single immutable reference, and define the hypothesis map.",
+      "success_criteria": [
+        "Clean v3 project exists with no reference confusion",
+        "Hypothesis atlas axes are defined",
+        "Branch closure discipline is formally recorded"
+      ],
+      "allowed_tools": [
+        "research_project",
+        "research_map",
+        "research_record",
+        "research_search"
+      ],
+      "evidence_requirements": [
+        "Clean v3 project exists with no reference confusion",
+        "Hypothesis atlas axes are defined",
+        "Branch closure discipline is formally recorded"
+      ],
+      "policy_tags": [
+        "setup",
+        "cheap_first"
+      ],
+      "max_turns": 4,
+      "max_tool_calls": 4,
+      "max_expensive_calls": 0,
+      "parallel_slot": 1,
+      "status": "pending",
+      "turn_count": 0,
+      "tool_call_count": 0,
+      "expensive_call_count": 0,
+      "assigned_worker_id": null,
+      "last_checkpoint_turn_id": "",
+      "last_checkpoint_summary": "",
+      "final_report_turn_id": "",
+      "last_error": "",
+      "last_summary": "",
+      "latest_tool_result_summary": "",
+      "active_operation_tool": "",
+      "active_operation_ref": "",
+      "active_operation_status": "",
+      "active_operation_arguments": {},
+      "active_resume_tool": "",
+      "active_resume_token": "",
+      "last_tool_response_status": "",
+      "artifacts": [],
+      "facts": {}
+    },
+    {
+      "slice_id": "compiled_plan_v3_stage_2",
+      "title": "Полный forensic-review ветки A1",
+      "hypothesis": "Recover and reproduce the exact logic and results of A1_high_iv_long_v1 from v2 artifacts before any new testing.",
+      "objective": "Recover and reproduce the exact logic and results of A1_high_iv_long_v1 from v2 artifacts before any new testing.",
+      "success_criteria": [
+        "A1 is described strictly and reproducibly with no ambiguity",
+        "v2 claimed results vs v3 actual results are documented"
+      ],
+      "allowed_tools": [
+        "research_project",
+        "research_map",
+        "research_record",
+        "research_search",
+        "backtests_analysis",
+        "backtests_conditions",
+        "experiments_run",
+        "experiments_inspect",
+        "experiments_read"
+      ],
+      "evidence_requirements": [
+        "A1 is described strictly and reproducibly with no ambiguity",
+        "v2 claimed results vs v3 actual results are documented"
+      ],
+      "policy_tags": [
+        "cheap_first"
+      ],
+      "max_turns": 8,
+      "max_tool_calls": 6,
+      "max_expensive_calls": 2,
+      "parallel_slot": 1,
+      "status": "pending",
+      "turn_count": 0,
+      "tool_call_count": 0,
+      "expensive_call_count": 0,
+      "assigned_worker_id": null,
+      "last_checkpoint_turn_id": "",
+      "last_checkpoint_summary": "",
+      "final_report_turn_id": "",
+      "last_error": "",
+      "last_summary": "",
+      "latest_tool_result_summary": "",
+      "active_operation_tool": "",
+      "active_operation_ref": "",
+      "active_operation_status": "",
+      "active_operation_arguments": {},
+      "active_resume_tool": "",
+      "active_resume_token": "",
+      "last_tool_response_status": "",
+      "artifacts": [],
+      "facts": {}
+    },
+    {
+      "slice_id": "compiled_plan_v3_stage_3",
+      "title": "Stability и concentration для A1",
+      "hypothesis": "Determine whether A1 survives as a genuine specialist-layer across time windows and is not propped up by a single lucky segment.",
+      "objective": "Determine whether A1 survives as a genuine specialist-layer across time windows and is not propped up by a single lucky segment.",
+      "success_criteria": [
+        "Honest verdict on whether A1 remains positive after removing any single strong segment"
+      ],
+      "allowed_tools": [
+        "backtests_analysis",
+        "backtests_conditions",
+        "experiments_run",
+        "experiments_inspect",
+        "experiments_read",
+        "backtests_plan",
+        "backtests_runs",
+        "backtests_studies",
+        "backtests_walkforward"
+      ],
+      "evidence_requirements": [
+        "Honest verdict on whether A1 remains positive after removing any single strong segment"
+      ],
+      "policy_tags": [
+        "backtesting"
+      ],
+      "max_turns": 8,
+      "max_tool_calls": 6,
+      "max_expensive_calls": 2,
+      "parallel_slot": 1,
+      "status": "pending",
+      "turn_count": 0,
+      "tool_call_count": 0,
+      "expensive_call_count": 0,
+      "assigned_worker_id": null,
+      "last_checkpoint_turn_id": "",
+      "last_checkpoint_summary": "",
+      "final_report_turn_id": "",
+      "last_error": "",
+      "last_summary": "",
+      "latest_tool_result_summary": "",
+      "active_operation_tool": "",
+      "active_operation_ref": "",
+      "active_operation_status": "",
+      "active_operation_arguments": {},
+      "active_resume_tool": "",
+      "active_resume_token": "",
+      "last_tool_response_status": "",
+      "artifacts": [],
+      "facts": {}
+    }
+  ],
+  "status": "draft",
+  "created_at": "2026-04-09T14:19:48.837151+00:00",
+  "updated_at": "2026-04-09T14:19:48.837154+00:00"
+}

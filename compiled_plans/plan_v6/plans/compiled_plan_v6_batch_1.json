@@ -1,0 +1,181 @@
+{
+  "plan_id": "compiled_plan_v6_batch_1",
+  "goal": "Найти и валидировать новые cross-symbol directional features и CatBoost long/short классификаторы, сравнить их с immutable baseline active-signal-v1@1 через matched OOS.",
+  "baseline_ref": {
+    "snapshot_id": "active-signal-v1",
+    "version": 1,
+    "symbol": "BTCUSDT",
+    "anchor_timeframe": "1h",
+    "execution_timeframe": "5m"
+  },
+  "global_constraints": [
+    "active-signal-v1@1 — immutable reference; never modify base, its thresholds, hours, days, execution, or feature set",
+    "No feature/target/threshold/architecture selection based on lockbox window — lockbox only validates frozen choices",
+    "All improvements must pass matched OOS comparison with base on the same window",
+    "Classification only — no regression on raw future PnL",
+    "Separate long and short classifiers first; no multiclass or router model at start (router only if both M1 and M2 show meaningful OOS value)",
+    "Maximum 3-4 strong feature families; no wide feature inflation",
+    "Compact disciplined HPO grid only: depth {4,6,8}, lr {0.03,0.05}, moderate regularization, 2-3 seeds max",
+    "Allowed horizons: 12h, 18h only; allowed barrier schemes: balanced, conservative only",
+    "Purge gap between train and later windows: minimum 24h",
+    "Thresholds must be frozen on selection OOS before lockbox is opened",
+    "Train/selection/lockbox windows must be frozen before any model training begins"
+  ],
+  "slices": [
+    {
+      "slice_id": "compiled_plan_v6_stage_1",
+      "title": "Start v6 and fix new model discipline",
+      "hypothesis": "Open a new research project for v6 and formally record the classification-first methodology, immutable baseline reference, and anti-leakage rules.",
+      "objective": "Open a new research project for v6 and formally record the classification-first methodology, immutable baseline reference, and anti-leakage rules.",
+      "success_criteria": [
+        "New project exists with immutable reference and frozen v6 rules documented"
+      ],
+      "allowed_tools": [
+        "research_project",
+        "features_custom"
+      ],
+      "evidence_requirements": [
+        "New project exists with immutable reference and frozen v6 rules documented"
+      ],
+      "policy_tags": [
+        "setup",
+        "cheap_first"
+      ],
+      "max_turns": 4,
+      "max_tool_calls": 4,
+      "max_expensive_calls": 0,
+      "parallel_slot": 1,
+      "status": "pending",
+      "turn_count": 0,
+      "tool_call_count": 0,
+      "expensive_call_count": 0,
+      "assigned_worker_id": null,
+      "last_checkpoint_turn_id": "",
+      "last_checkpoint_summary": "",
+      "final_report_turn_id": "",
+      "last_error": "",
+      "last_summary": "",
+      "latest_tool_result_summary": "",
+      "active_operation_tool": "",
+      "active_operation_ref": "",
+      "active_operation_status": "",
+      "active_operation_arguments": {},
+      "active_resume_tool": "",
+      "active_resume_token": "",
+      "last_tool_response_status": "",
+      "artifacts": [],
+      "facts": {}
+    },
+    {
+      "slice_id": "compiled_plan_v6_stage_2",
+      "title": "Data readiness for new information layer",
+      "hypothesis": "Verify that 1h datasets for cross-symbol and breadth features are available and of sufficient quality.",
+      "objective": "Verify that 1h datasets for cross-symbol and breadth features are available and of sufficient quality.",
+      "success_criteria": [
+        "Frozen symbol universe defined; clear which cross-symbol features are buildable"
+      ],
+      "allowed_tools": [
+        "datasets",
+        "datasets_sync",
+        "datasets_preview",
+        "events",
+        "events_sync",
+        "features_catalog",
+        "features_dataset",
+        "research_project",
+        "research_map",
+        "research_record",
+        "research_search"
+      ],
+      "evidence_requirements": [
+        "Frozen symbol universe defined; clear which cross-symbol features are buildable"
+      ],
+      "policy_tags": [
+        "setup",
+        "cheap_first"
+      ],
+      "max_turns": 4,
+      "max_tool_calls": 4,
+      "max_expensive_calls": 0,
+      "parallel_slot": 1,
+      "status": "pending",
+      "turn_count": 0,
+      "tool_call_count": 0,
+      "expensive_call_count": 0,
+      "assigned_worker_id": null,
+      "last_checkpoint_turn_id": "",
+      "last_checkpoint_summary": "",
+      "final_report_turn_id": "",
+      "last_error": "",
+      "last_summary": "",
+      "latest_tool_result_summary": "",
+      "active_operation_tool": "",
+      "active_operation_ref": "",
+      "active_operation_status": "",
+      "active_operation_arguments": {},
+      "active_resume_tool": "",
+      "active_resume_token": "",
+      "last_tool_response_status": "",
+      "artifacts": [],
+      "facts": {}
+    },
+    {
+      "slice_id": "compiled_plan_v6_stage_3",
+      "title": "Feature contract and materialization for v6 feature packs",
+      "hypothesis": "Build and validate the new directional feature layer across all four feature packs (leadership-breadth, path-asymmetry, regime-disagreement, hybrid-event).",
+      "objective": "Build and validate the new directional feature layer across all four feature packs (leadership-breadth, path-asymmetry, regime-disagreement, hybrid-event).",
+      "success_criteria": [
+        "All feature packs materialized with validated contracts",
+        "common_model_window defined with total active columns and cross-symbol columns counted",
+        "No leakage detected; features causally sound"
+      ],
+      "allowed_tools": [
+        "features_catalog",
+        "features_custom",
+        "features_dataset",
+        "features_analytics",
+        "datasets",
+        "datasets_sync",
+        "datasets_preview",
+        "events",
+        "events_sync"
+      ],
+      "evidence_requirements": [
+        "All feature packs materialized with validated contracts",
+        "common_model_window defined with total active columns and cross-symbol columns counted",
+        "No leakage detected; features causally sound"
+      ],
+      "policy_tags": [
+        "setup",
+        "cheap_first"
+      ],
+      "max_turns": 4,
+      "max_tool_calls": 4,
+      "max_expensive_calls": 0,
+      "parallel_slot": 1,
+      "status": "pending",
+      "turn_count": 0,
+      "tool_call_count": 0,
+      "expensive_call_count": 0,
+      "assigned_worker_id": null,
+      "last_checkpoint_turn_id": "",
+      "last_checkpoint_summary": "",
+      "final_report_turn_id": "",
+      "last_error": "",
+      "last_summary": "",
+      "latest_tool_result_summary": "",
+      "active_operation_tool": "",
+      "active_operation_ref": "",
+      "active_operation_status": "",
+      "active_operation_arguments": {},
+      "active_resume_tool": "",
+      "active_resume_token": "",
+      "last_tool_response_status": "",
+      "artifacts": [],
+      "facts": {}
+    }
+  ],
+  "status": "draft",
+  "created_at": "2026-04-09T14:24:19.886122+00:00",
+  "updated_at": "2026-04-09T14:24:19.886126+00:00"
+}

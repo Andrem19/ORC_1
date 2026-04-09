@@ -1,0 +1,178 @@
+{
+  "plan_id": "compiled_plan_v3_batch_3",
+  "goal": "Close the unfinished A1 branch from v2 to a definitive PROMOTE/REJECT decision, then open exactly one next low-friction branch only if A1 fails promotion.",
+  "baseline_ref": {
+    "snapshot_id": "active-signal-v1",
+    "version": 1,
+    "symbol": "BTCUSDT",
+    "anchor_timeframe": "1h",
+    "execution_timeframe": "5m"
+  },
+  "global_constraints": [
+    "active-signal-v1@1 is immutable — never modify base hours, days, thresholds, or execution logic",
+    "Nothing counts as improvement unless it passes strict additive integration, permissive integration, ownership, and cannibalization proof",
+    "Only one candidate branch open at a time; no parallel wide search",
+    "Medium-friction wave B is forbidden until A1 is closed and one low-friction branch (A2 or A3) is fully closed with no promoted candidate"
+  ],
+  "slices": [
+    {
+      "slice_id": "compiled_plan_v3_stage_7",
+      "title": "Открыть ровно одну следующую ветку (если A1 не promoted)",
+      "hypothesis": "If A1 was not promoted, select exactly one next low-friction branch and prepare it for clean testing — no wide search.",
+      "objective": "If A1 was not promoted, select exactly one next low-friction branch and prepare it for clean testing — no wide search.",
+      "success_criteria": [
+        "Exactly one next branch is selected and ready for clean testing with documented rationale"
+      ],
+      "allowed_tools": [
+        "research_project",
+        "research_map",
+        "research_record",
+        "research_search",
+        "features_catalog",
+        "features_custom",
+        "features_dataset",
+        "features_analytics"
+      ],
+      "evidence_requirements": [
+        "Exactly one next branch is selected and ready for clean testing with documented rationale"
+      ],
+      "policy_tags": [
+        "cheap_first",
+        "optional_candidate"
+      ],
+      "max_turns": 6,
+      "max_tool_calls": 5,
+      "max_expensive_calls": 1,
+      "parallel_slot": 1,
+      "status": "pending",
+      "turn_count": 0,
+      "tool_call_count": 0,
+      "expensive_call_count": 0,
+      "assigned_worker_id": null,
+      "last_checkpoint_turn_id": "",
+      "last_checkpoint_summary": "",
+      "final_report_turn_id": "",
+      "last_error": "",
+      "last_summary": "",
+      "latest_tool_result_summary": "",
+      "active_operation_tool": "",
+      "active_operation_ref": "",
+      "active_operation_status": "",
+      "active_operation_arguments": {},
+      "active_resume_tool": "",
+      "active_resume_token": "",
+      "last_tool_response_status": "",
+      "artifacts": [],
+      "facts": {}
+    },
+    {
+      "slice_id": "compiled_plan_v3_stage_8",
+      "title": "A2_iv_acceleration — проверка динамики IV",
+      "hypothesis": "Test whether IV dynamics produce a genuine new specialist-layer, with a compact feature set and strict prototype discipline.",
+      "objective": "Test whether IV dynamics produce a genuine new specialist-layer, with a compact feature set and strict prototype discipline.",
+      "success_criteria": [
+        "Either one mature A2 prototype passes plausibility and standalone, or an honest early rejection is recorded"
+      ],
+      "allowed_tools": [
+        "features_custom",
+        "models_dataset",
+        "models_train",
+        "models_registry",
+        "models_compare",
+        "models_to_feature",
+        "backtests_plan",
+        "backtests_runs",
+        "backtests_studies",
+        "backtests_walkforward",
+        "backtests_conditions",
+        "backtests_analysis"
+      ],
+      "evidence_requirements": [
+        "Either one mature A2 prototype passes plausibility and standalone, or an honest early rejection is recorded"
+      ],
+      "policy_tags": [
+        "optional_candidate"
+      ],
+      "max_turns": 6,
+      "max_tool_calls": 5,
+      "max_expensive_calls": 1,
+      "parallel_slot": 1,
+      "status": "pending",
+      "turn_count": 0,
+      "tool_call_count": 0,
+      "expensive_call_count": 0,
+      "assigned_worker_id": null,
+      "last_checkpoint_turn_id": "",
+      "last_checkpoint_summary": "",
+      "final_report_turn_id": "",
+      "last_error": "",
+      "last_summary": "",
+      "latest_tool_result_summary": "",
+      "active_operation_tool": "",
+      "active_operation_ref": "",
+      "active_operation_status": "",
+      "active_operation_arguments": {},
+      "active_resume_tool": "",
+      "active_resume_token": "",
+      "last_tool_response_status": "",
+      "artifacts": [],
+      "facts": {}
+    },
+    {
+      "slice_id": "compiled_plan_v3_stage_9",
+      "title": "A3_broader_cl_transition — проверка расширенных classifier transitions",
+      "hypothesis": "Test whether broader classifier transitions produce a genuine new specialist-layer with grouped transition features.",
+      "objective": "Test whether broader classifier transitions produce a genuine new specialist-layer with grouped transition features.",
+      "success_criteria": [
+        "Either one mature A3 prototype passes plausibility and standalone, or an honest early rejection is recorded"
+      ],
+      "allowed_tools": [
+        "features_custom",
+        "models_dataset",
+        "models_train",
+        "models_registry",
+        "models_compare",
+        "models_to_feature",
+        "backtests_plan",
+        "backtests_runs",
+        "backtests_studies",
+        "backtests_walkforward",
+        "backtests_conditions",
+        "backtests_analysis"
+      ],
+      "evidence_requirements": [
+        "Either one mature A3 prototype passes plausibility and standalone, or an honest early rejection is recorded"
+      ],
+      "policy_tags": [
+        "optional_candidate"
+      ],
+      "max_turns": 6,
+      "max_tool_calls": 5,
+      "max_expensive_calls": 1,
+      "parallel_slot": 1,
+      "status": "pending",
+      "turn_count": 0,
+      "tool_call_count": 0,
+      "expensive_call_count": 0,
+      "assigned_worker_id": null,
+      "last_checkpoint_turn_id": "",
+      "last_checkpoint_summary": "",
+      "final_report_turn_id": "",
+      "last_error": "",
+      "last_summary": "",
+      "latest_tool_result_summary": "",
+      "active_operation_tool": "",
+      "active_operation_ref": "",
+      "active_operation_status": "",
+      "active_operation_arguments": {},
+      "active_resume_tool": "",
+      "active_resume_token": "",
+      "last_tool_response_status": "",
+      "artifacts": [],
+      "facts": {}
+    }
+  ],
+  "status": "draft",
+  "created_at": "2026-04-09T14:19:48.837202+00:00",
+  "updated_at": "2026-04-09T14:19:48.837203+00:00"
+}

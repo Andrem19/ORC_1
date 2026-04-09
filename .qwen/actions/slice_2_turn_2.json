@@ -1,0 +1,13 @@
+{
+  "type": "tool_call",
+  "tool": "datasets_preview",
+  "arguments": {
+    "tool": {
+      "view": "rows",
+      "dataset_id": "ETHUSDT_1h",
+      "limit": 5
+    }
+  },
+  "reason": "Next step per plan: confirm ETHUSDT 1h schema aligns with BTCUSDT 1h (OHLCV columns, timestamps) before building cross-asset correlation features. This is a cheap read-only preview call.",
+  "expected_evidence": ["ETHUSDT 1h has open/high/low/close/volume columns", "Timestamps are aligned to hourly anchors compatible with BTCUSDT 1h", "Data quality is sufficient for rolling correlation computation"]
+}

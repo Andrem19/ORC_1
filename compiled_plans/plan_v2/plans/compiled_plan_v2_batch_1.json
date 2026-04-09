@@ -1,0 +1,165 @@
+{
+  "plan_id": "compiled_plan_v2_batch_1",
+  "goal": "Find one or more new orthogonal specialist signals or conditioning layers that work primarily where the base does not trade, use genuinely new information, pass window stability, and prove additive value through new entries upon integration.",
+  "baseline_ref": {
+    "snapshot_id": "active-signal-v1",
+    "version": 1,
+    "symbol": "BTCUSDT",
+    "anchor_timeframe": "1h",
+    "execution_timeframe": "5m"
+  },
+  "global_constraints": [
+    "Base active-signal-v1@1 is immutable — no re-tuning, no hour/day/threshold variations, no cosmetic changes.",
+    "Raw single-filter event entries (H1/H2 style) are permanently forbidden.",
+    "Every new candidate must first pass complement-first mode (base_absent surface) before any other evaluation.",
+    "Every prototype must contain at least 3 logical layers: new information layer + regime confirmation + density limiter.",
+    "Model-first approaches are forbidden until the low-friction wave (Wave A) completes.",
+    "No candidate may be a renamed variation of existing hour, dow, cl_*, rsi, iv_est static, or day-of-week patterns.",
+    "If permissive integration looks good but strict additive is weak — reject for hidden cannibalism.",
+    "Record both successes and reasons for rejection in research journal."
+  ],
+  "slices": [
+    {
+      "slice_id": "compiled_plan_v2_stage_1",
+      "title": "Postmortem plan_v1 and fix new rules",
+      "hypothesis": "Record what the weak result of the first cycle taught so the agent does not repeat the same failure under a different name.",
+      "objective": "Record what the weak result of the first cycle taught so the agent does not repeat the same failure under a different name.",
+      "success_criteria": [
+        "An explicit postmortem exists and the agent understands that v2 is a fundamentally different class of research, not just another attempt at the same raw ideas."
+      ],
+      "allowed_tools": [
+        "research_project",
+        "research_record",
+        "research_map"
+      ],
+      "evidence_requirements": [
+        "An explicit postmortem exists and the agent understands that v2 is a fundamentally different class of research, not just another attempt at the same raw ideas."
+      ],
+      "policy_tags": [
+        "setup",
+        "cheap_first"
+      ],
+      "max_turns": 4,
+      "max_tool_calls": 4,
+      "max_expensive_calls": 0,
+      "parallel_slot": 1,
+      "status": "pending",
+      "turn_count": 0,
+      "tool_call_count": 0,
+      "expensive_call_count": 0,
+      "assigned_worker_id": null,
+      "last_checkpoint_turn_id": "",
+      "last_checkpoint_summary": "",
+      "final_report_turn_id": "",
+      "last_error": "",
+      "last_summary": "",
+      "latest_tool_result_summary": "",
+      "active_operation_tool": "",
+      "active_operation_ref": "",
+      "active_operation_status": "",
+      "active_operation_arguments": {},
+      "active_resume_tool": "",
+      "active_resume_token": "",
+      "last_tool_response_status": "",
+      "artifacts": [],
+      "facts": {}
+    },
+    {
+      "slice_id": "compiled_plan_v2_stage_2",
+      "title": "Build base-absent research surface",
+      "hypothesis": "Map the anchor bars where the base does not trade, then find directional sub-spaces within that complement surface.",
+      "objective": "Map the anchor bars where the base does not trade, then find directional sub-spaces within that complement surface.",
+      "success_criteria": [
+        "A map of missing regimes exists specifically on the surface where the base does not participate."
+      ],
+      "allowed_tools": [
+        "experiments_run",
+        "experiments_read",
+        "backtests_analysis",
+        "backtests_conditions",
+        "experiments_inspect"
+      ],
+      "evidence_requirements": [
+        "A map of missing regimes exists specifically on the surface where the base does not participate."
+      ],
+      "policy_tags": [
+        "setup",
+        "cheap_first"
+      ],
+      "max_turns": 4,
+      "max_tool_calls": 4,
+      "max_expensive_calls": 0,
+      "parallel_slot": 1,
+      "status": "pending",
+      "turn_count": 0,
+      "tool_call_count": 0,
+      "expensive_call_count": 0,
+      "assigned_worker_id": null,
+      "last_checkpoint_turn_id": "",
+      "last_checkpoint_summary": "",
+      "final_report_turn_id": "",
+      "last_error": "",
+      "last_summary": "",
+      "latest_tool_result_summary": "",
+      "active_operation_tool": "",
+      "active_operation_ref": "",
+      "active_operation_status": "",
+      "active_operation_arguments": {},
+      "active_resume_tool": "",
+      "active_resume_token": "",
+      "last_tool_response_status": "",
+      "artifacts": [],
+      "facts": {}
+    },
+    {
+      "slice_id": "compiled_plan_v2_stage_3",
+      "title": "Wave A — low-friction new layers on available data",
+      "hypothesis": "Select hypotheses buildable without heavy external infrastructure, using already-available 1h data and minimal custom features.",
+      "objective": "Select hypotheses buildable without heavy external infrastructure, using already-available 1h data and minimal custom features.",
+      "success_criteria": [
+        "A small, high-quality list of Wave A hypotheses exists, each data-ready or nearly data-ready."
+      ],
+      "allowed_tools": [
+        "research_project",
+        "research_map",
+        "research_record",
+        "research_search",
+        "features_catalog"
+      ],
+      "evidence_requirements": [
+        "A small, high-quality list of Wave A hypotheses exists, each data-ready or nearly data-ready."
+      ],
+      "policy_tags": [
+        "hypothesis_design",
+        "cheap_first"
+      ],
+      "max_turns": 4,
+      "max_tool_calls": 4,
+      "max_expensive_calls": 0,
+      "parallel_slot": 1,
+      "status": "pending",
+      "turn_count": 0,
+      "tool_call_count": 0,
+      "expensive_call_count": 0,
+      "assigned_worker_id": null,
+      "last_checkpoint_turn_id": "",
+      "last_checkpoint_summary": "",
+      "final_report_turn_id": "",
+      "last_error": "",
+      "last_summary": "",
+      "latest_tool_result_summary": "",
+      "active_operation_tool": "",
+      "active_operation_ref": "",
+      "active_operation_status": "",
+      "active_operation_arguments": {},
+      "active_resume_tool": "",
+      "active_resume_token": "",
+      "last_tool_response_status": "",
+      "artifacts": [],
+      "facts": {}
+    }
+  ],
+  "status": "draft",
+  "created_at": "2026-04-09T14:18:20.893722+00:00",
+  "updated_at": "2026-04-09T14:18:20.893725+00:00"
+}

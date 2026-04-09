@@ -1,0 +1,57 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\n  \"status\": \"ok\",\n  \"message\": \"Model dataset action completed.\",\n  \"tool_name\": \"models_dataset\",\n  \"request_id\": \"14\",\n  \"correlation_id\": \"14\",\n  \"server_session_id\": \"7280d1865c8747bcbc22cff09bd8dfef\",\n  \"response_generated_at\": \"2026-04-09T12:27:37.040026+00:00\",\n  \"data\": {\n    \"action\": \"materialize\",\n    \"wait\": \"started\",\n    \"wait_satisfied\": true,\n    \"wait_timeout\": false,\n    \"wait_satisfied_by_status\": \"running_compute\",\n    \"final_status\": \"running_compute\",\n    \"operation\": {\n      \"operation_id\": \"models-dataset-12583e9d5de7f348-c0706905\",\n      \"operation_kind\": \"models_dataset\",\n      \"status\": \"running_compute\",\n      \"attempt_id\": \"models-dataset-12583e9d5de7f348-c0706905\",\n      \"phase\": \"loading_frames\",\n      \"progress_message\": \"Loading raw and managed frames for BTCUSDT 1h.\",\n      \"fingerprint\": \"12583e9d5de7f348\",\n      \"previous_attempts\": [],\n      \"reuse_reason\": \"new_attempt_created\",\n      \"dependency_fingerprint\": \"9607f893103c484d\"\n    },\n    \"elapsed_seconds\": 9.823631,\n    \"preflight_estimate\": {\n      \"anchor_row_estimate\": 54864,\n      \"execution_row_estimate\": null,\n      \"cost_class\": \"cheap\"\n    },\n    \"important_warnings\": [],\n    \"next_recommended_actions\": [\n      \"Continue with models_dataset(action='status', operation_id='...') until the operation reaches a terminal state.\"\n    ],\n    \"recommended_follow_up_tool\": null,\n    \"state_summary\": {},\n    \"exact_next_call_examples\": [],\n    \"raw_refs\": [],\n    \"raw_tool_hints\": [],\n    \"summary\": \"Dataset preparation is still running.\"\n  },\n  \"warnings\": [],\n  \"refs\": [],\n  \"error\": null\n}"
+    }
+  ],
+  "structuredContent": {
+    "status": "ok",
+    "message": "Model dataset action completed.",
+    "tool_name": "models_dataset",
+    "request_id": "14",
+    "correlation_id": "14",
+    "server_session_id": "7280d1865c8747bcbc22cff09bd8dfef",
+    "response_generated_at": "2026-04-09T12:27:37.040026+00:00",
+    "data": {
+      "action": "materialize",
+      "wait": "started",
+      "wait_satisfied": true,
+      "wait_timeout": false,
+      "wait_satisfied_by_status": "running_compute",
+      "final_status": "running_compute",
+      "operation": {
+        "operation_id": "models-dataset-12583e9d5de7f348-c0706905",
+        "operation_kind": "models_dataset",
+        "status": "running_compute",
+        "attempt_id": "models-dataset-12583e9d5de7f348-c0706905",
+        "phase": "loading_frames",
+        "progress_message": "Loading raw and managed frames for BTCUSDT 1h.",
+        "fingerprint": "12583e9d5de7f348",
+        "previous_attempts": [],
+        "reuse_reason": "new_attempt_created",
+        "dependency_fingerprint": "9607f893103c484d"
+      },
+      "elapsed_seconds": 9.823631,
+      "preflight_estimate": {
+        "anchor_row_estimate": 54864,
+        "execution_row_estimate": null,
+        "cost_class": "cheap"
+      },
+      "important_warnings": [],
+      "next_recommended_actions": [
+        "Continue with models_dataset(action='status', operation_id='...') until the operation reaches a terminal state."
+      ],
+      "recommended_follow_up_tool": null,
+      "state_summary": {},
+      "exact_next_call_examples": [],
+      "raw_refs": [],
+      "raw_tool_hints": [],
+      "summary": "Dataset preparation is still running."
+    },
+    "warnings": [],
+    "refs": [],
+    "error": null
+  },
+  "isError": false
+}

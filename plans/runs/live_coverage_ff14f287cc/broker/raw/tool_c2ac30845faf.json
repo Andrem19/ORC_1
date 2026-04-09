@@ -1,0 +1,656 @@
+{
+  "initial": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\n  \"status\": \"ok\",\n  \"message\": \"Backtests run inspect payload loaded.\",\n  \"tool_name\": \"backtests_runs\",\n  \"request_id\": \"39\",\n  \"correlation_id\": \"39\",\n  \"server_session_id\": \"93e816c4a9c94e6c81d1c952d314071a\",\n  \"response_generated_at\": \"2026-04-09T12:48:29.696398+00:00\",\n  \"data\": {\n    \"view\": \"status\",\n    \"run\": {\n      \"run_id\": \"20260409-124826-31901afd\",\n      \"status\": \"running\",\n      \"symbol\": \"BTCUSDT\",\n      \"strategy_name\": \"Active Signal v1\",\n      \"started_at\": \"2026-04-09T12:48:26.385915+00:00\",\n      \"finished_at\": null,\n      \"latest_message\": \"Queued\",\n      \"error_message\": null,\n      \"failure_stage\": null,\n      \"error_code\": null,\n      \"error_details\": {},\n      \"action_required\": null,\n      \"summary\": {\n        \"run_id\": \"20260409-124826-31901afd\",\n        \"status\": \"running\",\n        \"started_at\": \"2026-04-09T12:48:26.385915+00:00\",\n        \"finished_at\": null,\n        \"symbol\": \"BTCUSDT\",\n        \"strategy_name\": \"Active Signal v1\"\n      },\n      \"config\": {\n        \"symbol\": \"BTCUSDT\",\n        \"strategy_snapshot_id\": \"active-signal-v1\",\n        \"strategy_snapshot_version\": 1,\n        \"strategy_snapshot_name\": \"Active Signal v1\"\n      },\n      \"snapshot\": {\n        \"snapshot_id\": \"active-signal-v1\",\n        \"version\": 1,\n        \"name\": \"Active Signal v1\"\n      },\n      \"stop_requested\": false,\n      \"stop_requested_at\": null,\n      \"summary_finality\": {\n        \"is_final\": false,\n        \"state\": \"intermediate\",\n        \"status\": \"running\",\n        \"finality_state\": \"queue_precompute\",\n        \"persistence_state\": \"unpublished\",\n        \"compatibility_note\": \"queue_derived_lifecycle\",\n        \"reason\": \"run_not_terminal_or_not_persisted\"\n      },\n      \"summary_is_final\": false,\n      \"summary_kind\": \"intermediate\",\n      \"summary_note\": \"This summary is intermediate and may still be unpublished or actively persisting.\",\n      \"finality_state\": \"queue_precompute\",\n      \"persistence_state\": \"unpublished\",\n      \"compute_finished_at\": null,\n      \"persisted_at\": null,\n      \"lifecycle\": {\n        \"compute_complete\": false,\n        \"artifacts_persisted\": false,\n        \"final_persisted\": false,\n        \"readiness_state\": \"running_compute\",\n        \"stop_requested\": false,\n        \"state_explanation\": \"Compute is still running or the run has not reached a terminal persisted state yet.\"\n      },\n      \"is_stop_allowed\": true,\n      \"transient\": true,\n      \"processed_anchor_steps\": 0,\n      \"total_anchor_steps\": 0\n    },\n    \"operation\": {\n      \"operation_id\": \"20260409-124826-31901afd\",\n      \"operation_kind\": \"backtests_runs_start\",\n      \"status\": \"running\",\n      \"started_at\": \"2026-04-09T12:48:26.385915+00:00\",\n      \"finished_at\": null,\n      \"result_ref\": {\n        \"kind\": \"backtest_run\",\n        \"id\": \"20260409-124826-31901afd\"\n      },\n      \"finality_state\": \"queue_precompute\",\n      \"persistence_state\": \"unpublished\",\n      \"compute_finished_at\": null,\n      \"persisted_at\": null,\n      \"is_stop_allowed\": true,\n      \"slot_released\": false,\n      \"failure_stage\": null,\n      \"error_code\": null,\n      \"error_message\": null,\n      \"error_details\": {},\n      \"stop_requested\": false,\n      \"stop_requested_at\": null,\n      \"queue_id\": \"c636f909af6b\",\n      \"scheduler_state\": \"admitted\",\n      \"queue_position\": null,\n      \"queued_reason\": null,\n      \"blocking_operation_id\": null,\n      \"admitted_at\": \"2026-04-09T12:48:26.385915+00:00\",\n      \"health_state\": \"healthy\",\n      \"last_heartbeat_at\": \"2026-04-09T12:48:28.119739+00:00\",\n      \"last_progress_at\": \"2026-04-09T12:48:28.119739+00:00\",\n      \"progress_message\": \"Backtest run admitted and queued inside the run manager.\",\n      \"action_required\": null,\n      \"stop_supported\": true,\n      \"progress\": {\n        \"current\": 0.0,\n        \"total\": null,\n        \"unit\": \"anchor_steps\",\n        \"message\": \"Queued\"\n      }\n    },\n    \"important_warnings\": [],\n    \"next_recommended_actions\": [\n      \"Use backtests_runs(view='events') or view='trades' for live diagnostics, or view='detail' after terminal completion.\"\n    ],\n    \"recommended_follow_up_tool\": null,\n    \"state_summary\": {},\n    \"exact_next_call_examples\": [\n      {\n        \"tool\": \"backtests_runs\",\n        \"arguments\": {\n          \"action\": \"inspect\",\n          \"view\": \"events\",\n          \"run_id\": \"20260409-124826-31901afd\"\n        }\n      },\n      {\n        \"tool\": \"backtests_runs\",\n        \"arguments\": {\n          \"action\": \"inspect\",\n          \"view\": \"detail\",\n          \"run_id\": \"20260409-124826-31901afd\"\n        }\n      }\n    ],\n    \"raw_refs\": [\n      \"system_raw_call(tool_name='backtests_runs_get_live_status')\"\n    ],\n    \"raw_tool_hints\": [],\n    \"summary\": \"Loaded lifecycle status for backtest run 20260409-124826-31901afd.\"\n  },\n  \"warnings\": [],\n  \"refs\": [\n    {\n      \"kind\": \"backtest_run\",\n      \"id\": \"20260409-124826-31901afd\",\n      \"path\": null\n    }\n  ],\n  \"error\": null\n}"
+      }
+    ],
+    "structuredContent": {
+      "status": "ok",
+      "message": "Backtests run inspect payload loaded.",
+      "tool_name": "backtests_runs",
+      "request_id": "39",
+      "correlation_id": "39",
+      "server_session_id": "93e816c4a9c94e6c81d1c952d314071a",
+      "response_generated_at": "2026-04-09T12:48:29.696398+00:00",
+      "data": {
+        "view": "status",
+        "run": {
+          "run_id": "20260409-124826-31901afd",
+          "status": "running",
+          "symbol": "BTCUSDT",
+          "strategy_name": "Active Signal v1",
+          "started_at": "2026-04-09T12:48:26.385915+00:00",
+          "finished_at": null,
+          "latest_message": "Queued",
+          "error_message": null,
+          "failure_stage": null,
+          "error_code": null,
+          "error_details": {},
+          "action_required": null,
+          "summary": {
+            "run_id": "20260409-124826-31901afd",
+            "status": "running",
+            "started_at": "2026-04-09T12:48:26.385915+00:00",
+            "finished_at": null,
+            "symbol": "BTCUSDT",
+            "strategy_name": "Active Signal v1"
+          },
+          "config": {
+            "symbol": "BTCUSDT",
+            "strategy_snapshot_id": "active-signal-v1",
+            "strategy_snapshot_version": 1,
+            "strategy_snapshot_name": "Active Signal v1"
+          },
+          "snapshot": {
+            "snapshot_id": "active-signal-v1",
+            "version": 1,
+            "name": "Active Signal v1"
+          },
+          "stop_requested": false,
+          "stop_requested_at": null,
+          "summary_finality": {
+            "is_final": false,
+            "state": "intermediate",
+            "status": "running",
+            "finality_state": "queue_precompute",
+            "persistence_state": "unpublished",
+            "compatibility_note": "queue_derived_lifecycle",
+            "reason": "run_not_terminal_or_not_persisted"
+          },
+          "summary_is_final": false,
+          "summary_kind": "intermediate",
+          "summary_note": "This summary is intermediate and may still be unpublished or actively persisting.",
+          "finality_state": "queue_precompute",
+          "persistence_state": "unpublished",
+          "compute_finished_at": null,
+          "persisted_at": null,
+          "lifecycle": {
+            "compute_complete": false,
+            "artifacts_persisted": false,
+            "final_persisted": false,
+            "readiness_state": "running_compute",
+            "stop_requested": false,
+            "state_explanation": "Compute is still running or the run has not reached a terminal persisted state yet."
+          },
+          "is_stop_allowed": true,
+          "transient": true,
+          "processed_anchor_steps": 0,
+          "total_anchor_steps": 0
+        },
+        "operation": {
+          "operation_id": "20260409-124826-31901afd",
+          "operation_kind": "backtests_runs_start",
+          "status": "running",
+          "started_at": "2026-04-09T12:48:26.385915+00:00",
+          "finished_at": null,
+          "result_ref": {
+            "kind": "backtest_run",
+            "id": "20260409-124826-31901afd"
+          },
+          "finality_state": "queue_precompute",
+          "persistence_state": "unpublished",
+          "compute_finished_at": null,
+          "persisted_at": null,
+          "is_stop_allowed": true,
+          "slot_released": false,
+          "failure_stage": null,
+          "error_code": null,
+          "error_message": null,
+          "error_details": {},
+          "stop_requested": false,
+          "stop_requested_at": null,
+          "queue_id": "c636f909af6b",
+          "scheduler_state": "admitted",
+          "queue_position": null,
+          "queued_reason": null,
+          "blocking_operation_id": null,
+          "admitted_at": "2026-04-09T12:48:26.385915+00:00",
+          "health_state": "healthy",
+          "last_heartbeat_at": "2026-04-09T12:48:28.119739+00:00",
+          "last_progress_at": "2026-04-09T12:48:28.119739+00:00",
+          "progress_message": "Backtest run admitted and queued inside the run manager.",
+          "action_required": null,
+          "stop_supported": true,
+          "progress": {
+            "current": 0.0,
+            "total": null,
+            "unit": "anchor_steps",
+            "message": "Queued"
+          }
+        },
+        "important_warnings": [],
+        "next_recommended_actions": [
+          "Use backtests_runs(view='events') or view='trades' for live diagnostics, or view='detail' after terminal completion."
+        ],
+        "recommended_follow_up_tool": null,
+        "state_summary": {},
+        "exact_next_call_examples": [
+          {
+            "tool": "backtests_runs",
+            "arguments": {
+              "action": "inspect",
+              "view": "events",
+              "run_id": "20260409-124826-31901afd"
+            }
+          },
+          {
+            "tool": "backtests_runs",
+            "arguments": {
+              "action": "inspect",
+              "view": "detail",
+              "run_id": "20260409-124826-31901afd"
+            }
+          }
+        ],
+        "raw_refs": [
+          "system_raw_call(tool_name='backtests_runs_get_live_status')"
+        ],
+        "raw_tool_hints": [],
+        "summary": "Loaded lifecycle status for backtest run 20260409-124826-31901afd."
+      },
+      "warnings": [],
+      "refs": [
+        {
+          "kind": "backtest_run",
+          "id": "20260409-124826-31901afd",
+          "path": null
+        }
+      ],
+      "error": null
+    },
+    "isError": false
+  },
+  "autopoll": [
+    {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\n  \"status\": \"ok\",\n  \"message\": \"Backtests run inspect payload loaded.\",\n  \"tool_name\": \"backtests_runs\",\n  \"request_id\": \"40\",\n  \"correlation_id\": \"40\",\n  \"server_session_id\": \"93e816c4a9c94e6c81d1c952d314071a\",\n  \"response_generated_at\": \"2026-04-09T12:48:30.389078+00:00\",\n  \"data\": {\n    \"view\": \"status\",\n    \"run\": {\n      \"run_id\": \"20260409-124826-31901afd\",\n      \"status\": \"running\",\n      \"symbol\": \"BTCUSDT\",\n      \"strategy_name\": \"Active Signal v1\",\n      \"started_at\": \"2026-04-09T12:48:26.385915+00:00\",\n      \"finished_at\": null,\n      \"latest_message\": \"Queued\",\n      \"error_message\": null,\n      \"failure_stage\": null,\n      \"error_code\": null,\n      \"error_details\": {},\n      \"action_required\": null,\n      \"summary\": {\n        \"run_id\": \"20260409-124826-31901afd\",\n        \"status\": \"running\",\n        \"started_at\": \"2026-04-09T12:48:26.385915+00:00\",\n        \"finished_at\": null,\n        \"symbol\": \"BTCUSDT\",\n        \"strategy_name\": \"Active Signal v1\"\n      },\n      \"config\": {\n        \"symbol\": \"BTCUSDT\",\n        \"strategy_snapshot_id\": \"active-signal-v1\",\n        \"strategy_snapshot_version\": 1,\n        \"strategy_snapshot_name\": \"Active Signal v1\"\n      },\n      \"snapshot\": {\n        \"snapshot_id\": \"active-signal-v1\",\n        \"version\": 1,\n        \"name\": \"Active Signal v1\"\n      },\n      \"stop_requested\": false,\n      \"stop_requested_at\": null,\n      \"summary_finality\": {\n        \"is_final\": false,\n        \"state\": \"intermediate\",\n        \"status\": \"running\",\n        \"finality_state\": \"queue_precompute\",\n        \"persistence_state\": \"unpublished\",\n        \"compatibility_note\": \"queue_derived_lifecycle\",\n        \"reason\": \"run_not_terminal_or_not_persisted\"\n      },\n      \"summary_is_final\": false,\n      \"summary_kind\": \"intermediate\",\n      \"summary_note\": \"This summary is intermediate and may still be unpublished or actively persisting.\",\n      \"finality_state\": \"queue_precompute\",\n      \"persistence_state\": \"unpublished\",\n      \"compute_finished_at\": null,\n      \"persisted_at\": null,\n      \"lifecycle\": {\n        \"compute_complete\": false,\n        \"artifacts_persisted\": false,\n        \"final_persisted\": false,\n        \"readiness_state\": \"running_compute\",\n        \"stop_requested\": false,\n        \"state_explanation\": \"Compute is still running or the run has not reached a terminal persisted state yet.\"\n      },\n      \"is_stop_allowed\": true,\n      \"transient\": true,\n      \"processed_anchor_steps\": 0,\n      \"total_anchor_steps\": 0\n    },\n    \"operation\": {\n      \"operation_id\": \"20260409-124826-31901afd\",\n      \"operation_kind\": \"backtests_runs_start\",\n      \"status\": \"running\",\n      \"started_at\": \"2026-04-09T12:48:26.385915+00:00\",\n      \"finished_at\": null,\n      \"result_ref\": {\n        \"kind\": \"backtest_run\",\n        \"id\": \"20260409-124826-31901afd\"\n      },\n      \"finality_state\": \"queue_precompute\",\n      \"persistence_state\": \"unpublished\",\n      \"compute_finished_at\": null,\n      \"persisted_at\": null,\n      \"is_stop_allowed\": true,\n      \"slot_released\": false,\n      \"failure_stage\": null,\n      \"error_code\": null,\n      \"error_message\": null,\n      \"error_details\": {},\n      \"stop_requested\": false,\n      \"stop_requested_at\": null,\n      \"queue_id\": \"c636f909af6b\",\n      \"scheduler_state\": \"admitted\",\n      \"queue_position\": null,\n      \"queued_reason\": null,\n      \"blocking_operation_id\": null,\n      \"admitted_at\": \"2026-04-09T12:48:26.385915+00:00\",\n      \"health_state\": \"healthy\",\n      \"last_heartbeat_at\": \"2026-04-09T12:48:28.119739+00:00\",\n      \"last_progress_at\": \"2026-04-09T12:48:28.119739+00:00\",\n      \"progress_message\": \"Backtest run admitted and queued inside the run manager.\",\n      \"action_required\": null,\n      \"stop_supported\": true,\n      \"progress\": {\n        \"current\": 0.0,\n        \"total\": null,\n        \"unit\": \"anchor_steps\",\n        \"message\": \"Queued\"\n      }\n    },\n    \"important_warnings\": [],\n    \"next_recommended_actions\": [\n      \"Use backtests_runs(view='events') or view='trades' for live diagnostics, or view='detail' after terminal completion.\"\n    ],\n    \"recommended_follow_up_tool\": null,\n    \"state_summary\": {},\n    \"exact_next_call_examples\": [\n      {\n        \"tool\": \"backtests_runs\",\n        \"arguments\": {\n          \"action\": \"inspect\",\n          \"view\": \"events\",\n          \"run_id\": \"20260409-124826-31901afd\"\n        }\n      },\n      {\n        \"tool\": \"backtests_runs\",\n        \"arguments\": {\n          \"action\": \"inspect\",\n          \"view\": \"detail\",\n          \"run_id\": \"20260409-124826-31901afd\"\n        }\n      }\n    ],\n    \"raw_refs\": [\n      \"system_raw_call(tool_name='backtests_runs_get_live_status')\"\n    ],\n    \"raw_tool_hints\": [],\n    \"summary\": \"Loaded lifecycle status for backtest run 20260409-124826-31901afd.\"\n  },\n  \"warnings\": [],\n  \"refs\": [\n    {\n      \"kind\": \"backtest_run\",\n      \"id\": \"20260409-124826-31901afd\",\n      \"path\": null\n    }\n  ],\n  \"error\": null\n}"
+        }
+      ],
+      "structuredContent": {
+        "status": "ok",
+        "message": "Backtests run inspect payload loaded.",
+        "tool_name": "backtests_runs",
+        "request_id": "40",
+        "correlation_id": "40",
+        "server_session_id": "93e816c4a9c94e6c81d1c952d314071a",
+        "response_generated_at": "2026-04-09T12:48:30.389078+00:00",
+        "data": {
+          "view": "status",
+          "run": {
+            "run_id": "20260409-124826-31901afd",
+            "status": "running",
+            "symbol": "BTCUSDT",
+            "strategy_name": "Active Signal v1",
+            "started_at": "2026-04-09T12:48:26.385915+00:00",
+            "finished_at": null,
+            "latest_message": "Queued",
+            "error_message": null,
+            "failure_stage": null,
+            "error_code": null,
+            "error_details": {},
+            "action_required": null,
+            "summary": {
+              "run_id": "20260409-124826-31901afd",
+              "status": "running",
+              "started_at": "2026-04-09T12:48:26.385915+00:00",
+              "finished_at": null,
+              "symbol": "BTCUSDT",
+              "strategy_name": "Active Signal v1"
+            },
+            "config": {
+              "symbol": "BTCUSDT",
+              "strategy_snapshot_id": "active-signal-v1",
+              "strategy_snapshot_version": 1,
+              "strategy_snapshot_name": "Active Signal v1"
+            },
+            "snapshot": {
+              "snapshot_id": "active-signal-v1",
+              "version": 1,
+              "name": "Active Signal v1"
+            },
+            "stop_requested": false,
+            "stop_requested_at": null,
+            "summary_finality": {
+              "is_final": false,
+              "state": "intermediate",
+              "status": "running",
+              "finality_state": "queue_precompute",
+              "persistence_state": "unpublished",
+              "compatibility_note": "queue_derived_lifecycle",
+              "reason": "run_not_terminal_or_not_persisted"
+            },
+            "summary_is_final": false,
+            "summary_kind": "intermediate",
+            "summary_note": "This summary is intermediate and may still be unpublished or actively persisting.",
+            "finality_state": "queue_precompute",
+            "persistence_state": "unpublished",
+            "compute_finished_at": null,
+            "persisted_at": null,
+            "lifecycle": {
+              "compute_complete": false,
+              "artifacts_persisted": false,
+              "final_persisted": false,
+              "readiness_state": "running_compute",
+              "stop_requested": false,
+              "state_explanation": "Compute is still running or the run has not reached a terminal persisted state yet."
+            },
+            "is_stop_allowed": true,
+            "transient": true,
+            "processed_anchor_steps": 0,
+            "total_anchor_steps": 0
+          },
+          "operation": {
+            "operation_id": "20260409-124826-31901afd",
+            "operation_kind": "backtests_runs_start",
+            "status": "running",
+            "started_at": "2026-04-09T12:48:26.385915+00:00",
+            "finished_at": null,
+            "result_ref": {
+              "kind": "backtest_run",
+              "id": "20260409-124826-31901afd"
+            },
+            "finality_state": "queue_precompute",
+            "persistence_state": "unpublished",
+            "compute_finished_at": null,
+            "persisted_at": null,
+            "is_stop_allowed": true,
+            "slot_released": false,
+            "failure_stage": null,
+            "error_code": null,
+            "error_message": null,
+            "error_details": {},
+            "stop_requested": false,
+            "stop_requested_at": null,
+            "queue_id": "c636f909af6b",
+            "scheduler_state": "admitted",
+            "queue_position": null,
+            "queued_reason": null,
+            "blocking_operation_id": null,
+            "admitted_at": "2026-04-09T12:48:26.385915+00:00",
+            "health_state": "healthy",
+            "last_heartbeat_at": "2026-04-09T12:48:28.119739+00:00",
+            "last_progress_at": "2026-04-09T12:48:28.119739+00:00",
+            "progress_message": "Backtest run admitted and queued inside the run manager.",
+            "action_required": null,
+            "stop_supported": true,
+            "progress": {
+              "current": 0.0,
+              "total": null,
+              "unit": "anchor_steps",
+              "message": "Queued"
+            }
+          },
+          "important_warnings": [],
+          "next_recommended_actions": [
+            "Use backtests_runs(view='events') or view='trades' for live diagnostics, or view='detail' after terminal completion."
+          ],
+          "recommended_follow_up_tool": null,
+          "state_summary": {},
+          "exact_next_call_examples": [
+            {
+              "tool": "backtests_runs",
+              "arguments": {
+                "action": "inspect",
+                "view": "events",
+                "run_id": "20260409-124826-31901afd"
+              }
+            },
+            {
+              "tool": "backtests_runs",
+              "arguments": {
+                "action": "inspect",
+                "view": "detail",
+                "run_id": "20260409-124826-31901afd"
+              }
+            }
+          ],
+          "raw_refs": [
+            "system_raw_call(tool_name='backtests_runs_get_live_status')"
+          ],
+          "raw_tool_hints": [],
+          "summary": "Loaded lifecycle status for backtest run 20260409-124826-31901afd."
+        },
+        "warnings": [],
+        "refs": [
+          {
+            "kind": "backtest_run",
+            "id": "20260409-124826-31901afd",
+            "path": null
+          }
+        ],
+        "error": null
+      },
+      "isError": false
+    },
+    {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\n  \"status\": \"ok\",\n  \"message\": \"Backtests run inspect payload loaded.\",\n  \"tool_name\": \"backtests_runs\",\n  \"request_id\": \"41\",\n  \"correlation_id\": \"41\",\n  \"server_session_id\": \"93e816c4a9c94e6c81d1c952d314071a\",\n  \"response_generated_at\": \"2026-04-09T12:48:31.064129+00:00\",\n  \"data\": {\n    \"view\": \"status\",\n    \"run\": {\n      \"run_id\": \"20260409-124826-31901afd\",\n      \"status\": \"running\",\n      \"symbol\": \"BTCUSDT\",\n      \"strategy_name\": \"Active Signal v1\",\n      \"started_at\": \"2026-04-09T12:48:26.385915+00:00\",\n      \"finished_at\": null,\n      \"latest_message\": \"Queued\",\n      \"error_message\": null,\n      \"failure_stage\": null,\n      \"error_code\": null,\n      \"error_details\": {},\n      \"action_required\": null,\n      \"summary\": {\n        \"run_id\": \"20260409-124826-31901afd\",\n        \"status\": \"running\",\n        \"started_at\": \"2026-04-09T12:48:26.385915+00:00\",\n        \"finished_at\": null,\n        \"symbol\": \"BTCUSDT\",\n        \"strategy_name\": \"Active Signal v1\"\n      },\n      \"config\": {\n        \"symbol\": \"BTCUSDT\",\n        \"strategy_snapshot_id\": \"active-signal-v1\",\n        \"strategy_snapshot_version\": 1,\n        \"strategy_snapshot_name\": \"Active Signal v1\"\n      },\n      \"snapshot\": {\n        \"snapshot_id\": \"active-signal-v1\",\n        \"version\": 1,\n        \"name\": \"Active Signal v1\"\n      },\n      \"stop_requested\": false,\n      \"stop_requested_at\": null,\n      \"summary_finality\": {\n        \"is_final\": false,\n        \"state\": \"intermediate\",\n        \"status\": \"running\",\n        \"finality_state\": \"queue_precompute\",\n        \"persistence_state\": \"unpublished\",\n        \"compatibility_note\": \"queue_derived_lifecycle\",\n        \"reason\": \"run_not_terminal_or_not_persisted\"\n      },\n      \"summary_is_final\": false,\n      \"summary_kind\": \"intermediate\",\n      \"summary_note\": \"This summary is intermediate and may still be unpublished or actively persisting.\",\n      \"finality_state\": \"queue_precompute\",\n      \"persistence_state\": \"unpublished\",\n      \"compute_finished_at\": null,\n      \"persisted_at\": null,\n      \"lifecycle\": {\n        \"compute_complete\": false,\n        \"artifacts_persisted\": false,\n        \"final_persisted\": false,\n        \"readiness_state\": \"running_compute\",\n        \"stop_requested\": false,\n        \"state_explanation\": \"Compute is still running or the run has not reached a terminal persisted state yet.\"\n      },\n      \"is_stop_allowed\": true,\n      \"transient\": true,\n      \"processed_anchor_steps\": 0,\n      \"total_anchor_steps\": 0\n    },\n    \"operation\": {\n      \"operation_id\": \"20260409-124826-31901afd\",\n      \"operation_kind\": \"backtests_runs_start\",\n      \"status\": \"running\",\n      \"started_at\": \"2026-04-09T12:48:26.385915+00:00\",\n      \"finished_at\": null,\n      \"result_ref\": {\n        \"kind\": \"backtest_run\",\n        \"id\": \"20260409-124826-31901afd\"\n      },\n      \"finality_state\": \"queue_precompute\",\n      \"persistence_state\": \"unpublished\",\n      \"compute_finished_at\": null,\n      \"persisted_at\": null,\n      \"is_stop_allowed\": true,\n      \"slot_released\": false,\n      \"failure_stage\": null,\n      \"error_code\": null,\n      \"error_message\": null,\n      \"error_details\": {},\n      \"stop_requested\": false,\n      \"stop_requested_at\": null,\n      \"queue_id\": \"c636f909af6b\",\n      \"scheduler_state\": \"admitted\",\n      \"queue_position\": null,\n      \"queued_reason\": null,\n      \"blocking_operation_id\": null,\n      \"admitted_at\": \"2026-04-09T12:48:26.385915+00:00\",\n      \"health_state\": \"healthy\",\n      \"last_heartbeat_at\": \"2026-04-09T12:48:28.119739+00:00\",\n      \"last_progress_at\": \"2026-04-09T12:48:28.119739+00:00\",\n      \"progress_message\": \"Backtest run admitted and queued inside the run manager.\",\n      \"action_required\": null,\n      \"stop_supported\": true,\n      \"progress\": {\n        \"current\": 0.0,\n        \"total\": null,\n        \"unit\": \"anchor_steps\",\n        \"message\": \"Queued\"\n      }\n    },\n    \"important_warnings\": [],\n    \"next_recommended_actions\": [\n      \"Use backtests_runs(view='events') or view='trades' for live diagnostics, or view='detail' after terminal completion.\"\n    ],\n    \"recommended_follow_up_tool\": null,\n    \"state_summary\": {},\n    \"exact_next_call_examples\": [\n      {\n        \"tool\": \"backtests_runs\",\n        \"arguments\": {\n          \"action\": \"inspect\",\n          \"view\": \"events\",\n          \"run_id\": \"20260409-124826-31901afd\"\n        }\n      },\n      {\n        \"tool\": \"backtests_runs\",\n        \"arguments\": {\n          \"action\": \"inspect\",\n          \"view\": \"detail\",\n          \"run_id\": \"20260409-124826-31901afd\"\n        }\n      }\n    ],\n    \"raw_refs\": [\n      \"system_raw_call(tool_name='backtests_runs_get_live_status')\"\n    ],\n    \"raw_tool_hints\": [],\n    \"summary\": \"Loaded lifecycle status for backtest run 20260409-124826-31901afd.\"\n  },\n  \"warnings\": [],\n  \"refs\": [\n    {\n      \"kind\": \"backtest_run\",\n      \"id\": \"20260409-124826-31901afd\",\n      \"path\": null\n    }\n  ],\n  \"error\": null\n}"
+        }
+      ],
+      "structuredContent": {
+        "status": "ok",
+        "message": "Backtests run inspect payload loaded.",
+        "tool_name": "backtests_runs",
+        "request_id": "41",
+        "correlation_id": "41",
+        "server_session_id": "93e816c4a9c94e6c81d1c952d314071a",
+        "response_generated_at": "2026-04-09T12:48:31.064129+00:00",
+        "data": {
+          "view": "status",
+          "run": {
+            "run_id": "20260409-124826-31901afd",
+            "status": "running",
+            "symbol": "BTCUSDT",
+            "strategy_name": "Active Signal v1",
+            "started_at": "2026-04-09T12:48:26.385915+00:00",
+            "finished_at": null,
+            "latest_message": "Queued",
+            "error_message": null,
+            "failure_stage": null,
+            "error_code": null,
+            "error_details": {},
+            "action_required": null,
+            "summary": {
+              "run_id": "20260409-124826-31901afd",
+              "status": "running",
+              "started_at": "2026-04-09T12:48:26.385915+00:00",
+              "finished_at": null,
+              "symbol": "BTCUSDT",
+              "strategy_name": "Active Signal v1"
+            },
+            "config": {
+              "symbol": "BTCUSDT",
+              "strategy_snapshot_id": "active-signal-v1",
+              "strategy_snapshot_version": 1,
+              "strategy_snapshot_name": "Active Signal v1"
+            },
+            "snapshot": {
+              "snapshot_id": "active-signal-v1",
+              "version": 1,
+              "name": "Active Signal v1"
+            },
+            "stop_requested": false,
+            "stop_requested_at": null,
+            "summary_finality": {
+              "is_final": false,
+              "state": "intermediate",
+              "status": "running",
+              "finality_state": "queue_precompute",
+              "persistence_state": "unpublished",
+              "compatibility_note": "queue_derived_lifecycle",
+              "reason": "run_not_terminal_or_not_persisted"
+            },
+            "summary_is_final": false,
+            "summary_kind": "intermediate",
+            "summary_note": "This summary is intermediate and may still be unpublished or actively persisting.",
+            "finality_state": "queue_precompute",
+            "persistence_state": "unpublished",
+            "compute_finished_at": null,
+            "persisted_at": null,
+            "lifecycle": {
+              "compute_complete": false,
+              "artifacts_persisted": false,
+              "final_persisted": false,
+              "readiness_state": "running_compute",
+              "stop_requested": false,
+              "state_explanation": "Compute is still running or the run has not reached a terminal persisted state yet."
+            },
+            "is_stop_allowed": true,
+            "transient": true,
+            "processed_anchor_steps": 0,
+            "total_anchor_steps": 0
+          },
+          "operation": {
+            "operation_id": "20260409-124826-31901afd",
+            "operation_kind": "backtests_runs_start",
+            "status": "running",
+            "started_at": "2026-04-09T12:48:26.385915+00:00",
+            "finished_at": null,
+            "result_ref": {
+              "kind": "backtest_run",
+              "id": "20260409-124826-31901afd"
+            },
+            "finality_state": "queue_precompute",
+            "persistence_state": "unpublished",
+            "compute_finished_at": null,
+            "persisted_at": null,
+            "is_stop_allowed": true,
+            "slot_released": false,
+            "failure_stage": null,
+            "error_code": null,
+            "error_message": null,
+            "error_details": {},
+            "stop_requested": false,
+            "stop_requested_at": null,
+            "queue_id": "c636f909af6b",
+            "scheduler_state": "admitted",
+            "queue_position": null,
+            "queued_reason": null,
+            "blocking_operation_id": null,
+            "admitted_at": "2026-04-09T12:48:26.385915+00:00",
+            "health_state": "healthy",
+            "last_heartbeat_at": "2026-04-09T12:48:28.119739+00:00",
+            "last_progress_at": "2026-04-09T12:48:28.119739+00:00",
+            "progress_message": "Backtest run admitted and queued inside the run manager.",
+            "action_required": null,
+            "stop_supported": true,
+            "progress": {
+              "current": 0.0,
+              "total": null,
+              "unit": "anchor_steps",
+              "message": "Queued"
+            }
+          },
+          "important_warnings": [],
+          "next_recommended_actions": [
+            "Use backtests_runs(view='events') or view='trades' for live diagnostics, or view='detail' after terminal completion."
+          ],
+          "recommended_follow_up_tool": null,
+          "state_summary": {},
+          "exact_next_call_examples": [
+            {
+              "tool": "backtests_runs",
+              "arguments": {
+                "action": "inspect",
+                "view": "events",
+                "run_id": "20260409-124826-31901afd"
+              }
+            },
+            {
+              "tool": "backtests_runs",
+              "arguments": {
+                "action": "inspect",
+                "view": "detail",
+                "run_id": "20260409-124826-31901afd"
+              }
+            }
+          ],
+          "raw_refs": [
+            "system_raw_call(tool_name='backtests_runs_get_live_status')"
+          ],
+          "raw_tool_hints": [],
+          "summary": "Loaded lifecycle status for backtest run 20260409-124826-31901afd."
+        },
+        "warnings": [],
+        "refs": [
+          {
+            "kind": "backtest_run",
+            "id": "20260409-124826-31901afd",
+            "path": null
+          }
+        ],
+        "error": null
+      },
+      "isError": false
+    },
+    {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\n  \"status\": \"ok\",\n  \"message\": \"Backtests run inspect payload loaded.\",\n  \"tool_name\": \"backtests_runs\",\n  \"request_id\": \"42\",\n  \"correlation_id\": \"42\",\n  \"server_session_id\": \"93e816c4a9c94e6c81d1c952d314071a\",\n  \"response_generated_at\": \"2026-04-09T12:48:31.736068+00:00\",\n  \"data\": {\n    \"view\": \"status\",\n    \"run\": {\n      \"run_id\": \"20260409-124826-31901afd\",\n      \"status\": \"running\",\n      \"symbol\": \"BTCUSDT\",\n      \"strategy_name\": \"Active Signal v1\",\n      \"started_at\": \"2026-04-09T12:48:26.385915+00:00\",\n      \"finished_at\": null,\n      \"latest_message\": \"Queued\",\n      \"error_message\": null,\n      \"failure_stage\": null,\n      \"error_code\": null,\n      \"error_details\": {},\n      \"action_required\": null,\n      \"summary\": {\n        \"run_id\": \"20260409-124826-31901afd\",\n        \"status\": \"running\",\n        \"started_at\": \"2026-04-09T12:48:26.385915+00:00\",\n        \"finished_at\": null,\n        \"symbol\": \"BTCUSDT\",\n        \"strategy_name\": \"Active Signal v1\"\n      },\n      \"config\": {\n        \"symbol\": \"BTCUSDT\",\n        \"strategy_snapshot_id\": \"active-signal-v1\",\n        \"strategy_snapshot_version\": 1,\n        \"strategy_snapshot_name\": \"Active Signal v1\"\n      },\n      \"snapshot\": {\n        \"snapshot_id\": \"active-signal-v1\",\n        \"version\": 1,\n        \"name\": \"Active Signal v1\"\n      },\n      \"stop_requested\": false,\n      \"stop_requested_at\": null,\n      \"summary_finality\": {\n        \"is_final\": false,\n        \"state\": \"intermediate\",\n        \"status\": \"running\",\n        \"finality_state\": \"queue_precompute\",\n        \"persistence_state\": \"unpublished\",\n        \"compatibility_note\": \"queue_derived_lifecycle\",\n        \"reason\": \"run_not_terminal_or_not_persisted\"\n      },\n      \"summary_is_final\": false,\n      \"summary_kind\": \"intermediate\",\n      \"summary_note\": \"This summary is intermediate and may still be unpublished or actively persisting.\",\n      \"finality_state\": \"queue_precompute\",\n      \"persistence_state\": \"unpublished\",\n      \"compute_finished_at\": null,\n      \"persisted_at\": null,\n      \"lifecycle\": {\n        \"compute_complete\": false,\n        \"artifacts_persisted\": false,\n        \"final_persisted\": false,\n        \"readiness_state\": \"running_compute\",\n        \"stop_requested\": false,\n        \"state_explanation\": \"Compute is still running or the run has not reached a terminal persisted state yet.\"\n      },\n      \"is_stop_allowed\": true,\n      \"transient\": true,\n      \"processed_anchor_steps\": 0,\n      \"total_anchor_steps\": 0\n    },\n    \"operation\": {\n      \"operation_id\": \"20260409-124826-31901afd\",\n      \"operation_kind\": \"backtests_runs_start\",\n      \"status\": \"running\",\n      \"started_at\": \"2026-04-09T12:48:26.385915+00:00\",\n      \"finished_at\": null,\n      \"result_ref\": {\n        \"kind\": \"backtest_run\",\n        \"id\": \"20260409-124826-31901afd\"\n      },\n      \"finality_state\": \"queue_precompute\",\n      \"persistence_state\": \"unpublished\",\n      \"compute_finished_at\": null,\n      \"persisted_at\": null,\n      \"is_stop_allowed\": true,\n      \"slot_released\": false,\n      \"failure_stage\": null,\n      \"error_code\": null,\n      \"error_message\": null,\n      \"error_details\": {},\n      \"stop_requested\": false,\n      \"stop_requested_at\": null,\n      \"queue_id\": \"c636f909af6b\",\n      \"scheduler_state\": \"admitted\",\n      \"queue_position\": null,\n      \"queued_reason\": null,\n      \"blocking_operation_id\": null,\n      \"admitted_at\": \"2026-04-09T12:48:26.385915+00:00\",\n      \"health_state\": \"healthy\",\n      \"last_heartbeat_at\": \"2026-04-09T12:48:28.119739+00:00\",\n      \"last_progress_at\": \"2026-04-09T12:48:28.119739+00:00\",\n      \"progress_message\": \"Backtest run admitted and queued inside the run manager.\",\n      \"action_required\": null,\n      \"stop_supported\": true,\n      \"progress\": {\n        \"current\": 0.0,\n        \"total\": null,\n        \"unit\": \"anchor_steps\",\n        \"message\": \"Queued\"\n      }\n    },\n    \"important_warnings\": [],\n    \"next_recommended_actions\": [\n      \"Use backtests_runs(view='events') or view='trades' for live diagnostics, or view='detail' after terminal completion.\"\n    ],\n    \"recommended_follow_up_tool\": null,\n    \"state_summary\": {},\n    \"exact_next_call_examples\": [\n      {\n        \"tool\": \"backtests_runs\",\n        \"arguments\": {\n          \"action\": \"inspect\",\n          \"view\": \"events\",\n          \"run_id\": \"20260409-124826-31901afd\"\n        }\n      },\n      {\n        \"tool\": \"backtests_runs\",\n        \"arguments\": {\n          \"action\": \"inspect\",\n          \"view\": \"detail\",\n          \"run_id\": \"20260409-124826-31901afd\"\n        }\n      }\n    ],\n    \"raw_refs\": [\n      \"system_raw_call(tool_name='backtests_runs_get_live_status')\"\n    ],\n    \"raw_tool_hints\": [],\n    \"summary\": \"Loaded lifecycle status for backtest run 20260409-124826-31901afd.\"\n  },\n  \"warnings\": [],\n  \"refs\": [\n    {\n      \"kind\": \"backtest_run\",\n      \"id\": \"20260409-124826-31901afd\",\n      \"path\": null\n    }\n  ],\n  \"error\": null\n}"
+        }
+      ],
+      "structuredContent": {
+        "status": "ok",
+        "message": "Backtests run inspect payload loaded.",
+        "tool_name": "backtests_runs",
+        "request_id": "42",
+        "correlation_id": "42",
+        "server_session_id": "93e816c4a9c94e6c81d1c952d314071a",
+        "response_generated_at": "2026-04-09T12:48:31.736068+00:00",
+        "data": {
+          "view": "status",
+          "run": {
+            "run_id": "20260409-124826-31901afd",
+            "status": "running",
+            "symbol": "BTCUSDT",
+            "strategy_name": "Active Signal v1",
+            "started_at": "2026-04-09T12:48:26.385915+00:00",
+            "finished_at": null,
+            "latest_message": "Queued",
+            "error_message": null,
+            "failure_stage": null,
+            "error_code": null,
+            "error_details": {},
+            "action_required": null,
+            "summary": {
+              "run_id": "20260409-124826-31901afd",
+              "status": "running",
+              "started_at": "2026-04-09T12:48:26.385915+00:00",
+              "finished_at": null,
+              "symbol": "BTCUSDT",
+              "strategy_name": "Active Signal v1"
+            },
+            "config": {
+              "symbol": "BTCUSDT",
+              "strategy_snapshot_id": "active-signal-v1",
+              "strategy_snapshot_version": 1,
+              "strategy_snapshot_name": "Active Signal v1"
+            },
+            "snapshot": {
+              "snapshot_id": "active-signal-v1",
+              "version": 1,
+              "name": "Active Signal v1"
+            },
+            "stop_requested": false,
+            "stop_requested_at": null,
+            "summary_finality": {
+              "is_final": false,
+              "state": "intermediate",
+              "status": "running",
+              "finality_state": "queue_precompute",
+              "persistence_state": "unpublished",
+              "compatibility_note": "queue_derived_lifecycle",
+              "reason": "run_not_terminal_or_not_persisted"
+            },
+            "summary_is_final": false,
+            "summary_kind": "intermediate",
+            "summary_note": "This summary is intermediate and may still be unpublished or actively persisting.",
+            "finality_state": "queue_precompute",
+            "persistence_state": "unpublished",
+            "compute_finished_at": null,
+            "persisted_at": null,
+            "lifecycle": {
+              "compute_complete": false,
+              "artifacts_persisted": false,
+              "final_persisted": false,
+              "readiness_state": "running_compute",
+              "stop_requested": false,
+              "state_explanation": "Compute is still running or the run has not reached a terminal persisted state yet."
+            },
+            "is_stop_allowed": true,
+            "transient": true,
+            "processed_anchor_steps": 0,
+            "total_anchor_steps": 0
+          },
+          "operation": {
+            "operation_id": "20260409-124826-31901afd",
+            "operation_kind": "backtests_runs_start",
+            "status": "running",
+            "started_at": "2026-04-09T12:48:26.385915+00:00",
+            "finished_at": null,
+            "result_ref": {
+              "kind": "backtest_run",
+              "id": "20260409-124826-31901afd"
+            },
+            "finality_state": "queue_precompute",
+            "persistence_state": "unpublished",
+            "compute_finished_at": null,
+            "persisted_at": null,
+            "is_stop_allowed": true,
+            "slot_released": false,
+            "failure_stage": null,
+            "error_code": null,
+            "error_message": null,
+            "error_details": {},
+            "stop_requested": false,
+            "stop_requested_at": null,
+            "queue_id": "c636f909af6b",
+            "scheduler_state": "admitted",
+            "queue_position": null,
+            "queued_reason": null,
+            "blocking_operation_id": null,
+            "admitted_at": "2026-04-09T12:48:26.385915+00:00",
+            "health_state": "healthy",
+            "last_heartbeat_at": "2026-04-09T12:48:28.119739+00:00",
+            "last_progress_at": "2026-04-09T12:48:28.119739+00:00",
+            "progress_message": "Backtest run admitted and queued inside the run manager.",
+            "action_required": null,
+            "stop_supported": true,
+            "progress": {
+              "current": 0.0,
+              "total": null,
+              "unit": "anchor_steps",
+              "message": "Queued"
+            }
+          },
+          "important_warnings": [],
+          "next_recommended_actions": [
+            "Use backtests_runs(view='events') or view='trades' for live diagnostics, or view='detail' after terminal completion."
+          ],
+          "recommended_follow_up_tool": null,
+          "state_summary": {},
+          "exact_next_call_examples": [
+            {
+              "tool": "backtests_runs",
+              "arguments": {
+                "action": "inspect",
+                "view": "events",
+                "run_id": "20260409-124826-31901afd"
+              }
+            },
+            {
+              "tool": "backtests_runs",
+              "arguments": {
+                "action": "inspect",
+                "view": "detail",
+                "run_id": "20260409-124826-31901afd"
+              }
+            }
+          ],
+          "raw_refs": [
+            "system_raw_call(tool_name='backtests_runs_get_live_status')"
+          ],
+          "raw_tool_hints": [],
+          "summary": "Loaded lifecycle status for backtest run 20260409-124826-31901afd."
+        },
+        "warnings": [],
+        "refs": [
+          {
+            "kind": "backtest_run",
+            "id": "20260409-124826-31901afd",
+            "path": null
+          }
+        ],
+        "error": null
+      },
+      "isError": false
+    }
+  ]
+}

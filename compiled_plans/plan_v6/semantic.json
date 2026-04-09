@@ -1,0 +1,327 @@
+{
+  "source_file": "raw_plans/plan_v6.md",
+  "source_hash": "8b5e129c4e5aa98a65f5ad5ec0bd7c7510586b6b9e9f606f9a7a7baa30ff4de6",
+  "source_title": "План дальнейших исследований для v6",
+  "goal": "Найти и валидировать новые cross-symbol directional features и CatBoost long/short классификаторы, сравнить их с immutable baseline active-signal-v1@1 через matched OOS.",
+  "baseline_ref": {
+    "snapshot_id": "active-signal-v1",
+    "version": 1,
+    "symbol": "BTCUSDT",
+    "anchor_timeframe": "1h",
+    "execution_timeframe": "5m"
+  },
+  "global_constraints": [
+    "active-signal-v1@1 — immutable reference; never modify base, its thresholds, hours, days, execution, or feature set",
+    "No feature/target/threshold/architecture selection based on lockbox window — lockbox only validates frozen choices",
+    "All improvements must pass matched OOS comparison with base on the same window",
+    "Classification only — no regression on raw future PnL",
+    "Separate long and short classifiers first; no multiclass or router model at start (router only if both M1 and M2 show meaningful OOS value)",
+    "Maximum 3-4 strong feature families; no wide feature inflation",
+    "Compact disciplined HPO grid only: depth {4,6,8}, lr {0.03,0.05}, moderate regularization, 2-3 seeds max",
+    "Allowed horizons: 12h, 18h only; allowed barrier schemes: balanced, conservative only",
+    "Purge gap between train and later windows: minimum 24h",
+    "Thresholds must be frozen on selection OOS before lockbox is opened",
+    "Train/selection/lockbox windows must be frozen before any model training begins"
+  ],
+  "stages": [
+    {
+      "stage_id": "stage_1",
+      "title": "Start v6 and fix new model discipline",
+      "objective": "Open a new research project for v6 and formally record the classification-first methodology, immutable baseline reference, and anti-leakage rules.",
+      "actions": [
+        "Create new research_project for v6 cycle",
+        "Record why v5 regression route failed and why v6 uses classification",
+        "Record why a new information layer (cross-symbol) is mandatory",
+        "Fix immutable baseline reference: snapshot_id=active-signal-v1, version=1, symbol=BTCUSDT, anchor=1h, execution=5m",
+        "Define research_map axes: branch, feature_family, side, label_scheme, model_stage, final_decision",
+        "Record anti-leakage and anti-regression-repeat rules"
+      ],
+      "success_criteria": [
+        "New project exists with immutable reference and frozen v6 rules documented"
+      ],
+      "tool_hints": [
+        "research_project",
+        "features_custom"
+      ],
+      "policy_tags": [
+        "setup",
+        "cheap_first"
+      ],
+      "depends_on": [],
+      "required": true,
+      "parallelizable": false,
+      "gate_hint": "",
+      "raw_stage_ref": "stage_1"
+    },
+    {
+      "stage_id": "stage_2",
+      "title": "Data readiness for new information layer",
+      "objective": "Verify that 1h datasets for cross-symbol and breadth features are available and of sufficient quality.",
+      "actions": [
+        "Check 1h dataset readiness for BTCUSDT and ETHUSDT minimum",
+        "Check SOLUSDT and BNBUSDT availability if possible; shrink universe if needed but do not break discipline",
+        "Verify funding and expiry event data availability",
+        "Freeze final symbol universe for v6"
+      ],
+      "success_criteria": [
+        "Frozen symbol universe defined; clear which cross-symbol features are buildable"
+      ],
+      "tool_hints": [
+        "data_readiness",
+        "research_memory"
+      ],
+      "policy_tags": [
+        "setup",
+        "cheap_first"
+      ],
+      "depends_on": [
+        "stage_1"
+      ],
+      "required": true,
+      "parallelizable": false,
+      "gate_hint": "",
+      "raw_stage_ref": "stage_2"
+    },
+    {
+      "stage_id": "stage_3",
+      "title": "Feature contract and materialization for v6 feature packs",
+      "objective": "Build and validate the new directional feature layer across all four feature packs (leadership-breadth, path-asymmetry, regime-disagreement, hybrid-event).",
+      "actions": [
+        "For each feature in Pack 1 (leadership-breadth, 8 features): write contract, validate, publish, materialize, inspect coverage, verify causality",
+        "For each feature in Pack 2 (path-asymmetry, 7 features): write contract, validate, publish, materialize, inspect coverage, verify causality",
+        "For each feature in Pack 3 (regime-disagreement, 5 features): write contract, validate, publish, materialize, inspect coverage, verify causality",
+        "For each feature in Pack 4 (hybrid-event, 4 features): write contract, validate, publish, materialize, inspect coverage, verify causality",
+        "Compute common_model_window across all materialized features",
+        "Verify no leakage detected and all features are deployable to runtime"
+      ],
+      "success_criteria": [
+        "All feature packs materialized with validated contracts",
+        "common_model_window defined with total active columns and cross-symbol columns counted",
+        "No leakage detected; features causally sound"
+      ],
+      "tool_hints": [
+        "feature_contract",
+        "features_custom",
+        "data_readiness"
+      ],
+      "policy_tags": [
+        "setup",
+        "cheap_first"
+      ],
+      "depends_on": [
+        "stage_2"
+      ],
+      "required": true,
+      "parallelizable": false,
+      "gate_hint": "",
+      "raw_stage_ref": "stage_3"
+    },
+    {
+      "stage_id": "stage_4",
+      "title": "Dataset contract and label design without leakage",
+      "objective": "Freeze train/selection-OOS/lockbox-OOS windows and define barrier-based long/short labels before any model training.",
+      "actions": [
+        "Determine common coverage window based on cross-symbol feature availability",
+        "Freeze train_window, selection_oos_window, lockbox_oos_window with purge_gap >= 24h",
+        "Define balanced and conservative barrier-based labels for long and short sides",
+        "Constrain horizons to 12h and 18h only",
+        "Build two dataset surfaces: full surface and base-absent surface",
+        "Record that selection OOS selects feature pack / horizon / threshold; lockbox only validates frozen choices"
+      ],
+      "success_criteria": [
+        "Dataset splits and labels completely frozen and documented"
+      ],
+      "tool_hints": [
+        "feature_contract",
+        "data_readiness"
+      ],
+      "policy_tags": [
+        "setup",
+        "cheap_first"
+      ],
+      "depends_on": [
+        "stage_3"
+      ],
+      "required": true,
+      "parallelizable": false,
+      "gate_hint": "",
+      "raw_stage_ref": "stage_4"
+    },
+    {
+      "stage_id": "stage_5",
+      "title": "Fast plausibility check of feature packs",
+      "objective": "Filter out unpromising feature packs with lightweight models before full training; keep max 2 pack setups per side.",
+      "actions": [
+        "For each feature pack: train minimal long-classifier and short-classifier",
+        "Evaluate ranking value on selection OOS for each pack",
+        "Check economic plausibility of top-decile/top-bucket predictions",
+        "Shortlist max 2 pack setups for long and max 2 pack setups for short for full training"
+      ],
+      "success_criteria": [
+        "Shortlist of max 4 setups (2 long + 2 short) promoted to full training"
+      ],
+      "tool_hints": [
+        "modeling",
+        "analysis"
+      ],
+      "policy_tags": [
+        "cheap_first"
+      ],
+      "depends_on": [
+        "stage_4"
+      ],
+      "required": true,
+      "parallelizable": false,
+      "gate_hint": "",
+      "raw_stage_ref": "stage_5"
+    },
+    {
+      "stage_id": "stage_6",
+      "title": "Train CatBoost long/short classifiers",
+      "objective": "Train disciplined candidate CatBoost classification models on the shortlisted setups with frozen hyperparameter grid.",
+      "actions": [
+        "Train M1_long_A (and optionally M1_long_B) with frozen params: depth {4,6,8}, lr {0.03,0.05}, moderate regularization",
+        "Train M2_short_A (and optionally M2_short_B) with same disciplined grid",
+        "Apply early stopping, class weights, calibration sanity check",
+        "Record feature importance and SHAP summary for each model",
+        "Freeze model cards: feature pack, label scheme, horizon, params, best iteration, selection OOS quality",
+        "Optionally train M3/M4 weak-window classifiers only if standard models show recoverable weak pockets"
+      ],
+      "success_criteria": [
+        "Frozen long and short model candidates with documented model cards ready for sleeve construction"
+      ],
+      "tool_hints": [
+        "modeling",
+        "analysis",
+        "experiments"
+      ],
+      "policy_tags": [],
+      "depends_on": [
+        "stage_5"
+      ],
+      "required": true,
+      "parallelizable": true,
+      "gate_hint": "",
+      "raw_stage_ref": "stage_6"
+    },
+    {
+      "stage_id": "stage_7",
+      "title": "Convert models into tradeable sleeves",
+      "objective": "Transform classification probabilities into concrete long/short trading sleeves with frozen thresholds.",
+      "actions": [
+        "Extract p_long_success and p_short_success from frozen models",
+        "On selection OOS, choose up to 3 threshold tiers: conservative, balanced, aggressive",
+        "Freeze final thresholds before opening lockbox",
+        "Construct v6-long-balanced and v6-short-balanced sleeves"
+      ],
+      "success_criteria": [
+        "Tradeable sleeves defined with frozen thresholds ready for OOS backtest"
+      ],
+      "tool_hints": [
+        "modeling",
+        "analysis"
+      ],
+      "policy_tags": [],
+      "depends_on": [
+        "stage_6"
+      ],
+      "required": true,
+      "parallelizable": false,
+      "gate_hint": "",
+      "raw_stage_ref": "stage_7"
+    },
+    {
+      "stage_id": "stage_8",
+      "title": "Matched OOS comparison against baseline",
+      "objective": "Run sleeves and baseline on identical OOS windows and compare via strict additive, permissive, and standalone metrics.",
+      "actions": [
+        "Run each sleeve standalone on selection OOS (sanity check)",
+        "Run each sleeve standalone on lockbox OOS (primary test)",
+        "Run strict additive integration (base + model) on lockbox OOS (main criterion)",
+        "Run permissive integration on lockbox OOS (diagnostic only)",
+        "Run immutable baseline separately on selection OOS and lockbox OOS for matched comparison"
+      ],
+      "success_criteria": [
+        "Matched OOS comparison table complete: base standalone, model standalone, base+model on same windows"
+      ],
+      "tool_hints": [
+        "backtesting",
+        "analysis"
+      ],
+      "policy_tags": [],
+      "depends_on": [
+        "stage_7"
+      ],
+      "required": true,
+      "parallelizable": false,
+      "gate_hint": "",
+      "raw_stage_ref": "stage_8"
+    },
+    {
+      "stage_id": "stage_9",
+      "title": "Ownership, cannibalization and proof of new entries",
+      "objective": "Prove that each sleeve adds genuinely new profitable trades rather than replacing or cannibalizing baseline entries.",
+      "actions": [
+        "Compute overlap rate between sleeve trades and baseline trades",
+        "Count truly new trades and replaced baseline trades",
+        "Evaluate PnL of new trades specifically",
+        "Compute ownership metric (share of profit attributable to new model entries)",
+        "Check weak-window repair effect if applicable",
+        "Assign terminal decision per sleeve: PROMOTE, WATCHLIST, or REJECT"
+      ],
+      "success_criteria": [
+        "Every best sleeve has a terminal decision with supporting ownership and cannibalization metrics"
+      ],
+      "tool_hints": [
+        "analysis",
+        "backtesting"
+      ],
+      "policy_tags": [],
+      "depends_on": [
+        "stage_8"
+      ],
+      "required": true,
+      "parallelizable": false,
+      "gate_hint": "",
+      "raw_stage_ref": "stage_9"
+    },
+    {
+      "stage_id": "stage_10",
+      "title": "Final verdict on v6",
+      "objective": "Render a single consolidated verdict on the v6 model route: Success, Partial, or Failed.",
+      "actions": [
+        "Summarize what v6 aimed to achieve",
+        "Document what was actually done",
+        "State main conclusion from OOS and ownership analysis",
+        "Record v1-v6 cumulative outcome table",
+        "If Success: prepare promoted sleeves for runtime deployment",
+        "If Partial: document watchlist items and conditions for future revisit",
+        "If Failed: record why the cross-symbol + classification route was exhausted and what comes next"
+      ],
+      "success_criteria": [
+        "Unified v6 final report written with verdict, cumulative v1-v6 table, and next-steps recommendation"
+      ],
+      "tool_hints": [
+        "analysis",
+        "finalization",
+        "research_memory"
+      ],
+      "policy_tags": [
+        "finalization"
+      ],
+      "depends_on": [
+        "stage_9"
+      ],
+      "required": true,
+      "parallelizable": false,
+      "gate_hint": "",
+      "raw_stage_ref": "stage_10"
+    }
+  ],
+  "warnings": [
+    "Plan is in Russian; stage titles and objectives translated to English for semantic consistency",
+    "M3/M4 weak-window models gated — only permitted if standard long/short classifiers show weak but recoverable pockets",
+    "Router model explicitly forbidden at v6 start; only unlocked by conditional gate after M1+M2 success"
+  ],
+  "parse_confidence": 0.95
+}

@@ -1,0 +1,236 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\n  \"status\": \"ok\",\n  \"message\": \"Backtests run planning payload loaded.\",\n  \"tool_name\": \"backtests_plan\",\n  \"request_id\": \"87\",\n  \"correlation_id\": \"87\",\n  \"server_session_id\": \"82dad9bbb0ab4d0ea300cda9d21b6aae\",\n  \"response_generated_at\": \"2026-04-09T12:54:42.469992+00:00\",\n  \"data\": {\n    \"constraints\": {\n      \"symbol\": \"BTCUSDT\",\n      \"anchor_timeframe\": \"1h\",\n      \"execution_timeframe\": \"5m\",\n      \"strategy_snapshot_id\": \"active-signal-v1\",\n      \"strategy_snapshot_version\": 1,\n      \"strategy_snapshot_name\": \"Active Signal v1\",\n      \"required_context_columns\": [\n        \"cl_15m\",\n        \"cl_1d\",\n        \"cl_1h\",\n        \"dow\",\n        \"hour\",\n        \"iv_est\",\n        \"rsi\"\n      ],\n      \"context_path\": \"/home/ubuntu/MARKET_DATA/_crypto_data/features/binance/um/BTCUSDT/1h/features.parquet\",\n      \"missing_context_columns\": [],\n      \"context_ready\": true,\n      \"required_execution_context_columns\": [],\n      \"execution_context_path\": null,\n      \"missing_execution_context_columns\": [],\n      \"execution_context_ready\": true,\n      \"earliest_start_at\": \"2021-03-24T02:00:00+00:00\",\n      \"latest_end_at\": \"2026-04-04T23:00:00+00:00\",\n      \"anchor_start_at\": \"2020-01-01T00:00:00+00:00\",\n      \"anchor_end_at\": \"2026-04-04T23:00:00+00:00\",\n      \"execution_start_at\": \"2020-01-01T00:00:00+00:00\",\n      \"execution_end_at\": \"2026-04-04T23:55:00+00:00\",\n      \"context_start_at\": \"2021-03-24T01:00:00+00:00\",\n      \"context_end_at\": \"2026-04-04T23:00:00+00:00\",\n      \"execution_context_start_at\": null,\n      \"execution_context_end_at\": null,\n      \"earliest_causally_available_start_at\": \"2021-03-24T02:00:00+00:00\",\n      \"anchor_causal_start_at\": \"2020-01-01T01:00:00+00:00\",\n      \"context_causal_start_at\": \"2021-03-24T02:00:00+00:00\",\n      \"execution_context_causal_start_at\": null\n    },\n    \"valid_range\": {\n      \"earliest_start_at\": \"2021-03-24T02:00:00+00:00\",\n      \"latest_end_at\": \"2026-04-04T23:00:00+00:00\",\n      \"canonical_run_window\": {\n        \"start_at\": \"2021-03-24T02:00:00+00:00\",\n        \"end_at\": \"2026-04-04T23:00:00+00:00\"\n      },\n      \"earliest_safe_oos_start_at\": null,\n      \"predictive_model_usage_present\": false,\n      \"predictive_model_refs\": [],\n      \"explicit_start_required\": false,\n      \"usable_oos_horizon_seconds\": null,\n      \"usable_oos_horizon_days\": null,\n      \"oos_horizon_status\": \"unknown\"\n    },\n    \"condition_stability\": {\n      \"status\": \"selection_required\",\n      \"snapshot_ref\": \"active-signal-v1@1\",\n      \"signal_id\": null,\n      \"execution_profile_id\": null,\n      \"freshness_reason\": \"Multiple enabled signals are present; signal_id is required. Available signal_ids: feature-long, feature-short\",\n      \"recommended_tool\": \"backtests_conditions\",\n      \"recommended_args\": {\n        \"snapshot_id\": \"active-signal-v1\",\n        \"version\": 1,\n        \"symbol\": \"BTCUSDT\",\n        \"anchor_timeframe\": \"1h\",\n        \"execution_timeframe\": \"5m\",\n        \"signal_id\": \"<required>\",\n        \"target_value_field\": \"net_pnl\"\n      },\n      \"last_job_id\": null,\n      \"last_job_status\": null,\n      \"last_finished_at\": null,\n      \"last_fingerprint_match\": false,\n      \"manual_review_details\": {\n        \"enabled_signals\": [\n          \"feature-long\",\n          \"feature-short\"\n        ]\n      },\n      \"available_signal_ids\": [\n        \"feature-long\",\n        \"feature-short\"\n      ],\n      \"selection_rule\": \"If the snapshot has multiple enabled signals, pass signal_id explicitly.\"\n    },\n    \"causal_audit\": {\n      \"status\": \"ready\",\n      \"target\": {\n        \"target_type\": \"run\",\n        \"feature_name\": null,\n        \"dataset_id\": null,\n        \"event_family\": null,\n        \"run_id\": null,\n        \"snapshot_id\": \"active-signal-v1\",\n        \"symbol\": \"BTCUSDT\",\n        \"anchor_timeframe\": \"1h\",\n        \"execution_timeframe\": \"5m\",\n        \"version\": 1\n      },\n      \"logical_key\": \"run|||||active-signal-v1|BTCUSDT|1h|5m\",\n      \"spec_hash\": \"b8dffdedb8fed3343cd454b20d8b3d015001ac2c5365d585ec0cf668483f0d10\",\n      \"audit_id\": \"caudit_20260408131146_17572bb8\",\n      \"verdict\": \"warning\",\n      \"risk_score\": 36,\n      \"report_produced_at\": \"2026-04-08T13:11:46.078244+00:00\",\n      \"summary_message\": \"Matching audit is fresh for the current resolved fingerprint.\"\n    },\n    \"feature_shift_audit\": {\n      \"status\": \"ok\",\n      \"policy\": \"warning_only\",\n      \"feature_count\": 0,\n      \"features\": [],\n      \"warnings\": []\n    },\n    \"workflow_readiness\": null,\n    \"readiness_checks\": {\n      \"context_ready\": true,\n      \"execution_context_ready\": true,\n      \"blocking_issues\": [],\n      \"important_warnings\": [\n        \"Snapshot logic depends on explicit anchor-context columns; keep using the computed causal lower bound.\"\n      ]\n    },\n    \"window_guard\": {\n      \"feature_names\": [\n        \"dow\",\n        \"iv_est_1\",\n        \"iv_est\",\n        \"rsi_1\",\n        \"rsi\",\n        \"hour\",\n        \"cl_1h\",\n        \"cl_1d\",\n        \"cl_15m\"\n      ],\n      \"model_refs\": [],\n      \"model_windows\": [],\n      \"predictive_model_usage_present\": false,\n      \"predictive_model_refs\": [],\n      \"explicit_start_required\": false,\n      \"earliest_safe_oos_start_at\": null,\n      \"blocking_issues\": [],\n      \"warnings\": []\n    },\n    \"window_guard_feature_sources\": {\n      \"raw_snapshot_fields\": [\n        \"atr_1\",\n        \"cl_15m\",\n        \"cl_1d\",\n        \"cl_1h\",\n        \"cl_4h\",\n        \"dow\",\n        \"hour\",\n        \"iv_est\",\n        \"iv_est_1\",\n        \"rsi\",\n        \"rsi_1\"\n      ],\n      \"resolved_feature_names\": [\n        \"dow\",\n        \"iv_est_1\",\n        \"iv_est\",\n        \"rsi_1\",\n        \"rsi\",\n        \"hour\",\n        \"cl_1h\",\n        \"cl_1d\",\n        \"cl_15m\"\n      ],\n      \"logic_refs\": [],\n      \"stale_raw_fields\": [\n        \"atr_1\",\n        \"cl_4h\"\n      ]\n    },\n    \"requested_window_evaluation\": {\n      \"requested_start_at\": \"2026-01-01T00:00:00+00:00\",\n      \"requested_end_at\": \"2026-01-07T00:00:00+00:00\",\n      \"overlaps_consumed_model_window\": false,\n      \"earliest_safe_start_at\": null,\n      \"blocking_issue\": null,\n      \"warnings\": [],\n      \"within_constraints\": true,\n      \"predictive_model_usage_present\": false,\n      \"predictive_model_refs\": [],\n      \"explicit_start_required\": false,\n      \"usable_oos_horizon_seconds\": null,\n      \"usable_oos_horizon_days\": null,\n      \"oos_horizon_status\": \"unknown\"\n    },\n    \"important_warnings\": [\n      \"Snapshot logic depends on explicit anchor-context columns; keep using the computed causal lower bound.\",\n      \"stale_snapshot_feature_refs: snapshot feature_source.fields contains names that are not currently resolved through the feature registry/window guard.\"\n    ],\n    \"next_recommended_actions\": [\n      \"Use backtests_runs(action='start') only after the requested window is inside constraints and after the consumed model window, if any.\",\n      \"Use backtests_strategy(action='inspect', view='detail') if the feature namespace or snapshot wiring still needs review.\",\n      \"If the OOS horizon is unusably small, sync datasets, rebuild feature datasets, retrain or re-materialize model-backed dependencies, then rerun backtests_plan.\"\n    ],\n    \"recommended_follow_up_tool\": null,\n    \"state_summary\": {},\n    \"exact_next_call_examples\": [],\n    \"raw_refs\": [\n      \"system_raw_call(tool_name='backtests_runs_get_constraints')\"\n    ],\n    \"raw_tool_hints\": [],\n    \"summary\": \"Planned backtest run window for active-signal-v1 on BTCUSDT@1h/5m.\"\n  },\n  \"warnings\": [],\n  \"refs\": [\n    {\n      \"kind\": \"snapshot\",\n      \"id\": \"active-signal-v1@1\",\n      \"path\": null\n    }\n  ],\n  \"error\": null\n}"
+    }
+  ],
+  "structuredContent": {
+    "status": "ok",
+    "message": "Backtests run planning payload loaded.",
+    "tool_name": "backtests_plan",
+    "request_id": "87",
+    "correlation_id": "87",
+    "server_session_id": "82dad9bbb0ab4d0ea300cda9d21b6aae",
+    "response_generated_at": "2026-04-09T12:54:42.469992+00:00",
+    "data": {
+      "constraints": {
+        "symbol": "BTCUSDT",
+        "anchor_timeframe": "1h",
+        "execution_timeframe": "5m",
+        "strategy_snapshot_id": "active-signal-v1",
+        "strategy_snapshot_version": 1,
+        "strategy_snapshot_name": "Active Signal v1",
+        "required_context_columns": [
+          "cl_15m",
+          "cl_1d",
+          "cl_1h",
+          "dow",
+          "hour",
+          "iv_est",
+          "rsi"
+        ],
+        "context_path": "/home/ubuntu/MARKET_DATA/_crypto_data/features/binance/um/BTCUSDT/1h/features.parquet",
+        "missing_context_columns": [],
+        "context_ready": true,
+        "required_execution_context_columns": [],
+        "execution_context_path": null,
+        "missing_execution_context_columns": [],
+        "execution_context_ready": true,
+        "earliest_start_at": "2021-03-24T02:00:00+00:00",
+        "latest_end_at": "2026-04-04T23:00:00+00:00",
+        "anchor_start_at": "2020-01-01T00:00:00+00:00",
+        "anchor_end_at": "2026-04-04T23:00:00+00:00",
+        "execution_start_at": "2020-01-01T00:00:00+00:00",
+        "execution_end_at": "2026-04-04T23:55:00+00:00",
+        "context_start_at": "2021-03-24T01:00:00+00:00",
+        "context_end_at": "2026-04-04T23:00:00+00:00",
+        "execution_context_start_at": null,
+        "execution_context_end_at": null,
+        "earliest_causally_available_start_at": "2021-03-24T02:00:00+00:00",
+        "anchor_causal_start_at": "2020-01-01T01:00:00+00:00",
+        "context_causal_start_at": "2021-03-24T02:00:00+00:00",
+        "execution_context_causal_start_at": null
+      },
+      "valid_range": {
+        "earliest_start_at": "2021-03-24T02:00:00+00:00",
+        "latest_end_at": "2026-04-04T23:00:00+00:00",
+        "canonical_run_window": {
+          "start_at": "2021-03-24T02:00:00+00:00",
+          "end_at": "2026-04-04T23:00:00+00:00"
+        },
+        "earliest_safe_oos_start_at": null,
+        "predictive_model_usage_present": false,
+        "predictive_model_refs": [],
+        "explicit_start_required": false,
+        "usable_oos_horizon_seconds": null,
+        "usable_oos_horizon_days": null,
+        "oos_horizon_status": "unknown"
+      },
+      "condition_stability": {
+        "status": "selection_required",
+        "snapshot_ref": "active-signal-v1@1",
+        "signal_id": null,
+        "execution_profile_id": null,
+        "freshness_reason": "Multiple enabled signals are present; signal_id is required. Available signal_ids: feature-long, feature-short",
+        "recommended_tool": "backtests_conditions",
+        "recommended_args": {
+          "snapshot_id": "active-signal-v1",
+          "version": 1,
+          "symbol": "BTCUSDT",
+          "anchor_timeframe": "1h",
+          "execution_timeframe": "5m",
+          "signal_id": "<required>",
+          "target_value_field": "net_pnl"
+        },
+        "last_job_id": null,
+        "last_job_status": null,
+        "last_finished_at": null,
+        "last_fingerprint_match": false,
+        "manual_review_details": {
+          "enabled_signals": [
+            "feature-long",
+            "feature-short"
+          ]
+        },
+        "available_signal_ids": [
+          "feature-long",
+          "feature-short"
+        ],
+        "selection_rule": "If the snapshot has multiple enabled signals, pass signal_id explicitly."
+      },
+      "causal_audit": {
+        "status": "ready",
+        "target": {
+          "target_type": "run",
+          "feature_name": null,
+          "dataset_id": null,
+          "event_family": null,
+          "run_id": null,
+          "snapshot_id": "active-signal-v1",
+          "symbol": "BTCUSDT",
+          "anchor_timeframe": "1h",
+          "execution_timeframe": "5m",
+          "version": 1
+        },
+        "logical_key": "run|||||active-signal-v1|BTCUSDT|1h|5m",
+        "spec_hash": "b8dffdedb8fed3343cd454b20d8b3d015001ac2c5365d585ec0cf668483f0d10",
+        "audit_id": "caudit_20260408131146_17572bb8",
+        "verdict": "warning",
+        "risk_score": 36,
+        "report_produced_at": "2026-04-08T13:11:46.078244+00:00",
+        "summary_message": "Matching audit is fresh for the current resolved fingerprint."
+      },
+      "feature_shift_audit": {
+        "status": "ok",
+        "policy": "warning_only",
+        "feature_count": 0,
+        "features": [],
+        "warnings": []
+      },
+      "workflow_readiness": null,
+      "readiness_checks": {
+        "context_ready": true,
+        "execution_context_ready": true,
+        "blocking_issues": [],
+        "important_warnings": [
+          "Snapshot logic depends on explicit anchor-context columns; keep using the computed causal lower bound."
+        ]
+      },
+      "window_guard": {
+        "feature_names": [
+          "dow",
+          "iv_est_1",
+          "iv_est",
+          "rsi_1",
+          "rsi",
+          "hour",
+          "cl_1h",
+          "cl_1d",
+          "cl_15m"
+        ],
+        "model_refs": [],
+        "model_windows": [],
+        "predictive_model_usage_present": false,
+        "predictive_model_refs": [],
+        "explicit_start_required": false,
+        "earliest_safe_oos_start_at": null,
+        "blocking_issues": [],
+        "warnings": []
+      },
+      "window_guard_feature_sources": {
+        "raw_snapshot_fields": [
+          "atr_1",
+          "cl_15m",
+          "cl_1d",
+          "cl_1h",
+          "cl_4h",
+          "dow",
+          "hour",
+          "iv_est",
+          "iv_est_1",
+          "rsi",
+          "rsi_1"
+        ],
+        "resolved_feature_names": [
+          "dow",
+          "iv_est_1",
+          "iv_est",
+          "rsi_1",
+          "rsi",
+          "hour",
+          "cl_1h",
+          "cl_1d",
+          "cl_15m"
+        ],
+        "logic_refs": [],
+        "stale_raw_fields": [
+          "atr_1",
+          "cl_4h"
+        ]
+      },
+      "requested_window_evaluation": {
+        "requested_start_at": "2026-01-01T00:00:00+00:00",
+        "requested_end_at": "2026-01-07T00:00:00+00:00",
+        "overlaps_consumed_model_window": false,
+        "earliest_safe_start_at": null,
+        "blocking_issue": null,
+        "warnings": [],
+        "within_constraints": true,
+        "predictive_model_usage_present": false,
+        "predictive_model_refs": [],
+        "explicit_start_required": false,
+        "usable_oos_horizon_seconds": null,
+        "usable_oos_horizon_days": null,
+        "oos_horizon_status": "unknown"
+      },
+      "important_warnings": [
+        "Snapshot logic depends on explicit anchor-context columns; keep using the computed causal lower bound.",
+        "stale_snapshot_feature_refs: snapshot feature_source.fields contains names that are not currently resolved through the feature registry/window guard."
+      ],
+      "next_recommended_actions": [
+        "Use backtests_runs(action='start') only after the requested window is inside constraints and after the consumed model window, if any.",
+        "Use backtests_strategy(action='inspect', view='detail') if the feature namespace or snapshot wiring still needs review.",
+        "If the OOS horizon is unusably small, sync datasets, rebuild feature datasets, retrain or re-materialize model-backed dependencies, then rerun backtests_plan."
+      ],
+      "recommended_follow_up_tool": null,
+      "state_summary": {},
+      "exact_next_call_examples": [],
+      "raw_refs": [
+        "system_raw_call(tool_name='backtests_runs_get_constraints')"
+      ],
+      "raw_tool_hints": [],
+      "summary": "Planned backtest run window for active-signal-v1 on BTCUSDT@1h/5m."
+    },
+    "warnings": [],
+    "refs": [
+      {
+        "kind": "snapshot",
+        "id": "active-signal-v1@1",
+        "path": null
+      }
+    ],
+    "error": null
+  },
+  "isError": false
+}

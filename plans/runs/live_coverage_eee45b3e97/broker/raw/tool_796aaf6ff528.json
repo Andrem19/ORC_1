@@ -1,0 +1,473 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\n  \"status\": \"ok\",\n  \"message\": \"Backtests strategy inspect payload loaded.\",\n  \"tool_name\": \"backtests_strategy\",\n  \"request_id\": \"6\",\n  \"correlation_id\": \"6\",\n  \"server_session_id\": \"96b060c9f65e465fb4836340e9d955d7\",\n  \"response_generated_at\": \"2026-04-09T13:27:40.958716+00:00\",\n  \"data\": {\n    \"view\": \"list\",\n    \"snapshots\": [\n      {\n        \"snapshot_id\": \"active-signal-v1\",\n        \"name\": \"Active Signal v1\",\n        \"latest_version\": 1,\n        \"archived\": false,\n        \"system\": true,\n        \"versions\": [\n          {\n            \"snapshot_id\": \"active-signal-v1\",\n            \"version\": 1,\n            \"name\": \"Active Signal v1\",\n            \"created_at\": \"2024-01-01T00:00:00+00:00\",\n            \"archived\": false,\n            \"system\": true\n          }\n        ]\n      },\n      {\n        \"snapshot_id\": \"candidate_orthogonal_combo_v1\",\n        \"name\": \"candidate-orthogonal-combo-v1\",\n        \"latest_version\": 2,\n        \"archived\": false,\n        \"system\": false,\n        \"versions\": [\n          {\n            \"snapshot_id\": \"candidate_orthogonal_combo_v1\",\n            \"version\": 1,\n            \"name\": \"candidate-orthogonal-combo-v1\",\n            \"created_at\": \"2026-04-07T19:56:36.673973+00:00\",\n            \"archived\": false,\n            \"system\": false\n          },\n          {\n            \"snapshot_id\": \"candidate_orthogonal_combo_v1\",\n            \"version\": 2,\n            \"name\": \"candidate-orthogonal-combo-v1\",\n            \"created_at\": \"2026-04-07T19:57:33.634964+00:00\",\n            \"archived\": false,\n            \"system\": false\n          }\n        ]\n      },\n      {\n        \"snapshot_id\": \"candidate_vol_term_spread_v1\",\n        \"name\": \"candidate-vol-term-spread-v1\",\n        \"latest_version\": 2,\n        \"archived\": false,\n        \"system\": false,\n        \"versions\": [\n          {\n            \"snapshot_id\": \"candidate_vol_term_spread_v1\",\n            \"version\": 1,\n            \"name\": \"candidate-vol-term-spread-v1\",\n            \"created_at\": \"2026-04-07T19:48:24.979180+00:00\",\n            \"archived\": false,\n            \"system\": false\n          },\n          {\n            \"snapshot_id\": \"candidate_vol_term_spread_v1\",\n            \"version\": 2,\n            \"name\": \"candidate-vol-term-spread-v1\",\n            \"created_at\": \"2026-04-07T19:49:53.315166+00:00\",\n            \"archived\": false,\n            \"system\": false\n          }\n        ]\n      },\n      {\n        \"snapshot_id\": \"flow-micro-v1\",\n        \"name\": \"Flow Microstructure v1\",\n        \"latest_version\": 2,\n        \"archived\": false,\n        \"system\": false,\n        \"versions\": [\n          {\n            \"snapshot_id\": \"flow-micro-v1\",\n            \"version\": 1,\n            \"name\": \"Flow Microstructure v1\",\n            \"created_at\": \"2026-04-08T22:25:35.181652+00:00\",\n            \"archived\": false,\n            \"system\": false\n          },\n          {\n            \"snapshot_id\": \"flow-micro-v1\",\n            \"version\": 2,\n            \"name\": \"Flow Microstructure v1\",\n            \"created_at\": \"2026-04-08T22:25:53.963613+00:00\",\n            \"archived\": false,\n            \"system\": false\n          }\n        ]\n      },\n      {\n        \"snapshot_id\": \"flow-v1\",\n        \"name\": \"Flow Microstructure v1\",\n        \"latest_version\": 1,\n        \"archived\": false,\n        \"system\": false,\n        \"versions\": [\n          {\n            \"snapshot_id\": \"flow-v1\",\n            \"version\": 1,\n            \"name\": \"Flow Microstructure v1\",\n            \"created_at\": \"2026-04-08T22:24:56.382397+00:00\",\n            \"archived\": false,\n            \"system\": false\n          }\n        ]\n      },\n      {\n        \"snapshot_id\": \"funding_regime_v1\",\n        \"name\": \"funding-regime-v1\",\n        \"latest_version\": 2,\n        \"archived\": false,\n        \"system\": false,\n        \"versions\": [\n          {\n            \"snapshot_id\": \"funding_regime_v1\",\n            \"version\": 1,\n            \"name\": \"funding-regime-v1\",\n            \"created_at\": \"2026-04-08T20:44:40.128556+00:00\",\n            \"archived\": false,\n            \"system\": false\n          },\n          {\n            \"snapshot_id\": \"funding_regime_v1\",\n            \"version\": 2,\n            \"name\": \"funding-regime-v1\",\n            \"created_at\": \"2026-04-08T20:45:24.509576+00:00\",\n            \"archived\": false,\n            \"system\": false\n          }\n        ]\n      },\n      {\n        \"snapshot_id\": \"momentum-divergence-v1\",\n        \"name\": \"momentum-divergence-v1\",\n        \"latest_version\": 1,\n        \"archived\": false,\n        \"system\": false,\n        \"versions\": [\n          {\n            \"snapshot_id\": \"momentum-divergence-v1\",\n            \"version\": 1,\n            \"name\": \"momentum-divergence-v1\",\n            \"created_at\": \"2026-04-09T11:08:42.550339+00:00\",\n            \"archived\": false,\n            \"system\": false\n          }\n        ]\n      },\n      {\n        \"snapshot_id\": \"vol-asym-compression-v1\",\n        \"name\": \"vol-asym-compression-v1\",\n        \"latest_version\": 4,\n        \"archived\": false,\n        \"system\": false,\n        \"versions\": [\n          {\n            \"snapshot_id\": \"vol-asym-compression-v1\",\n            \"version\": 1,\n            \"name\": \"vol-asym-compression-v1\",\n            \"created_at\": \"2026-04-08T23:22:30.482384+00:00\",\n            \"archived\": false,\n            \"system\": false\n          },\n          {\n            \"snapshot_id\": \"vol-asym-compression-v1\",\n            \"version\": 2,\n            \"name\": \"vol-asym-compression-v1\",\n            \"created_at\": \"2026-04-08T23:25:54.369950+00:00\",\n            \"archived\": false,\n            \"system\": false\n          },\n          {\n            \"snapshot_id\": \"vol-asym-compression-v1\",\n            \"version\": 3,\n            \"name\": \"vol-asym-compression-v1\",\n            \"created_at\": \"2026-04-08T23:26:38.305612+00:00\",\n            \"archived\": false,\n            \"system\": false\n          },\n          {\n            \"snapshot_id\": \"vol-asym-compression-v1\",\n            \"version\": 4,\n            \"name\": \"vol-asym-compression-v1\",\n            \"created_at\": \"2026-04-08T23:27:25.964409+00:00\",\n            \"archived\": false,\n            \"system\": false\n          }\n        ]\n      },\n      {\n        \"snapshot_id\": \"vol-squeeze-breakout-v1\",\n        \"name\": \"vol-squeeze-breakout-v1\",\n        \"latest_version\": 2,\n        \"archived\": false,\n        \"system\": false,\n        \"versions\": [\n          {\n            \"snapshot_id\": \"vol-squeeze-breakout-v1\",\n            \"version\": 1,\n            \"name\": \"vol-squeeze-breakout-v1\",\n            \"created_at\": \"2026-04-08T22:20:30.263517+00:00\",\n            \"archived\": false,\n            \"system\": false\n          },\n          {\n            \"snapshot_id\": \"vol-squeeze-breakout-v1\",\n            \"version\": 2,\n            \"name\": \"vol-squeeze-breakout-v1\",\n            \"created_at\": \"2026-04-08T22:21:18.458401+00:00\",\n            \"archived\": false,\n            \"system\": false\n          }\n        ]\n      },\n      {\n        \"snapshot_id\": \"vol_absorb_v1\",\n        \"name\": \"vol_absorb_v1\",\n        \"latest_version\": 3,\n        \"archived\": false,\n        \"system\": false,\n        \"versions\": [\n          {\n            \"snapshot_id\": \"vol_absorb_v1\",\n            \"version\": 1,\n            \"name\": \"vol_absorb_v1\",\n            \"created_at\": \"2026-04-08T23:20:04.033840+00:00\",\n            \"archived\": false,\n            \"system\": false\n          },\n          {\n            \"snapshot_id\": \"vol_absorb_v1\",\n            \"version\": 2,\n            \"name\": \"vol_absorb_v1\",\n            \"created_at\": \"2026-04-08T23:23:04.606232+00:00\",\n            \"archived\": false,\n            \"system\": false\n          },\n          {\n            \"snapshot_id\": \"vol_absorb_v1\",\n            \"version\": 3,\n            \"name\": \"vol_absorb_v1\",\n            \"created_at\": \"2026-04-08T23:23:54.364079+00:00\",\n            \"archived\": false,\n            \"system\": false\n          }\n        ]\n      },\n      {\n        \"snapshot_id\": \"vol_expand_v1\",\n        \"name\": \"vol_expand_v1\",\n        \"latest_version\": 1,\n        \"archived\": false,\n        \"system\": false,\n        \"versions\": [\n          {\n            \"snapshot_id\": \"vol_expand_v1\",\n            \"version\": 1,\n            \"name\": \"vol_expand_v1\",\n            \"created_at\": \"2026-04-08T21:50:58.792209+00:00\",\n            \"archived\": false,\n            \"system\": false\n          }\n        ]\n      },\n      {\n        \"snapshot_id\": \"vol_regime_standalone\",\n        \"name\": \"Vol Regime Standalone\",\n        \"latest_version\": 3,\n        \"archived\": false,\n        \"system\": false,\n        \"versions\": [\n          {\n            \"snapshot_id\": \"vol_regime_standalone\",\n            \"version\": 1,\n            \"name\": \"Vol Regime Standalone\",\n            \"created_at\": \"2026-04-08T22:24:26.673248+00:00\",\n            \"archived\": false,\n            \"system\": false\n          },\n          {\n            \"snapshot_id\": \"vol_regime_standalone\",\n            \"version\": 2,\n            \"name\": \"Vol Regime Standalone\",\n            \"created_at\": \"2026-04-08T22:26:54.317183+00:00\",\n            \"archived\": false,\n            \"system\": false\n          },\n          {\n            \"snapshot_id\": \"vol_regime_standalone\",\n            \"version\": 3,\n            \"name\": \"Vol Regime Standalone\",\n            \"created_at\": \"2026-04-08T22:29:19.808574+00:00\",\n            \"archived\": false,\n            \"system\": false\n          }\n        ]\n      },\n      {\n        \"snapshot_id\": \"vwap_dev_v1\",\n        \"name\": \"vwap_dev_v1\",\n        \"latest_version\": 2,\n        \"archived\": false,\n        \"system\": false,\n        \"versions\": [\n          {\n            \"snapshot_id\": \"vwap_dev_v1\",\n            \"version\": 1,\n            \"name\": \"vwap_dev_v1\",\n            \"created_at\": \"2026-04-09T00:52:36.493974+00:00\",\n            \"archived\": false,\n            \"system\": false\n          },\n          {\n            \"snapshot_id\": \"vwap_dev_v1\",\n            \"version\": 2,\n            \"name\": \"vwap_dev_v1\",\n            \"created_at\": \"2026-04-09T00:53:36.279339+00:00\",\n            \"archived\": false,\n            \"system\": false\n          }\n        ]\n      },\n      {\n        \"snapshot_id\": \"zscore_reversion_v1\",\n        \"name\": \"zscore-reversion-v1\",\n        \"latest_version\": 2,\n        \"archived\": false,\n        \"system\": false,\n        \"versions\": [\n          {\n            \"snapshot_id\": \"zscore_reversion_v1\",\n            \"version\": 1,\n            \"name\": \"zscore-reversion-v1\",\n            \"created_at\": \"2026-04-08T20:44:40.656108+00:00\",\n            \"archived\": false,\n            \"system\": false\n          },\n          {\n            \"snapshot_id\": \"zscore_reversion_v1\",\n            \"version\": 2,\n            \"name\": \"zscore-reversion-v1\",\n            \"created_at\": \"2026-04-08T20:45:25.345440+00:00\",\n            \"archived\": false,\n            \"system\": false\n          }\n        ]\n      }\n    ],\n    \"snapshots_truncation\": {\n      \"count\": 14,\n      \"truncated\": false,\n      \"remaining_count\": 0\n    },\n    \"storage_ref\": {\n      \"root_path\": \"/home/ubuntu/FOUNDATION/artifacts/backtest_snapshots\",\n      \"root_fingerprint\": \"2049:524293:/home/ubuntu/FOUNDATION/artifacts/backtest_snapshots\",\n      \"process_identity\": {\n        \"pid\": 3128880,\n        \"hostname\": \"vps-503b3bd6\"\n      }\n    },\n    \"baseline_integrity\": {\n      \"expected_snapshot_id\": \"active-signal-v1\",\n      \"expected_version\": 1,\n      \"available\": true\n    },\n    \"latest_version_guidance\": {\n      \"message\": \"Inspect the latest_version for a snapshot first, then reuse that exact integer in save_version/compare/plan calls instead of guessing.\",\n      \"safe_edit_flow\": [\n        \"backtests_strategy(action='inspect', view='list')\",\n        \"backtests_strategy(action='inspect', view='detail', snapshot_id='...', version=<latest_version>)\",\n        \"backtests_strategy(action='save_version', snapshot_id='...', base_version=<latest_version>, ...)\"\n      ],\n      \"snapshots\": [\n        {\n          \"snapshot_id\": \"active-signal-v1\",\n          \"latest_version\": 1\n        },\n        {\n          \"snapshot_id\": \"candidate_orthogonal_combo_v1\",\n          \"latest_version\": 2\n        },\n        {\n          \"snapshot_id\": \"candidate_vol_term_spread_v1\",\n          \"latest_version\": 2\n        },\n        {\n          \"snapshot_id\": \"flow-micro-v1\",\n          \"latest_version\": 2\n        },\n        {\n          \"snapshot_id\": \"flow-v1\",\n          \"latest_version\": 1\n        },\n        {\n          \"snapshot_id\": \"funding_regime_v1\",\n          \"latest_version\": 2\n        },\n        {\n          \"snapshot_id\": \"momentum-divergence-v1\",\n          \"latest_version\": 1\n        },\n        {\n          \"snapshot_id\": \"vol-asym-compression-v1\",\n          \"latest_version\": 4\n        },\n        {\n          \"snapshot_id\": \"vol-squeeze-breakout-v1\",\n          \"latest_version\": 2\n        },\n        {\n          \"snapshot_id\": \"vol_absorb_v1\",\n          \"latest_version\": 3\n        },\n        {\n          \"snapshot_id\": \"vol_expand_v1\",\n          \"latest_version\": 1\n        },\n        {\n          \"snapshot_id\": \"vol_regime_standalone\",\n          \"latest_version\": 3\n        },\n        {\n          \"snapshot_id\": \"vwap_dev_v1\",\n          \"latest_version\": 2\n        },\n        {\n          \"snapshot_id\": \"zscore_reversion_v1\",\n          \"latest_version\": 2\n        }\n      ]\n    },\n    \"important_warnings\": [],\n    \"next_recommended_actions\": [\n      \"Use backtests_strategy(action='inspect', view='detail') for one snapshot or backtests_strategy(action='clone', source_snapshot_id='...', target_snapshot_id='...') to branch one strategy line.\",\n      \"Use backtests_strategy(action='save_version') to create, archive, rename, or version a strategy snapshot.\"\n    ],\n    \"recommended_follow_up_tool\": null,\n    \"state_summary\": {},\n    \"exact_next_call_examples\": [],\n    \"raw_refs\": [\n      \"system_raw_call(tool_name='backtests_snapshots_list')\"\n    ],\n    \"raw_tool_hints\": [],\n    \"summary\": \"Loaded backtest strategy snapshots.\"\n  },\n  \"warnings\": [],\n  \"refs\": [],\n  \"error\": null\n}"
+    }
+  ],
+  "structuredContent": {
+    "status": "ok",
+    "message": "Backtests strategy inspect payload loaded.",
+    "tool_name": "backtests_strategy",
+    "request_id": "6",
+    "correlation_id": "6",
+    "server_session_id": "96b060c9f65e465fb4836340e9d955d7",
+    "response_generated_at": "2026-04-09T13:27:40.958716+00:00",
+    "data": {
+      "view": "list",
+      "snapshots": [
+        {
+          "snapshot_id": "active-signal-v1",
+          "name": "Active Signal v1",
+          "latest_version": 1,
+          "archived": false,
+          "system": true,
+          "versions": [
+            {
+              "snapshot_id": "active-signal-v1",
+              "version": 1,
+              "name": "Active Signal v1",
+              "created_at": "2024-01-01T00:00:00+00:00",
+              "archived": false,
+              "system": true
+            }
+          ]
+        },
+        {
+          "snapshot_id": "candidate_orthogonal_combo_v1",
+          "name": "candidate-orthogonal-combo-v1",
+          "latest_version": 2,
+          "archived": false,
+          "system": false,
+          "versions": [
+            {
+              "snapshot_id": "candidate_orthogonal_combo_v1",
+              "version": 1,
+              "name": "candidate-orthogonal-combo-v1",
+              "created_at": "2026-04-07T19:56:36.673973+00:00",
+              "archived": false,
+              "system": false
+            },
+            {
+              "snapshot_id": "candidate_orthogonal_combo_v1",
+              "version": 2,
+              "name": "candidate-orthogonal-combo-v1",
+              "created_at": "2026-04-07T19:57:33.634964+00:00",
+              "archived": false,
+              "system": false
+            }
+          ]
+        },
+        {
+          "snapshot_id": "candidate_vol_term_spread_v1",
+          "name": "candidate-vol-term-spread-v1",
+          "latest_version": 2,
+          "archived": false,
+          "system": false,
+          "versions": [
+            {
+              "snapshot_id": "candidate_vol_term_spread_v1",
+              "version": 1,
+              "name": "candidate-vol-term-spread-v1",
+              "created_at": "2026-04-07T19:48:24.979180+00:00",
+              "archived": false,
+              "system": false
+            },
+            {
+              "snapshot_id": "candidate_vol_term_spread_v1",
+              "version": 2,
+              "name": "candidate-vol-term-spread-v1",
+              "created_at": "2026-04-07T19:49:53.315166+00:00",
+              "archived": false,
+              "system": false
+            }
+          ]
+        },
+        {
+          "snapshot_id": "flow-micro-v1",
+          "name": "Flow Microstructure v1",
+          "latest_version": 2,
+          "archived": false,
+          "system": false,
+          "versions": [
+            {
+              "snapshot_id": "flow-micro-v1",
+              "version": 1,
+              "name": "Flow Microstructure v1",
+              "created_at": "2026-04-08T22:25:35.181652+00:00",
+              "archived": false,
+              "system": false
+            },
+            {
+              "snapshot_id": "flow-micro-v1",
+              "version": 2,
+              "name": "Flow Microstructure v1",
+              "created_at": "2026-04-08T22:25:53.963613+00:00",
+              "archived": false,
+              "system": false
+            }
+          ]
+        },
+        {
+          "snapshot_id": "flow-v1",
+          "name": "Flow Microstructure v1",
+          "latest_version": 1,
+          "archived": false,
+          "system": false,
+          "versions": [
+            {
+              "snapshot_id": "flow-v1",
+              "version": 1,
+              "name": "Flow Microstructure v1",
+              "created_at": "2026-04-08T22:24:56.382397+00:00",
+              "archived": false,
+              "system": false
+            }
+          ]
+        },
+        {
+          "snapshot_id": "funding_regime_v1",
+          "name": "funding-regime-v1",
+          "latest_version": 2,
+          "archived": false,
+          "system": false,
+          "versions": [
+            {
+              "snapshot_id": "funding_regime_v1",
+              "version": 1,
+              "name": "funding-regime-v1",
+              "created_at": "2026-04-08T20:44:40.128556+00:00",
+              "archived": false,
+              "system": false
+            },
+            {
+              "snapshot_id": "funding_regime_v1",
+              "version": 2,
+              "name": "funding-regime-v1",
+              "created_at": "2026-04-08T20:45:24.509576+00:00",
+              "archived": false,
+              "system": false
+            }
+          ]
+        },
+        {
+          "snapshot_id": "momentum-divergence-v1",
+          "name": "momentum-divergence-v1",
+          "latest_version": 1,
+          "archived": false,
+          "system": false,
+          "versions": [
+            {
+              "snapshot_id": "momentum-divergence-v1",
+              "version": 1,
+              "name": "momentum-divergence-v1",
+              "created_at": "2026-04-09T11:08:42.550339+00:00",
+              "archived": false,
+              "system": false
+            }
+          ]
+        },
+        {
+          "snapshot_id": "vol-asym-compression-v1",
+          "name": "vol-asym-compression-v1",
+          "latest_version": 4,
+          "archived": false,
+          "system": false,
+          "versions": [
+            {
+              "snapshot_id": "vol-asym-compression-v1",
+              "version": 1,
+              "name": "vol-asym-compression-v1",
+              "created_at": "2026-04-08T23:22:30.482384+00:00",
+              "archived": false,
+              "system": false
+            },
+            {
+              "snapshot_id": "vol-asym-compression-v1",
+              "version": 2,
+              "name": "vol-asym-compression-v1",
+              "created_at": "2026-04-08T23:25:54.369950+00:00",
+              "archived": false,
+              "system": false
+            },
+            {
+              "snapshot_id": "vol-asym-compression-v1",
+              "version": 3,
+              "name": "vol-asym-compression-v1",
+              "created_at": "2026-04-08T23:26:38.305612+00:00",
+              "archived": false,
+              "system": false
+            },
+            {
+              "snapshot_id": "vol-asym-compression-v1",
+              "version": 4,
+              "name": "vol-asym-compression-v1",
+              "created_at": "2026-04-08T23:27:25.964409+00:00",
+              "archived": false,
+              "system": false
+            }
+          ]
+        },
+        {
+          "snapshot_id": "vol-squeeze-breakout-v1",
+          "name": "vol-squeeze-breakout-v1",
+          "latest_version": 2,
+          "archived": false,
+          "system": false,
+          "versions": [
+            {
+              "snapshot_id": "vol-squeeze-breakout-v1",
+              "version": 1,
+              "name": "vol-squeeze-breakout-v1",
+              "created_at": "2026-04-08T22:20:30.263517+00:00",
+              "archived": false,
+              "system": false
+            },
+            {
+              "snapshot_id": "vol-squeeze-breakout-v1",
+              "version": 2,
+              "name": "vol-squeeze-breakout-v1",
+              "created_at": "2026-04-08T22:21:18.458401+00:00",
+              "archived": false,
+              "system": false
+            }
+          ]
+        },
+        {
+          "snapshot_id": "vol_absorb_v1",
+          "name": "vol_absorb_v1",
+          "latest_version": 3,
+          "archived": false,
+          "system": false,
+          "versions": [
+            {
+              "snapshot_id": "vol_absorb_v1",
+              "version": 1,
+              "name": "vol_absorb_v1",
+              "created_at": "2026-04-08T23:20:04.033840+00:00",
+              "archived": false,
+              "system": false
+            },
+            {
+              "snapshot_id": "vol_absorb_v1",
+              "version": 2,
+              "name": "vol_absorb_v1",
+              "created_at": "2026-04-08T23:23:04.606232+00:00",
+              "archived": false,
+              "system": false
+            },
+            {
+              "snapshot_id": "vol_absorb_v1",
+              "version": 3,
+              "name": "vol_absorb_v1",
+              "created_at": "2026-04-08T23:23:54.364079+00:00",
+              "archived": false,
+              "system": false
+            }
+          ]
+        },
+        {
+          "snapshot_id": "vol_expand_v1",
+          "name": "vol_expand_v1",
+          "latest_version": 1,
+          "archived": false,
+          "system": false,
+          "versions": [
+            {
+              "snapshot_id": "vol_expand_v1",
+              "version": 1,
+              "name": "vol_expand_v1",
+              "created_at": "2026-04-08T21:50:58.792209+00:00",
+              "archived": false,
+              "system": false
+            }
+          ]
+        },
+        {
+          "snapshot_id": "vol_regime_standalone",
+          "name": "Vol Regime Standalone",
+          "latest_version": 3,
+          "archived": false,
+          "system": false,
+          "versions": [
+            {
+              "snapshot_id": "vol_regime_standalone",
+              "version": 1,
+              "name": "Vol Regime Standalone",
+              "created_at": "2026-04-08T22:24:26.673248+00:00",
+              "archived": false,
+              "system": false
+            },
+            {
+              "snapshot_id": "vol_regime_standalone",
+              "version": 2,
+              "name": "Vol Regime Standalone",
+              "created_at": "2026-04-08T22:26:54.317183+00:00",
+              "archived": false,
+              "system": false
+            },
+            {
+              "snapshot_id": "vol_regime_standalone",
+              "version": 3,
+              "name": "Vol Regime Standalone",
+              "created_at": "2026-04-08T22:29:19.808574+00:00",
+              "archived": false,
+              "system": false
+            }
+          ]
+        },
+        {
+          "snapshot_id": "vwap_dev_v1",
+          "name": "vwap_dev_v1",
+          "latest_version": 2,
+          "archived": false,
+          "system": false,
+          "versions": [
+            {
+              "snapshot_id": "vwap_dev_v1",
+              "version": 1,
+              "name": "vwap_dev_v1",
+              "created_at": "2026-04-09T00:52:36.493974+00:00",
+              "archived": false,
+              "system": false
+            },
+            {
+              "snapshot_id": "vwap_dev_v1",
+              "version": 2,
+              "name": "vwap_dev_v1",
+              "created_at": "2026-04-09T00:53:36.279339+00:00",
+              "archived": false,
+              "system": false
+            }
+          ]
+        },
+        {
+          "snapshot_id": "zscore_reversion_v1",
+          "name": "zscore-reversion-v1",
+          "latest_version": 2,
+          "archived": false,
+          "system": false,
+          "versions": [
+            {
+              "snapshot_id": "zscore_reversion_v1",
+              "version": 1,
+              "name": "zscore-reversion-v1",
+              "created_at": "2026-04-08T20:44:40.656108+00:00",
+              "archived": false,
+              "system": false
+            },
+            {
+              "snapshot_id": "zscore_reversion_v1",
+              "version": 2,
+              "name": "zscore-reversion-v1",
+              "created_at": "2026-04-08T20:45:25.345440+00:00",
+              "archived": false,
+              "system": false
+            }
+          ]
+        }
+      ],
+      "snapshots_truncation": {
+        "count": 14,
+        "truncated": false,
+        "remaining_count": 0
+      },
+      "storage_ref": {
+        "root_path": "/home/ubuntu/FOUNDATION/artifacts/backtest_snapshots",
+        "root_fingerprint": "2049:524293:/home/ubuntu/FOUNDATION/artifacts/backtest_snapshots",
+        "process_identity": {
+          "pid": 3128880,
+          "hostname": "vps-503b3bd6"
+        }
+      },
+      "baseline_integrity": {
+        "expected_snapshot_id": "active-signal-v1",
+        "expected_version": 1,
+        "available": true
+      },
+      "latest_version_guidance": {
+        "message": "Inspect the latest_version for a snapshot first, then reuse that exact integer in save_version/compare/plan calls instead of guessing.",
+        "safe_edit_flow": [
+          "backtests_strategy(action='inspect', view='list')",
+          "backtests_strategy(action='inspect', view='detail', snapshot_id='...', version=<latest_version>)",
+          "backtests_strategy(action='save_version', snapshot_id='...', base_version=<latest_version>, ...)"
+        ],
+        "snapshots": [
+          {
+            "snapshot_id": "active-signal-v1",
+            "latest_version": 1
+          },
+          {
+            "snapshot_id": "candidate_orthogonal_combo_v1",
+            "latest_version": 2
+          },
+          {
+            "snapshot_id": "candidate_vol_term_spread_v1",
+            "latest_version": 2
+          },
+          {
+            "snapshot_id": "flow-micro-v1",
+            "latest_version": 2
+          },
+          {
+            "snapshot_id": "flow-v1",
+            "latest_version": 1
+          },
+          {
+            "snapshot_id": "funding_regime_v1",
+            "latest_version": 2
+          },
+          {
+            "snapshot_id": "momentum-divergence-v1",
+            "latest_version": 1
+          },
+          {
+            "snapshot_id": "vol-asym-compression-v1",
+            "latest_version": 4
+          },
+          {
+            "snapshot_id": "vol-squeeze-breakout-v1",
+            "latest_version": 2
+          },
+          {
+            "snapshot_id": "vol_absorb_v1",
+            "latest_version": 3
+          },
+          {
+            "snapshot_id": "vol_expand_v1",
+            "latest_version": 1
+          },
+          {
+            "snapshot_id": "vol_regime_standalone",
+            "latest_version": 3
+          },
+          {
+            "snapshot_id": "vwap_dev_v1",
+            "latest_version": 2
+          },
+          {
+            "snapshot_id": "zscore_reversion_v1",
+            "latest_version": 2
+          }
+        ]
+      },
+      "important_warnings": [],
+      "next_recommended_actions": [
+        "Use backtests_strategy(action='inspect', view='detail') for one snapshot or backtests_strategy(action='clone', source_snapshot_id='...', target_snapshot_id='...') to branch one strategy line.",
+        "Use backtests_strategy(action='save_version') to create, archive, rename, or version a strategy snapshot."
+      ],
+      "recommended_follow_up_tool": null,
+      "state_summary": {},
+      "exact_next_call_examples": [],
+      "raw_refs": [
+        "system_raw_call(tool_name='backtests_snapshots_list')"
+      ],
+      "raw_tool_hints": [],
+      "summary": "Loaded backtest strategy snapshots."
+    },
+    "warnings": [],
+    "refs": [],
+    "error": null
+  },
+  "isError": false
+}

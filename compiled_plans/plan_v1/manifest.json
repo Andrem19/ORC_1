@@ -1,0 +1,15 @@
+{
+  "source_file": "raw_plans/plan_v1.md",
+  "source_hash": "43d2b6894f2df1d1a134b3898365b01fbb80ef52bf06871fa29b69a5201facae",
+  "compiled_at": "2026-04-09T14:16:11.875677+00:00",
+  "sequence_id": "compiled_plan_v1",
+  "compile_status": "compiled",
+  "warnings": [],
+  "semantic_method": "llm",
+  "plan_files": [
+    "plans/compiled_plan_v1_batch_1.json",
+    "plans/compiled_plan_v1_batch_2.json",
+    "plans/compiled_plan_v1_batch_3.json",
+    "plans/compiled_plan_v1_batch_4.json"
+  ]
+}

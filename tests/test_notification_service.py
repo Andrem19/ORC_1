@@ -12,8 +12,6 @@ import pytest
 
 from app.config import NotificationConfig, OrchestratorConfig, load_config_from_dict
 from app.models import (
-    PlannerDecision,
-    PlannerOutput,
     TaskResult,
     OrchestratorState,
 )
@@ -431,21 +429,348 @@ class TestDiagnosticDigest:
         assert svc.send_diagnostic_digest("test", cycle=1) is False
 
 
-class TestExecutionPrediction:
-    def test_send_execution_prediction(self):
+# ---------------------------------------------------------------------------
+# Tests: enriched worker result messages
+# ---------------------------------------------------------------------------
+
+
+def _make_svc_no_batch():
+    with patch.dict(os.environ, {"ALGO_BOT": "tok", "CHAT_ID": "1"}):
+        cfg = NotificationConfig(enabled=True, min_interval_seconds=0, batch_enabled=False)
+        return NotificationService(cfg)
+
+
+class TestEnrichedWorkerResult:
+    def test_title_used_instead_of_task_id(self):
+        svc = _make_svc_no_batch()
+        result = TaskResult(
+            task_id="plan_abc:slice_xyz",
+            worker_id="qwen-1",
+            status="success",
+            title="Validate OHLCV quality",
+            summary="Data quality confirmed.",
+        )
+        with patch.object(svc, "_send_structured", return_value=True) as mock:
+            svc.send_worker_result(result, cycle=3)
+        sections = mock.call_args[0][0]
+        header_text = "".join(s.value for s in sections if s.kind == "header")
+        assert "Validate OHLCV quality" in header_text
+        assert "slice_xyz" not in header_text
+
+    def test_task_id_used_when_no_title(self):
+        svc = _make_svc_no_batch()
+        result = TaskResult(
+            task_id="plan_abc:slice_xyz",
+            worker_id="qwen-1",
+            status="success",
+            title="",
+        )
+        with patch.object(svc, "_send_structured", return_value=True) as mock:
+            svc.send_worker_result(result, cycle=1)
+        sections = mock.call_args[0][0]
+        header_text = "".join(s.value for s in sections if s.kind == "header")
+        assert "slice_xyz" in header_text
+
+    def test_verdict_icon_in_header(self):
+        svc = _make_svc_no_batch()
+        result = TaskResult(
+            task_id="t1", worker_id="w1", status="success",
+            verdict="PROMOTE", title="Test slice",
+        )
+        with patch.object(svc, "_send_structured", return_value=True) as mock:
+            svc.send_worker_result(result, cycle=1)
+        sections = mock.call_args[0][0]
+        header_text = "".join(s.value for s in sections if s.kind == "header")
+        assert "\U0001f3c6" in header_text  # 🏆
+
+    def test_findings_appear_as_bullets(self):
+        svc = _make_svc_no_batch()
+        result = TaskResult(
+            task_id="t1", worker_id="w1", status="success",
+            findings=["Strong momentum edge confirmed", "RSI divergence pattern found"],
+        )
+        with patch.object(svc, "_send_structured", return_value=True) as mock:
+            svc.send_worker_result(result, cycle=1)
+        sections = mock.call_args[0][0]
+        body_text = " ".join(s.value for s in sections if s.kind == "body")
+        assert "Strong momentum edge confirmed" in body_text
+        assert "RSI divergence pattern found" in body_text
+        assert "\u2022" in body_text  # bullet
+
+    def test_key_metrics_in_code_block(self):
+        svc = _make_svc_no_batch()
+        result = TaskResult(
+            task_id="t1", worker_id="w1", status="success",
+            key_metrics={"return": 2.45, "sharpe": 1.3},
+        )
+        with patch.object(svc, "_send_structured", return_value=True) as mock:
+            svc.send_worker_result(result, cycle=1)
+        sections = mock.call_args[0][0]
+        code_text = " ".join(s.value for s in sections if s.kind == "code")
+        assert "return=2.45" in code_text
+        assert "sharpe=1.30" in code_text
+
+    def test_next_actions_appear(self):
+        svc = _make_svc_no_batch()
+        result = TaskResult(
+            task_id="t1", worker_id="w1", status="success",
+            next_actions=["Extend backtest to 2020", "Test on ETH/USDT"],
+        )
+        with patch.object(svc, "_send_structured", return_value=True) as mock:
+            svc.send_worker_result(result, cycle=1)
+        sections = mock.call_args[0][0]
+        body_text = " ".join(s.value for s in sections if s.kind == "body")
+        assert "Extend backtest to 2020" in body_text
+        assert "\u2192" in body_text  # →
+
+    def test_no_extra_sections_when_fields_empty(self):
+        svc = _make_svc_no_batch()
+        result = TaskResult(task_id="t1", worker_id="w1", status="success")
+        with patch.object(svc, "_send_structured", return_value=True) as mock:
+            svc.send_worker_result(result, cycle=1)
+        sections = mock.call_args[0][0]
+        # Should not crash and should produce at least header + separator
+        assert any(s.kind == "header" for s in sections)
+        assert any(s.kind == "separator" for s in sections)
+
+
+# ---------------------------------------------------------------------------
+# Tests: enriched batch summary with verdict distribution
+# ---------------------------------------------------------------------------
+
+
+class TestEnrichedBatchSummary:
+    def test_verdict_distribution_line_present(self):
+        svc = _make_batch_svc()
+        r1 = TaskResult(task_id="t1", worker_id="w1", status="success",
+                        verdict="PROMOTE", title="Slice A")
+        r2 = TaskResult(task_id="t2", worker_id="w2", status="success",
+                        verdict="WATCHLIST", title="Slice B")
+        r3 = TaskResult(task_id="t3", worker_id="w3", status="error",
+                        verdict="FAILED", title="Slice C")
+        with patch.object(svc, "_send_structured", return_value=True) as mock:
+            svc._send_batch_summary([
+                _QueuedNotification(r1, 5, 0.0),
+                _QueuedNotification(r2, 5, 0.0),
+                _QueuedNotification(r3, 5, 0.0),
+            ])
+        sections = mock.call_args[0][0]
+        body_text = " ".join(s.value for s in sections if s.kind == "body")
+        assert "1 promoted" in body_text or "\U0001f3c6 1" in body_text
+        assert "watchlist" in body_text.lower() or "\U0001f441 1" in body_text
+
+    def test_per_worker_line_uses_title(self):
+        svc = _make_batch_svc()
+        r1 = TaskResult(task_id="plan:slice_a", worker_id="w1", status="success",
+                        title="OHLCV validation", verdict="PROMOTE",
+                        summary="All good")
+        with patch.object(svc, "_send_structured", return_value=True) as mock:
+            svc._send_batch_summary([_QueuedNotification(r1, 3, 0.0)])
+        sections = mock.call_args[0][0]
+        body_text = " ".join(s.value for s in sections if s.kind == "body")
+        assert "OHLCV validation" in body_text
+
+    def test_verdict_appended_to_line(self):
+        svc = _make_batch_svc()
+        r1 = TaskResult(task_id="t1", worker_id="w1", status="success",
+                        verdict="WATCHLIST", summary="Weak signal")
+        with patch.object(svc, "_send_structured", return_value=True) as mock:
+            svc._send_batch_summary([_QueuedNotification(r1, 1, 0.0)])
+        sections = mock.call_args[0][0]
+        body_text = " ".join(s.value for s in sections if s.kind == "body")
+        assert "WATCHLIST" in body_text
+
+    def test_no_verdict_line_when_no_verdicts_set(self):
+        svc = _make_batch_svc()
+        r1 = TaskResult(task_id="t1", worker_id="w1", status="success", verdict="")
+        r2 = TaskResult(task_id="t2", worker_id="w2", status="error", verdict="")
+        with patch.object(svc, "_send_structured", return_value=True) as mock:
+            svc._send_batch_summary([
+                _QueuedNotification(r1, 1, 0.0),
+                _QueuedNotification(r2, 1, 0.0),
+            ])
+        sections = mock.call_args[0][0]
+        body_text = " ".join(s.value for s in sections if s.kind == "body")
+        # No verdict-specific words
+        assert "promoted" not in body_text
+
+
+# ---------------------------------------------------------------------------
+# Tests: send_run_complete
+# ---------------------------------------------------------------------------
+
+
+from app.services.notification_service import _ms_to_human, _short_task_label, _verdict_icon, _stop_icon, _QueuedNotification
+
+
+class TestMsToHuman:
+    def test_seconds_only(self):
+        assert _ms_to_human(45_000) == "45s"
+
+    def test_minutes_and_seconds(self):
+        assert _ms_to_human(272_000) == "4m 32s"
+
+    def test_hours(self):
+        assert _ms_to_human(3_661_000) == "1h 01m"
+
+    def test_zero(self):
+        assert _ms_to_human(0) == "—"
+
+
+class TestShortTaskLabel:
+    def test_title_preferred(self):
+        r = TaskResult(task_id="plan:slice", worker_id="w", status="success", title="My Task")
+        assert _short_task_label(r) == "My Task"
+
+    def test_slice_id_fallback(self):
+        r = TaskResult(task_id="plan_abc:slice_xyz", worker_id="w", status="success")
+        assert _short_task_label(r) == "slice_xyz"
+
+    def test_full_task_id_when_no_colon(self):
+        r = TaskResult(task_id="standalone", worker_id="w", status="success")
+        assert _short_task_label(r) == "standalone"
+
+
+class TestVerdictIcon:
+    def test_promote(self):
+        assert _verdict_icon("PROMOTE") == "\U0001f3c6"
+
+    def test_watchlist(self):
+        assert _verdict_icon("WATCHLIST") == "\U0001f441"
+
+    def test_failed(self):
+        assert _verdict_icon("FAILED") == "\u274c"
+
+    def test_empty(self):
+        assert _verdict_icon("") == "\u2139\ufe0f"
+
+
+class TestSendRunComplete:
+    def _make_report(self, **overrides):
+        from types import SimpleNamespace
+        from app.reporting.models import NarrativeSectionsRu, ToolUsageSummary
+        narrative = NarrativeSectionsRu(
+            executive_summary_ru="Исследование завершено успешно.",
+            recommended_next_actions_ru=["Расширить бэктест", "Протестировать на ETH"],
+        )
+        defaults = dict(
+            stop_reason="goal_reached",
+            goal="Research crypto momentum strategy",
+            duration_ms=272_000,
+            completed_sequences=3,
+            failed_sequences=0,
+            partial_sequences=1,
+            best_outcomes=["btc_momentum_v2 — strong edge confirmed", "eth_rsi_cross — moderate signal"],
+            unresolved_blockers=["MCP dataset sync timeout"],
+            executive_summary_ru="Исследование завершено успешно.",
+            narrative_sections_ru=narrative,
+            tool_usage_rollup=ToolUsageSummary(total_calls=142, failed_calls=3),
+        )
+        defaults.update(overrides)
+        return SimpleNamespace(**defaults)
+
+    def _make_enabled_svc(self):
         with patch.dict(os.environ, {"ALGO_BOT": "tok", "CHAT_ID": "1"}):
             cfg = NotificationConfig(enabled=True, min_interval_seconds=0)
-            svc = NotificationService(cfg)
-            with patch.object(svc, "_send_structured", return_value=True) as mock:
-                result = svc.send_execution_prediction(
-                    "Stage 1: ~8 min, Stage 2: ~15 min", plan_version=3,
-                )
-            assert result is True
-            sections = mock.call_args[0][0]
-            body_text = "".join(s.value for s in sections if s.kind == "body")
-            assert "Stage 1" in body_text
+            return NotificationService(cfg)
 
-    def test_prediction_disabled_returns_false(self):
-        cfg = NotificationConfig(enabled=False)
-        svc = NotificationService(cfg)
-        assert svc.send_execution_prediction("test", plan_version=1) is False
+    def test_run_complete_disabled_returns_false(self):
+        svc = NotificationService()
+        assert svc.send_run_complete(object()) is False
+
+    def test_run_complete_includes_stop_reason(self):
+        svc = self._make_enabled_svc()
+        report = self._make_report()
+        with patch.object(svc, "_send_structured", return_value=True) as mock:
+            svc.send_run_complete(report)
+        sections = mock.call_args[0][0]
+        header_text = " ".join(s.value for s in sections if s.kind == "header")
+        assert "goal_reached" in header_text
+
+    def test_run_complete_includes_goal(self):
+        svc = self._make_enabled_svc()
+        report = self._make_report()
+        with patch.object(svc, "_send_structured", return_value=True) as mock:
+            svc.send_run_complete(report)
+        sections = mock.call_args[0][0]
+        all_text = " ".join(s.value for s in sections)
+        assert "Research crypto momentum strategy" in all_text
+
+    def test_run_complete_includes_duration(self):
+        svc = self._make_enabled_svc()
+        report = self._make_report(duration_ms=272_000)
+        with patch.object(svc, "_send_structured", return_value=True) as mock:
+            svc.send_run_complete(report)
+        sections = mock.call_args[0][0]
+        all_text = " ".join(s.value for s in sections)
+        assert "4m 32s" in all_text
+
+    def test_run_complete_includes_executive_summary(self):
+        svc = self._make_enabled_svc()
+        report = self._make_report()
+        with patch.object(svc, "_send_structured", return_value=True) as mock:
+            svc.send_run_complete(report)
+        sections = mock.call_args[0][0]
+        body_text = " ".join(s.value for s in sections if s.kind == "body")
+        assert "Исследование завершено успешно" in body_text
+
+    def test_run_complete_includes_best_outcomes(self):
+        svc = self._make_enabled_svc()
+        report = self._make_report()
+        with patch.object(svc, "_send_structured", return_value=True) as mock:
+            svc.send_run_complete(report)
+        sections = mock.call_args[0][0]
+        body_text = " ".join(s.value for s in sections if s.kind == "body")
+        assert "btc_momentum_v2" in body_text
+
+    def test_run_complete_includes_blockers(self):
+        svc = self._make_enabled_svc()
+        report = self._make_report()
+        with patch.object(svc, "_send_structured", return_value=True) as mock:
+            svc.send_run_complete(report)
+        sections = mock.call_args[0][0]
+        body_text = " ".join(s.value for s in sections if s.kind == "body")
+        assert "MCP dataset sync timeout" in body_text
+
+    def test_run_complete_includes_tool_usage(self):
+        svc = self._make_enabled_svc()
+        report = self._make_report()
+        with patch.object(svc, "_send_structured", return_value=True) as mock:
+            svc.send_run_complete(report)
+        sections = mock.call_args[0][0]
+        all_text = " ".join(s.value for s in sections)
+        assert "142" in all_text
+
+    def test_run_complete_includes_next_actions(self):
+        svc = self._make_enabled_svc()
+        report = self._make_report()
+        with patch.object(svc, "_send_structured", return_value=True) as mock:
+            svc.send_run_complete(report)
+        sections = mock.call_args[0][0]
+        body_text = " ".join(s.value for s in sections if s.kind == "body")
+        assert "Расширить бэктест" in body_text
+
+    def test_run_complete_stop_reason_icon_goal_reached(self):
+        assert _stop_icon("goal_reached") == "\u2705"
+
+    def test_run_complete_stop_reason_icon_max_errors(self):
+        assert _stop_icon("max_errors") == "\U0001f525"
+
+    def test_run_complete_skips_sections_when_empty(self):
+        svc = self._make_enabled_svc()
+        report = self._make_report(
+            best_outcomes=[],
+            unresolved_blockers=[],
+            executive_summary_ru="",
+        )
+        # Override narrative to have no next actions
+        from types import SimpleNamespace
+        from app.reporting.models import NarrativeSectionsRu
+        report.narrative_sections_ru = NarrativeSectionsRu()
+        with patch.object(svc, "_send_structured", return_value=True) as mock:
+            svc.send_run_complete(report)
+        sections = mock.call_args[0][0]
+        header_values = [s.value for s in sections if s.kind == "header"]
+        # Should only have "Run complete —..." header, not Best outcomes etc.
+        assert not any("Best outcomes" in h for h in header_values)
+        assert not any("Blockers" in h for h in header_values)

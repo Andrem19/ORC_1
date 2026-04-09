@@ -1,0 +1,122 @@
+{
+  "plan_id": "compiled_plan_v4_batch_3",
+  "goal": "Close all outstanding v3 research branches, run a weak-window repair specialist program on the immutable base, and produce a final v4 verdict before any medium-friction work is unlocked.",
+  "baseline_ref": {
+    "snapshot_id": "active-signal-v1",
+    "version": 1,
+    "symbol": "BTCUSDT",
+    "anchor_timeframe": "1h",
+    "execution_timeframe": "5m"
+  },
+  "global_constraints": [
+    "active-signal-v1@1 is immutable — never modify the baseline snapshot.",
+    "Every research branch must reach a terminal decision (promoted or rejected); no half-open branches allowed.",
+    "Previously rejected branches (H1_post_funding_long, H2_expiry_lead_lag, A1_high_iv_long_v1, A1b_high_iv_momentum, A4_wed_afternoon) must not be revived.",
+    "Medium-friction wave (B1, B2) is locked unless all five unlock conditions are simultaneously satisfied.",
+    "Maximum 2 weak pockets may be selected for specialist repair in a single research cycle."
+  ],
+  "slices": [
+    {
+      "slice_id": "compiled_plan_v4_stage_7",
+      "title": "Решение по medium-friction wave (unlock gate)",
+      "hypothesis": "Decide whether to unlock the medium-friction wave (B1 cross-symbol leadership, B2 model-backed IV-routing) or keep it locked.",
+      "objective": "Decide whether to unlock the medium-friction wave (B1 cross-symbol leadership, B2 model-backed IV-routing) or keep it locked.",
+      "success_criteria": [
+        "A clear lock/unlock decision is recorded. If unlocked, B1 and B2 each have an initial assessment."
+      ],
+      "allowed_tools": [
+        "backtests_analysis",
+        "backtests_conditions",
+        "experiments_run",
+        "experiments_inspect",
+        "experiments_read",
+        "research_project",
+        "research_map",
+        "research_record",
+        "research_search"
+      ],
+      "evidence_requirements": [
+        "A clear lock/unlock decision is recorded. If unlocked, B1 and B2 each have an initial assessment."
+      ],
+      "policy_tags": [
+        "decision_gate",
+        "conditional_branch",
+        "optional_candidate"
+      ],
+      "max_turns": 6,
+      "max_tool_calls": 5,
+      "max_expensive_calls": 2,
+      "parallel_slot": 1,
+      "status": "pending",
+      "turn_count": 0,
+      "tool_call_count": 0,
+      "expensive_call_count": 0,
+      "assigned_worker_id": null,
+      "last_checkpoint_turn_id": "",
+      "last_checkpoint_summary": "",
+      "final_report_turn_id": "",
+      "last_error": "",
+      "last_summary": "",
+      "latest_tool_result_summary": "",
+      "active_operation_tool": "",
+      "active_operation_ref": "",
+      "active_operation_status": "",
+      "active_operation_arguments": {},
+      "active_resume_tool": "",
+      "active_resume_token": "",
+      "last_tool_response_status": "",
+      "artifacts": [],
+      "facts": {}
+    },
+    {
+      "slice_id": "compiled_plan_v4_stage_8",
+      "title": "Финальный отчет по v4",
+      "hypothesis": "Produce a comprehensive final report summarizing all v4 research outcomes, terminal decisions, and recommendations for next steps.",
+      "objective": "Produce a comprehensive final report summarizing all v4 research outcomes, terminal decisions, and recommendations for next steps.",
+      "success_criteria": [
+        "A standalone v4 final report exists with all stage outcomes, terminal decisions, and next-step recommendations."
+      ],
+      "allowed_tools": [
+        "research_project",
+        "research_map",
+        "research_record",
+        "research_search",
+        "backtests_analysis",
+        "notify_send"
+      ],
+      "evidence_requirements": [
+        "A standalone v4 final report exists with all stage outcomes, terminal decisions, and next-step recommendations."
+      ],
+      "policy_tags": [
+        "reporting"
+      ],
+      "max_turns": 4,
+      "max_tool_calls": 3,
+      "max_expensive_calls": 0,
+      "parallel_slot": 1,
+      "status": "pending",
+      "turn_count": 0,
+      "tool_call_count": 0,
+      "expensive_call_count": 0,
+      "assigned_worker_id": null,
+      "last_checkpoint_turn_id": "",
+      "last_checkpoint_summary": "",
+      "final_report_turn_id": "",
+      "last_error": "",
+      "last_summary": "",
+      "latest_tool_result_summary": "",
+      "active_operation_tool": "",
+      "active_operation_ref": "",
+      "active_operation_status": "",
+      "active_operation_arguments": {},
+      "active_resume_tool": "",
+      "active_resume_token": "",
+      "last_tool_response_status": "",
+      "artifacts": [],
+      "facts": {}
+    }
+  ],
+  "status": "draft",
+  "created_at": "2026-04-09T14:21:37.708589+00:00",
+  "updated_at": "2026-04-09T14:21:37.708591+00:00"
+}

@@ -1,0 +1,175 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\n  \"status\": \"ok\",\n  \"message\": \"Backtests run inspect payload loaded.\",\n  \"tool_name\": \"backtests_runs\",\n  \"request_id\": \"68\",\n  \"correlation_id\": \"68\",\n  \"server_session_id\": \"e71ae3223f614c80b0655f06cba7ad68\",\n  \"response_generated_at\": \"2026-04-09T13:07:33.356575+00:00\",\n  \"data\": {\n    \"view\": \"status\",\n    \"run\": {\n      \"run_id\": \"20260409-130721-78d701f9\",\n      \"status\": \"completed\",\n      \"symbol\": \"BTCUSDT\",\n      \"strategy_name\": \"Active Signal v1\",\n      \"started_at\": \"2026-04-09T13:07:31.399285+00:00\",\n      \"finished_at\": \"2026-04-09T13:07:31.403885+00:00\",\n      \"total_anchor_steps\": 145,\n      \"processed_anchor_steps\": 44,\n      \"current_anchor_timestamp\": null,\n      \"completed_trade_count\": 1,\n      \"active_position\": null,\n      \"latest_message\": \"Backtest run completed with persisted artifacts.\",\n      \"error_message\": null,\n      \"summary\": {\n        \"run_id\": \"20260409-130721-78d701f9\",\n        \"symbol\": \"BTCUSDT\",\n        \"strategy_name\": \"Active Signal v1\",\n        \"strategy_snapshot_id\": \"active-signal-v1\",\n        \"strategy_snapshot_version\": 1,\n        \"status\": \"completed\",\n        \"started_at\": \"2026-04-09T13:07:31.399285+00:00\",\n        \"finished_at\": \"2026-04-09T13:07:31.403885+00:00\",\n        \"data_start_at\": \"2026-01-01T00:00:00+00:00\",\n        \"data_end_at\": \"2026-01-07T00:00:00+00:00\",\n        \"starting_capital_usd\": 1000.0,\n        \"ending_capital_usd\": 1010.4163013959558,\n        \"total_trades\": 1,\n        \"win_count\": 1,\n        \"loss_count\": 0,\n        \"net_pnl\": 10.416301395955799,\n        \"gross_pnl\": 11.321396024166674,\n        \"total_fees\": 0.905094628210875,\n        \"win_rate\": 1.0,\n        \"total_return_pct\": 1.0416301395955798,\n        \"annualized_return_pct\": 1.0416301395955798,\n        \"average_trade\": 10.416301395955799,\n        \"average_winner\": 10.416301395955799,\n        \"average_loser\": 0.0,\n        \"profit_factor\": null,\n        \"sharpe_ratio\": null,\n        \"sortino_ratio\": null,\n        \"calmar_ratio\": null,\n        \"recovery_factor\": null,\n        \"ulcer_index\": null,\n        \"max_drawdown\": 0.0,\n        \"max_drawdown_pct\": 0.0,\n        \"exposure_pct\": null,\n        \"time_under_water_pct\": null,\n        \"long_count\": 1,\n        \"short_count\": 0,\n        \"exit_reason_breakdown\": {\n          \"time_limit\": 1\n        }\n      },\n      \"wall_clock_duration_seconds\": 0.0046,\n      \"summary_finality\": {\n        \"is_final\": true,\n        \"state\": \"final\",\n        \"status\": \"completed\",\n        \"finality_state\": \"persisted_terminal\",\n        \"persistence_state\": \"persisted\"\n      },\n      \"summary_is_final\": true,\n      \"summary_kind\": \"final\",\n      \"summary_note\": \"This summary is final and persisted.\",\n      \"finality_state\": \"persisted_terminal\",\n      \"persistence_state\": \"persisted\",\n      \"compute_finished_at\": \"2026-04-09T13:07:31.403885+00:00\",\n      \"persisted_at\": \"2026-04-09T13:07:32.193713+00:00\",\n      \"lifecycle\": {\n        \"compute_complete\": true,\n        \"artifacts_persisted\": true,\n        \"final_persisted\": true,\n        \"readiness_state\": \"final_persisted\",\n        \"stop_requested\": false,\n        \"state_explanation\": \"Compute and artifact persistence are complete; the run is fully finalized.\"\n      },\n      \"is_stop_allowed\": false,\n      \"transient\": false\n    },\n    \"operation\": {\n      \"operation_id\": \"20260409-130721-78d701f9\",\n      \"operation_kind\": \"backtests_runs_start\",\n      \"status\": \"completed\",\n      \"progress\": {\n        \"current\": 44.0,\n        \"total\": 145.0,\n        \"unit\": \"anchor_steps\",\n        \"message\": \"Backtest run completed with persisted artifacts.\"\n      },\n      \"started_at\": \"2026-04-09T13:07:31.399285+00:00\",\n      \"finished_at\": \"2026-04-09T13:07:31.403885+00:00\",\n      \"result_ref\": {\n        \"kind\": \"backtest_run\",\n        \"id\": \"20260409-130721-78d701f9\"\n      },\n      \"finality_state\": \"persisted_terminal\",\n      \"persistence_state\": \"persisted\",\n      \"compute_finished_at\": \"2026-04-09T13:07:31.403885+00:00\",\n      \"persisted_at\": \"2026-04-09T13:07:32.193713+00:00\",\n      \"is_stop_allowed\": false,\n      \"slot_released\": false,\n      \"queue_id\": \"b5b22f250740\",\n      \"scheduler_state\": \"terminal\",\n      \"queue_position\": null,\n      \"queued_reason\": null,\n      \"blocking_operation_id\": null,\n      \"admitted_at\": \"2026-04-09T13:07:21.182670+00:00\",\n      \"health_state\": \"healthy\",\n      \"last_heartbeat_at\": \"2026-04-09T13:07:31.401348+00:00\",\n      \"last_progress_at\": \"2026-04-09T13:07:31.401348+00:00\",\n      \"progress_message\": \"Running backtest engine\",\n      \"action_required\": null,\n      \"stop_supported\": true\n    },\n    \"important_warnings\": [],\n    \"next_recommended_actions\": [\n      \"Use backtests_runs(view='events') or view='trades' for live diagnostics, or view='detail' after terminal completion.\"\n    ],\n    \"recommended_follow_up_tool\": null,\n    \"state_summary\": {},\n    \"exact_next_call_examples\": [\n      {\n        \"tool\": \"backtests_runs\",\n        \"arguments\": {\n          \"action\": \"inspect\",\n          \"view\": \"events\",\n          \"run_id\": \"20260409-130721-78d701f9\"\n        }\n      },\n      {\n        \"tool\": \"backtests_runs\",\n        \"arguments\": {\n          \"action\": \"inspect\",\n          \"view\": \"detail\",\n          \"run_id\": \"20260409-130721-78d701f9\"\n        }\n      }\n    ],\n    \"raw_refs\": [\n      \"system_raw_call(tool_name='backtests_runs_get_live_status')\"\n    ],\n    \"raw_tool_hints\": [],\n    \"summary\": \"Loaded lifecycle status for backtest run 20260409-130721-78d701f9.\"\n  },\n  \"warnings\": [],\n  \"refs\": [\n    {\n      \"kind\": \"backtest_run\",\n      \"id\": \"20260409-130721-78d701f9\",\n      \"path\": null\n    }\n  ],\n  \"error\": null\n}"
+    }
+  ],
+  "structuredContent": {
+    "status": "ok",
+    "message": "Backtests run inspect payload loaded.",
+    "tool_name": "backtests_runs",
+    "request_id": "68",
+    "correlation_id": "68",
+    "server_session_id": "e71ae3223f614c80b0655f06cba7ad68",
+    "response_generated_at": "2026-04-09T13:07:33.356575+00:00",
+    "data": {
+      "view": "status",
+      "run": {
+        "run_id": "20260409-130721-78d701f9",
+        "status": "completed",
+        "symbol": "BTCUSDT",
+        "strategy_name": "Active Signal v1",
+        "started_at": "2026-04-09T13:07:31.399285+00:00",
+        "finished_at": "2026-04-09T13:07:31.403885+00:00",
+        "total_anchor_steps": 145,
+        "processed_anchor_steps": 44,
+        "current_anchor_timestamp": null,
+        "completed_trade_count": 1,
+        "active_position": null,
+        "latest_message": "Backtest run completed with persisted artifacts.",
+        "error_message": null,
+        "summary": {
+          "run_id": "20260409-130721-78d701f9",
+          "symbol": "BTCUSDT",
+          "strategy_name": "Active Signal v1",
+          "strategy_snapshot_id": "active-signal-v1",
+          "strategy_snapshot_version": 1,
+          "status": "completed",
+          "started_at": "2026-04-09T13:07:31.399285+00:00",
+          "finished_at": "2026-04-09T13:07:31.403885+00:00",
+          "data_start_at": "2026-01-01T00:00:00+00:00",
+          "data_end_at": "2026-01-07T00:00:00+00:00",
+          "starting_capital_usd": 1000.0,
+          "ending_capital_usd": 1010.4163013959558,
+          "total_trades": 1,
+          "win_count": 1,
+          "loss_count": 0,
+          "net_pnl": 10.416301395955799,
+          "gross_pnl": 11.321396024166674,
+          "total_fees": 0.905094628210875,
+          "win_rate": 1.0,
+          "total_return_pct": 1.0416301395955798,
+          "annualized_return_pct": 1.0416301395955798,
+          "average_trade": 10.416301395955799,
+          "average_winner": 10.416301395955799,
+          "average_loser": 0.0,
+          "profit_factor": null,
+          "sharpe_ratio": null,
+          "sortino_ratio": null,
+          "calmar_ratio": null,
+          "recovery_factor": null,
+          "ulcer_index": null,
+          "max_drawdown": 0.0,
+          "max_drawdown_pct": 0.0,
+          "exposure_pct": null,
+          "time_under_water_pct": null,
+          "long_count": 1,
+          "short_count": 0,
+          "exit_reason_breakdown": {
+            "time_limit": 1
+          }
+        },
+        "wall_clock_duration_seconds": 0.0046,
+        "summary_finality": {
+          "is_final": true,
+          "state": "final",
+          "status": "completed",
+          "finality_state": "persisted_terminal",
+          "persistence_state": "persisted"
+        },
+        "summary_is_final": true,
+        "summary_kind": "final",
+        "summary_note": "This summary is final and persisted.",
+        "finality_state": "persisted_terminal",
+        "persistence_state": "persisted",
+        "compute_finished_at": "2026-04-09T13:07:31.403885+00:00",
+        "persisted_at": "2026-04-09T13:07:32.193713+00:00",
+        "lifecycle": {
+          "compute_complete": true,
+          "artifacts_persisted": true,
+          "final_persisted": true,
+          "readiness_state": "final_persisted",
+          "stop_requested": false,
+          "state_explanation": "Compute and artifact persistence are complete; the run is fully finalized."
+        },
+        "is_stop_allowed": false,
+        "transient": false
+      },
+      "operation": {
+        "operation_id": "20260409-130721-78d701f9",
+        "operation_kind": "backtests_runs_start",
+        "status": "completed",
+        "progress": {
+          "current": 44.0,
+          "total": 145.0,
+          "unit": "anchor_steps",
+          "message": "Backtest run completed with persisted artifacts."
+        },
+        "started_at": "2026-04-09T13:07:31.399285+00:00",
+        "finished_at": "2026-04-09T13:07:31.403885+00:00",
+        "result_ref": {
+          "kind": "backtest_run",
+          "id": "20260409-130721-78d701f9"
+        },
+        "finality_state": "persisted_terminal",
+        "persistence_state": "persisted",
+        "compute_finished_at": "2026-04-09T13:07:31.403885+00:00",
+        "persisted_at": "2026-04-09T13:07:32.193713+00:00",
+        "is_stop_allowed": false,
+        "slot_released": false,
+        "queue_id": "b5b22f250740",
+        "scheduler_state": "terminal",
+        "queue_position": null,
+        "queued_reason": null,
+        "blocking_operation_id": null,
+        "admitted_at": "2026-04-09T13:07:21.182670+00:00",
+        "health_state": "healthy",
+        "last_heartbeat_at": "2026-04-09T13:07:31.401348+00:00",
+        "last_progress_at": "2026-04-09T13:07:31.401348+00:00",
+        "progress_message": "Running backtest engine",
+        "action_required": null,
+        "stop_supported": true
+      },
+      "important_warnings": [],
+      "next_recommended_actions": [
+        "Use backtests_runs(view='events') or view='trades' for live diagnostics, or view='detail' after terminal completion."
+      ],
+      "recommended_follow_up_tool": null,
+      "state_summary": {},
+      "exact_next_call_examples": [
+        {
+          "tool": "backtests_runs",
+          "arguments": {
+            "action": "inspect",
+            "view": "events",
+            "run_id": "20260409-130721-78d701f9"
+          }
+        },
+        {
+          "tool": "backtests_runs",
+          "arguments": {
+            "action": "inspect",
+            "view": "detail",
+            "run_id": "20260409-130721-78d701f9"
+          }
+        }
+      ],
+      "raw_refs": [
+        "system_raw_call(tool_name='backtests_runs_get_live_status')"
+      ],
+      "raw_tool_hints": [],
+      "summary": "Loaded lifecycle status for backtest run 20260409-130721-78d701f9."
+    },
+    "warnings": [],
+    "refs": [
+      {
+        "kind": "backtest_run",
+        "id": "20260409-130721-78d701f9",
+        "path": null
+      }
+    ],
+    "error": null
+  },
+  "isError": false
+}

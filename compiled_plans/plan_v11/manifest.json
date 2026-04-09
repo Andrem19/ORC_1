@@ -1,0 +1,19 @@
+{
+  "source_file": "raw_plans/plan_v11.md",
+  "source_hash": "3f49d822ba6a5bfa9dab725eed820edaac3196724c74fd317b87b3d2bee21676",
+  "compiled_at": "2026-04-09T14:34:40.635917+00:00",
+  "sequence_id": "compiled_plan_v11",
+  "compile_status": "compiled",
+  "warnings": [
+    "v10 lockbox comparison used @3 as baseline instead of the declared @1 — this mismatch must be resolved first.",
+    "v10 veto models report AUC/PR ~0.95, which is suspiciously high and could indicate label leakage or threshold shortcut.",
+    "short_veto, long_veto, and combined_veto in v10 lockbox table report identical deltas — requires explanation."
+  ],
+  "semantic_method": "llm",
+  "plan_files": [
+    "plans/compiled_plan_v11_batch_1.json",
+    "plans/compiled_plan_v11_batch_2.json",
+    "plans/compiled_plan_v11_batch_3.json",
+    "plans/compiled_plan_v11_batch_4.json"
+  ]
+}

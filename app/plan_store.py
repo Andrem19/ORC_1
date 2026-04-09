@@ -1,10 +1,5 @@
 """
-Plan persistence — dual-format storage for research plans.
-
-Saves plans as:
-  - Markdown: plans/plan_v1.md (human-readable, feeds back into planner)
-  - JSON: plans/plan_v1.json (machine-readable, for state restoration)
-  - Reports: plans/reports/{task_id}.json
+Persistence for the canonical markdown wave runtime.
 """
 
 from __future__ import annotations
@@ -12,229 +7,130 @@ from __future__ import annotations
 import json
 import logging
 import shutil
-from dataclasses import asdict
 from datetime import datetime, timezone
+from dataclasses import asdict
 from pathlib import Path
 from typing import Any
 
-from app.plan_models import ResearchPlan, TaskReport, decision_gate_from_dict
+from app.plan_models import Plan, PlanExecutionSlice, PlanReport
+from app.run_context import ensure_current_run, read_current_run_id, resolve_run_dir
 
 logger = logging.getLogger("orchestrator.plan_store")
 
 
 class PlanStore:
-    """Manages plan and report persistence on disk."""
+    """Stores plans, plan reports, planner runs, and wave summaries."""
 
-    def __init__(self, plans_dir: str = "plans") -> None:
+    def __init__(self, plans_dir: str = "plans", *, run_id: str = "") -> None:
         self.plans_dir = Path(plans_dir)
-        self.reports_dir = self.plans_dir / "reports"
-        self.rejected_dir = self.plans_dir / "rejected"
-        self.planner_runs_dir = self.plans_dir / "planner_runs"
+        self.run_id = run_id or read_current_run_id(self.plans_dir)
+        self.reports_dir = self.active_root / "reports"
+        self.planner_runs_dir = self.active_root / "planner_runs"
+        self.wave_runs_dir = self.active_root / "waves"
+        self.attempts_dir = self.active_root / "attempts"
+
+    @property
+    def active_root(self) -> Path:
+        if not self.run_id:
+            return self.plans_dir
+        return ensure_current_run(self.plans_dir, self.run_id)
 
     def ensure_dirs(self) -> None:
-        """Create plan directories if they don't exist."""
         self.plans_dir.mkdir(parents=True, exist_ok=True)
+        self.active_root.mkdir(parents=True, exist_ok=True)
         self.reports_dir.mkdir(parents=True, exist_ok=True)
-        self.rejected_dir.mkdir(parents=True, exist_ok=True)
         self.planner_runs_dir.mkdir(parents=True, exist_ok=True)
+        self.wave_runs_dir.mkdir(parents=True, exist_ok=True)
+        self.attempts_dir.mkdir(parents=True, exist_ok=True)
 
-    # ---------------------------------------------------------------
-    # Plan persistence
-    # ---------------------------------------------------------------
-
-    def save_plan(self, plan: ResearchPlan) -> Path:
-        """Save plan as both markdown and JSON. Returns the markdown path."""
+    def save_plan(self, plan: Plan) -> Path:
         self.ensure_dirs()
-
-        md_path = self.plans_dir / f"plan_v{plan.version}.md"
-        json_path = self.plans_dir / f"plan_v{plan.version}.json"
-
-        # Save markdown (the planner's raw output, or rendered)
-        md_content = plan.plan_markdown or _render_plan_markdown(plan)
-        md_path.write_text(md_content, encoding="utf-8")
-
-        # Save JSON (full structured data, but WITHOUT plan_markdown to save space)
-        json_data = _plan_to_dict(plan)
-        json_data["plan_markdown"] = ""  # stored separately as .md
-        json_path.write_text(
-            json.dumps(json_data, ensure_ascii=False, indent=2),
-            encoding="utf-8",
-        )
-
-        logger.info("Plan v%d saved to %s (%d chars) and %s",
-                     plan.version, md_path, len(md_content), json_path)
+        md_path = self.active_root / f"plan_v{plan.version}.md"
+        meta_path = self.active_root / f"plan_v{plan.version}_meta.json"
+        md_path.write_text(plan.markdown, encoding="utf-8")
+        payload = asdict(plan)
+        payload["markdown"] = ""
+        meta_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+        logger.info("Plan v%d saved", plan.version)
         return md_path
 
-    def load_plan(self, version: int) -> ResearchPlan | None:
-        """Load a plan by version number (from JSON, restores markdown from .md)."""
-        json_path = self.plans_dir / f"plan_v{version}.json"
-        if not json_path.exists():
+    def load_plan(self, version: int) -> Plan | None:
+        meta_path = self._preferred_path(f"plan_v{version}_meta.json")
+        if not meta_path.exists():
             return None
         try:
-            data = json.loads(json_path.read_text(encoding="utf-8"))
-            plan = _plan_from_dict(data)
-            # Restore plan_markdown from the separate .md file
-            if not plan.plan_markdown:
-                md = self.load_plan_markdown(version)
-                if md:
-                    plan.plan_markdown = md
-            return plan
-        except Exception as e:
-            logger.error("Failed to load plan v%d: %s", version, e)
+            payload = json.loads(meta_path.read_text(encoding="utf-8"))
+            payload["markdown"] = self.load_plan_markdown(version) or ""
+            slices = payload.get("slices", [])
+            if isinstance(slices, list):
+                payload["slices"] = [
+                    item if isinstance(item, PlanExecutionSlice) else PlanExecutionSlice(**item)
+                    for item in slices
+                    if isinstance(item, dict)
+                ]
+            filtered = {k: v for k, v in payload.items() if k in Plan.__dataclass_fields__}
+            return Plan(**filtered)
+        except Exception as exc:
+            logger.error("Failed to load plan v%d: %s", version, exc)
             return None
-
-    def load_latest_plan(self) -> ResearchPlan | None:
-        """Load the most recent plan version."""
-        versions = self.list_plan_versions()
-        if not versions:
-            return None
-        return self.load_plan(max(versions))
-
-    def list_plan_versions(self) -> list[int]:
-        """List all plan version numbers available on disk, sorted ascending."""
-        versions: list[int] = []
-        if not self.plans_dir.exists():
-            return versions
-        for p in self.plans_dir.glob("plan_v*.json"):
-            try:
-                ver = int(p.stem.replace("plan_v", ""))
-                versions.append(ver)
-            except ValueError:
-                continue
-        return sorted(versions)
 
     def load_plan_markdown(self, version: int) -> str | None:
-        """Load the markdown text of a plan version."""
-        md_path = self.plans_dir / f"plan_v{version}.md"
+        md_path = self._preferred_path(f"plan_v{version}.md")
         if not md_path.exists():
             return None
         return md_path.read_text(encoding="utf-8")
 
-    def load_all_anti_patterns(self) -> list[dict[str, Any]]:
-        """Load anti-patterns from all plan versions (for planner context)."""
-        all_patterns: list[dict[str, Any]] = []
-        seen_ids: set[str] = set()
-        for ver in self.list_plan_versions():
-            plan = self.load_plan(ver)
-            if plan is None:
+    def list_plan_versions(self) -> list[int]:
+        versions: list[int] = []
+        search_root = self.active_root if self.active_root.exists() else self.plans_dir
+        if not search_root.exists():
+            return versions
+        for path in search_root.glob("plan_v*_meta.json"):
+            try:
+                versions.append(int(path.stem.replace("plan_v", "").replace("_meta", "")))
+            except ValueError:
                 continue
-            for ap in plan.anti_patterns:
-                if ap.pattern_id not in seen_ids:
-                    seen_ids.add(ap.pattern_id)
-                    all_patterns.append(asdict(ap))
-        return all_patterns
+        return sorted(versions)
 
-    def load_cumulative_summary(self) -> str:
-        """Load the cumulative summary from the latest plan."""
+    def load_latest_plan(self) -> Plan | None:
         versions = self.list_plan_versions()
         if not versions:
-            return ""
-        plan = self.load_plan(max(versions))
-        if plan is None:
-            return ""
-        return plan.cumulative_summary
+            return None
+        return self.load_plan(versions[-1])
 
-    def load_all_reports_compact(
-        self, current_plan_version: int = 0, max_lines: int = 10,
-        max_versions: int = 5,
-    ) -> list[str]:
-        """Return compact one-line verdicts from recent plan versions' reports.
-
-        Skips the current plan version (those reports are already in the
-        Worker Reports section of the prompt).  Only the *max_versions* most
-        recent older versions are included to keep prompt size bounded.
-        """
-        lines: list[str] = []
-        versions = self.list_plan_versions()
-        older = [v for v in versions if v != current_plan_version]
-        recent_versions = older[-max_versions:] if len(older) > max_versions else older
-        for ver in recent_versions:
-            reports = self.load_reports_for_plan(ver)
-            for report in reports:
-                verdict = report.verdict or "PENDING"
-                # Extract feature name and key metrics
-                detail_parts: list[str] = []
-                if report.results_table:
-                    for row in report.results_table[:1]:
-                        name = row.get("name", row.get("feature", row.get("snapshot_ref", "")))
-                        if name:
-                            detail_parts.append(str(name))
-                        pnl = row.get("net_pnl", row.get("pnl", ""))
-                        if pnl != "":
-                            detail_parts.append(f"PnL {pnl}")
-                        trades = row.get("trades", row.get("total_trades", ""))
-                        if trades != "":
-                            detail_parts.append(f"{trades} trades")
-                elif report.what_was_done:
-                    detail_parts.append(report.what_was_done[:60])
-                else:
-                    detail_parts.append(f"status={report.status}")
-                detail = ", ".join(detail_parts)
-                line = f"- v{ver}: {detail} -> {verdict}"
-                if len(line) > 140:
-                    line = line[:137] + "..."
-                lines.append(line)
-                if len(lines) >= max_lines:
-                    return lines
-        return lines
-
-    # ---------------------------------------------------------------
-    # Report persistence
-    # ---------------------------------------------------------------
-
-    def save_report(self, report: TaskReport) -> Path:
-        """Save a task report."""
+    def save_report(self, report: PlanReport) -> Path:
         self.ensure_dirs()
-        path = self.reports_dir / f"{report.task_id}.json"
-        path.write_text(
-            json.dumps(asdict(report), ensure_ascii=False, indent=2),
-            encoding="utf-8",
-        )
-        logger.info("Report saved for task %s (plan v%d)", report.task_id, report.plan_version)
+        path = self.reports_dir / f"plan_v{report.plan_version}_report.json"
+        path.write_text(json.dumps(asdict(report), ensure_ascii=False, indent=2), encoding="utf-8")
+        logger.info("Plan report saved for v%d", report.plan_version)
         return path
 
-    def save_rejected_plan_attempt(
-        self,
-        plan_version: int,
-        attempt_number: int,
-        attempt_type: str,
-        raw_output: str,
-        parsed_data: dict[str, Any],
-        validation_errors: list[dict[str, Any]],
-        execution_seq: int = 1,
-        failure_class: str = "invalid_content",
-        request_type: str | None = None,
-        structured_payload: dict[str, Any] | None = None,
-        failure_detail: str = "",
-        planner_run_artifact: str | None = None,
-    ) -> Path:
-        """Persist one invalid planner attempt for later debugging."""
+    def load_report(self, version: int) -> PlanReport | None:
+        path = self._preferred_subpath("reports", f"plan_v{version}_report.json")
+        if not path.exists():
+            return None
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+            filtered = {k: v for k, v in payload.items() if k in PlanReport.__dataclass_fields__}
+            return PlanReport(**filtered)
+        except Exception as exc:
+            logger.error("Failed to load report for v%d: %s", version, exc)
+            return None
+
+    def load_cumulative_findings(self) -> str:
+        path = self.plans_dir / "cumulative_findings.txt"
+        if not path.exists():
+            return ""
+        return path.read_text(encoding="utf-8")
+
+    def append_findings(self, text: str) -> None:
         self.ensure_dirs()
-        path = self.rejected_dir / f"plan_v{plan_version}_attempt_{attempt_number}_exec_{execution_seq}.json"
-        payload = {
-            "plan_version": plan_version,
-            "attempt_number": attempt_number,
-            "attempt_type": attempt_type,
-            "execution_seq": execution_seq,
-            "saved_at": datetime.now(timezone.utc).isoformat(),
-            "raw_output": raw_output,
-            "parsed_data": parsed_data,
-            "validation_errors": validation_errors,
-            "failure_class": failure_class,
-            "request_type": request_type or attempt_type,
-            "structured_payload": structured_payload,
-            "failure_detail": failure_detail,
-            "planner_run_artifact": planner_run_artifact,
-        }
-        path.write_text(
-            json.dumps(payload, ensure_ascii=False, indent=2),
-            encoding="utf-8",
-        )
-        logger.info(
-            "Rejected plan attempt saved: v%d attempt=%d type=%s",
-            plan_version, attempt_number, attempt_type,
-        )
-        return path
+        path = self.plans_dir / "cumulative_findings.txt"
+        existing = self.load_cumulative_findings()
+        updated = (existing + "\n" + text).strip()
+        if len(updated) > 3000:
+            updated = updated[-3000:]
+        path.write_text(updated, encoding="utf-8")
 
     def save_planner_run(
         self,
@@ -245,233 +141,147 @@ class PlanStore:
         execution_seq: int,
         payload: dict[str, Any],
     ) -> Path:
-        """Persist one planner execution trace for diagnostics."""
         self.ensure_dirs()
         filename = f"{request_type}_v{request_version}_attempt_{attempt_number}_exec_{execution_seq}.json"
         path = self.planner_runs_dir / filename
-        path.write_text(
-            json.dumps(payload, ensure_ascii=False, indent=2),
-            encoding="utf-8",
-        )
+        normalized = self._externalize_planner_payload(filename=filename, payload=payload)
+        path.write_text(json.dumps(normalized, ensure_ascii=False, indent=2), encoding="utf-8")
         logger.info(
-            "Planner run saved: type=%s v%d attempt=%d",
-            request_type, request_version, attempt_number,
+            "Planner run saved: type=%s v%d attempt=%d exec=%d",
+            request_type,
+            request_version,
+            attempt_number,
+            execution_seq,
         )
         return path
 
-    def load_report(self, task_id: str) -> TaskReport | None:
-        """Load a task report by task_id."""
-        path = self.reports_dir / f"{task_id}.json"
+    def save_wave_summary(self, *, wave_id: int, payload: dict[str, Any]) -> Path:
+        self.ensure_dirs()
+        path = self.wave_runs_dir / f"wave_{wave_id}.json"
+        path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+        logger.info("Wave summary saved for wave %d", wave_id)
+        return path
+
+    def load_wave_summary(self, wave_id: int) -> dict[str, Any] | None:
+        path = self.wave_runs_dir / f"wave_{wave_id}.json"
         if not path.exists():
             return None
         try:
-            data = json.loads(path.read_text(encoding="utf-8"))
-            return TaskReport(**data)
-        except Exception as e:
-            logger.error("Failed to load report for task %s: %s", task_id, e)
+            return json.loads(path.read_text(encoding="utf-8"))
+        except Exception as exc:
+            logger.error("Failed to load wave %d: %s", wave_id, exc)
             return None
 
-    def load_reports_for_plan(self, version: int) -> list[TaskReport]:
-        """Load all reports for a specific plan version."""
-        reports: list[TaskReport] = []
-        if not self.reports_dir.exists():
-            return reports
-        for path in self.reports_dir.glob("*.json"):
+    def load_latest_wave_summary(self) -> dict[str, Any] | None:
+        if not self.wave_runs_dir.exists():
+            return None
+        wave_ids: list[int] = []
+        for path in self.wave_runs_dir.glob("wave_*.json"):
             try:
-                data = json.loads(path.read_text(encoding="utf-8"))
-                report = TaskReport(**data)
-                if report.plan_version == version:
-                    reports.append(report)
-            except Exception:
+                wave_ids.append(int(path.stem.replace("wave_", "")))
+            except ValueError:
                 continue
-        return reports
-
-    # ---------------------------------------------------------------
-    # Reset support
-    # ---------------------------------------------------------------
+        if not wave_ids:
+            return None
+        return self.load_wave_summary(max(wave_ids))
 
     def clear_all(self) -> None:
-        """Remove all plan files and reports from disk."""
-        for p in list(self.plans_dir.glob("plan_v*")):
-            p.unlink()
-            logger.info("Removed plan file: %s", p)
-        if self.reports_dir.exists():
-            for p in list(self.reports_dir.glob("*.json")):
-                p.unlink()
-                logger.info("Removed report: %s", p)
-        if self.rejected_dir.exists():
-            for p in list(self.rejected_dir.glob("*.json")):
-                p.unlink()
-                logger.info("Removed rejected plan artifact: %s", p)
-        if self.planner_runs_dir.exists():
-            for p in list(self.planner_runs_dir.glob("*.json")):
-                p.unlink()
-                logger.info("Removed planner run artifact: %s", p)
+        targets = list(self.plans_dir.glob("plan_v*.md")) + list(self.plans_dir.glob("plan_v*_meta.json"))
+        if self.plans_dir.exists():
+            for subdir in ("reports", "planner_runs", "waves", "attempts", "runs"):
+                path = self.plans_dir / subdir
+                if path.exists():
+                    if path.is_dir():
+                        shutil.rmtree(path, ignore_errors=True)
+                    else:
+                        path.unlink(missing_ok=True)
+        findings_path = self.plans_dir / "cumulative_findings.txt"
+        if findings_path.exists():
+            targets.append(findings_path)
+        current_run_path = self.plans_dir / "current_run.json"
+        if current_run_path.exists():
+            targets.append(current_run_path)
+        current_link = self.plans_dir / "current"
+        if current_link.exists() or current_link.is_symlink():
+            targets.append(current_link)
+        for path in targets:
+            if path.is_dir() and not path.is_symlink():
+                shutil.rmtree(path, ignore_errors=True)
+            else:
+                path.unlink(missing_ok=True)
 
     def archive_to(self, target_dir: Path) -> int:
-        """Copy all plan files and reports to target_dir. Returns file count."""
         target_dir.mkdir(parents=True, exist_ok=True)
         count = 0
-        for p in self.plans_dir.glob("plan_v*"):
-            shutil.copy2(p, target_dir / p.name)
+        for path in self.plans_dir.glob("plan_v*"):
+            shutil.copy2(path, target_dir / path.name)
             count += 1
-        reports_target = target_dir / "reports"
-        if self.reports_dir.exists():
-            reports_target.mkdir(parents=True, exist_ok=True)
-            for p in self.reports_dir.glob("*.json"):
-                shutil.copy2(p, reports_target / p.name)
+        for subdir_name in ("reports", "planner_runs", "waves"):
+            src_dir = self.plans_dir / subdir_name
+            if not src_dir.exists():
+                continue
+            dst_dir = target_dir / subdir_name
+            dst_dir.mkdir(parents=True, exist_ok=True)
+            for path in src_dir.glob("*.json"):
+                shutil.copy2(path, dst_dir / path.name)
                 count += 1
-        rejected_target = target_dir / "rejected"
-        if self.rejected_dir.exists():
-            rejected_target.mkdir(parents=True, exist_ok=True)
-            for p in self.rejected_dir.glob("*.json"):
-                shutil.copy2(p, rejected_target / p.name)
-                count += 1
-        planner_runs_target = target_dir / "planner_runs"
-        if self.planner_runs_dir.exists():
-            planner_runs_target.mkdir(parents=True, exist_ok=True)
-            for p in self.planner_runs_dir.glob("*.json"):
-                shutil.copy2(p, planner_runs_target / p.name)
-                count += 1
+        findings_path = self.plans_dir / "cumulative_findings.txt"
+        if findings_path.exists():
+            shutil.copy2(findings_path, target_dir / findings_path.name)
+            count += 1
         return count
 
+    def save_worker_attempt_artifact(
+        self,
+        *,
+        task_id: str,
+        plan_version: int,
+        payload: dict[str, Any],
+    ) -> Path:
+        self.ensure_dirs()
+        safe_task = task_id.replace("/", "_")
+        filename = f"plan_v{plan_version}_{safe_task}.json"
+        path = self.attempts_dir / filename
+        path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+        return path
 
-# ---------------------------------------------------------------------------
-# Serialization helpers
-# ---------------------------------------------------------------------------
+    def _preferred_path(self, filename: str) -> Path:
+        candidate = self.active_root / filename
+        if candidate.exists():
+            return candidate
+        return self.plans_dir / filename
 
-def _plan_to_dict(plan: ResearchPlan) -> dict[str, Any]:
-    """Serialize a ResearchPlan to a plain dict."""
-    return asdict(plan)
+    def _preferred_subpath(self, dirname: str, filename: str) -> Path:
+        candidate = self.active_root / dirname / filename
+        if candidate.exists():
+            return candidate
+        return self.plans_dir / dirname / filename
 
-
-def _plan_from_dict(data: dict[str, Any]) -> ResearchPlan:
-    """Deserialize a ResearchPlan from a plain dict."""
-    # Rebuild nested objects
-    tasks = []
-    for t_data in data.get("tasks", []):
-        gates = []
-        for g_data in t_data.get("decision_gates", []):
-            gates.append(_dict_to_dataclass(g_data))
-        t_data["decision_gates"] = gates
-        depends_on = t_data.get("depends_on", [])
-        if not isinstance(depends_on, list):
-            depends_on = []
-        t_data["depends_on"] = [int(dep) for dep in depends_on if isinstance(dep, int)]
-        t_data["steps"] = t_data.get("steps", [])
-        t_data["results_table_rows"] = t_data.get("results_table_rows", [])
-        t_data["results_table_columns"] = t_data.get("results_table_columns", [])
-        t_data["agent_instructions"] = t_data.get("agent_instructions", [])
-        # Ensure status is valid
-        status_str = t_data.get("status", "pending")
-        try:
-            from app.models import TaskStatus
-            t_data["status"] = TaskStatus(status_str)
-        except ValueError:
-            t_data["status"] = TaskStatus.PENDING
-        tasks.append(_dict_to_dataclass(t_data, target_class_name="PlanTask"))
-
-    anti_patterns = []
-    for ap_data in data.get("anti_patterns", []):
-        anti_patterns.append(_dict_to_dataclass(ap_data, target_class_name="AntiPattern"))
-
-    data["tasks"] = tasks
-    data["anti_patterns"] = anti_patterns
-    data["schema_version"] = int(data.get("schema_version", 1) or 1)
-    data["principles"] = data.get("principles", [])
-    data["execution_order"] = data.get("execution_order", [])
-    baseline_metrics = data.get("baseline_metrics", {})
-    data["baseline_metrics"] = baseline_metrics if isinstance(baseline_metrics, dict) else {}
-
-    # Remove fields that don't exist in the dataclass
-    valid_keys = {f.name for f in __import__("dataclasses").fields(ResearchPlan)}
-    filtered = {k: v for k, v in data.items() if k in valid_keys}
-
-    return ResearchPlan(**filtered)
+    def _externalize_planner_payload(self, *, filename: str, payload: dict[str, Any]) -> dict[str, Any]:
+        normalized = dict(payload)
+        transcripts_dir = self.planner_runs_dir / "transcripts"
+        transcripts_dir.mkdir(parents=True, exist_ok=True)
+        for field_name in ("raw_stdout", "raw_stderr"):
+            raw = str(normalized.get(field_name, "") or "")
+            if not raw:
+                normalized[f"{field_name}_chars"] = 0
+                continue
+            ref = transcripts_dir / f"{Path(filename).stem}_{field_name}.log"
+            ref.write_text(raw, encoding="utf-8")
+            normalized[f"{field_name}_chars"] = len(raw)
+            normalized[f"{field_name}_ref"] = str(ref)
+            normalized[f"{field_name}_preview"] = raw[:1200]
+            normalized[f"{field_name}_tail"] = raw[-1200:]
+            normalized[field_name] = _compact_preview(raw)
+        rendered = str(normalized.get("rendered_output", "") or "")
+        normalized["rendered_output_chars"] = len(rendered)
+        if len(rendered) > 6000:
+            normalized["rendered_output"] = _compact_preview(rendered)
+        normalized["saved_at"] = datetime.now(timezone.utc).isoformat()
+        return normalized
 
 
-def _dict_to_dataclass(data: dict[str, Any], target_class_name: str = "") -> Any:
-    """Best-effort dict → dataclass conversion."""
-    if target_class_name == "PlanTask":
-        from app.plan_models import PlanTask, DecisionGate, PlanStep
-        gates = []
-        for g in data.get("decision_gates", []):
-            if isinstance(g, dict):
-                gates.append(decision_gate_from_dict(g))
-            elif isinstance(g, DecisionGate):
-                gates.append(g)
-        steps = []
-        for s in data.get("steps", []):
-            if isinstance(s, dict):
-                steps.append(PlanStep(**{
-                    "step_id": s.get("step_id", ""),
-                    "kind": s.get("kind", "work"),
-                    "instruction": s.get("instruction", ""),
-                    "tool_name": s.get("tool_name"),
-                    "args": s.get("args", {}) if isinstance(s.get("args"), dict) else {},
-                    "binds": s.get("binds", []) if isinstance(s.get("binds"), list) else [],
-                    "decision_outputs": s.get("decision_outputs", []) if isinstance(s.get("decision_outputs"), list) else [],
-                    "notes": s.get("notes", ""),
-                }))
-            elif isinstance(s, PlanStep):
-                steps.append(s)
-        valid_keys = {f.name for f in __import__("dataclasses").fields(PlanTask)}
-        filtered = {k: v for k, v in data.items() if k in valid_keys}
-        filtered["decision_gates"] = gates
-        filtered["steps"] = steps
-        return PlanTask(**filtered)
-    elif target_class_name == "AntiPattern":
-        from app.plan_models import AntiPattern
-        valid_keys = {f.name for f in __import__("dataclasses").fields(AntiPattern)}
-        filtered = {k: v for k, v in data.items() if k in valid_keys}
-        return AntiPattern(**filtered)
-    else:
-        # DecisionGate or simple dataclass
-        return decision_gate_from_dict(data)
-
-
-def _render_plan_markdown(plan: ResearchPlan) -> str:
-    """Render a ResearchPlan into markdown (fallback if plan_markdown is empty)."""
-    parts: list[str] = []
-    parts.append(f"# Plan v{plan.version}")
-    parts.append("")
-    parts.append(f"**Created**: {plan.created_at}")
-    if plan.frozen_base:
-        parts.append(f"**Frozen base**: {plan.frozen_base}")
-    parts.append(f"**Goal**: {plan.goal}")
-    parts.append("")
-
-    if plan.cumulative_summary:
-        parts.append("## Cumulative Summary")
-        parts.append(plan.cumulative_summary)
-        parts.append("")
-
-    if plan.anti_patterns:
-        parts.append("## Anti-Patterns (do NOT repeat)")
-        for ap in plan.anti_patterns:
-            parts.append(f"- **{ap.category}**: {ap.description} ({ap.evidence_count} failures)")
-        parts.append("")
-
-    for task in plan.tasks:
-        parts.append(f"## ETAP {task.stage_number}: {task.stage_name}")
-        parts.append("")
-        if task.theory:
-            parts.append("### Theory")
-            parts.append(task.theory)
-            parts.append("")
-        parts.append("### Instructions")
-        for i, step in enumerate(task.normalized_steps(), 1):
-            parts.append(f"{i}. [{step.step_id}] {step.kind}")
-            for line in step.render_prompt_block()[1:]:
-                parts.append(f"   - {line}")
-        if task.results_table_columns:
-            parts.append("")
-            parts.append("### Results")
-            cols = task.results_table_columns
-            parts.append("| " + " | ".join(cols) + " |")
-            parts.append("| " + " | ".join("---" for _ in cols) + " |")
-            for row in task.results_table_rows:
-                parts.append("| " + " | ".join(str(row.get(c, "")) for c in cols) + " |")
-        parts.append("")
-
-    return "\n".join(parts)
+def _compact_preview(text: str, *, head: int = 1200, tail: int = 800) -> str:
+    if len(text) <= head + tail + 32:
+        return text
+    return f"{text[:head]}\n\n--- [TRUNCATED] ---\n\n{text[-tail:]}"

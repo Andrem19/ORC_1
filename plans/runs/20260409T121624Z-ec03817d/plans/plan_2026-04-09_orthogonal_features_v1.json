@@ -1,0 +1,195 @@
+{
+  "plan_id": "plan_2026-04-09_orthogonal_features_v1",
+  "goal": "Discover and validate three orthogonal feature families that generate new trades beyond the active-signal-v1 baseline, keeping all three workers saturated with parallel discovery-then-build work.",
+  "baseline_ref": {
+    "snapshot_id": "active-signal-v1",
+    "version": 1,
+    "symbol": "BTCUSDT",
+    "anchor_timeframe": "1h",
+    "execution_timeframe": "5m"
+  },
+  "global_constraints": [
+    "keep 1h/5m timeframes fixed",
+    "do not retune baseline thresholds",
+    "every slice must start with cheap data-availability discovery before any feature engineering",
+    "new features must target signal regimes the baseline misses: sentiment, order-flow, and cross-timeframe divergence",
+    "no slice may assume a feature family or dataset exists without first confirming via catalog or preview"
+  ],
+  "slices": [
+    {
+      "slice_id": "slice_1_funding_sentiment",
+      "title": "Funding rate and open-interest sentiment features",
+      "hypothesis": "Extreme funding rates and rapid OI changes reflect crowded positioning that precedes price reversals or accelerations the baseline does not capture, providing genuinely new entry signals.",
+      "objective": "Discover available funding and OI event/feature data, then engineer sentiment-extreme features and validate their signal independence from baseline trades.",
+      "success_criteria": [
+        "Confirm at least one funding-rate or open-interest data source is available and fresh via events_sync or features_catalog",
+        "Produce one or more custom features (e.g. funding_zscore, oi_velocity) with non-degenerate distributions via features_analytics",
+        "Demonstrate via cheap correlation check or quick backtests_study that new features fire in time windows where baseline has zero trades"
+      ],
+      "allowed_tools": [
+        "events",
+        "events_sync",
+        "features_catalog",
+        "features_analytics",
+        "features_custom",
+        "features_dataset",
+        "datasets",
+        "datasets_preview",
+        "backtests_studies",
+        "backtests_study_materialize",
+        "research_record"
+      ],
+      "evidence_requirements": [
+        "events or catalog listing proving funding/OI data availability and date range",
+        "distribution statistics for engineered features showing non-trivial variance",
+        "overlap analysis showing fewer than 30% of new-feature signals coincide with baseline trade windows"
+      ],
+      "policy_tags": [
+        "cheap_first",
+        "orthogonal_signal",
+        "sentiment"
+      ],
+      "max_turns": 12,
+      "max_tool_calls": 10,
+      "max_expensive_calls": 3,
+      "parallel_slot": 1,
+      "status": "pending",
+      "turn_count": 0,
+      "tool_call_count": 0,
+      "expensive_call_count": 0,
+      "assigned_worker_id": null,
+      "last_checkpoint_turn_id": "",
+      "last_checkpoint_summary": "",
+      "final_report_turn_id": "",
+      "last_error": "",
+      "last_summary": "",
+      "latest_tool_result_summary": "",
+      "active_operation_tool": "",
+      "active_operation_ref": "",
+      "active_operation_status": "",
+      "active_operation_arguments": {},
+      "active_resume_tool": "",
+      "active_resume_token": "",
+      "last_tool_response_status": "",
+      "artifacts": [],
+      "facts": {}
+    },
+    {
+      "slice_id": "slice_2_volume_microstructure",
+      "title": "Volume delta and trade-intensity microstructure features",
+      "hypothesis": "Order-flow imbalance captured by buy-vs-sell volume delta and trade intensity spikes reveals aggressive positioning shifts that pure price-based baseline signals miss, unlocking new trade opportunities during consolidation and breakout regimes.",
+      "objective": "Inventory existing volume-related features, identify gaps, engineer volume-delta and intensity features, and validate that they produce signals in under-traded regimes.",
+      "success_criteria": [
+        "features_catalog and datasets_preview confirm volume or trade-level data coverage on BTCUSDT at 5m granularity",
+        "Engineer at least two features: cumulative_volume_delta and trade_intensity_ratio with healthy spread via features_analytics",
+        "Quick backtests_study or research_record shows new volume features trigger in low-baseline-activity periods (e.g. flat market breakouts)"
+      ],
+      "allowed_tools": [
+        "features_catalog",
+        "features_analytics",
+        "features_custom",
+        "features_dataset",
+        "features_cleanup",
+        "datasets",
+        "datasets_preview",
+        "backtests_studies",
+        "backtests_study_materialize",
+        "research_record"
+      ],
+      "evidence_requirements": [
+        "catalog or dataset listing confirming volume-trade data availability",
+        "feature distribution report showing skew and kurtosis within usable bounds",
+        "regime overlap check: volume-feature signals must activate in at least 20% of bars where baseline is silent"
+      ],
+      "policy_tags": [
+        "cheap_first",
+        "orthogonal_signal",
+        "order_flow"
+      ],
+      "max_turns": 12,
+      "max_tool_calls": 10,
+      "max_expensive_calls": 3,
+      "parallel_slot": 2,
+      "status": "pending",
+      "turn_count": 0,
+      "tool_call_count": 0,
+      "expensive_call_count": 0,
+      "assigned_worker_id": null,
+      "last_checkpoint_turn_id": "",
+      "last_checkpoint_summary": "",
+      "final_report_turn_id": "",
+      "last_error": "",
+      "last_summary": "",
+      "latest_tool_result_summary": "",
+      "active_operation_tool": "",
+      "active_operation_ref": "",
+      "active_operation_status": "",
+      "active_operation_arguments": {},
+      "active_resume_tool": "",
+      "active_resume_token": "",
+      "last_tool_response_status": "",
+      "artifacts": [],
+      "facts": {}
+    },
+    {
+      "slice_id": "slice_3_cross_tf_divergence",
+      "title": "Cross-timeframe momentum and volatility divergence features",
+      "hypothesis": "When 5m momentum diverges from 1h momentum direction or when 5m volatility expands while 1h remains compressed, the market is entering a regime transition that the baseline's single-timeframe logic does not trade, yielding new entries at trend inflection points.",
+      "objective": "Discover available multi-timeframe feature building blocks, construct divergence features between 1h anchor and 5m execution frames, and validate orthogonality against baseline trade windows.",
+      "success_criteria": [
+        "features_catalog reveals at least momentum and volatility indicator primitives at both 1h and 5m resolutions",
+        "Engineer at least two features: momentum_divergence_1h_5m and vol_expansion_ratio with non-degenerate distributions",
+        "Cheap backtests_study or features_analytics correlation confirms divergence signals overlap baseline trades less than 25% of the time"
+      ],
+      "allowed_tools": [
+        "features_catalog",
+        "features_analytics",
+        "features_custom",
+        "features_dataset",
+        "features_cleanup",
+        "datasets",
+        "datasets_preview",
+        "backtests_studies",
+        "backtests_study_materialize",
+        "research_record"
+      ],
+      "evidence_requirements": [
+        "catalog listing confirming momentum and volatility features at both 1h and 5m",
+        "distribution and stationarity statistics for divergence features",
+        "signal overlap report quantifying co-occurrence with baseline trade timestamps"
+      ],
+      "policy_tags": [
+        "cheap_first",
+        "orthogonal_signal",
+        "regime_transition"
+      ],
+      "max_turns": 12,
+      "max_tool_calls": 10,
+      "max_expensive_calls": 3,
+      "parallel_slot": 3,
+      "status": "pending",
+      "turn_count": 0,
+      "tool_call_count": 0,
+      "expensive_call_count": 0,
+      "assigned_worker_id": null,
+      "last_checkpoint_turn_id": "",
+      "last_checkpoint_summary": "",
+      "final_report_turn_id": "",
+      "last_error": "",
+      "last_summary": "",
+      "latest_tool_result_summary": "",
+      "active_operation_tool": "",
+      "active_operation_ref": "",
+      "active_operation_status": "",
+      "active_operation_arguments": {},
+      "active_resume_tool": "",
+      "active_resume_token": "",
+      "last_tool_response_status": "",
+      "artifacts": [],
+      "facts": {}
+    }
+  ],
+  "status": "running",
+  "created_at": "2026-04-09T12:18:07.016343+00:00",
+  "updated_at": "2026-04-09T12:18:07.016346+00:00"
+}

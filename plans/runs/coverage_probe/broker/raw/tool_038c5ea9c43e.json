@@ -1,0 +1,85 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\n  \"status\": \"ok\",\n  \"message\": \"Datasets payload loaded.\",\n  \"tool_name\": \"datasets\",\n  \"request_id\": \"6\",\n  \"correlation_id\": \"6\",\n  \"server_session_id\": \"745bd6b3aaf042958914ade2c6967820\",\n  \"response_generated_at\": \"2026-04-09T12:24:56.876042+00:00\",\n  \"data\": {\n    \"action\": \"instruments\",\n    \"instruments\": [\n      {\n        \"symbol\": \"BNBUSDT\",\n        \"market\": \"um\",\n        \"timeframes_present\": [\n          \"1d\",\n          \"1h\",\n          \"5m\"\n        ],\n        \"dataset_count\": 3,\n        \"last_synced_at\": \"2026-04-04T10:16:01.556093+00:00\",\n        \"last_open_time\": \"2026-04-03T23:00:00+00:00\",\n        \"stale_status\": \"fresh\",\n        \"validation_status\": \"valid\"\n      },\n      {\n        \"symbol\": \"BTCUSDT\",\n        \"market\": \"um\",\n        \"timeframes_present\": [\n          \"15m\",\n          \"1d\",\n          \"1h\",\n          \"4h\",\n          \"5m\"\n        ],\n        \"dataset_count\": 5,\n        \"last_synced_at\": \"2026-04-06T12:02:31.240917+00:00\",\n        \"last_open_time\": \"2026-04-05T23:45:00+00:00\",\n        \"stale_status\": \"fresh\",\n        \"validation_status\": \"valid\"\n      },\n      {\n        \"symbol\": \"ETHUSDT\",\n        \"market\": \"um\",\n        \"timeframes_present\": [\n          \"1d\",\n          \"1h\",\n          \"4h\",\n          \"5m\"\n        ],\n        \"dataset_count\": 4,\n        \"last_synced_at\": \"2026-04-03T19:43:17.735715+00:00\",\n        \"last_open_time\": \"2026-04-02T20:00:00+00:00\",\n        \"stale_status\": \"fresh\",\n        \"validation_status\": \"valid\"\n      }\n    ],\n    \"important_warnings\": [],\n    \"next_recommended_actions\": [\n      \"Use datasets_sync(action='add' | 'sync') when you need to change tracked instrument state.\"\n    ],\n    \"recommended_follow_up_tool\": null,\n    \"state_summary\": {},\n    \"exact_next_call_examples\": [],\n    \"raw_refs\": [\n      \"system_raw_call(tool_name='datasets_instruments_list')\"\n    ],\n    \"raw_tool_hints\": [\n      \"system_raw_call(tool_name='datasets_instruments_list')\"\n    ],\n    \"next_action\": \"Use datasets_sync(action='add' | 'sync') when you need to change tracked instrument state.\"\n  },\n  \"warnings\": [],\n  \"refs\": [],\n  \"error\": null\n}"
+    }
+  ],
+  "structuredContent": {
+    "status": "ok",
+    "message": "Datasets payload loaded.",
+    "tool_name": "datasets",
+    "request_id": "6",
+    "correlation_id": "6",
+    "server_session_id": "745bd6b3aaf042958914ade2c6967820",
+    "response_generated_at": "2026-04-09T12:24:56.876042+00:00",
+    "data": {
+      "action": "instruments",
+      "instruments": [
+        {
+          "symbol": "BNBUSDT",
+          "market": "um",
+          "timeframes_present": [
+            "1d",
+            "1h",
+            "5m"
+          ],
+          "dataset_count": 3,
+          "last_synced_at": "2026-04-04T10:16:01.556093+00:00",
+          "last_open_time": "2026-04-03T23:00:00+00:00",
+          "stale_status": "fresh",
+          "validation_status": "valid"
+        },
+        {
+          "symbol": "BTCUSDT",
+          "market": "um",
+          "timeframes_present": [
+            "15m",
+            "1d",
+            "1h",
+            "4h",
+            "5m"
+          ],
+          "dataset_count": 5,
+          "last_synced_at": "2026-04-06T12:02:31.240917+00:00",
+          "last_open_time": "2026-04-05T23:45:00+00:00",
+          "stale_status": "fresh",
+          "validation_status": "valid"
+        },
+        {
+          "symbol": "ETHUSDT",
+          "market": "um",
+          "timeframes_present": [
+            "1d",
+            "1h",
+            "4h",
+            "5m"
+          ],
+          "dataset_count": 4,
+          "last_synced_at": "2026-04-03T19:43:17.735715+00:00",
+          "last_open_time": "2026-04-02T20:00:00+00:00",
+          "stale_status": "fresh",
+          "validation_status": "valid"
+        }
+      ],
+      "important_warnings": [],
+      "next_recommended_actions": [
+        "Use datasets_sync(action='add' | 'sync') when you need to change tracked instrument state."
+      ],
+      "recommended_follow_up_tool": null,
+      "state_summary": {},
+      "exact_next_call_examples": [],
+      "raw_refs": [
+        "system_raw_call(tool_name='datasets_instruments_list')"
+      ],
+      "raw_tool_hints": [
+        "system_raw_call(tool_name='datasets_instruments_list')"
+      ],
+      "next_action": "Use datasets_sync(action='add' | 'sync') when you need to change tracked instrument state."
+    },
+    "warnings": [],
+    "refs": [],
+    "error": null
+  },
+  "isError": false
+}

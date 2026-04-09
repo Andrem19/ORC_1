@@ -1,0 +1,330 @@
+{
+  "source_file": "raw_plans/plan_v1.md",
+  "source_hash": "43d2b6894f2df1d1a134b3898365b01fbb80ef52bf06871fa29b69a5201facae",
+  "source_title": "План дальнейших исследований для v1",
+  "goal": "Find one or more new orthogonal signals that independently add informational value and improve the base system without cannibalizing it.",
+  "baseline_ref": {
+    "snapshot_id": "active-signal-v1",
+    "version": 1,
+    "symbol": "BTCUSDT",
+    "anchor_timeframe": "1h",
+    "execution_timeframe": "5m"
+  },
+  "global_constraints": [
+    "Base system active-signal-v1@1 is frozen — never modify its rules, thresholds, hours, days, or execution logic.",
+    "Only genuinely new signal classes are allowed — no retuning, permutation, or filter relaxation of existing base inputs.",
+    "Every hypothesis must pass the full funnel: standalone → stability → integration → cannibalization → final report.",
+    "No brute-force parameter search; use small logical grids only.",
+    "All negative, neutral, and positive results must be recorded in research memory.",
+    "Cannibalism must be explicitly measured before any promotion."
+  ],
+  "stages": [
+    {
+      "stage_id": "stage_1",
+      "title": "Запуск цикла и фиксация инвариантов",
+      "objective": "Lock the cycle around the immutable base and open a dedicated research project with a hypothesis map and naming scheme.",
+      "actions": [
+        "Open a dedicated research_project for this cycle.",
+        "In research_map create axes: hypothesis_family, data_layer, direction, expected_missing_regime, status.",
+        "In research_record fix cycle invariants: base is frozen, old tuned families stay closed, acceptance only through the full funnel.",
+        "Save exact baseline-reference (active-signal-v1@1) in a separate record.",
+        "Define a unified naming scheme for candidates and run IDs."
+      ],
+      "success_criteria": [
+        "Open project exists, hypothesis map is initialized, cycle rules are recorded, baseline reference is saved."
+      ],
+      "tool_hints": [
+        "research_project",
+        "research_map",
+        "research_record"
+      ],
+      "policy_tags": [
+        "setup"
+      ],
+      "depends_on": [],
+      "required": true,
+      "parallelizable": false,
+      "gate_hint": "",
+      "raw_stage_ref": "stage_1"
+    },
+    {
+      "stage_id": "stage_2",
+      "title": "Формирование пространства только новых гипотез",
+      "objective": "Build a short-list of genuinely new signal families that are not permutations of the exhausted base input space.",
+      "actions": [
+        "Enumerate candidate families: missing-regime long specialists, new event-conditioned entries, new derivatives-state layers, cross-symbol routing, model-backed routing, exit-originated alpha.",
+        "For each family document why it is new, why it is not a duplicate of the base, which missing regime it targets, and which features/data would test it.",
+        "Reject families that rehash closed idea classes (v1–v12 history).",
+        "Produce a wave-1 short-list of hypotheses."
+      ],
+      "success_criteria": [
+        "Wave-1 short-list exists with each hypothesis having a written justification of novelty relative to the base and prior history."
+      ],
+      "tool_hints": [
+        "research_map",
+        "research_record",
+        "research_search"
+      ],
+      "policy_tags": [
+        "setup",
+        "cheap_first"
+      ],
+      "depends_on": [
+        "stage_1"
+      ],
+      "required": true,
+      "parallelizable": false,
+      "gate_hint": "",
+      "raw_stage_ref": "stage_2"
+    },
+    {
+      "stage_id": "stage_3",
+      "title": "Data contract и feature contract для каждой новой семьи",
+      "objective": "For every wave-1 hypothesis fix a precise data and feature contract — inputs, alignment, lookback, leakage surface — before any testing.",
+      "actions": [
+        "For each hypothesis define a feature contract: input columns, construction method, decision-time info, lookback window, cross-symbol joins, event alignment.",
+        "If custom features are needed: validate with features_custom_validate, publish with features_custom_publish, verify materialized dataset.",
+        "If model-backed features are needed: prepare a separate train/validation/test split ensuring no train window leaks into the studied OOS segment.",
+        "For event hypotheses verify alignment and coverage separately.",
+        "Record human-readable interpretation for every new feature."
+      ],
+      "success_criteria": [
+        "Each hypothesis has a clean data and feature contract with leakage risks explicitly addressed."
+      ],
+      "tool_hints": [
+        "features_catalog",
+        "features_dataset_inspect",
+        "features_custom_validate",
+        "features_custom_publish",
+        "models_dataset_prepare",
+        "events_*"
+      ],
+      "policy_tags": [
+        "data_readiness",
+        "feature_contract"
+      ],
+      "depends_on": [
+        "stage_2"
+      ],
+      "required": true,
+      "parallelizable": true,
+      "gate_hint": "",
+      "raw_stage_ref": "stage_3"
+    },
+    {
+      "stage_id": "stage_4",
+      "title": "Быстрый отбор через signal plausibility и feature profitability",
+      "objective": "Before expensive backtests, discard hypotheses that look empty, unstable, or too similar to the base at the feature level.",
+      "actions": [
+        "Run a primary profitability scan for every new feature.",
+        "Check bucket behavior and monotonicity where meaningful.",
+        "Verify the effect is not driven by a single extreme bucket.",
+        "Compare coverage against the base: hours, days, regimes, event subspaces.",
+        "Remove candidates that appear to be hidden replicas of known rules."
+      ],
+      "success_criteria": [
+        "Only hypotheses with preliminary signal plausibility and expected orthogonality remain."
+      ],
+      "tool_hints": [
+        "features_profitability",
+        "backtests_analysis_start",
+        "research_record"
+      ],
+      "policy_tags": [
+        "cheap_first",
+        "analysis"
+      ],
+      "depends_on": [
+        "stage_3"
+      ],
+      "required": true,
+      "parallelizable": true,
+      "gate_hint": "",
+      "raw_stage_ref": "stage_4"
+    },
+    {
+      "stage_id": "stage_5",
+      "title": "Standalone backtests новых сигналов",
+      "objective": "Determine whether each surviving hypothesis has independent trading value before any integration with the base.",
+      "actions": [
+        "Build a minimal honest standalone version for each candidate.",
+        "If multiple entry forms are needed, use a small logical grid — no wide brute force.",
+        "Record for each standalone signal: net PnL, trade count, profit factor, max drawdown, PnL per trade, quarterly distribution, profit concentration.",
+        "Describe which market situation each signal targets."
+      ],
+      "success_criteria": [
+        "Short-list of standalone candidates that are non-empty on their own."
+      ],
+      "tool_hints": [
+        "backtests_run_plan",
+        "backtests_run_start",
+        "backtests_analysis_start",
+        "research_record"
+      ],
+      "policy_tags": [
+        "backtesting",
+        "modeling"
+      ],
+      "depends_on": [
+        "stage_4"
+      ],
+      "required": true,
+      "parallelizable": true,
+      "gate_hint": "",
+      "raw_stage_ref": "stage_5"
+    },
+    {
+      "stage_id": "stage_6",
+      "title": "Stability и condition analysis",
+      "objective": "Filter out attractive but locally fragile signals; keep only those that survive window decomposition or honestly qualify as specialist signals for a specific missing regime.",
+      "actions": [
+        "Run window stability analysis for every standalone finalist.",
+        "Run condition stability analysis on key conditions using backtests_conditions_run.",
+        "Identify weak windows and explain why the signal fails there.",
+        "Verify the result is not carried by a single large move.",
+        "If a signal works only in one sub-regime, document it — acceptable only if that regime is uncovered by the base."
+      ],
+      "success_criteria": [
+        "Remaining signals are either broadly stable or honestly proven as specialist signals for a missing regime."
+      ],
+      "tool_hints": [
+        "backtests_conditions_run",
+        "backtests_analysis_start",
+        "backtests_study_start"
+      ],
+      "policy_tags": [
+        "backtesting",
+        "analysis"
+      ],
+      "depends_on": [
+        "stage_5"
+      ],
+      "required": true,
+      "parallelizable": true,
+      "gate_hint": "",
+      "raw_stage_ref": "stage_6"
+    },
+    {
+      "stage_id": "stage_7",
+      "title": "Интеграция с active-signal-v1@1",
+      "objective": "Measure each surviving candidate's real incremental value on top of the unchanged base system.",
+      "actions": [
+        "Integrate each surviving candidate with the base.",
+        "Compare only against the unchanged base.",
+        "Measure: net delta PnL, delta trades, delta PF, delta DD, change in the base's weak quarters.",
+        "Reject candidates whose integration degrades the overall profile, regardless of standalone beauty.",
+        "If integration degrades the profile, reject or send back for architecture rework."
+      ],
+      "success_criteria": [
+        "Full integration picture exists for every standalone candidate."
+      ],
+      "tool_hints": [
+        "backtests_run_start",
+        "backtests_analysis_start"
+      ],
+      "policy_tags": [
+        "backtesting",
+        "integration"
+      ],
+      "depends_on": [
+        "stage_6"
+      ],
+      "required": true,
+      "parallelizable": true,
+      "gate_hint": "",
+      "raw_stage_ref": "stage_7"
+    },
+    {
+      "stage_id": "stage_8",
+      "title": "Cannibalization, ownership и new-entry proof",
+      "objective": "Prove that each remaining signal adds genuinely new entries rather than parasitizing on the base.",
+      "actions": [
+        "Compute overlap rate with the base.",
+        "Count truly new trades, replaced base trades, and PnL attributable to genuinely new entries.",
+        "Run layer_compare and signal_ownership analysis.",
+        "Verify coverage expansion across hours, days, regimes."
+      ],
+      "success_criteria": [
+        "Direct evidence exists showing which candidates genuinely expand the system."
+      ],
+      "tool_hints": [
+        "backtests_analysis_start"
+      ],
+      "policy_tags": [
+        "analysis",
+        "integration"
+      ],
+      "depends_on": [
+        "stage_7"
+      ],
+      "required": true,
+      "parallelizable": true,
+      "gate_hint": "",
+      "raw_stage_ref": "stage_8"
+    },
+    {
+      "stage_id": "stage_9",
+      "title": "Walk-forward и финальная валидация финалистов",
+      "objective": "Submit every finalist to stricter walk-forward validation and pairwise compatibility checks.",
+      "actions": [
+        "Run backtests_walkforward_start for every finalist.",
+        "Record walk-forward verdict, final uplift vs base, drawdown quality, new-entry proof verdict.",
+        "Check pairwise compatibility if multiple finalists exist.",
+        "Produce a final status per candidate."
+      ],
+      "success_criteria": [
+        "Walk-forward is completed for all finalists with clear verdicts."
+      ],
+      "tool_hints": [
+        "backtests_walkforward_start",
+        "backtests_analysis_start",
+        "experiments_run"
+      ],
+      "policy_tags": [
+        "backtesting",
+        "finalization"
+      ],
+      "depends_on": [
+        "stage_8"
+      ],
+      "required": true,
+      "parallelizable": true,
+      "gate_hint": "",
+      "raw_stage_ref": "stage_9"
+    },
+    {
+      "stage_id": "stage_10",
+      "title": "Финальный отбор и решение по продвижению",
+      "objective": "Make an explicit promote / watchlist / reject decision for every hypothesis with full evidence trail.",
+      "actions": [
+        "For each hypothesis assign one of: PROMOTE (integrate into mainline), WATCHLIST SPECIALIST (reserve for specific regime), REJECT.",
+        "Record main reason, evidence references, and cannibalism journal entry.",
+        "Verify operational checklist: base never modified, each hypothesis has novelty justification, each finalist has standalone, negative results recorded, final report written, honest answer on whether a new input layer was found.",
+        "Write the final cycle report."
+      ],
+      "success_criteria": [
+        "Every hypothesis has a documented decision with evidence.",
+        "Cannibalism journal is complete.",
+        "Operational checklist is fully ticked.",
+        "Final report is written."
+      ],
+      "tool_hints": [
+        "research_record",
+        "experiments_run",
+        "notify_send"
+      ],
+      "policy_tags": [
+        "finalization"
+      ],
+      "depends_on": [
+        "stage_9"
+      ],
+      "required": true,
+      "parallelizable": false,
+      "gate_hint": "",
+      "raw_stage_ref": "stage_10"
+    }
+  ],
+  "warnings": [],
+  "parse_confidence": 0.95
+}

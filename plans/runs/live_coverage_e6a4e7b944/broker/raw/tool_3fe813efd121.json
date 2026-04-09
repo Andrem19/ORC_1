@@ -1,0 +1,76 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\n  \"status\": \"ok\",\n  \"message\": \"System queue summary loaded.\",\n  \"tool_name\": \"system_queue\",\n  \"request_id\": \"56\",\n  \"correlation_id\": \"56\",\n  \"server_session_id\": \"e09983af9aca43a09d26b21e52921957\",\n  \"response_generated_at\": \"2026-04-09T12:50:04.586118+00:00\",\n  \"data\": {\n    \"summary\": \"System queue inspect returned active heavy-operation state, effective concurrency, and queued records.\",\n    \"active_heavy_operation\": {},\n    \"active_heavy_operations\": [],\n    \"active_queue_ids\": [],\n    \"queue_depth\": 0,\n    \"next_queued_operation\": null,\n    \"configured_max_concurrent_heavy_operations\": 3,\n    \"effective_max_concurrent_heavy_operations\": 3,\n    \"available_admission_slots\": 3,\n    \"queue_blocked_reason\": null,\n    \"estimated_wait_hint\": null,\n    \"resource_guard\": {\n      \"enabled\": true,\n      \"resource_snapshot\": {\n        \"observed_at\": \"2026-04-09T12:50:04.584716+00:00\",\n        \"state\": \"ready\",\n        \"reason\": null,\n        \"cpu_count\": 8,\n        \"load_1m\": 1.6792,\n        \"cpu_load_ratio\": 0.2099,\n        \"memory_total_bytes\": 24599855104,\n        \"memory_available_bytes\": 21673611264,\n        \"memory_available_gb\": 20.185,\n        \"memory_used_percent\": 11.9,\n        \"nofile_soft_limit\": 1024,\n        \"nofile_hard_limit\": 524288,\n        \"fd_count\": 38,\n        \"fd_available_headroom\": 986\n      }\n    },\n    \"records\": [],\n    \"total_records\": 0,\n    \"returned_records\": 0,\n    \"truncated\": false,\n    \"execution_queue_state_bytes\": 604523,\n    \"partial\": false,\n    \"timeout_reason\": null,\n    \"important_warnings\": [],\n    \"next_recommended_actions\": [\n      \"Use system_queue when a queued item must be cancelled or the active slot must be stopped.\"\n    ],\n    \"recommended_follow_up_tool\": null,\n    \"state_summary\": {},\n    \"exact_next_call_examples\": [],\n    \"raw_refs\": [\n      \"system_queue(action='inspect')\",\n      \"system_queue(action='cancel', queue_id='queue-123')\"\n    ],\n    \"raw_tool_hints\": [\n      \"system_queue(action='inspect')\",\n      \"system_queue(action='cancel', queue_id='queue-123')\"\n    ],\n    \"next_action\": \"Use system_queue when a queued item must be cancelled or the active slot must be stopped.\"\n  },\n  \"warnings\": [],\n  \"refs\": [],\n  \"error\": null\n}"
+    }
+  ],
+  "structuredContent": {
+    "status": "ok",
+    "message": "System queue summary loaded.",
+    "tool_name": "system_queue",
+    "request_id": "56",
+    "correlation_id": "56",
+    "server_session_id": "e09983af9aca43a09d26b21e52921957",
+    "response_generated_at": "2026-04-09T12:50:04.586118+00:00",
+    "data": {
+      "summary": "System queue inspect returned active heavy-operation state, effective concurrency, and queued records.",
+      "active_heavy_operation": {},
+      "active_heavy_operations": [],
+      "active_queue_ids": [],
+      "queue_depth": 0,
+      "next_queued_operation": null,
+      "configured_max_concurrent_heavy_operations": 3,
+      "effective_max_concurrent_heavy_operations": 3,
+      "available_admission_slots": 3,
+      "queue_blocked_reason": null,
+      "estimated_wait_hint": null,
+      "resource_guard": {
+        "enabled": true,
+        "resource_snapshot": {
+          "observed_at": "2026-04-09T12:50:04.584716+00:00",
+          "state": "ready",
+          "reason": null,
+          "cpu_count": 8,
+          "load_1m": 1.6792,
+          "cpu_load_ratio": 0.2099,
+          "memory_total_bytes": 24599855104,
+          "memory_available_bytes": 21673611264,
+          "memory_available_gb": 20.185,
+          "memory_used_percent": 11.9,
+          "nofile_soft_limit": 1024,
+          "nofile_hard_limit": 524288,
+          "fd_count": 38,
+          "fd_available_headroom": 986
+        }
+      },
+      "records": [],
+      "total_records": 0,
+      "returned_records": 0,
+      "truncated": false,
+      "execution_queue_state_bytes": 604523,
+      "partial": false,
+      "timeout_reason": null,
+      "important_warnings": [],
+      "next_recommended_actions": [
+        "Use system_queue when a queued item must be cancelled or the active slot must be stopped."
+      ],
+      "recommended_follow_up_tool": null,
+      "state_summary": {},
+      "exact_next_call_examples": [],
+      "raw_refs": [
+        "system_queue(action='inspect')",
+        "system_queue(action='cancel', queue_id='queue-123')"
+      ],
+      "raw_tool_hints": [
+        "system_queue(action='inspect')",
+        "system_queue(action='cancel', queue_id='queue-123')"
+      ],
+      "next_action": "Use system_queue when a queued item must be cancelled or the active slot must be stopped."
+    },
+    "warnings": [],
+    "refs": [],
+    "error": null
+  },
+  "isError": false
+}

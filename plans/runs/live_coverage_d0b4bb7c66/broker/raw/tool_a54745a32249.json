@@ -1,0 +1,85 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\n  \"status\": \"error\",\n  \"message\": \"research_map requires project_id.\",\n  \"tool_name\": \"research_map\",\n  \"request_id\": \"28\",\n  \"correlation_id\": \"28\",\n  \"server_session_id\": \"5a301846d4f14327904240c86c64426d\",\n  \"response_generated_at\": \"2026-04-09T12:38:36.031468+00:00\",\n  \"data\": null,\n  \"warnings\": [],\n  \"refs\": [],\n  \"error\": {\n    \"code\": \"invalid_input\",\n    \"error_type\": \"input\",\n    \"message\": \"research_map requires project_id.\",\n    \"retryable\": false,\n    \"remediation\": \"Use one existing research project id from the current project list.\",\n    \"suggested_next_step\": \"Retry with one existing project_id, or call research_project(action='list') first.\",\n    \"details\": {\n      \"reason\": \"missing_project_id\",\n      \"project_field_name\": \"project_id\",\n      \"requested_project_id\": null,\n      \"candidate_projects\": [\n        {\n          \"project_id\": \"mcp-infra-incidents\",\n          \"name\": \"MCP Infrastructure Incidents\"\n        },\n        {\n          \"project_id\": \"coverage-project-live-coverage-d0b4bb7c66-1-f34d3fe6\",\n          \"name\": \"coverage-project-live_coverage_d0b4bb7c66-1\"\n        },\n        {\n          \"project_id\": \"coverage-project-live-coverage-9960ca0c94-1-f9af4c8d\",\n          \"name\": \"coverage-project-live_coverage_9960ca0c94-1\"\n        },\n        {\n          \"project_id\": \"coverage-project-live-coverage-6139b1d9e6-1-9a005a9b\",\n          \"name\": \"coverage-project-live_coverage_6139b1d9e6-1\"\n        }\n      ],\n      \"recommended_verify_call\": {\n        \"tool\": \"research_project\",\n        \"arguments\": {\n          \"action\": \"list\"\n        }\n      },\n      \"exact_next_call_examples\": [\n        {\n          \"tool\": \"research_project\",\n          \"arguments\": {\n            \"action\": \"list\"\n          }\n        },\n        {\n          \"tool\": \"research_project\",\n          \"arguments\": {\n            \"action\": \"open\",\n            \"project_id\": \"mcp-infra-incidents\",\n            \"view\": \"summary\"\n          }\n        }\n      ],\n      \"classification\": \"agent_contract_misuse\",\n      \"tool\": \"research_map\",\n      \"correlation_id\": \"28\",\n      \"request_id\": \"28\",\n      \"server_session_id\": \"5a301846d4f14327904240c86c64426d\",\n      \"debug_context_available\": true,\n      \"recommended_debug_tools\": [\n        \"system_debug_recent_events\",\n        \"system_logs\"\n      ],\n      \"log_service_hint\": \"mcp_server\"\n    }\n  }\n}"
+    }
+  ],
+  "structuredContent": {
+    "status": "error",
+    "message": "research_map requires project_id.",
+    "tool_name": "research_map",
+    "request_id": "28",
+    "correlation_id": "28",
+    "server_session_id": "5a301846d4f14327904240c86c64426d",
+    "response_generated_at": "2026-04-09T12:38:36.031468+00:00",
+    "data": null,
+    "warnings": [],
+    "refs": [],
+    "error": {
+      "code": "invalid_input",
+      "error_type": "input",
+      "message": "research_map requires project_id.",
+      "retryable": false,
+      "remediation": "Use one existing research project id from the current project list.",
+      "suggested_next_step": "Retry with one existing project_id, or call research_project(action='list') first.",
+      "details": {
+        "reason": "missing_project_id",
+        "project_field_name": "project_id",
+        "requested_project_id": null,
+        "candidate_projects": [
+          {
+            "project_id": "mcp-infra-incidents",
+            "name": "MCP Infrastructure Incidents"
+          },
+          {
+            "project_id": "coverage-project-live-coverage-d0b4bb7c66-1-f34d3fe6",
+            "name": "coverage-project-live_coverage_d0b4bb7c66-1"
+          },
+          {
+            "project_id": "coverage-project-live-coverage-9960ca0c94-1-f9af4c8d",
+            "name": "coverage-project-live_coverage_9960ca0c94-1"
+          },
+          {
+            "project_id": "coverage-project-live-coverage-6139b1d9e6-1-9a005a9b",
+            "name": "coverage-project-live_coverage_6139b1d9e6-1"
+          }
+        ],
+        "recommended_verify_call": {
+          "tool": "research_project",
+          "arguments": {
+            "action": "list"
+          }
+        },
+        "exact_next_call_examples": [
+          {
+            "tool": "research_project",
+            "arguments": {
+              "action": "list"
+            }
+          },
+          {
+            "tool": "research_project",
+            "arguments": {
+              "action": "open",
+              "project_id": "mcp-infra-incidents",
+              "view": "summary"
+            }
+          }
+        ],
+        "classification": "agent_contract_misuse",
+        "tool": "research_map",
+        "correlation_id": "28",
+        "request_id": "28",
+        "server_session_id": "5a301846d4f14327904240c86c64426d",
+        "debug_context_available": true,
+        "recommended_debug_tools": [
+          "system_debug_recent_events",
+          "system_logs"
+        ],
+        "log_service_hint": "mcp_server"
+      }
+    }
+  },
+  "isError": false
+}

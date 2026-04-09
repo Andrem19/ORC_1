@@ -31,7 +31,6 @@ class TestLMStudioConfig:
                 "translation_backend": "lmstudio",
             },
             "lmstudio": {
-                "enabled": True,
                 "base_url": "http://192.168.1.100:1234",
                 "model": "qwen/qwen3.5-9b",
                 "translation": {
@@ -188,9 +187,10 @@ class TestLMStudioCheckAvailable:
         t = LMStudioTranslator(base_url="http://localhost:1234")
         mock_resp = MagicMock()
         mock_resp.status = 200
+        mock_resp.read.return_value = json.dumps({"data": [{"id": "qwen/qwen3.5-9b"}]}).encode()
 
         with patch(
-            "app.services.translation_service.HTTPConnection"
+            "app.lmstudio_api.HTTPConnection"
         ) as mock_conn_cls:
             mock_conn = mock_conn_cls.return_value
             mock_conn.getresponse.return_value = mock_resp
@@ -201,9 +201,10 @@ class TestLMStudioCheckAvailable:
         t = LMStudioTranslator(base_url="http://localhost:1234")
         mock_resp = MagicMock()
         mock_resp.status = 500
+        mock_resp.read.return_value = b'{"error":"down"}'
 
         with patch(
-            "app.services.translation_service.HTTPConnection"
+            "app.lmstudio_api.HTTPConnection"
         ) as mock_conn_cls:
             mock_conn = mock_conn_cls.return_value
             mock_conn.getresponse.return_value = mock_resp
@@ -213,9 +214,22 @@ class TestLMStudioCheckAvailable:
         t = LMStudioTranslator(base_url="http://localhost:1234")
 
         with patch(
-            "app.services.translation_service.HTTPConnection"
+            "app.lmstudio_api.HTTPConnection"
         ) as mock_conn_cls:
             mock_conn_cls.return_value.request.side_effect = ConnectionError()
+            assert t.check_available() is False
+
+    def test_unavailable_when_model_missing(self):
+        t = LMStudioTranslator(base_url="http://localhost:1234", model="missing-model")
+        mock_resp = MagicMock()
+        mock_resp.status = 200
+        mock_resp.read.return_value = json.dumps({
+            "data": [{"id": "qwen/qwen3.5-9b"}],
+        }).encode()
+
+        with patch("app.lmstudio_api.HTTPConnection") as mock_conn_cls:
+            mock_conn = mock_conn_cls.return_value
+            mock_conn.getresponse.return_value = mock_resp
             assert t.check_available() is False
 
 
@@ -257,9 +271,10 @@ class TestTranslationServiceLMStudio:
         )
         mock_resp = MagicMock()
         mock_resp.status = 200
+        mock_resp.read.return_value = json.dumps({"data": []}).encode()
 
         with patch(
-            "app.services.translation_service.HTTPConnection"
+            "app.lmstudio_api.HTTPConnection"
         ) as mock_conn_cls:
             mock_conn = mock_conn_cls.return_value
             mock_conn.getresponse.return_value = mock_resp
@@ -268,6 +283,19 @@ class TestTranslationServiceLMStudio:
         assert svc._model_loaded is True
         assert svc.is_ready is True
 
+    def test_load_model_lmstudio_never_calls_opus_loader(self):
+        svc = TranslationService(
+            translate_to_russian=True,
+            backend="lmstudio",
+        )
+
+        with patch.object(svc, "_load_lmstudio") as mock_load_lmstudio:
+            with patch.object(svc, "_load_opus") as mock_load_opus:
+                svc.load_model()
+
+        mock_load_lmstudio.assert_called_once_with()
+        mock_load_opus.assert_not_called()
+
     def test_load_model_lmstudio_unavailable_raises(self):
         svc = TranslationService(
             translate_to_russian=True,
@@ -275,7 +303,7 @@ class TestTranslationServiceLMStudio:
         )
 
         with patch(
-            "app.services.translation_service.HTTPConnection"
+            "app.lmstudio_api.HTTPConnection"
         ) as mock_conn_cls:
             mock_conn_cls.return_value.request.side_effect = ConnectionError()
             with pytest.raises(RuntimeError, match="not reachable"):
@@ -369,7 +397,6 @@ class TestNotificationLMStudioIntegration:
                 translation_backend="lmstudio",
             )
             lm_cfg = LMStudioConfig(
-                enabled=True,
                 base_url="http://localhost:9999",
                 model="qwen/qwen3.5-9b",
             )

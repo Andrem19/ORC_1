@@ -22,6 +22,8 @@ from http.client import HTTPConnection
 from pathlib import Path
 from urllib.parse import urlparse
 
+from app.lmstudio_api import validate_lmstudio_endpoint
+
 logger = logging.getLogger("orchestrator.translation")
 
 # Compiled regex for technical terms to protect from translation.
@@ -41,8 +43,9 @@ _TECH_PATTERNS = [
     r"\b[\w]+-v\d+\b",
     # Worker IDs: qwen-1, qwen-2
     r"\bqwen-\d+\b",
-    # Decision enum values
-    r"\b(?:launch_worker|wait|finish|retry_worker|stop_worker|reassign_task)\b",
+    # Planner plan markers
+    r"\bPlan v\d+\b",
+    r"\bETAP \d+\b",
     # UUIDs
     r"\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b",
 ]
@@ -94,17 +97,21 @@ class LMStudioTranslator:
     def check_available(self) -> bool:
         """Check if LM Studio server is reachable."""
         try:
-            parsed = urlparse(self._base_url)
-            conn = HTTPConnection(
-                parsed.hostname, parsed.port or 1234, timeout=5,
+            ok, models = validate_lmstudio_endpoint(
+                base_url=self._base_url,
+                model=self._model,
+                timeout=5,
             )
-            conn.request("GET", "/v1/models")
-            resp = conn.getresponse()
-            conn.close()
-            ok = resp.status == 200
             if ok and not self._available_checked:
                 logger.info(
                     "LM Studio translator available at %s", self._base_url,
+                )
+            elif not ok and self._model and models:
+                logger.warning(
+                    "LM Studio translator model '%s' not found at %s (available=%s)",
+                    self._model,
+                    self._base_url,
+                    ", ".join(models[:10]),
                 )
             self._available = ok
             self._available_checked = True
@@ -207,6 +214,7 @@ class TranslationService:
         self._tokenizer = None
         self._model = None
         self._model_loaded = False
+        self._load_attempted = False
         self._cache: OrderedDict[str, str] = OrderedDict()
         self._lmstudio_translator: LMStudioTranslator | None = None
         if backend == "lmstudio" and translate_to_russian:
@@ -239,6 +247,7 @@ class TranslationService:
         if not self._translate:
             return
 
+        self._load_attempted = True
         if self._backend == "lmstudio":
             self._load_lmstudio()
         else:
@@ -310,7 +319,16 @@ class TranslationService:
 
         Returns original text if translation is disabled or backend is not loaded.
         """
-        if not self._translate or not self._model_loaded:
+        if not self._translate:
+            return text
+
+        if not self._model_loaded and not self._load_attempted:
+            try:
+                self.load_model()
+            except Exception as exc:
+                logger.warning("Translation backend unavailable, sending original text: %s", exc)
+
+        if not self._model_loaded:
             return text
 
         if not text.strip():

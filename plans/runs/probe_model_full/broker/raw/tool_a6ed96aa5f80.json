@@ -1,0 +1,170 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\n  \"status\": \"ok\",\n  \"message\": \"Model dataset action completed.\",\n  \"tool_name\": \"models_dataset\",\n  \"request_id\": \"15\",\n  \"correlation_id\": \"15\",\n  \"server_session_id\": \"7280d1865c8747bcbc22cff09bd8dfef\",\n  \"response_generated_at\": \"2026-04-09T12:27:38.245229+00:00\",\n  \"data\": {\n    \"action\": \"materialize\",\n    \"wait\": \"started\",\n    \"wait_satisfied\": true,\n    \"wait_timeout\": false,\n    \"wait_satisfied_by_status\": \"completed\",\n    \"final_status\": \"completed\",\n    \"operation\": {\n      \"operation_id\": \"models-dataset-12583e9d5de7f348-c0706905\",\n      \"operation_kind\": \"models_dataset\",\n      \"status\": \"completed\",\n      \"attempt_id\": \"models-dataset-12583e9d5de7f348-c0706905\",\n      \"phase\": \"completed\",\n      \"progress_message\": \"Dataset operation completed.\",\n      \"fingerprint\": \"12583e9d5de7f348\",\n      \"previous_attempts\": [],\n      \"reuse_reason\": \"new_attempt_created\",\n      \"dependency_fingerprint\": \"9607f893103c484d\"\n    },\n    \"elapsed_seconds\": 10.702863,\n    \"preflight_estimate\": {\n      \"anchor_row_estimate\": 54864,\n      \"execution_row_estimate\": null,\n      \"cost_class\": \"cheap\"\n    },\n    \"dataset\": {\n      \"dataset_id\": \"de6deb5ff1b3a125\",\n      \"row_count\": 240,\n      \"split_summary\": {\n        \"train\": 144,\n        \"validation\": 48,\n        \"test\": 48\n      },\n      \"drop_summary\": {\n        \"first_missing_timestamp\": null,\n        \"last_missing_timestamp\": null,\n        \"leading_warmup_only_rows\": 0,\n        \"missing_by_input_column\": {\n          \"close_now\": 0,\n          \"open_now\": 0,\n          \"rsi_now\": 0\n        },\n        \"missing_target_rows\": 0,\n        \"projected_split_drop_summary\": {\n          \"test\": {\n            \"dropped_pct\": 0.0,\n            \"dropped_rows\": 0,\n            \"missing_input_pct\": 0.0,\n            \"missing_input_rows\": 0,\n            \"missing_target_pct\": 0.0,\n            \"missing_target_rows\": 0,\n            \"rows\": 48\n          },\n          \"train\": {\n            \"dropped_pct\": 0.0,\n            \"dropped_rows\": 0,\n            \"missing_input_pct\": 0.0,\n            \"missing_input_rows\": 0,\n            \"missing_target_pct\": 0.0,\n            \"missing_target_rows\": 0,\n            \"rows\": 144\n          },\n          \"validation\": {\n            \"dropped_pct\": 0.0,\n            \"dropped_rows\": 0,\n            \"missing_input_pct\": 0.0,\n            \"missing_input_rows\": 0,\n            \"missing_target_pct\": 0.0,\n            \"missing_target_rows\": 0,\n            \"rows\": 48\n          }\n        },\n        \"rows_with_any_missing_input\": 0\n      },\n      \"source_summary\": {\n        \"analysis_input_runtime_compatibility\": {\n          \"mode\": \"not_used\",\n          \"reason\": \"analysis_input_code is not set.\",\n          \"remediation\": null\n        },\n        \"anchor_timeframe\": \"1h\",\n        \"available_anchor_window\": {\n          \"end_at\": \"2026-04-04T23:00:00+00:00\",\n          \"row_count\": 54864,\n          \"start_at\": \"2020-01-01T00:00:00+00:00\"\n        },\n        \"cross_symbol_feature_columns\": [],\n        \"feature_timeframes\": [\n          \"1h\"\n        ],\n        \"loaded_timeframes\": {\n          \"1h\": 54864\n        },\n        \"materialized_window\": {\n          \"end_at\": \"2024-01-10T23:00:00+00:00\",\n          \"row_count\": 240,\n          \"start_at\": \"2024-01-01T00:00:00+00:00\"\n        },\n        \"raw_timeframes\": [\n          \"1h\"\n        ],\n        \"requested_window\": {\n          \"end_at\": \"2024-01-10T23:00:00+00:00\",\n          \"start_at\": \"2024-01-01T00:00:00+00:00\"\n        },\n        \"split_windows\": {\n          \"test\": {\n            \"end_at\": \"2024-01-10T23:00:00+00:00\",\n            \"row_count\": 48,\n            \"start_at\": \"2024-01-09T00:00:00+00:00\"\n          },\n          \"train\": {\n            \"end_at\": \"2024-01-06T23:00:00+00:00\",\n            \"row_count\": 144,\n            \"start_at\": \"2024-01-01T00:00:00+00:00\"\n          },\n          \"validation\": {\n            \"end_at\": \"2024-01-08T23:00:00+00:00\",\n            \"row_count\": 48,\n            \"start_at\": \"2024-01-07T00:00:00+00:00\"\n          }\n        }\n      },\n      \"target_summary\": {\n        \"kind\": \"numeric\",\n        \"max\": 1.0,\n        \"mean\": 0.5291666666666667,\n        \"min\": 0.0,\n        \"std\": 0.5001917345070559\n      },\n      \"strategy_usage_class\": \"predictive_signal\",\n      \"predictive_oos_guard_required\": true,\n      \"warnings\": [],\n      \"next_tools\": []\n    },\n    \"important_warnings\": [],\n    \"next_recommended_actions\": [\n      \"Use models_dataset(action='inspect', view='detail') to inspect the stored dataset window and split summary.\",\n      \"Use models_train(action='start') to train one immutable model version from this dataset.\"\n    ],\n    \"recommended_follow_up_tool\": null,\n    \"state_summary\": {},\n    \"exact_next_call_examples\": [],\n    \"raw_refs\": [\n      \"system_raw_call(tool_name='models_datasets_materialize')\"\n    ],\n    \"raw_tool_hints\": [],\n    \"summary\": \"Training dataset materialized and ready for training.\"\n  },\n  \"warnings\": [],\n  \"refs\": [],\n  \"error\": null\n}"
+    }
+  ],
+  "structuredContent": {
+    "status": "ok",
+    "message": "Model dataset action completed.",
+    "tool_name": "models_dataset",
+    "request_id": "15",
+    "correlation_id": "15",
+    "server_session_id": "7280d1865c8747bcbc22cff09bd8dfef",
+    "response_generated_at": "2026-04-09T12:27:38.245229+00:00",
+    "data": {
+      "action": "materialize",
+      "wait": "started",
+      "wait_satisfied": true,
+      "wait_timeout": false,
+      "wait_satisfied_by_status": "completed",
+      "final_status": "completed",
+      "operation": {
+        "operation_id": "models-dataset-12583e9d5de7f348-c0706905",
+        "operation_kind": "models_dataset",
+        "status": "completed",
+        "attempt_id": "models-dataset-12583e9d5de7f348-c0706905",
+        "phase": "completed",
+        "progress_message": "Dataset operation completed.",
+        "fingerprint": "12583e9d5de7f348",
+        "previous_attempts": [],
+        "reuse_reason": "new_attempt_created",
+        "dependency_fingerprint": "9607f893103c484d"
+      },
+      "elapsed_seconds": 10.702863,
+      "preflight_estimate": {
+        "anchor_row_estimate": 54864,
+        "execution_row_estimate": null,
+        "cost_class": "cheap"
+      },
+      "dataset": {
+        "dataset_id": "de6deb5ff1b3a125",
+        "row_count": 240,
+        "split_summary": {
+          "train": 144,
+          "validation": 48,
+          "test": 48
+        },
+        "drop_summary": {
+          "first_missing_timestamp": null,
+          "last_missing_timestamp": null,
+          "leading_warmup_only_rows": 0,
+          "missing_by_input_column": {
+            "close_now": 0,
+            "open_now": 0,
+            "rsi_now": 0
+          },
+          "missing_target_rows": 0,
+          "projected_split_drop_summary": {
+            "test": {
+              "dropped_pct": 0.0,
+              "dropped_rows": 0,
+              "missing_input_pct": 0.0,
+              "missing_input_rows": 0,
+              "missing_target_pct": 0.0,
+              "missing_target_rows": 0,
+              "rows": 48
+            },
+            "train": {
+              "dropped_pct": 0.0,
+              "dropped_rows": 0,
+              "missing_input_pct": 0.0,
+              "missing_input_rows": 0,
+              "missing_target_pct": 0.0,
+              "missing_target_rows": 0,
+              "rows": 144
+            },
+            "validation": {
+              "dropped_pct": 0.0,
+              "dropped_rows": 0,
+              "missing_input_pct": 0.0,
+              "missing_input_rows": 0,
+              "missing_target_pct": 0.0,
+              "missing_target_rows": 0,
+              "rows": 48
+            }
+          },
+          "rows_with_any_missing_input": 0
+        },
+        "source_summary": {
+          "analysis_input_runtime_compatibility": {
+            "mode": "not_used",
+            "reason": "analysis_input_code is not set.",
+            "remediation": null
+          },
+          "anchor_timeframe": "1h",
+          "available_anchor_window": {
+            "end_at": "2026-04-04T23:00:00+00:00",
+            "row_count": 54864,
+            "start_at": "2020-01-01T00:00:00+00:00"
+          },
+          "cross_symbol_feature_columns": [],
+          "feature_timeframes": [
+            "1h"
+          ],
+          "loaded_timeframes": {
+            "1h": 54864
+          },
+          "materialized_window": {
+            "end_at": "2024-01-10T23:00:00+00:00",
+            "row_count": 240,
+            "start_at": "2024-01-01T00:00:00+00:00"
+          },
+          "raw_timeframes": [
+            "1h"
+          ],
+          "requested_window": {
+            "end_at": "2024-01-10T23:00:00+00:00",
+            "start_at": "2024-01-01T00:00:00+00:00"
+          },
+          "split_windows": {
+            "test": {
+              "end_at": "2024-01-10T23:00:00+00:00",
+              "row_count": 48,
+              "start_at": "2024-01-09T00:00:00+00:00"
+            },
+            "train": {
+              "end_at": "2024-01-06T23:00:00+00:00",
+              "row_count": 144,
+              "start_at": "2024-01-01T00:00:00+00:00"
+            },
+            "validation": {
+              "end_at": "2024-01-08T23:00:00+00:00",
+              "row_count": 48,
+              "start_at": "2024-01-07T00:00:00+00:00"
+            }
+          }
+        },
+        "target_summary": {
+          "kind": "numeric",
+          "max": 1.0,
+          "mean": 0.5291666666666667,
+          "min": 0.0,
+          "std": 0.5001917345070559
+        },
+        "strategy_usage_class": "predictive_signal",
+        "predictive_oos_guard_required": true,
+        "warnings": [],
+        "next_tools": []
+      },
+      "important_warnings": [],
+      "next_recommended_actions": [
+        "Use models_dataset(action='inspect', view='detail') to inspect the stored dataset window and split summary.",
+        "Use models_train(action='start') to train one immutable model version from this dataset."
+      ],
+      "recommended_follow_up_tool": null,
+      "state_summary": {},
+      "exact_next_call_examples": [],
+      "raw_refs": [
+        "system_raw_call(tool_name='models_datasets_materialize')"
+      ],
+      "raw_tool_hints": [],
+      "summary": "Training dataset materialized and ready for training."
+    },
+    "warnings": [],
+    "refs": [],
+    "error": null
+  },
+  "isError": false
+}

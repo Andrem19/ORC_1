@@ -1,0 +1,17 @@
+{
+  "source_file": "raw_plans/plan_v7.md",
+  "source_hash": "50047c8ea7fe63bf16bf9495c6650924453fc99241a6855b73f138a0d41ba9eb",
+  "compiled_at": "2026-04-09T14:26:06.296898+00:00",
+  "sequence_id": "compiled_plan_v7",
+  "compile_status": "compiled",
+  "warnings": [
+    "parse_confidence=0.95: plan written in Russian with mixed terminology; semantic mapping is inferred"
+  ],
+  "semantic_method": "llm",
+  "plan_files": [
+    "plans/compiled_plan_v7_batch_1.json",
+    "plans/compiled_plan_v7_batch_2.json",
+    "plans/compiled_plan_v7_batch_3.json",
+    "plans/compiled_plan_v7_batch_4.json"
+  ]
+}

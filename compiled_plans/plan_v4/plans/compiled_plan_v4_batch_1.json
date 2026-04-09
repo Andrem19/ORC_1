@@ -1,0 +1,176 @@
+{
+  "plan_id": "compiled_plan_v4_batch_1",
+  "goal": "Close all outstanding v3 research branches, run a weak-window repair specialist program on the immutable base, and produce a final v4 verdict before any medium-friction work is unlocked.",
+  "baseline_ref": {
+    "snapshot_id": "active-signal-v1",
+    "version": 1,
+    "symbol": "BTCUSDT",
+    "anchor_timeframe": "1h",
+    "execution_timeframe": "5m"
+  },
+  "global_constraints": [
+    "active-signal-v1@1 is immutable — never modify the baseline snapshot.",
+    "Every research branch must reach a terminal decision (promoted or rejected); no half-open branches allowed.",
+    "Previously rejected branches (H1_post_funding_long, H2_expiry_lead_lag, A1_high_iv_long_v1, A1b_high_iv_momentum, A4_wed_afternoon) must not be revived.",
+    "Medium-friction wave (B1, B2) is locked unless all five unlock conditions are simultaneously satisfied.",
+    "Maximum 2 weak pockets may be selected for specialist repair in a single research cycle."
+  ],
+  "slices": [
+    {
+      "slice_id": "compiled_plan_v4_stage_1",
+      "title": "Полный closure-audit по прошлым планам",
+      "hypothesis": "Compile a unified register of every unfinished item from previous plans and establish the v4 research project with immutable reference.",
+      "objective": "Compile a unified register of every unfinished item from previous plans and establish the v4 research project with immutable reference.",
+      "success_criteria": [
+        "A single open-items register exists and the immutable reference is recorded in the project."
+      ],
+      "allowed_tools": [
+        "research_project",
+        "research_map",
+        "research_record",
+        "research_search"
+      ],
+      "evidence_requirements": [
+        "A single open-items register exists and the immutable reference is recorded in the project."
+      ],
+      "policy_tags": [
+        "setup",
+        "cheap_first"
+      ],
+      "max_turns": 4,
+      "max_tool_calls": 4,
+      "max_expensive_calls": 0,
+      "parallel_slot": 1,
+      "status": "pending",
+      "turn_count": 0,
+      "tool_call_count": 0,
+      "expensive_call_count": 0,
+      "assigned_worker_id": null,
+      "last_checkpoint_turn_id": "",
+      "last_checkpoint_summary": "",
+      "final_report_turn_id": "",
+      "last_error": "",
+      "last_summary": "",
+      "latest_tool_result_summary": "",
+      "active_operation_tool": "",
+      "active_operation_ref": "",
+      "active_operation_status": "",
+      "active_operation_arguments": {},
+      "active_resume_tool": "",
+      "active_resume_token": "",
+      "last_tool_response_status": "",
+      "artifacts": [],
+      "facts": {}
+    },
+    {
+      "slice_id": "compiled_plan_v4_stage_2",
+      "title": "Формально закрыть все незавершенные документы и memory-nodes прошлых планов",
+      "hypothesis": "Eliminate all organisational debt — close hanging branches, create terminal nodes, and freeze past-plan memory.",
+      "objective": "Eliminate all organisational debt — close hanging branches, create terminal nodes, and freeze past-plan memory.",
+      "success_criteria": [
+        "No research branch in memory lacks a terminal status (promoted or rejected)."
+      ],
+      "allowed_tools": [
+        "research_project",
+        "research_map",
+        "research_record",
+        "research_search",
+        "backtests_analysis",
+        "notify_send"
+      ],
+      "evidence_requirements": [
+        "No research branch in memory lacks a terminal status (promoted or rejected)."
+      ],
+      "policy_tags": [
+        "cleanup"
+      ],
+      "max_turns": 4,
+      "max_tool_calls": 4,
+      "max_expensive_calls": 0,
+      "parallel_slot": 1,
+      "status": "pending",
+      "turn_count": 0,
+      "tool_call_count": 0,
+      "expensive_call_count": 0,
+      "assigned_worker_id": null,
+      "last_checkpoint_turn_id": "",
+      "last_checkpoint_summary": "",
+      "final_report_turn_id": "",
+      "last_error": "",
+      "last_summary": "",
+      "latest_tool_result_summary": "",
+      "active_operation_tool": "",
+      "active_operation_ref": "",
+      "active_operation_status": "",
+      "active_operation_arguments": {},
+      "active_resume_tool": "",
+      "active_resume_token": "",
+      "last_tool_response_status": "",
+      "artifacts": [],
+      "facts": {}
+    },
+    {
+      "slice_id": "compiled_plan_v4_stage_3",
+      "title": "Полностью закрыть ветку A2_iv_acceleration",
+      "hypothesis": "Drive the main unfinished v3 branch A2 to a definitive terminal decision through feature contract, materialization, plausibility check, strict prototyping, and full acceptance chain.",
+      "objective": "Drive the main unfinished v3 branch A2 to a definitive terminal decision through feature contract, materialization, plausibility check, strict prototyping, and full acceptance chain.",
+      "success_criteria": [
+        "A2_iv_acceleration has a terminal decision: promoted or rejected with documented reason."
+      ],
+      "allowed_tools": [
+        "features_catalog",
+        "features_custom",
+        "features_dataset",
+        "features_analytics",
+        "models_dataset",
+        "models_train",
+        "models_registry",
+        "models_compare",
+        "models_to_feature",
+        "backtests_plan",
+        "backtests_runs",
+        "backtests_studies",
+        "backtests_walkforward",
+        "backtests_conditions",
+        "backtests_analysis",
+        "experiments_run",
+        "experiments_inspect",
+        "experiments_read",
+        "experiments_registry_inspect"
+      ],
+      "evidence_requirements": [
+        "A2_iv_acceleration has a terminal decision: promoted or rejected with documented reason."
+      ],
+      "policy_tags": [
+        "core_research"
+      ],
+      "max_turns": 6,
+      "max_tool_calls": 5,
+      "max_expensive_calls": 1,
+      "parallel_slot": 1,
+      "status": "pending",
+      "turn_count": 0,
+      "tool_call_count": 0,
+      "expensive_call_count": 0,
+      "assigned_worker_id": null,
+      "last_checkpoint_turn_id": "",
+      "last_checkpoint_summary": "",
+      "final_report_turn_id": "",
+      "last_error": "",
+      "last_summary": "",
+      "latest_tool_result_summary": "",
+      "active_operation_tool": "",
+      "active_operation_ref": "",
+      "active_operation_status": "",
+      "active_operation_arguments": {},
+      "active_resume_tool": "",
+      "active_resume_token": "",
+      "last_tool_response_status": "",
+      "artifacts": [],
+      "facts": {}
+    }
+  ],
+  "status": "draft",
+  "created_at": "2026-04-09T14:21:37.708505+00:00",
+  "updated_at": "2026-04-09T14:21:37.708509+00:00"
+}

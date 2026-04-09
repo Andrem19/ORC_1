@@ -1,0 +1,178 @@
+{
+  "plan_id": "compiled_plan_v10_batch_2",
+  "goal": "Доказать или опровергнуть, что microstructure feature family (прежде всего cf_micro_imbalance_1h) даёт реальный overlay alpha поверх immutable base через veto, и вынести terminal verdict: PROMOTE / WATCHLIST / REJECT.",
+  "baseline_ref": {
+    "snapshot_id": "active-signal-v1",
+    "version": 1,
+    "symbol": "BTCUSDT",
+    "anchor_timeframe": "1h",
+    "execution_timeframe": "5m"
+  },
+  "global_constraints": [
+    "База active-signal-v1@1 immutable: запрещено менять базу, подбирать часы/дни/пороги/исполнение, retune label scheme или architecture.",
+    "Активна только одна feature family: microstructure_proxies. Все остальные locked.",
+    "Overlay veto обязателен первым; early-cut и directional scout разрешены только после проходного veto-lockbox.",
+    "Единственный критерий истины — matched lockbox OOS comparison (base vs base+overlay) на том же окне.",
+    "Simple baselines (bucket/threshold/logistic) обязательны до CatBoost; если простой rule не хуже модели — сложность не нужна.",
+    "Short side приоритет (short-first) во всех veto экспериментах.",
+    "Запрещено: net_pnl>0 как единственный veto label; reopening закрытых avenues (leadership, path-asymmetry, regime-disagreement, event-only overlays, derivatives positioning без реальных данных).",
+    "Feature set ограничен micro-core (7 признаков) + минимальный context-support; запрещено подмешивать старые feature packs."
+  ],
+  "slices": [
+    {
+      "slice_id": "compiled_plan_v10_stage_4",
+      "title": "Freeze improved veto labels",
+      "hypothesis": "Определить и заморозить осмысленные veto target labels (три семьи × balanced/conservative), запретить изменения после начала training.",
+      "objective": "Определить и заморозить осмысленные veto target labels (три семьи × balanced/conservative), запретить изменения после начала training.",
+      "success_criteria": [
+        "6 frozen label definitions (3 families × 2 variants) с полной спецификацией каждого; label mutation lock активен."
+      ],
+      "allowed_tools": [
+        "features_catalog",
+        "features_custom",
+        "features_dataset",
+        "features_analytics"
+      ],
+      "evidence_requirements": [
+        "6 frozen label definitions (3 families × 2 variants) с полной спецификацией каждого; label mutation lock активен."
+      ],
+      "policy_tags": [
+        "setup"
+      ],
+      "max_turns": 4,
+      "max_tool_calls": 4,
+      "max_expensive_calls": 0,
+      "parallel_slot": 1,
+      "status": "pending",
+      "turn_count": 0,
+      "tool_call_count": 0,
+      "expensive_call_count": 0,
+      "assigned_worker_id": null,
+      "last_checkpoint_turn_id": "",
+      "last_checkpoint_summary": "",
+      "final_report_turn_id": "",
+      "last_error": "",
+      "last_summary": "",
+      "latest_tool_result_summary": "",
+      "active_operation_tool": "",
+      "active_operation_ref": "",
+      "active_operation_status": "",
+      "active_operation_arguments": {},
+      "active_resume_tool": "",
+      "active_resume_token": "",
+      "last_tool_response_status": "",
+      "artifacts": [],
+      "facts": {}
+    },
+    {
+      "slice_id": "compiled_plan_v10_stage_5",
+      "title": "Simple baselines before CatBoost",
+      "hypothesis": "Проверить на selection OOS, нужен ли сложный model layer сверх cf_micro_imbalance_1h, сравнив bucket veto, threshold veto, logistic и small CatBoost.",
+      "objective": "Проверить на selection OOS, нужен ли сложный model layer сверх cf_micro_imbalance_1h, сравнив bucket veto, threshold veto, logistic и small CatBoost.",
+      "success_criteria": [
+        "Все 4 baseline оценены на selection OOS; comparative table заполнена; решение: достаточен ли простой rule или нужен CatBoost."
+      ],
+      "allowed_tools": [
+        "models_dataset",
+        "models_train",
+        "models_registry",
+        "models_compare",
+        "models_to_feature",
+        "backtests_plan",
+        "backtests_runs",
+        "backtests_studies",
+        "backtests_walkforward",
+        "backtests_conditions",
+        "backtests_analysis",
+        "experiments_run",
+        "experiments_inspect",
+        "experiments_read"
+      ],
+      "evidence_requirements": [
+        "Все 4 baseline оценены на selection OOS; comparative table заполнена; решение: достаточен ли простой rule или нужен CatBoost."
+      ],
+      "policy_tags": [
+        "cheap_first"
+      ],
+      "max_turns": 6,
+      "max_tool_calls": 5,
+      "max_expensive_calls": 2,
+      "parallel_slot": 1,
+      "status": "pending",
+      "turn_count": 0,
+      "tool_call_count": 0,
+      "expensive_call_count": 0,
+      "assigned_worker_id": null,
+      "last_checkpoint_turn_id": "",
+      "last_checkpoint_summary": "",
+      "final_report_turn_id": "",
+      "last_error": "",
+      "last_summary": "",
+      "latest_tool_result_summary": "",
+      "active_operation_tool": "",
+      "active_operation_ref": "",
+      "active_operation_status": "",
+      "active_operation_arguments": {},
+      "active_resume_tool": "",
+      "active_resume_token": "",
+      "last_tool_response_status": "",
+      "artifacts": [],
+      "facts": {}
+    },
+    {
+      "slice_id": "compiled_plan_v10_stage_6",
+      "title": "Short-first veto models",
+      "hypothesis": "Обучить short veto модели на frozen labels (pnl, fragile, composite) и выбрать лучший short route по selection economics.",
+      "objective": "Обучить short veto модели на frozen labels (pnl, fragile, composite) и выбрать лучший short route по selection economics.",
+      "success_criteria": [
+        "Лучший short veto model выбран; selection economic effect положителен или задокументирован как недостаточный."
+      ],
+      "allowed_tools": [
+        "models_dataset",
+        "models_train",
+        "models_registry",
+        "models_compare",
+        "models_to_feature",
+        "backtests_plan",
+        "backtests_runs",
+        "backtests_studies",
+        "backtests_walkforward",
+        "backtests_conditions",
+        "backtests_analysis"
+      ],
+      "evidence_requirements": [
+        "Лучший short veto model выбран; selection economic effect положителен или задокументирован как недостаточный."
+      ],
+      "policy_tags": [
+        "short_first"
+      ],
+      "max_turns": 6,
+      "max_tool_calls": 5,
+      "max_expensive_calls": 2,
+      "parallel_slot": 1,
+      "status": "pending",
+      "turn_count": 0,
+      "tool_call_count": 0,
+      "expensive_call_count": 0,
+      "assigned_worker_id": null,
+      "last_checkpoint_turn_id": "",
+      "last_checkpoint_summary": "",
+      "final_report_turn_id": "",
+      "last_error": "",
+      "last_summary": "",
+      "latest_tool_result_summary": "",
+      "active_operation_tool": "",
+      "active_operation_ref": "",
+      "active_operation_status": "",
+      "active_operation_arguments": {},
+      "active_resume_tool": "",
+      "active_resume_token": "",
+      "last_tool_response_status": "",
+      "artifacts": [],
+      "facts": {}
+    }
+  ],
+  "status": "draft",
+  "created_at": "2026-04-09T14:32:33.478175+00:00",
+  "updated_at": "2026-04-09T14:32:33.478176+00:00"
+}

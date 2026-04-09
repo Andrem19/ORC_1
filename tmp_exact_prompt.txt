@@ -1,0 +1,43 @@
+## Operator Directives
+Твоя задача найти новые features которые бы давали новые сигналы которые мы не получаем от сигналов в baseline т е чтобы не было канибазизма а добавлялись реально новые сигналы дающие прибыль. Составляй качественные продуманные планы. Продумывай их так чтобы workers не простаивали (у тебя 3 работника) чтобы они могли большую часть делать параллельно.
+
+You are writing a markdown research plan, not executing research.
+Use only the facts in this prompt. Do not use tools, do not inspect the workspace, do not gather more context, and do not spawn subagents.
+Tool names in this prompt are for authoring the worker plan only. You must not call them.
+
+## Status and Frame
+Baseline is fixed: active-signal-v1@1. Do not retune the baseline or recycle old tuned families.
+symbol: BTCUSDT, anchor_timeframe: 1h, execution_timeframe: 5m
+Wave context: starting a new wave 1, slot 1 of 3
+
+## Goal
+Continuously improve automated trading strategy performance on BTCUSDT via MCP dev_space1. Maximize net PnL and trade count while minimizing max drawdown. Run research cycles indefinitely, exploring new features, models, and strategies, validating them against the active-signal-v1 baseline (Sharpe 1.06, +13% return, 49
+
+## Baseline
+active-signal-v1@1: Sharpe 1.06, +13% return, 498 trades, max DD 2.4%
+This baseline is the fixed reference system for integration checks, not an object for retuning.
+
+## Research Principles
+- Search for genuinely new signals or missing-regime layers, not cosmetic baseline variations.
+- Require standalone value, stability, integration quality, and cannibalization control.
+- Prefer ideas that add new trades, new regimes, or new information layers.
+- Do not spend the cycle retuning hours, days, thresholds, or execution details of the baseline.
+
+## dev_space1 Capabilities
+Workers available: 3. Each markdown plan is executed by one worker, but the broader orchestration may run up to 3 plans in parallel.
+Allowed tool names to reference in steps: features_catalog, features_dataset, features_custom, features_analytics, backtests_strategy, backtests_strategy_validate, backtests_plan, backtests_runs, backtests_studies, backtests_walkforward, backtests_conditions, backtests_analysis, research_project, research_map, research_record, research_search, datasets, datasets_preview, datasets_sync, events, events_sync, experiments_run, models_dataset, models_train, models_registry, models_to_feature, models_compare.
+Constraints: timeframes locked to 1h/5m. Use action='build' for new features. backtests_strategy(action='clone') uses source_snapshot_id. backtests_runs(action='start') requires version.
+
+## Output Format
+Write a SINGLE research plan as plain markdown for Plan v1.
+Rules:
+1. Start with '# Plan v1'
+2. Include sections for Status and Frame, Goal, Baseline, Research Principles, and dev_space1 Capabilities before the ETAPs
+3. Write exactly 3 ETAP sections with '## ETAP N: Name' headers
+4. Each ETAP must have: one-sentence goal, 4-6 numbered action steps, completion criteria
+5. Action steps must use concrete MCP tool names and args on single lines
+6. NEVER use placeholders like <...> or '...' — use concrete values
+7. Assume symbol/timeframes are already known; do not spend steps rediscovering them
+8. End each ETAP with a compact markdown results table template
+9. Do NOT use code fences, pseudocode, or multi-line snippets anywhere
+10. Keep the plan concise and execution-oriented

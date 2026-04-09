@@ -93,12 +93,13 @@ class TestTermProtection:
         restored = svc._restore_terms(protected, placeholders)
         assert restored == text
 
-    def test_decision_values_protected(self):
+    def test_plan_markers_protected(self):
         svc = self._make_service()
-        text = "launch_worker was the decision"
+        text = "Plan v2 completed ETAP 3 successfully"
         protected, placeholders = svc._protect_terms(text)
-        assert "launch_worker" not in protected
-        assert len(placeholders) == 1
+        assert "Plan v2" not in protected
+        assert "ETAP 3" not in protected
+        assert len(placeholders) == 2
 
     def test_urls_protected(self):
         svc = self._make_service()
@@ -149,16 +150,28 @@ class TestTranslate:
         text = "Hello, how are you?"
         assert svc.translate(text) == text
 
-    def test_model_not_loaded_returns_original(self):
+    def test_lazy_load_failure_returns_original(self):
         svc = TranslationService(translate_to_russian=True)
-        # Model not loaded — should return original text
         text = "Hello, how are you?"
-        assert svc.translate(text) == text
+        with pytest.MonkeyPatch.context() as mp:
+            mp.setattr(svc, "load_model", lambda: (_ for _ in ()).throw(RuntimeError("boom")))
+            assert svc.translate(text) == text
 
     def test_empty_text_returns_empty(self):
         svc = TranslationService(translate_to_russian=False)
         assert svc.translate("") == ""
         assert svc.translate("   ") == "   "
+
+    def test_lazy_load_success_translates(self):
+        svc = TranslationService(translate_to_russian=True, backend="opus")
+
+        def _fake_load():
+            svc._model_loaded = True
+
+        with pytest.MonkeyPatch.context() as mp:
+            mp.setattr(svc, "load_model", _fake_load)
+            mp.setattr(svc, "_translate_opus", lambda text: "translated")
+            assert svc.translate("Hello") == "translated"
 
 
 # ---------------------------------------------------------------------------
@@ -213,9 +226,11 @@ class TestLoadModel:
 
     def test_enabled_but_not_loaded_returns_original(self):
         svc = TranslationService(translate_to_russian=True)
-        # Don't call load_model
         text = "This should pass through unchanged"
-        assert svc.translate(text) == text
+        with pytest.MonkeyPatch.context() as mp:
+            # Keep the service in a not-ready state after lazy-load attempt.
+            mp.setattr(svc, "load_model", lambda: None)
+            assert svc.translate(text) == text
 
 
 # ---------------------------------------------------------------------------

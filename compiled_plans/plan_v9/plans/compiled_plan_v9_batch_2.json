@@ -1,0 +1,172 @@
+{
+  "plan_id": "compiled_plan_v9_batch_2",
+  "goal": "Определить, содержит ли доступный новый data universe реальный информационный сигнал сверх текущего OHLCV+IV+classifier+breadth+event space, и может ли он стать основой для overlay или directional model route.",
+  "baseline_ref": {
+    "snapshot_id": "active-signal-v1",
+    "version": 1,
+    "symbol": "BTCUSDT",
+    "anchor_timeframe": "1h",
+    "execution_timeframe": "5m"
+  },
+  "global_constraints": [
+    "База active-signal-v1@1 — immutable reference: запрещено менять базу, подбирать ей параметры, заново открывать closed routes на старом data universe.",
+    "Новый data universe обязан быть новым по сути, а не другой упаковкой уже использованной информации (OHLCV, IV, classifier transitions, breadth, events).",
+    "Одна primary data family за раз; fallback — строго по очереди, не паралельно.",
+    "Overlay-first: новая family сначала проверяется на veto/overlay surface базы, directional scout разрешён только после overlay evidence.",
+    "Никакого feature selection, label scheme, threshold, horizon или архитектуры по lockbox-окну.",
+    "Любое улучшение обязано пройти matched OOS comparison против базы на том же окне.",
+    "Purge gap минимум 24h для trade/holding tasks; больше если новая family требует lookback.",
+    "Первая волна features — не более 12 на family.",
+    "Direction labels запрещено открывать раньше overlay evidence.",
+    "Family choice freeze перед modeling; feature set freeze перед training; threshold freeze перед lockbox."
+  ],
+  "slices": [
+    {
+      "slice_id": "compiled_plan_v9_stage_4",
+      "title": "Feature contract и materialization для primary family",
+      "hypothesis": "Построить minimal viable feature layer (≤12 features) для primary family с валидацией, публикацией, materialization и bucket sanity.",
+      "objective": "Построить minimal viable feature layer (≤12 features) для primary family с валидацией, публикацией, materialization и bucket sanity.",
+      "success_criteria": [
+        "Все features materialized с coverage_ok=true, warmup_ok=true, bucket_sanity_ok=true",
+        "Количество features в первой волне ≤ 12"
+      ],
+      "allowed_tools": [
+        "features_catalog",
+        "features_custom",
+        "features_dataset",
+        "features_analytics"
+      ],
+      "evidence_requirements": [
+        "Все features materialized с coverage_ok=true, warmup_ok=true, bucket_sanity_ok=true",
+        "Количество features в первой волне ≤ 12"
+      ],
+      "policy_tags": [
+        "cheap_first",
+        "feature_contract"
+      ],
+      "max_turns": 6,
+      "max_tool_calls": 5,
+      "max_expensive_calls": 1,
+      "parallel_slot": 1,
+      "status": "pending",
+      "turn_count": 0,
+      "tool_call_count": 0,
+      "expensive_call_count": 0,
+      "assigned_worker_id": null,
+      "last_checkpoint_turn_id": "",
+      "last_checkpoint_summary": "",
+      "final_report_turn_id": "",
+      "last_error": "",
+      "last_summary": "",
+      "latest_tool_result_summary": "",
+      "active_operation_tool": "",
+      "active_operation_ref": "",
+      "active_operation_status": "",
+      "active_operation_arguments": {},
+      "active_resume_tool": "",
+      "active_resume_token": "",
+      "last_tool_response_status": "",
+      "artifacts": [],
+      "facts": {}
+    },
+    {
+      "slice_id": "compiled_plan_v9_stage_5",
+      "title": "Trade-surface atlas augmentation",
+      "hypothesis": "Привязать новый feature layer к trade surface базы и определить, где новая family показывает наибольший сигнал.",
+      "objective": "Привязать новый feature layer к trade surface базы и определить, где новая family показывает наибольший сигнал.",
+      "success_criteria": [
+        "Atlas базы обогащён новыми features; есть предварительная карта силы сигнала по trade segments"
+      ],
+      "allowed_tools": [
+        "features_custom",
+        "backtests_analysis",
+        "backtests_conditions",
+        "experiments_run",
+        "experiments_inspect",
+        "experiments_read"
+      ],
+      "evidence_requirements": [
+        "Atlas базы обогащён новыми features; есть предварительная карта силы сигнала по trade segments"
+      ],
+      "policy_tags": [
+        "overlay_first"
+      ],
+      "max_turns": 6,
+      "max_tool_calls": 5,
+      "max_expensive_calls": 1,
+      "parallel_slot": 1,
+      "status": "pending",
+      "turn_count": 0,
+      "tool_call_count": 0,
+      "expensive_call_count": 0,
+      "assigned_worker_id": null,
+      "last_checkpoint_turn_id": "",
+      "last_checkpoint_summary": "",
+      "final_report_turn_id": "",
+      "last_error": "",
+      "last_summary": "",
+      "latest_tool_result_summary": "",
+      "active_operation_tool": "",
+      "active_operation_ref": "",
+      "active_operation_status": "",
+      "active_operation_arguments": {},
+      "active_resume_tool": "",
+      "active_resume_token": "",
+      "last_tool_response_status": "",
+      "artifacts": [],
+      "facts": {}
+    },
+    {
+      "slice_id": "compiled_plan_v9_stage_6",
+      "title": "Veto-route plausibility on new family",
+      "hypothesis": "Обучить veto-overlay модели (long/short balanced) и оценить, даёт ли новая family meaningful veto signal на selection OOS.",
+      "objective": "Обучить veto-overlay модели (long/short balanced) и оценить, даёт ли новая family meaningful veto signal на selection OOS.",
+      "success_criteria": [
+        "Модели обучены; есть метрики val/test AUC, precision, veto_bucket_ok, selection_economic_effect_ok",
+        "Принято решение о promotion_to_lockbox"
+      ],
+      "allowed_tools": [
+        "models_dataset",
+        "models_train",
+        "models_registry",
+        "models_compare",
+        "models_to_feature"
+      ],
+      "evidence_requirements": [
+        "Модели обучены; есть метрики val/test AUC, precision, veto_bucket_ok, selection_economic_effect_ok",
+        "Принято решение о promotion_to_lockbox"
+      ],
+      "policy_tags": [
+        "overlay_first",
+        "modeling"
+      ],
+      "max_turns": 6,
+      "max_tool_calls": 5,
+      "max_expensive_calls": 2,
+      "parallel_slot": 1,
+      "status": "pending",
+      "turn_count": 0,
+      "tool_call_count": 0,
+      "expensive_call_count": 0,
+      "assigned_worker_id": null,
+      "last_checkpoint_turn_id": "",
+      "last_checkpoint_summary": "",
+      "final_report_turn_id": "",
+      "last_error": "",
+      "last_summary": "",
+      "latest_tool_result_summary": "",
+      "active_operation_tool": "",
+      "active_operation_ref": "",
+      "active_operation_status": "",
+      "active_operation_arguments": {},
+      "active_resume_tool": "",
+      "active_resume_token": "",
+      "last_tool_response_status": "",
+      "artifacts": [],
+      "facts": {}
+    }
+  ],
+  "status": "draft",
+  "created_at": "2026-04-09T14:30:46.474433+00:00",
+  "updated_at": "2026-04-09T14:30:46.474434+00:00"
+}

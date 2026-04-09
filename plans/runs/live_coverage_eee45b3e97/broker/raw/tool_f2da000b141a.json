@@ -1,0 +1,93 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\n  \"status\": \"ok\",\n  \"message\": \"Experiment inspection loaded.\",\n  \"tool_name\": \"experiments_inspect\",\n  \"request_id\": \"31\",\n  \"correlation_id\": \"31\",\n  \"server_session_id\": \"96b060c9f65e465fb4836340e9d955d7\",\n  \"response_generated_at\": \"2026-04-09T13:27:50.575052+00:00\",\n  \"data\": {\n    \"view\": \"result\",\n    \"job\": {\n      \"job_id\": \"20260409-132749-429dfe3c\",\n      \"name\": \"coverage_experiment_live_coverage_eee45b3e97_1\",\n      \"description\": null,\n      \"status\": \"running_compute\",\n      \"created_at\": \"2026-04-09T13:27:49.645484+00:00\",\n      \"started_at\": \"2026-04-09T13:27:49.970362+00:00\",\n      \"finished_at\": null,\n      \"timeout_seconds\": 120,\n      \"workspace\": {\n        \"job_dir\": \"/home/ubuntu/FOUNDATION/artifacts/experiments/20260409-132749-429dfe3c\",\n        \"manifest_path\": \"/home/ubuntu/FOUNDATION/artifacts/experiments/20260409-132749-429dfe3c/manifest.json\",\n        \"script_path\": \"/home/ubuntu/FOUNDATION/artifacts/experiments/20260409-132749-429dfe3c/script.py\",\n        \"stdout_path\": \"/home/ubuntu/FOUNDATION/artifacts/experiments/20260409-132749-429dfe3c/stdout.log\",\n        \"stderr_path\": \"/home/ubuntu/FOUNDATION/artifacts/experiments/20260409-132749-429dfe3c/stderr.log\",\n        \"result_path\": \"/home/ubuntu/FOUNDATION/artifacts/experiments/20260409-132749-429dfe3c/result.json\",\n        \"artifacts_dir\": \"/home/ubuntu/FOUNDATION/artifacts/experiments/20260409-132749-429dfe3c/artifacts\",\n        \"cwd\": \"/home/ubuntu/FOUNDATION/artifacts/experiments/20260409-132749-429dfe3c\",\n        \"path_scope\": \"server_runtime\",\n        \"path_scope_note\": \"Filesystem paths refer to the MCP server runtime host, not a shared client workspace path.\",\n        \"recommended_delivery_tool\": \"notify_send\",\n        \"recommended_read_tool\": \"experiments_read\"\n      },\n      \"exit_code\": null,\n      \"error_message\": null,\n      \"termination_reason\": null,\n      \"task_summary\": \"Live broker coverage experiment cycle 1\",\n      \"task_category\": \"validation\",\n      \"task_tags\": [],\n      \"task_project_id\": \"experiments-use-case-registry\",\n      \"required_project_paths\": [],\n      \"project_root\": \"/home/ubuntu/FOUNDATION\",\n      \"project_root_scope\": \"server_runtime\"\n    },\n    \"result\": null,\n    \"cleanup_hints\": {\n      \"resource_keys\": [\n        \"experiments:experiment_job:20260409-132749-429dfe3c\"\n      ],\n      \"recommended_next_tool\": \"system_workspace\"\n    },\n    \"important_warnings\": [],\n    \"next_recommended_actions\": [\n      \"Use experiments_read(view='list') to browse produced artifacts.\",\n      \"Use experiments_inspect(view='logs') if the result still needs runtime diagnosis.\"\n    ],\n    \"recommended_follow_up_tool\": null,\n    \"state_summary\": {},\n    \"exact_next_call_examples\": [\n      {\n        \"tool\": \"experiments_read\",\n        \"arguments\": {\n          \"view\": \"list\",\n          \"job_id\": \"20260409-132749-429dfe3c\"\n        }\n      },\n      {\n        \"tool\": \"experiments_inspect\",\n        \"arguments\": {\n          \"view\": \"logs\",\n          \"job_id\": \"20260409-132749-429dfe3c\"\n        }\n      }\n    ],\n    \"raw_refs\": [\n      \"system_raw_call(tool_name='experiments_jobs_get_result')\"\n    ],\n    \"raw_tool_hints\": [],\n    \"summary\": \"Loaded structured result for experiment job 20260409-132749-429dfe3c.\"\n  },\n  \"warnings\": [],\n  \"refs\": [],\n  \"error\": null\n}"
+    }
+  ],
+  "structuredContent": {
+    "status": "ok",
+    "message": "Experiment inspection loaded.",
+    "tool_name": "experiments_inspect",
+    "request_id": "31",
+    "correlation_id": "31",
+    "server_session_id": "96b060c9f65e465fb4836340e9d955d7",
+    "response_generated_at": "2026-04-09T13:27:50.575052+00:00",
+    "data": {
+      "view": "result",
+      "job": {
+        "job_id": "20260409-132749-429dfe3c",
+        "name": "coverage_experiment_live_coverage_eee45b3e97_1",
+        "description": null,
+        "status": "running_compute",
+        "created_at": "2026-04-09T13:27:49.645484+00:00",
+        "started_at": "2026-04-09T13:27:49.970362+00:00",
+        "finished_at": null,
+        "timeout_seconds": 120,
+        "workspace": {
+          "job_dir": "/home/ubuntu/FOUNDATION/artifacts/experiments/20260409-132749-429dfe3c",
+          "manifest_path": "/home/ubuntu/FOUNDATION/artifacts/experiments/20260409-132749-429dfe3c/manifest.json",
+          "script_path": "/home/ubuntu/FOUNDATION/artifacts/experiments/20260409-132749-429dfe3c/script.py",
+          "stdout_path": "/home/ubuntu/FOUNDATION/artifacts/experiments/20260409-132749-429dfe3c/stdout.log",
+          "stderr_path": "/home/ubuntu/FOUNDATION/artifacts/experiments/20260409-132749-429dfe3c/stderr.log",
+          "result_path": "/home/ubuntu/FOUNDATION/artifacts/experiments/20260409-132749-429dfe3c/result.json",
+          "artifacts_dir": "/home/ubuntu/FOUNDATION/artifacts/experiments/20260409-132749-429dfe3c/artifacts",
+          "cwd": "/home/ubuntu/FOUNDATION/artifacts/experiments/20260409-132749-429dfe3c",
+          "path_scope": "server_runtime",
+          "path_scope_note": "Filesystem paths refer to the MCP server runtime host, not a shared client workspace path.",
+          "recommended_delivery_tool": "notify_send",
+          "recommended_read_tool": "experiments_read"
+        },
+        "exit_code": null,
+        "error_message": null,
+        "termination_reason": null,
+        "task_summary": "Live broker coverage experiment cycle 1",
+        "task_category": "validation",
+        "task_tags": [],
+        "task_project_id": "experiments-use-case-registry",
+        "required_project_paths": [],
+        "project_root": "/home/ubuntu/FOUNDATION",
+        "project_root_scope": "server_runtime"
+      },
+      "result": null,
+      "cleanup_hints": {
+        "resource_keys": [
+          "experiments:experiment_job:20260409-132749-429dfe3c"
+        ],
+        "recommended_next_tool": "system_workspace"
+      },
+      "important_warnings": [],
+      "next_recommended_actions": [
+        "Use experiments_read(view='list') to browse produced artifacts.",
+        "Use experiments_inspect(view='logs') if the result still needs runtime diagnosis."
+      ],
+      "recommended_follow_up_tool": null,
+      "state_summary": {},
+      "exact_next_call_examples": [
+        {
+          "tool": "experiments_read",
+          "arguments": {
+            "view": "list",
+            "job_id": "20260409-132749-429dfe3c"
+          }
+        },
+        {
+          "tool": "experiments_inspect",
+          "arguments": {
+            "view": "logs",
+            "job_id": "20260409-132749-429dfe3c"
+          }
+        }
+      ],
+      "raw_refs": [
+        "system_raw_call(tool_name='experiments_jobs_get_result')"
+      ],
+      "raw_tool_hints": [],
+      "summary": "Loaded structured result for experiment job 20260409-132749-429dfe3c."
+    },
+    "warnings": [],
+    "refs": [],
+    "error": null
+  },
+  "isError": false
+}

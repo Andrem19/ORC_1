@@ -1,0 +1,2189 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\n  \"status\": \"ok\",\n  \"message\": \"Infrastructure incident payload loaded.\",\n  \"tool_name\": \"incidents\",\n  \"request_id\": \"69\",\n  \"correlation_id\": \"69\",\n  \"server_session_id\": \"fbf2ef6510c34fd58f805b982a099afd\",\n  \"response_generated_at\": \"2026-04-09T13:50:26.601041+00:00\",\n  \"data\": {\n    \"view\": \"summary\",\n    \"project_id\": \"mcp-infra-incidents\",\n    \"counts_by_state\": {\n      \"open\": 60,\n      \"investigating\": 0,\n      \"fixed\": 2,\n      \"verified\": 0,\n      \"closed\": 0\n    },\n    \"latest_open_incidents\": [\n      {\n        \"node_id\": \"node-341390cefc9d413cbc8f87fc26a6b463\",\n        \"project_id\": \"mcp-infra-incidents\",\n        \"branch_id\": \"branch-52fbeb31fd074ba39daf2ed99a72d977\",\n        \"node_type\": \"note\",\n        \"title\": \"backtests_plan: backtests_plan_warning\",\n        \"summary\": \"backtests_plan_warning\",\n        \"status\": \"active\",\n        \"content\": {\n          \"error\": {\n            \"message\": \"stale_snapshot_feature_refs: snapshot feature_source.fields contains names that are not currently resolved through the feature registry/window guard.\"\n          },\n          \"events\": [],\n          \"log_excerpt\": null\n        },\n        \"metadata\": {\n          \"affected_tool\": \"backtests_plan\",\n          \"arguments\": {\n            \"anchor_timeframe\": \"1h\",\n            \"end_at\": \"2026-01-07T00:00:00+00:00\",\n            \"execution_timeframe\": \"5m\",\n            \"snapshot_id\": \"active-signal-v1\",\n            \"start_at\": \"2026-01-01T00:00:00+00:00\",\n            \"symbol\": \"BTCUSDT\",\n            \"version\": \"1\"\n          },\n          \"correlation_id\": null,\n          \"error_code\": \"unknown_error\",\n          \"evidence\": {},\n          \"first_seen_at\": \"2026-04-09T12:32:00.921177+00:00\",\n          \"kind\": \"infrastructure_incident\",\n          \"last_seen_at\": \"2026-04-09T13:50:00.968970+00:00\",\n          \"message\": \"backtests_plan_warning\",\n          \"normalized_message\": \"backtests_plan_warning\",\n          \"occurrences\": 47,\n          \"request_id\": null,\n          \"result\": {\n            \"artifact_ids\": [],\n            \"call_id\": \"tool_e944584939f3\",\n            \"created_at\": \"2026-04-09T13:50:00.691251+00:00\",\n            \"duration_ms\": 6352,\n            \"error_class\": \"\",\n            \"key_facts\": {\n              \"summary\": \"Planned backtest run window for active-signal-v1 on BTCUSDT@1h/5m.\"\n            },\n            \"ok\": true,\n            \"operation_ref\": \"\",\n            \"plan_id\": \"live_coverage\",\n            \"raw_result_ref\": \"plans/runs/live_coverage_038882df8f/broker/raw/tool_e944584939f3.json\",\n            \"request_arguments\": {\n              \"anchor_timeframe\": \"1h\",\n              \"end_at\": \"2026-01-07T00:00:00+00:00\",\n              \"execution_timeframe\": \"5m\",\n              \"snapshot_id\": \"active-signal-v1\",\n              \"start_at\": \"2026-01-01T00:00:00+00:00\",\n              \"symbol\": \"BTCUSDT\",\n              \"version\": 1\n            },\n            \"response_status\": \"\",\n            \"resume_arguments\": {},\n            \"resume_token\": \"\",\n            \"resume_tool\": \"backtests_plan\",\n            \"retryable\": false,\n            \"slice_id\": \"backtests_plan_window\",\n            \"summary\": \"Planned backtest run window for active-signal-v1 on BTCUSDT@1h/5m.\",\n            \"tool\": \"backtests_plan\",\n            \"tool_response_status\": \"ok\",\n            \"warnings\": [\n              \"Snapshot logic depends on explicit anchor-context columns; keep using the computed causal lower bound.\",\n              \"stale_snapshot_feature_refs: snapshot feature_source.fields contains names that are not currently resolved through the feature registry/window guard.\"\n            ]\n          },\n          \"server_session_id\": null,\n          \"service\": \"dev_space1\",\n          \"severity\": \"medium\",\n          \"state\": \"open\"\n        },\n        \"source_refs\": [],\n        \"external_ref\": \"incident:f8e690a485647b6bffeb3f32\",\n        \"dedupe_key\": \"f8e690a485647b6bffeb3f32\",\n        \"pinned\": false,\n        \"protection_reason\": null,\n        \"created_at\": \"2026-04-09T12:32:00.922338+00:00\",\n        \"updated_at\": \"2026-04-09T13:50:00.972416+00:00\",\n        \"incident_id\": \"incident:f8e690a485647b6bffeb3f32\"\n      },\n      {\n        \"node_id\": \"node-b9bf4bfdf9634340b214505ed850d3b3\",\n        \"project_id\": \"mcp-infra-incidents\",\n        \"branch_id\": \"branch-52fbeb31fd074ba39daf2ed99a72d977\",\n        \"node_type\": \"note\",\n        \"title\": \"features_analytics: features_analytics_warning\",\n        \"summary\": \"features_analytics_warning\",\n        \"status\": \"active\",\n        \"content\": {\n          \"error\": {\n            \"message\": \"shift_audit_custom_features_only\"\n          },\n          \"events\": [],\n          \"log_excerpt\": null\n        },\n        \"metadata\": {\n          \"affected_tool\": \"features_analytics\",\n          \"arguments\": {\n            \"action\": \"analytics\",\n            \"feature_name\": \"rsi_1\",\n            \"symbol\": \"BTCUSDT\"\n          },\n          \"correlation_id\": null,\n          \"error_code\": \"unknown_error\",\n          \"evidence\": {},\n          \"first_seen_at\": \"2026-04-09T04:19:26.773801+00:00\",\n          \"kind\": \"infrastructure_incident\",\n          \"last_seen_at\": \"2026-04-09T13:49:00.408330+00:00\",\n          \"message\": \"features_analytics_warning\",\n          \"normalized_message\": \"features_analytics_warning\",\n          \"occurrences\": 27,\n          \"request_id\": null,\n          \"result\": {\n            \"artifact_ids\": [],\n            \"call_id\": \"tool_90f84eda680b\",\n            \"created_at\": \"2026-04-09T13:49:00.270448+00:00\",\n            \"duration_ms\": 503,\n            \"error_class\": \"\",\n            \"key_facts\": {},\n            \"ok\": true,\n            \"operation_ref\": \"\",\n            \"plan_id\": \"live_coverage\",\n            \"raw_result_ref\": \"plans/runs/live_coverage_038882df8f/broker/raw/tool_90f84eda680b.json\",\n            \"request_arguments\": {\n              \"action\": \"analytics\",\n              \"feature_name\": \"rsi_1\",\n              \"symbol\": \"BTCUSDT\"\n            },\n            \"response_status\": \"\",\n            \"resume_arguments\": {},\n            \"resume_token\": \"\",\n            \"resume_tool\": \"features_analytics\",\n            \"retryable\": false,\n            \"slice_id\": \"features_analytics_rsi\",\n            \"summary\": \"Feature analytics action completed.\",\n            \"tool\": \"features_analytics\",\n            \"tool_response_status\": \"ok\",\n            \"warnings\": [\n              \"shift_audit_custom_features_only\"\n            ]\n          },\n          \"server_session_id\": null,\n          \"service\": \"dev_space1\",\n          \"severity\": \"medium\",\n          \"state\": \"open\"\n        },\n        \"source_refs\": [],\n        \"external_ref\": \"incident:1843cfa8b423842d7b6b6635\",\n        \"dedupe_key\": \"1843cfa8b423842d7b6b6635\",\n        \"pinned\": false,\n        \"protection_reason\": null,\n        \"created_at\": \"2026-04-09T04:19:26.774882+00:00\",\n        \"updated_at\": \"2026-04-09T13:49:00.856999+00:00\",\n        \"incident_id\": \"incident:1843cfa8b423842d7b6b6635\"\n      },\n      {\n        \"node_id\": \"node-25bf4dcce3e445ab82edb6898cb4bf13\",\n        \"project_id\": \"mcp-infra-incidents\",\n        \"branch_id\": \"branch-52fbeb31fd074ba39daf2ed99a72d977\",\n        \"node_type\": \"note\",\n        \"title\": \"system_reset_space: system_reset_space_warning\",\n        \"summary\": \"system_reset_space_warning\",\n        \"status\": \"active\",\n        \"content\": {\n          \"error\": {\n            \"message\": \"normalized_boolean:research_memory\"\n          },\n          \"events\": [],\n          \"log_excerpt\": null\n        },\n        \"metadata\": {\n          \"affected_tool\": \"system_reset_space\",\n          \"arguments\": {\n            \"action\": \"preview\",\n            \"research_memory\": \"false\"\n          },\n          \"correlation_id\": null,\n          \"error_code\": \"unknown_error\",\n          \"evidence\": {},\n          \"first_seen_at\": \"2026-04-09T12:39:26.545606+00:00\",\n          \"kind\": \"infrastructure_incident\",\n          \"last_seen_at\": \"2026-04-09T13:26:17.805970+00:00\",\n          \"message\": \"system_reset_space_warning\",\n          \"normalized_message\": \"system_reset_space_warning\",\n          \"occurrences\": 17,\n          \"request_id\": null,\n          \"result\": {\n            \"artifact_ids\": [],\n            \"call_id\": \"tool_382a7f2755a4\",\n            \"created_at\": \"2026-04-09T13:26:17.697546+00:00\",\n            \"duration_ms\": 485,\n            \"error_class\": \"\",\n            \"key_facts\": {\n              \"summary\": \"Explicit system reset preview completed.\"\n            },\n            \"ok\": true,\n            \"operation_ref\": \"\",\n            \"plan_id\": \"live_coverage\",\n            \"raw_result_ref\": \"plans/runs/live_coverage_0abad64a84/broker/raw/tool_382a7f2755a4.json\",\n            \"request_arguments\": {\n              \"action\": \"preview\",\n              \"research_memory\": \"false\"\n            },\n            \"response_status\": \"\",\n            \"resume_arguments\": {},\n            \"resume_token\": \"\",\n            \"resume_tool\": \"system_reset_space\",\n            \"retryable\": false,\n            \"slice_id\": \"system_reset_preview\",\n            \"summary\": \"Explicit system reset preview completed.\",\n            \"tool\": \"system_reset_space\",\n            \"tool_response_status\": \"ok\",\n            \"warnings\": [\n              \"normalized_boolean:research_memory\"\n            ]\n          },\n          \"server_session_id\": null,\n          \"service\": \"dev_space1\",\n          \"severity\": \"medium\",\n          \"state\": \"open\"\n        },\n        \"source_refs\": [],\n        \"external_ref\": \"incident:38282462bc82cd17ca73d5cf\",\n        \"dedupe_key\": \"38282462bc82cd17ca73d5cf\",\n        \"pinned\": false,\n        \"protection_reason\": null,\n        \"created_at\": \"2026-04-09T12:39:26.549726+00:00\",\n        \"updated_at\": \"2026-04-09T13:26:17.810944+00:00\",\n        \"incident_id\": \"incident:38282462bc82cd17ca73d5cf\"\n      },\n      {\n        \"node_id\": \"node-cab754771ee7495580959affd1d4d909\",\n        \"project_id\": \"mcp-infra-incidents\",\n        \"branch_id\": \"branch-52fbeb31fd074ba39daf2ed99a72d977\",\n        \"node_type\": \"note\",\n        \"title\": \"research_search: research_search_warning\",\n        \"summary\": \"research_search_warning\",\n        \"status\": \"active\",\n        \"content\": {\n          \"error\": {\n            \"message\": \"broker_contract_trap:research_search_compact_level_rewritten\"\n          },\n          \"events\": [],\n          \"log_excerpt\": null\n        },\n        \"metadata\": {\n          \"affected_tool\": \"research_search\",\n          \"arguments\": {\n            \"level\": \"compact\",\n            \"limit\": \"5\",\n            \"project_id\": \"coverage-project-live-coverage-0abad64a84-3-b1506b56\",\n            \"query\": \"coverage note\"\n          },\n          \"correlation_id\": null,\n          \"error_code\": \"unknown_error\",\n          \"evidence\": {},\n          \"first_seen_at\": \"2026-04-09T10:18:39.889269+00:00\",\n          \"kind\": \"infrastructure_incident\",\n          \"last_seen_at\": \"2026-04-09T13:23:57.777926+00:00\",\n          \"message\": \"research_search_warning\",\n          \"normalized_message\": \"research_search_warning\",\n          \"occurrences\": 20,\n          \"request_id\": null,\n          \"result\": {\n            \"artifact_ids\": [],\n            \"call_id\": \"tool_9cde453734fb\",\n            \"created_at\": \"2026-04-09T13:23:57.238045+00:00\",\n            \"duration_ms\": 197,\n            \"error_class\": \"\",\n            \"key_facts\": {\n              \"project_id\": \"coverage-project-live-coverage-0abad64a84-3-b1506b56\",\n              \"summary\": \"Loaded research search results.\"\n            },\n            \"ok\": true,\n            \"operation_ref\": \"\",\n            \"plan_id\": \"live_coverage\",\n            \"raw_result_ref\": \"plans/runs/live_coverage_0abad64a84/broker/raw/tool_9cde453734fb.json\",\n            \"request_arguments\": {\n              \"level\": \"normal\",\n              \"limit\": 5,\n              \"project_id\": \"coverage-project-live-coverage-0abad64a84-3-b1506b56\",\n              \"query\": \"coverage note\"\n            },\n            \"response_status\": \"\",\n            \"resume_arguments\": {},\n            \"resume_token\": \"\",\n            \"resume_tool\": \"research_search\",\n            \"retryable\": false,\n            \"slice_id\": \"research_search_compact_rewritten\",\n            \"summary\": \"Loaded research search results.\",\n            \"tool\": \"research_search\",\n            \"tool_response_status\": \"ok\",\n            \"warnings\": [\n              \"broker_contract_trap:research_search_compact_level_rewritten\"\n            ]\n          },\n          \"server_session_id\": null,\n          \"service\": \"dev_space1\",\n          \"severity\": \"medium\",\n          \"state\": \"open\"\n        },\n        \"source_refs\": [],\n        \"external_ref\": \"incident:ab76138f1bb3fbd331db485e\",\n        \"dedupe_key\": \"ab76138f1bb3fbd331db485e\",\n        \"pinned\": false,\n        \"protection_reason\": null,\n        \"created_at\": \"2026-04-09T10:18:39.890958+00:00\",\n        \"updated_at\": \"2026-04-09T13:23:57.832457+00:00\",\n        \"incident_id\": \"incident:ab76138f1bb3fbd331db485e\"\n      },\n      {\n        \"node_id\": \"node-c4d2760da5f9440986c344a39da246f5\",\n        \"project_id\": \"mcp-infra-incidents\",\n        \"branch_id\": \"branch-52fbeb31fd074ba39daf2ed99a72d977\",\n        \"node_type\": \"note\",\n        \"title\": \"research_search: research_search_compact_level_rewritten\",\n        \"summary\": \"research_search_compact_level_rewritten\",\n        \"status\": \"active\",\n        \"content\": {\n          \"error\": {\n            \"message\": \"research_search level='compact' is advertised by schema/docs but rejected by runtime; broker rewrote it to level='normal'.\"\n          },\n          \"events\": [],\n          \"log_excerpt\": null\n        },\n        \"metadata\": {\n          \"affected_tool\": \"research_search\",\n          \"correlation_id\": null,\n          \"error_code\": \"unknown_error\",\n          \"evidence\": {},\n          \"first_seen_at\": \"2026-04-09T10:18:39.694222+00:00\",\n          \"kind\": \"infrastructure_incident\",\n          \"last_seen_at\": \"2026-04-09T13:23:57.377548+00:00\",\n          \"message\": \"research_search_compact_level_rewritten\",\n          \"normalized_message\": \"research_search_compact_level_rewritten\",\n          \"occurrences\": 20,\n          \"original_arguments\": {\n            \"level\": \"compact\",\n            \"limit\": \"5\",\n            \"project_id\": \"coverage-project-live-coverage-0abad64a84-3-b1506b56\",\n            \"query\": \"coverage note\"\n          },\n          \"reason_code\": \"research_search_compact_level_rewritten\",\n          \"request_id\": null,\n          \"rewritten_arguments\": {\n            \"level\": \"normal\",\n            \"limit\": \"5\",\n            \"project_id\": \"coverage-project-live-coverage-0abad64a84-3-b1506b56\",\n            \"query\": \"coverage note\"\n          },\n          \"server_session_id\": null,\n          \"service\": \"dev_space1\",\n          \"severity\": \"medium\",\n          \"state\": \"open\"\n        },\n        \"source_refs\": [],\n        \"external_ref\": \"incident:0b25fd13e319998b8287f16b\",\n        \"dedupe_key\": \"0b25fd13e319998b8287f16b\",\n        \"pinned\": false,\n        \"protection_reason\": null,\n        \"created_at\": \"2026-04-09T10:18:39.696234+00:00\",\n        \"updated_at\": \"2026-04-09T13:23:57.384328+00:00\",\n        \"incident_id\": \"incident:0b25fd13e319998b8287f16b\"\n      },\n      {\n        \"node_id\": \"node-b24e44feeed14d34a8d1777adf866455\",\n        \"project_id\": \"mcp-infra-incidents\",\n        \"branch_id\": \"branch-52fbeb31fd074ba39daf2ed99a72d977\",\n        \"node_type\": \"note\",\n        \"title\": \"experiments_read: Brokered tool call failed: experiments_read\",\n        \"summary\": \"Brokered tool call failed: experiments_read\",\n        \"status\": \"active\",\n        \"content\": {\n          \"error\": {\n            \"message\": \"Unknown experiment artifact: summary.json\"\n          },\n          \"events\": [],\n          \"log_excerpt\": null\n        },\n        \"metadata\": {\n          \"affected_tool\": \"experiments_read\",\n          \"arguments\": {\n            \"artifact_path\": \"summary.json\",\n            \"job_id\": \"20260409-130621-e6335e91\",\n            \"view\": \"json\"\n          },\n          \"correlation_id\": null,\n          \"error_code\": \"unknown_error\",\n          \"evidence\": {},\n          \"first_seen_at\": \"2026-04-09T13:06:23.273072+00:00\",\n          \"kind\": \"infrastructure_incident\",\n          \"last_seen_at\": \"2026-04-09T13:06:23.273072+00:00\",\n          \"message\": \"Brokered tool call failed: experiments_read\",\n          \"normalized_message\": \"brokered tool call failed: experiments_read\",\n          \"occurrences\": 1,\n          \"request_id\": null,\n          \"result\": {\n            \"artifact_ids\": [],\n            \"call_id\": \"tool_72a618a6b182\",\n            \"created_at\": \"2026-04-09T13:06:23.121386+00:00\",\n            \"duration_ms\": 185,\n            \"error_class\": \"not_found\",\n            \"key_facts\": {},\n            \"ok\": false,\n            \"operation_ref\": \"\",\n            \"plan_id\": \"live_coverage\",\n            \"raw_result_ref\": \"plans/runs/live_coverage_07f4453564/broker/raw/tool_72a618a6b182.json\",\n            \"request_arguments\": {\n              \"artifact_path\": \"summary.json\",\n              \"job_id\": \"20260409-130621-e6335e91\",\n              \"view\": \"json\"\n            },\n            \"response_status\": \"\",\n            \"resume_arguments\": {},\n            \"resume_token\": \"\",\n            \"resume_tool\": \"experiments_read\",\n            \"retryable\": false,\n            \"slice_id\": \"experiments_read_summary_json\",\n            \"summary\": \"Unknown experiment artifact: summary.json\",\n            \"tool\": \"experiments_read\",\n            \"tool_response_status\": \"error\",\n            \"warnings\": []\n          },\n          \"server_session_id\": null,\n          \"service\": \"dev_space1\",\n          \"severity\": \"medium\",\n          \"state\": \"open\"\n        },\n        \"source_refs\": [],\n        \"external_ref\": \"incident:d20743ec73b0066341ec67b2\",\n        \"dedupe_key\": \"d20743ec73b0066341ec67b2\",\n        \"pinned\": false,\n        \"protection_reason\": null,\n        \"created_at\": \"2026-04-09T13:06:23.276299+00:00\",\n        \"updated_at\": \"2026-04-09T13:06:23.276303+00:00\",\n        \"incident_id\": \"incident:d20743ec73b0066341ec67b2\"\n      },\n      {\n        \"node_id\": \"node-8a8c013ae34e4e8b9c7af2526b1d6547\",\n        \"project_id\": \"mcp-infra-incidents\",\n        \"branch_id\": \"branch-52fbeb31fd074ba39daf2ed99a72d977\",\n        \"node_type\": \"note\",\n        \"title\": \"backtests_analysis: Brokered tool call failed: backtests_analysis\",\n        \"summary\": \"Brokered tool call failed: backtests_analysis\",\n        \"status\": \"active\",\n        \"content\": {\n          \"error\": {\n            \"message\": \"Canonical analysis requires persisted completed run artifacts for run_id='20260409-125059-965fdc06'.\"\n          },\n          \"events\": [],\n          \"log_excerpt\": null\n        },\n        \"metadata\": {\n          \"affected_tool\": \"backtests_analysis\",\n          \"arguments\": {\n            \"action\": \"start\",\n            \"analysis\": \"diagnostics\",\n            \"run_id\": \"20260409-125059-965fdc06\",\n            \"wait\": \"started\"\n          },\n          \"correlation_id\": null,\n          \"error_code\": \"unknown_error\",\n          \"evidence\": {},\n          \"first_seen_at\": \"2026-04-09T12:51:10.778684+00:00\",\n          \"kind\": \"infrastructure_incident\",\n          \"last_seen_at\": \"2026-04-09T12:51:10.778684+00:00\",\n          \"message\": \"Brokered tool call failed: backtests_analysis\",\n          \"normalized_message\": \"brokered tool call failed: backtests_analysis\",\n          \"occurrences\": 1,\n          \"request_id\": null,\n          \"result\": {\n            \"artifact_ids\": [],\n            \"call_id\": \"tool_eb04454a0b8a\",\n            \"created_at\": \"2026-04-09T12:51:10.674867+00:00\",\n            \"duration_ms\": 178,\n            \"error_class\": \"invalid_input\",\n            \"key_facts\": {},\n            \"ok\": false,\n            \"operation_ref\": \"\",\n            \"plan_id\": \"live_coverage\",\n            \"raw_result_ref\": \"plans/runs/live_coverage_e6a4e7b944/broker/raw/tool_eb04454a0b8a.json\",\n            \"request_arguments\": {\n              \"action\": \"start\",\n              \"analysis\": \"diagnostics\",\n              \"run_id\": \"20260409-125059-965fdc06\",\n              \"wait\": \"started\"\n            },\n            \"response_status\": \"\",\n            \"resume_arguments\": {},\n            \"resume_token\": \"\",\n            \"resume_tool\": \"backtests_analysis\",\n            \"retryable\": false,\n            \"slice_id\": \"backtests_analysis_diagnostics\",\n            \"summary\": \"Canonical analysis requires persisted completed run artifacts for run_id='20260409-125059-965fdc06'.\",\n            \"tool\": \"backtests_analysis\",\n            \"tool_response_status\": \"error\",\n            \"warnings\": []\n          },\n          \"server_session_id\": null,\n          \"service\": \"dev_space1\",\n          \"severity\": \"medium\",\n          \"state\": \"open\"\n        },\n        \"source_refs\": [],\n        \"external_ref\": \"incident:eac4c3077aa0f4244fdaf85a\",\n        \"dedupe_key\": \"eac4c3077aa0f4244fdaf85a\",\n        \"pinned\": false,\n        \"protection_reason\": null,\n        \"created_at\": \"2026-04-09T12:51:10.782164+00:00\",\n        \"updated_at\": \"2026-04-09T12:51:10.782169+00:00\",\n        \"incident_id\": \"incident:eac4c3077aa0f4244fdaf85a\"\n      },\n      {\n        \"node_id\": \"node-df531995024741ee82ccafb1d4731fa8\",\n        \"project_id\": \"mcp-infra-incidents\",\n        \"branch_id\": \"branch-52fbeb31fd074ba39daf2ed99a72d977\",\n        \"node_type\": \"note\",\n        \"title\": \"features_cleanup: Brokered tool call failed: features_cleanup\",\n        \"summary\": \"Brokered tool call failed: features_cleanup\",\n        \"status\": \"active\",\n        \"content\": {\n          \"error\": {\n            \"message\": \"No published custom features matched the requested cleanup selectors.\"\n          },\n          \"events\": [],\n          \"log_excerpt\": null\n        },\n        \"metadata\": {\n          \"affected_tool\": \"features_cleanup\",\n          \"arguments\": {\n            \"action\": \"preview\",\n            \"cf_patterns\": \"cf_coverage_*\",\n            \"dry_run\": \"true\",\n            \"scope\": \"features_only\"\n          },\n          \"correlation_id\": null,\n          \"error_code\": \"unknown_error\",\n          \"evidence\": {},\n          \"first_seen_at\": \"2026-04-09T12:37:18.638491+00:00\",\n          \"kind\": \"infrastructure_incident\",\n          \"last_seen_at\": \"2026-04-09T12:42:51.968886+00:00\",\n          \"message\": \"Brokered tool call failed: features_cleanup\",\n          \"normalized_message\": \"brokered tool call failed: features_cleanup\",\n          \"occurrences\": 4,\n          \"request_id\": null,\n          \"result\": {\n            \"artifact_ids\": [],\n            \"call_id\": \"tool_33f0c96001db\",\n            \"created_at\": \"2026-04-09T12:42:51.869991+00:00\",\n            \"duration_ms\": 178,\n            \"error_class\": \"invalid_input\",\n            \"key_facts\": {},\n            \"ok\": false,\n            \"operation_ref\": \"\",\n            \"plan_id\": \"live_coverage\",\n            \"raw_result_ref\": \"plans/runs/live_coverage_5026d7e9cb/broker/raw/tool_33f0c96001db.json\",\n            \"request_arguments\": {\n              \"action\": \"preview\",\n              \"cf_patterns\": \"cf_coverage_*\",\n              \"dry_run\": true,\n              \"scope\": \"features_only\"\n            },\n            \"response_status\": \"\",\n            \"resume_arguments\": {},\n            \"resume_token\": \"\",\n            \"resume_tool\": \"features_cleanup\",\n            \"retryable\": false,\n            \"slice_id\": \"features_cleanup_preview\",\n            \"summary\": \"No published custom features matched the requested cleanup selectors.\",\n            \"tool\": \"features_cleanup\",\n            \"tool_response_status\": \"error\",\n            \"warnings\": []\n          },\n          \"server_session_id\": null,\n          \"service\": \"dev_space1\",\n          \"severity\": \"medium\",\n          \"state\": \"open\"\n        },\n        \"source_refs\": [],\n        \"external_ref\": \"incident:7660ac30d2814fd915b0d267\",\n        \"dedupe_key\": \"7660ac30d2814fd915b0d267\",\n        \"pinned\": false,\n        \"protection_reason\": null,\n        \"created_at\": \"2026-04-09T12:37:18.640330+00:00\",\n        \"updated_at\": \"2026-04-09T12:42:51.972986+00:00\",\n        \"incident_id\": \"incident:7660ac30d2814fd915b0d267\"\n      },\n      {\n        \"node_id\": \"node-de2310c1df544ccb9c9d586a85f9d455\",\n        \"project_id\": \"mcp-infra-incidents\",\n        \"branch_id\": \"branch-52fbeb31fd074ba39daf2ed99a72d977\",\n        \"node_type\": \"note\",\n        \"title\": \"research_map: Brokered tool call failed: research_map\",\n        \"summary\": \"Brokered tool call failed: research_map\",\n        \"status\": \"active\",\n        \"content\": {\n          \"error\": {\n            \"message\": \"research_map requires project_id.\"\n          },\n          \"events\": [],\n          \"log_excerpt\": null\n        },\n        \"metadata\": {\n          \"affected_tool\": \"research_map\",\n          \"arguments\": {\n            \"action\": \"inspect\",\n            \"project_id\": \"\",\n            \"view\": \"summary\"\n          },\n          \"correlation_id\": null,\n          \"error_code\": \"unknown_error\",\n          \"evidence\": {},\n          \"first_seen_at\": \"2026-04-09T12:37:20.521513+00:00\",\n          \"kind\": \"infrastructure_incident\",\n          \"last_seen_at\": \"2026-04-09T12:38:36.205468+00:00\",\n          \"message\": \"Brokered tool call failed: research_map\",\n          \"normalized_message\": \"brokered tool call failed: research_map\",\n          \"occurrences\": 3,\n          \"request_id\": null,\n          \"result\": {\n            \"artifact_ids\": [],\n            \"call_id\": \"tool_a54745a32249\",\n            \"created_at\": \"2026-04-09T12:38:36.121568+00:00\",\n            \"duration_ms\": 174,\n            \"error_class\": \"invalid_input\",\n            \"key_facts\": {},\n            \"ok\": false,\n            \"operation_ref\": \"\",\n            \"plan_id\": \"live_coverage\",\n            \"raw_result_ref\": \"plans/runs/live_coverage_d0b4bb7c66/broker/raw/tool_a54745a32249.json\",\n            \"request_arguments\": {\n              \"action\": \"inspect\",\n              \"project_id\": \"\",\n              \"view\": \"summary\"\n            },\n            \"response_status\": \"\",\n            \"resume_arguments\": {},\n            \"resume_token\": \"\",\n            \"resume_tool\": \"research_map\",\n            \"retryable\": false,\n            \"slice_id\": \"research_map_summary\",\n            \"summary\": \"research_map requires project_id.\",\n            \"tool\": \"research_map\",\n            \"tool_response_status\": \"error\",\n            \"warnings\": []\n          },\n          \"server_session_id\": null,\n          \"service\": \"dev_space1\",\n          \"severity\": \"medium\",\n          \"state\": \"open\"\n        },\n        \"source_refs\": [],\n        \"external_ref\": \"incident:2446699d79f2baf90242056f\",\n        \"dedupe_key\": \"2446699d79f2baf90242056f\",\n        \"pinned\": false,\n        \"protection_reason\": null,\n        \"created_at\": \"2026-04-09T12:37:20.523362+00:00\",\n        \"updated_at\": \"2026-04-09T12:38:36.208344+00:00\",\n        \"incident_id\": \"incident:2446699d79f2baf90242056f\"\n      },\n      {\n        \"node_id\": \"node-0f688b12c27b402aa3306370a25e4ef5\",\n        \"project_id\": \"mcp-infra-incidents\",\n        \"branch_id\": \"branch-52fbeb31fd074ba39daf2ed99a72d977\",\n        \"node_type\": \"note\",\n        \"title\": \"research_map: research_map requires project_id.\",\n        \"summary\": \"research_map requires project_id.\",\n        \"status\": \"active\",\n        \"content\": {\n          \"error\": {\n            \"code\": \"invalid_input\",\n            \"details\": {\n              \"classification\": \"agent_contract_misuse\",\n              \"failure_signature\": \"research_map|reason:missing_project_id|message:research_map requires project_id.\"\n            },\n            \"message\": \"research_map requires project_id.\"\n          },\n          \"events\": [],\n          \"log_excerpt\": null\n        },\n        \"metadata\": {\n          \"affected_tool\": \"research_map\",\n          \"classification\": \"agent_contract_misuse\",\n          \"correlation_id\": null,\n          \"domain\": \"research_memory\",\n          \"error_code\": \"invalid_input\",\n          \"error_field\": null,\n          \"evidence\": {},\n          \"exact_repair_examples\": [\n            {\n              \"arguments\": {\n                \"action\": \"list\"\n              },\n              \"tool\": \"research_project\"\n            },\n            {\n              \"arguments\": {\n                \"action\": \"open\",\n                \"project_id\": \"mcp-infra-incidents\",\n                \"view\": \"summary\"\n              },\n              \"tool\": \"research_project\"\n            }\n          ],\n          \"failure_signature\": \"research_map|reason:missing_project_id|message:research_map requires project_id.\",\n          \"first_seen_at\": \"2026-04-09T12:38:06.831205+00:00\",\n          \"incident_kind\": \"contract_usability_trap\",\n          \"kind\": \"infrastructure_incident\",\n          \"last_seen_at\": \"2026-04-09T12:38:36.044978+00:00\",\n          \"latest_example\": {\n            \"correlation_id\": \"28\",\n            \"error_expected\": null,\n            \"error_received_value\": null,\n            \"message\": \"research_map requires project_id.\",\n            \"request_id\": \"28\"\n          },\n          \"message\": \"research_map requires project_id.\",\n          \"normalized_message\": \"research_map requires project_id.\",\n          \"occurrence_count\": 3,\n          \"occurrences\": 2,\n          \"recommended_contract_fix_owner\": \"mcp_server\",\n          \"request_id\": null,\n          \"server_session_id\": null,\n          \"service\": \"mcp_server\",\n          \"severity\": \"medium\",\n          \"state\": \"open\",\n          \"tool_name\": \"research_map\"\n        },\n        \"source_refs\": [],\n        \"external_ref\": \"incident:95c7008d0b1903b54271f345\",\n        \"dedupe_key\": \"95c7008d0b1903b54271f345\",\n        \"pinned\": false,\n        \"protection_reason\": null,\n        \"created_at\": \"2026-04-09T12:38:06.832436+00:00\",\n        \"updated_at\": \"2026-04-09T12:38:36.078397+00:00\",\n        \"incident_id\": \"incident:95c7008d0b1903b54271f345\"\n      },\n      {\n        \"node_id\": \"node-04bf9be9609f4560b1dc4ebb20869188\",\n        \"project_id\": \"mcp-infra-incidents\",\n        \"branch_id\": \"branch-52fbeb31fd074ba39daf2ed99a72d977\",\n        \"node_type\": \"note\",\n        \"title\": \"research_search: Brokered tool call failed: research_search\",\n        \"summary\": \"Brokered tool call failed: research_search\",\n        \"status\": \"active\",\n        \"content\": {\n          \"error\": {\n            \"message\": \"research_search requires project_id.\"\n          },\n          \"events\": [],\n          \"log_excerpt\": null\n        },\n        \"metadata\": {\n          \"affected_tool\": \"research_search\",\n          \"arguments\": {\n            \"level\": \"compact\",\n            \"limit\": \"5\",\n            \"project_id\": \"\",\n            \"query\": \"coverage note\"\n          },\n          \"correlation_id\": null,\n          \"error_code\": \"unknown_error\",\n          \"evidence\": {},\n          \"first_seen_at\": \"2026-04-09T10:03:11.404948+00:00\",\n          \"kind\": \"infrastructure_incident\",\n          \"last_seen_at\": \"2026-04-09T12:38:35.864914+00:00\",\n          \"message\": \"Brokered tool call failed: research_search\",\n          \"normalized_message\": \"brokered tool call failed: research_search\",\n          \"occurrences\": 5,\n          \"request_id\": null,\n          \"result\": {\n            \"artifact_ids\": [],\n            \"call_id\": \"tool_fbe9b25a56fb\",\n            \"created_at\": \"2026-04-09T12:38:35.425008+00:00\",\n            \"duration_ms\": 160,\n            \"error_class\": \"invalid_input\",\n            \"key_facts\": {},\n            \"ok\": false,\n            \"operation_ref\": \"\",\n            \"plan_id\": \"live_coverage\",\n            \"raw_result_ref\": \"plans/runs/live_coverage_d0b4bb7c66/broker/raw/tool_fbe9b25a56fb.json\",\n            \"request_arguments\": {\n              \"level\": \"normal\",\n              \"limit\": 5,\n              \"project_id\": \"\",\n              \"query\": \"coverage note\"\n            },\n            \"response_status\": \"\",\n            \"resume_arguments\": {},\n            \"resume_token\": \"\",\n            \"resume_tool\": \"research_search\",\n            \"retryable\": false,\n            \"slice_id\": \"research_search_compact_rewritten\",\n            \"summary\": \"research_search requires project_id.\",\n            \"tool\": \"research_search\",\n            \"tool_response_status\": \"error\",\n            \"warnings\": [\n              \"broker_contract_trap:research_search_compact_level_rewritten\"\n            ]\n          },\n          \"server_session_id\": null,\n          \"service\": \"dev_space1\",\n          \"severity\": \"medium\",\n          \"state\": \"open\"\n        },\n        \"source_refs\": [],\n        \"external_ref\": \"incident:33f2e956d027e2831a1ac4b3\",\n        \"dedupe_key\": \"33f2e956d027e2831a1ac4b3\",\n        \"pinned\": false,\n        \"protection_reason\": null,\n        \"created_at\": \"2026-04-09T10:03:11.406575+00:00\",\n        \"updated_at\": \"2026-04-09T12:38:35.868255+00:00\",\n        \"incident_id\": \"incident:33f2e956d027e2831a1ac4b3\"\n      },\n      {\n        \"node_id\": \"node-7b7379fc2d2b4260bc7b6164d7b7400d\",\n        \"project_id\": \"mcp-infra-incidents\",\n        \"branch_id\": \"branch-52fbeb31fd074ba39daf2ed99a72d977\",\n        \"node_type\": \"note\",\n        \"title\": \"research_search: research_search requires project_id.\",\n        \"summary\": \"research_search requires project_id.\",\n        \"status\": \"active\",\n        \"content\": {\n          \"error\": {\n            \"code\": \"invalid_input\",\n            \"details\": {\n              \"classification\": \"agent_contract_misuse\",\n              \"failure_signature\": \"research_search|reason:missing_project_id|message:research_search requires project_id.\"\n            },\n            \"message\": \"research_search requires project_id.\"\n          },\n          \"events\": [],\n          \"log_excerpt\": null\n        },\n        \"metadata\": {\n          \"affected_tool\": \"research_search\",\n          \"classification\": \"agent_contract_misuse\",\n          \"correlation_id\": null,\n          \"domain\": \"research_memory\",\n          \"error_code\": \"invalid_input\",\n          \"error_field\": null,\n          \"evidence\": {},\n          \"exact_repair_examples\": [\n            {\n              \"arguments\": {\n                \"action\": \"list\"\n              },\n              \"tool\": \"research_project\"\n            },\n            {\n              \"arguments\": {\n                \"action\": \"open\",\n                \"project_id\": \"mcp-infra-incidents\",\n                \"view\": \"summary\"\n              },\n              \"tool\": \"research_project\"\n            }\n          ],\n          \"failure_signature\": \"research_search|reason:missing_project_id|message:research_search requires project_id.\",\n          \"first_seen_at\": \"2026-04-09T12:38:06.088735+00:00\",\n          \"incident_kind\": \"contract_usability_trap\",\n          \"kind\": \"infrastructure_incident\",\n          \"last_seen_at\": \"2026-04-09T12:38:35.410197+00:00\",\n          \"latest_example\": {\n            \"correlation_id\": \"24\",\n            \"error_expected\": null,\n            \"error_received_value\": null,\n            \"message\": \"research_search requires project_id.\",\n            \"request_id\": \"24\"\n          },\n          \"message\": \"research_search requires project_id.\",\n          \"normalized_message\": \"research_search requires project_id.\",\n          \"occurrence_count\": 3,\n          \"occurrences\": 2,\n          \"recommended_contract_fix_owner\": \"mcp_server\",\n          \"request_id\": null,\n          \"server_session_id\": null,\n          \"service\": \"mcp_server\",\n          \"severity\": \"medium\",\n          \"state\": \"open\",\n          \"tool_name\": \"research_search\"\n        },\n        \"source_refs\": [],\n        \"external_ref\": \"incident:bd74cd8f9bc5c0c7187fb973\",\n        \"dedupe_key\": \"bd74cd8f9bc5c0c7187fb973\",\n        \"pinned\": false,\n        \"protection_reason\": null,\n        \"created_at\": \"2026-04-09T12:38:06.090869+00:00\",\n        \"updated_at\": \"2026-04-09T12:38:35.412624+00:00\",\n        \"incident_id\": \"incident:bd74cd8f9bc5c0c7187fb973\"\n      },\n      {\n        \"node_id\": \"node-309fe474ce18493d807f1bfa18bf1d3f\",\n        \"project_id\": \"mcp-infra-incidents\",\n        \"branch_id\": \"branch-52fbeb31fd074ba39daf2ed99a72d977\",\n        \"node_type\": \"note\",\n        \"title\": \"research_record: research_record_warning\",\n        \"summary\": \"research_record_warning\",\n        \"status\": \"active\",\n        \"content\": {\n          \"error\": {\n            \"message\": \"broker_contract_trap:expensive_async_wait_completed_rewritten\"\n          },\n          \"events\": [],\n          \"log_excerpt\": null\n        },\n        \"metadata\": {\n          \"affected_tool\": \"research_record\",\n          \"arguments\": {\n            \"action\": \"create\",\n            \"kind\": \"note\",\n            \"project_id\": \"\",\n            \"record\": {\n              \"metadata\": {\n                \"cycle\": 1\n              },\n              \"summary\": \"Live broker coverage note\",\n              \"title\": \"Coverage note\"\n            },\n            \"wait\": \"completed\"\n          },\n          \"correlation_id\": null,\n          \"error_code\": \"unknown_error\",\n          \"evidence\": {},\n          \"first_seen_at\": \"2026-04-09T12:37:19.435983+00:00\",\n          \"kind\": \"infrastructure_incident\",\n          \"last_seen_at\": \"2026-04-09T12:38:35.169252+00:00\",\n          \"message\": \"research_record_warning\",\n          \"normalized_message\": \"research_record_warning\",\n          \"occurrences\": 3,\n          \"request_id\": null,\n          \"result\": {\n            \"artifact_ids\": [\n              \"0f1036c2459a\",\n              \"None\"\n            ],\n            \"call_id\": \"tool_3396e5c27814\",\n            \"created_at\": \"2026-04-09T12:38:34.923622+00:00\",\n            \"duration_ms\": 158,\n            \"error_class\": \"\",\n            \"key_facts\": {\n              \"final_status\": \"failed\",\n              \"operation.blocking_operation_id\": null,\n              \"operation.operation_id\": \"0f1036c2459a\",\n              \"operation.project_id\": null,\n              \"operation.queue_id\": null,\n              \"operation.scheduler_state\": null,\n              \"operation.status\": \"failed\",\n              \"wait_satisfied\": true,\n              \"wait_timeout\": false\n            },\n            \"ok\": true,\n            \"operation_ref\": \"0f1036c2459a\",\n            \"plan_id\": \"live_coverage\",\n            \"raw_result_ref\": \"plans/runs/live_coverage_d0b4bb7c66/broker/raw/tool_3396e5c27814.json\",\n            \"request_arguments\": {\n              \"action\": \"create\",\n              \"kind\": \"note\",\n              \"project_id\": \"\",\n              \"record\": {\n                \"metadata\": {\n                  \"cycle\": 1\n                },\n                \"summary\": \"Live broker coverage note\",\n                \"title\": \"Coverage note\"\n              },\n              \"wait\": \"started\"\n            },\n            \"response_status\": \"failed\",\n            \"resume_arguments\": {\n              \"action\": \"status\",\n              \"operation_id\": \"0f1036c2459a\"\n            },\n            \"resume_token\": \"0f1036c2459a\",\n            \"resume_tool\": \"research_record\",\n            \"retryable\": false,\n            \"slice_id\": \"research_record_create\",\n            \"summary\": \"Research record operation loaded.\",\n            \"tool\": \"research_record\",\n            \"tool_response_status\": \"ok\",\n            \"warnings\": [\n              \"broker_contract_trap:expensive_async_wait_completed_rewritten\"\n            ]\n          },\n          \"server_session_id\": null,\n          \"service\": \"dev_space1\",\n          \"severity\": \"medium\",\n          \"state\": \"open\"\n        },\n        \"source_refs\": [],\n        \"external_ref\": \"incident:bd18cc095e428808f95e05ac\",\n        \"dedupe_key\": \"bd18cc095e428808f95e05ac\",\n        \"pinned\": false,\n        \"protection_reason\": null,\n        \"created_at\": \"2026-04-09T12:37:19.437635+00:00\",\n        \"updated_at\": \"2026-04-09T12:38:35.172111+00:00\",\n        \"incident_id\": \"incident:bd18cc095e428808f95e05ac\"\n      },\n      {\n        \"node_id\": \"node-48d304de15e54d9ba1b735d6c606bd8a\",\n        \"project_id\": \"mcp-infra-incidents\",\n        \"branch_id\": \"branch-52fbeb31fd074ba39daf2ed99a72d977\",\n        \"node_type\": \"note\",\n        \"title\": \"research_record: expensive_async_wait_completed_rewritten\",\n        \"summary\": \"expensive_async_wait_completed_rewritten\",\n        \"status\": \"active\",\n        \"content\": {\n          \"error\": {\n            \"message\": \"research_record wait='completed' is blocked for expensive async tools; broker rewrote it to wait='started'.\"\n          },\n          \"events\": [],\n          \"log_excerpt\": null\n        },\n        \"metadata\": {\n          \"affected_tool\": \"research_record\",\n          \"correlation_id\": null,\n          \"error_code\": \"unknown_error\",\n          \"evidence\": {},\n          \"first_seen_at\": \"2026-04-09T12:37:19.244844+00:00\",\n          \"kind\": \"infrastructure_incident\",\n          \"last_seen_at\": \"2026-04-09T12:38:35.009004+00:00\",\n          \"message\": \"expensive_async_wait_completed_rewritten\",\n          \"normalized_message\": \"expensive_async_wait_completed_rewritten\",\n          \"occurrences\": 3,\n          \"original_arguments\": {\n            \"action\": \"create\",\n            \"kind\": \"note\",\n            \"project_id\": \"\",\n            \"record\": {\n              \"metadata\": {\n                \"cycle\": 1\n              },\n              \"summary\": \"Live broker coverage note\",\n              \"title\": \"Coverage note\"\n            },\n            \"wait\": \"completed\"\n          },\n          \"reason_code\": \"expensive_async_wait_completed_rewritten\",\n          \"request_id\": null,\n          \"rewritten_arguments\": {\n            \"action\": \"create\",\n            \"kind\": \"note\",\n            \"project_id\": \"\",\n            \"record\": {\n              \"metadata\": {\n                \"cycle\": 1\n              },\n              \"summary\": \"Live broker coverage note\",\n              \"title\": \"Coverage note\"\n            },\n            \"wait\": \"started\"\n          },\n          \"server_session_id\": null,\n          \"service\": \"dev_space1\",\n          \"severity\": \"medium\",\n          \"state\": \"open\"\n        },\n        \"source_refs\": [],\n        \"external_ref\": \"incident:ef7f740ea827b9f2e5cfcaff\",\n        \"dedupe_key\": \"ef7f740ea827b9f2e5cfcaff\",\n        \"pinned\": false,\n        \"protection_reason\": null,\n        \"created_at\": \"2026-04-09T12:37:19.246800+00:00\",\n        \"updated_at\": \"2026-04-09T12:38:35.011542+00:00\",\n        \"incident_id\": \"incident:ef7f740ea827b9f2e5cfcaff\"\n      },\n      {\n        \"node_id\": \"node-0ef34323cd1a43f7ac4e428e06427f51\",\n        \"project_id\": \"mcp-infra-incidents\",\n        \"branch_id\": \"branch-52fbeb31fd074ba39daf2ed99a72d977\",\n        \"node_type\": \"note\",\n        \"title\": \"features_cleanup: Unsupported features_cleanup scope: 'registry'. (field=scope; received=registry)\",\n        \"summary\": \"Unsupported features_cleanup scope: 'registry'. (field=scope; received=registry)\",\n        \"status\": \"active\",\n        \"content\": {\n          \"error\": {\n            \"code\": \"invalid_input\",\n            \"details\": {\n              \"classification\": \"agent_contract_misuse\",\n              \"failure_signature\": \"features_cleanup|field:scope|message:unsupported features_cleanup scope: 'registry'. (field=scope; received=registry)\"\n            },\n            \"message\": \"Unsupported features_cleanup scope: 'registry'. (field=scope; received=registry)\"\n          },\n          \"events\": [],\n          \"log_excerpt\": null\n        },\n        \"metadata\": {\n          \"affected_tool\": \"features_cleanup\",\n          \"classification\": \"agent_contract_misuse\",\n          \"correlation_id\": null,\n          \"domain\": \"features\",\n          \"error_code\": \"invalid_input\",\n          \"error_field\": \"scope\",\n          \"evidence\": {},\n          \"failure_signature\": \"features_cleanup|field:scope|message:unsupported features_cleanup scope: 'registry'. (field=scope; received=registry)\",\n          \"first_seen_at\": \"2026-04-09T12:38:05.097492+00:00\",\n          \"incident_kind\": \"contract_usability_trap\",\n          \"kind\": \"infrastructure_incident\",\n          \"last_seen_at\": \"2026-04-09T12:38:34.422292+00:00\",\n          \"latest_example\": {\n            \"correlation_id\": \"18\",\n            \"error_expected\": null,\n            \"error_received_value\": \"registry\",\n            \"message\": \"Unsupported features_cleanup scope: 'registry'. (field=scope; received=registry)\",\n            \"request_id\": \"18\"\n          },\n          \"message\": \"Unsupported features_cleanup scope: 'registry'. (field=scope; received=registry)\",\n          \"normalized_message\": \"unsupported features_cleanup scope: 'registry'. (field=scope; received=registry)\",\n          \"occurrence_count\": 3,\n          \"occurrences\": 2,\n          \"recommended_contract_fix_owner\": \"mcp_server\",\n          \"request_id\": null,\n          \"server_session_id\": null,\n          \"service\": \"mcp_server\",\n          \"severity\": \"medium\",\n          \"state\": \"open\",\n          \"tool_name\": \"features_cleanup\"\n        },\n        \"source_refs\": [],\n        \"external_ref\": \"incident:2cdb5bd3d2ba9bbaa18a3bdf\",\n        \"dedupe_key\": \"2cdb5bd3d2ba9bbaa18a3bdf\",\n        \"pinned\": false,\n        \"protection_reason\": null,\n        \"created_at\": \"2026-04-09T12:38:05.098919+00:00\",\n        \"updated_at\": \"2026-04-09T12:38:34.424631+00:00\",\n        \"incident_id\": \"incident:2cdb5bd3d2ba9bbaa18a3bdf\"\n      },\n      {\n        \"node_id\": \"node-68fb6368553a438c8f814b0863418180\",\n        \"project_id\": \"mcp-infra-incidents\",\n        \"branch_id\": \"branch-52fbeb31fd074ba39daf2ed99a72d977\",\n        \"node_type\": \"note\",\n        \"title\": \"backtests_runs: Broker argument validation failed: backtests_runs\",\n        \"summary\": \"Broker argument validation failed: backtests_runs\",\n        \"status\": \"active\",\n        \"content\": {\n          \"error\": {\n            \"message\": \"backtests_runs.starting_capital_usd: '1000' is not valid under any of the given schemas\"\n          },\n          \"events\": [],\n          \"log_excerpt\": null\n        },\n        \"metadata\": {\n          \"affected_tool\": \"backtests_runs\",\n          \"arguments\": {\n            \"action\": \"start\",\n            \"anchor_timeframe\": \"1h\",\n            \"end_at\": \"2026-01-07T00:00:00+00:00\",\n            \"execution_timeframe\": \"5m\",\n            \"snapshot_id\": \"active-signal-v1\",\n            \"start_at\": \"2026-01-01T00:00:00+00:00\",\n            \"starting_capital_usd\": \"1000\",\n            \"symbol\": \"BTCUSDT\",\n            \"version\": 1,\n            \"wait\": \"started\"\n          },\n          \"correlation_id\": null,\n          \"error_code\": \"unknown_error\",\n          \"evidence\": {},\n          \"first_seen_at\": \"2026-04-09T12:32:02.308928+00:00\",\n          \"input_schema\": {\n            \"properties\": {\n              \"action\": {\n                \"anyOf\": [\n                  {\n                    \"type\": \"string\"\n                  },\n                  {\n                    \"type\": \"null\"\n                  }\n                ],\n                \"default\": \"inspect\",\n                \"description\": \"Operation to run on this unified backtests tool.\",\n                \"title\": \"Action\"\n              },\n              \"anchor_timeframe\": {\n                \"anyOf\": [\n                  {\n                    \"type\": \"string\"\n                  },\n                  {\n                    \"type\": \"null\"\n                  }\n                ],\n                \"default\": null,\n                \"description\": \"Feature anchor timeframe used by the strategy logic. Currently policy-locked to '1h' — do not use any other value.\",\n                \"title\": \"Anchor Timeframe\"\n              },\n              \"auto_complete_work_items\": {\n                \"anyOf\": [\n                  {\n                    \"type\": \"boolean\"\n                  },\n                  {\n                    \"type\": \"null\"\n                  }\n                ],\n                \"default\": false,\n                \"description\": \"Set true to auto-complete all open work items before the run starts (avoids workflow blocking errors for project-bound runs).\",\n                \"title\": \"Auto Complete Work Items\"\n              },\n              \"base_run_id\": {\n                \"anyOf\": [\n                  {\n                    \"type\": \"string\"\n                  },\n                  {\n                    \"type\": \"null\"\n                  }\n                ],\n                \"default\": null,\n                \"description\": \"Alias for baseline_run_id retained for agent convenience on compare_summary read views.\",\n                \"title\": \"Base Run Id\"\n              },\n              \"baseline_run_id\": {\n                \"anyOf\": [\n                  {\n                    \"type\": \"string\"\n                  },\n                  {\n                    \"type\": \"null\"\n                  }\n                ],\n                \"default\": null,\n                \"description\": \"Baseline saved run id used by compare_summary read views.\",\n                \"title\": \"Baseline Run Id\"\n              },\n              \"before_started_at\": {\n                \"anyOf\": [\n                  {\n                    \"type\": \"string\"\n                  },\n                  {\n                    \"type\": \"null\"\n                  }\n                ],\n                \"default\": null,\n                \"description\": \"Only list runs started before this UTC timestamp.\",\n                \"title\": \"Before Started At\"\n              },\n              \"branch_id\": {\n                \"anyOf\": [\n                  {\n                    \"type\": \"string\"\n                  },\n                  {\n                    \"type\": \"null\"\n                  }\n                ],\n                \"default\": null,\n                \"description\": \"Optional project branch id used for checkpointed writes.\",\n                \"title\": \"Branch Id\"\n              },\n              \"context_path\": {\n                \"anyOf\": [\n                  {\n                    \"type\": \"string\"\n                  },\n                  {\n                    \"type\": \"null\"\n                  }\n                ],\n                \"default\": null,\n                \"description\": \"Optional context override path; usually leave unset unless a non-default context is required.\",\n                \"title\": \"Context Path\"\n              },\n              \"debug_signal_enabled\": {\n                \"default\": false,\n                \"description\": \"Set true to capture extra signal-debug output for this run.\",\n                \"title\": \"Debug Signal Enabled\"\n              },\n              \"dry_run\": {\n                \"default\": true,\n                \"description\": \"Set true to inspect lifecycle actions without applying destructive saved-run changes.\",\n                \"title\": \"Dry Run\"\n              },\n              \"end_at\": {\n                \"anyOf\": [\n                  {\n                    \"type\": \"string\"\n                  },\n                  {\n                    \"type\": \"null\"\n                  }\n                ],\n                \"default\": null,\n                \"description\": \"Inclusive UTC end timestamp for the evaluation window.\",\n                \"title\": \"End At\"\n              },\n              \"exact_candles\": {\n                \"default\": false,\n                \"description\": \"Set true to render charts with exact saved candles instead of compact defaults.\",\n                \"title\": \"Exact Candles\"\n              },\n              \"execution_timeframe\": {\n                \"anyOf\": [\n                  {\n                    \"type\": \"string\"\n                  },\n                  {\n                    \"type\": \"null\"\n                  }\n                ],\n                \"default\": null,\n                \"description\": \"Execution timeframe used for entries, exits, and fills. Currently policy-locked to '5m' — do not use any other value.\",\n                \"title\": \"Execution Timeframe\"\n              },\n              \"include\": {\n                \"anyOf\": [\n                  {\n                    \"items\": {\n                      \"type\": \"string\"\n                    },\n                    \"type\": \"array\"\n                  },\n                  {\n                    \"type\": \"string\"\n                  },\n                  {\n                    \"type\": \"null\"\n                  }\n                ],\n                \"default\": null,\n                \"description\": \"Optional extra sections to include in the response.\",\n                \"title\": \"Include\"\n              },\n              \"include_analysis\": {\n                \"anyOf\": [\n                  {\n                    \"type\": \"boolean\"\n                  },\n                  {\n                    \"type\": \"null\"\n                  }\n                ],\n                \"default\": false,\n                \"description\": \"Set true to include cached analysis previews in run detail output.\",\n                \"title\": \"Include Analysis\"\n              },\n              \"include_trades\": {\n                \"anyOf\": [\n                  {\n                    \"type\": \"boolean\"\n                  },\n                  {\n                    \"type\": \"null\"\n                  }\n                ],\n                \"default\": false,\n                \"description\": \"Set true to include trade records in run detail output.\",\n                \"title\": \"Include Trades\"\n              },\n              \"intent_summary\": {\n                \"anyOf\": [\n                  {\n                    \"type\": \"string\"\n                  },\n                  {\n                    \"type\": \"null\"\n                  }\n                ],\n                \"default\": null,\n                \"description\": \"Optional short note describing why this run is being launched.\",\n                \"title\": \"Intent Summary\"\n              },\n              \"limit\": {\n                \"anyOf\": [\n                  {},\n                  {\n                    \"type\": \"null\"\n                  }\n                ],\n                \"default\": null,\n                \"description\": \"Maximum number of matching records to return.\",\n                \"title\": \"Limit\"\n              },\n              \"live_chart_enabled\": {\n                \"default\": true,\n                \"description\": \"Set true to keep live chart payloads updated while the run is active.\",\n                \"title\": \"Live Chart Enabled\"\n              },\n              \"on_fail\": {\n                \"anyOf\": [\n                  {\n                    \"type\": \"string\"\n                  },\n                  {\n                    \"type\": \"null\"\n                  }\n                ],\n                \"default\": \"summary\",\n                \"description\": \"Failure reporting mode to return when the async job does not complete cleanly.\",\n                \"title\": \"On Fail\"\n              },\n              \"poll_interval_seconds\": {\n                \"anyOf\": [\n                  {\n                    \"type\": \"number\"\n                  },\n                  {\n                    \"type\": \"null\"\n                  }\n                ],\n                \"default\": null,\n                \"description\": \"Seconds between status polls while waiting.\",\n                \"title\": \"Poll Interval Seconds\"\n              },\n              \"project_id\": {\n                \"anyOf\": [\n                  {\n                    \"type\": \"string\"\n                  },\n                  {\n                    \"type\": \"null\"\n                  }\n                ],\n                \"default\": null,\n                \"description\": \"Optional research project id that should receive checkpoints or lineage.\",\n                \"title\": \"Project Id\"\n              },\n              \"run_id\": {\n                \"anyOf\": [\n                  {\n                    \"type\": \"string\"\n                  },\n                  {\n                    \"type\": \"null\"\n                  }\n                ],\n                \"default\": null,\n                \"description\": \"Saved or active backtest run id from `backtests_runs(action='inspect')`.\",\n                \"title\": \"Run Id\"\n              },\n              \"run_ids\": {\n                \"anyOf\": [\n                  {\n                    \"items\": {\n                      \"type\": \"string\"\n                    },\n                    \"type\": \"array\"\n                  },\n                  {\n                    \"type\": \"string\"\n                  },\n                  {\n                    \"type\": \"null\"\n                  }\n                ],\n                \"default\": null,\n                \"description\": \"Optional run id list when inspecting several saved runs together.\",\n                \"title\": \"Run Ids\"\n              },\n              \"scope\": {\n                \"anyOf\": [\n                  {\n                    \"type\": \"string\"\n                  },\n                  {\n                    \"type\": \"null\"\n                  }\n                ],\n                \"default\": \"all\",\n                \"description\": \"Run inventory scope to inspect, such as active, saved, or all.\",\n                \"title\": \"Scope\"\n              },\n              \"snapshot_id\": {\n                \"anyOf\": [\n                  {\n                    \"type\": \"string\"\n                  },\n                  {\n                    \"type\": \"null\"\n                  }\n                ],\n                \"default\": null,\n                \"description\": \"Snapshot line id from `backtests_strategy(action='inspect')`. Inspect-style reads also accept snapshot refs like `snapshot_id@version`.\",\n                \"title\": \"Snapshot Id\"\n              },\n              \"snapshot_version\": {\n                \"anyOf\": [\n                  {},\n                  {\n                    \"type\": \"null\"\n                  }\n                ],\n                \"default\": null,\n                \"description\": \"Deprecated version alias for agent compatibility; canonical callers should use `version`.\",\n                \"title\": \"Snapshot Version\"\n              },\n              \"start_at\": {\n                \"anyOf\": [\n                  {\n                    \"type\": \"string\"\n                  },\n                  {\n                    \"type\": \"null\"\n                  }\n                ],\n                \"default\": null,\n                \"description\": \"Inclusive UTC start timestamp for the evaluation window.\",\n                \"title\": \"Start At\"\n              },\n              \"starting_capital_usd\": {\n                \"anyOf\": [\n                  {\n                    \"type\": \"number\"\n                  },\n                  {\n                    \"type\": \"null\"\n                  }\n                ],\n                \"default\": null,\n                \"description\": \"Optional starting capital in USD for the run or evaluation.\",\n                \"title\": \"Starting Capital Usd\"\n              },\n              \"status\": {\n                \"anyOf\": [\n                  {\n                    \"type\": \"string\"\n                  },\n                  {\n                    \"type\": \"null\"\n                  }\n                ],\n                \"default\": null,\n                \"description\": \"Optional lifecycle status filter for listing jobs or runs.\",\n                \"title\": \"Status\"\n              },\n              \"strategy_snapshot_id\": {\n                \"anyOf\": [\n                  {\n                    \"type\": \"string\"\n                  },\n                  {\n                    \"type\": \"null\"\n                  }\n                ],\n                \"default\": null,\n                \"description\": \"Optional snapshot line filter when listing saved or active runs.\",\n                \"title\": \"Strategy Snapshot Id\"\n              },\n              \"strict_preflight\": {\n                \"anyOf\": [\n                  {\n                    \"type\": \"boolean\"\n                  },\n                  {\n                    \"type\": \"null\"\n                  }\n                ],\n                \"default\": false,\n                \"description\": \"Set true to require strict preflight success before admitting the run.\",\n                \"title\": \"Strict Preflight\"\n              },\n              \"symbol\": {\n                \"anyOf\": [\n                  {\n                    \"type\": \"string\"\n                  },\n                  {\n                    \"type\": \"null\"\n                  }\n                ],\n                \"default\": null,\n                \"description\": \"Market symbol to load data for, such as `BTCUSDT`.\",\n                \"title\": \"Symbol\"\n              },\n              \"terminal_logging_enabled\": {\n                \"default\": true,\n                \"description\": \"Set true to emit operational run logs while the run executes.\",\n                \"title\": \"Terminal Logging Enabled\"\n              },\n              \"timeout_seconds\": {\n                \"anyOf\": [\n                  {\n                    \"type\": \"number\"\n                  },\n                  {\n                    \"type\": \"null\"\n                  }\n                ],\n                \"default\": null,\n                \"description\": \"Maximum seconds to wait before the call times out. Accepts integer or float values.\",\n                \"title\": \"Timeout Seconds\"\n              },\n              \"trade_limit\": {\n                \"anyOf\": [\n                  {},\n                  {\n                    \"type\": \"null\"\n                  }\n                ],\n                \"default\": null,\n                \"description\": \"Maximum number of trades to include when trade data is requested.\",\n                \"title\": \"Trade Limit\"\n              },\n              \"ui_streaming_enabled\": {\n                \"default\": true,\n                \"description\": \"Set true to stream live progress updates to UI-oriented consumers.\",\n                \"title\": \"Ui Streaming Enabled\"\n              },\n              \"version\": {\n                \"anyOf\": [\n                  {\n                    \"type\": \"integer\"\n                  },\n                  {\n                    \"type\": \"string\"\n                  },\n                  {\n                    \"type\": \"null\"\n                  }\n                ],\n                \"default\": null,\n                \"description\": \"Immutable snapshot version number for the referenced snapshot line. Accepts integer values directly; numeric strings are normalized with warnings.\",\n                \"title\": \"Version\"\n              },\n              \"view\": {\n                \"anyOf\": [\n                  {\n                    \"type\": \"string\"\n                  },\n                  {\n                    \"type\": \"null\"\n                  }\n                ],\n                \"default\": \"list\",\n                \"description\": \"Response view to load for the selected run, snapshot, or job.\",\n                \"title\": \"View\"\n              },\n              \"wait\": {\n                \"anyOf\": [\n                  {\n                    \"type\": \"string\"\n                  },\n                  {\n                    \"type\": \"null\"\n                  }\n                ],\n                \"default\": \"none\",\n                \"description\": \"How long the tool should wait before returning control.\",\n                \"title\": \"Wait\"\n              }\n            },\n            \"title\": \"backtests_runsArguments\",\n            \"type\": \"object\"\n          },\n          \"kind\": \"infrastructure_incident\",\n          \"last_seen_at\": \"2026-04-09T12:32:02.308928+00:00\",\n          \"message\": \"Broker argument validation failed: backtests_runs\",\n          \"normalized_message\": \"broker argument validation failed: backtests_runs\",\n          \"occurrences\": 1,\n          \"request_id\": null,\n          \"server_session_id\": null,\n          \"service\": \"dev_space1\",\n          \"severity\": \"medium\",\n          \"state\": \"open\"\n        },\n        \"source_refs\": [],\n        \"external_ref\": \"incident:f139ea304fd9c2e871a66903\",\n        \"dedupe_key\": \"f139ea304fd9c2e871a66903\",\n        \"pinned\": false,\n        \"protection_reason\": null,\n        \"created_at\": \"2026-04-09T12:32:02.310040+00:00\",\n        \"updated_at\": \"2026-04-09T12:32:02.310043+00:00\",\n        \"incident_id\": \"incident:f139ea304fd9c2e871a66903\"\n      },\n      {\n        \"node_id\": \"node-88d9fe35286f4ee090347845bddf901e\",\n        \"project_id\": \"mcp-infra-incidents\",\n        \"branch_id\": \"branch-52fbeb31fd074ba39daf2ed99a72d977\",\n        \"node_type\": \"note\",\n        \"title\": \"models_dataset: models_dataset_warning\",\n        \"summary\": \"models_dataset_warning\",\n        \"status\": \"active\",\n        \"content\": {\n          \"error\": {\n            \"message\": \"broker_contract_trap:expensive_async_wait_completed_rewritten\"\n          },\n          \"events\": [],\n          \"log_excerpt\": null\n        },\n        \"metadata\": {\n          \"affected_tool\": \"models_dataset\",\n          \"arguments\": {\n            \"action\": \"preview\",\n            \"spec\": {\n              \"anchor_timeframe\": \"1h\",\n              \"description\": \"Small preview dataset for broker coverage\",\n              \"end_at\": \"2024-01-15T23:00:00+00:00\",\n              \"input_fields\": [\n                {\n                  \"column\": \"open\",\n                  \"name\": \"open_now\",\n                  \"source_kind\": \"ohlcv\",\n                  \"timeframe\": \"1h\",\n                  \"transform\": \"current\"\n                },\n                {\n                  \"column\": \"close\",\n                  \"name\": \"close_now\",\n                  \"source_kind\": \"ohlcv\",\n                  \"timeframe\": \"1h\",\n                  \"transform\": \"current\"\n                },\n                {\n                  \"column\": \"rsi_1\",\n                  \"name\": \"rsi_now\",\n                  \"source_kind\": \"feature\",\n                  \"timeframe\": \"1h\",\n                  \"transform\": \"current\"\n                }\n              ],\n              \"name\": \"Coverage Python Target Preview\",\n              \"split\": {\n                \"test_fraction\": 0.2,\n                \"train_fraction\": 0.6,\n                \"validation_fraction\": 0.2\n              },\n              \"start_at\": \"2024-01-01T00:00:00+00:00\",\n              \"symbol\": \"BTCUSDT\",\n              \"target\": {\n                \"code\": \"def compute_target(step):\\n    return 1 if step.current('close') > step.current('open') else 0\\n\",\n                \"kind\": \"python_target\",\n                \"lookback_bars\": 1,\n                \"required_columns\": [\n                  \"open\",\n                  \"close\"\n                ],\n                \"required_features\": [\n                  \"rsi_1\"\n                ],\n                \"required_timeframes\": [\n                  \"1h\"\n                ]\n              }\n            },\n            \"wait\": \"completed\"\n          },\n          \"correlation_id\": null,\n          \"error_code\": \"unknown_error\",\n          \"evidence\": {},\n          \"first_seen_at\": \"2026-04-09T12:26:57.279375+00:00\",\n          \"kind\": \"infrastructure_incident\",\n          \"last_seen_at\": \"2026-04-09T12:26:57.279375+00:00\",\n          \"message\": \"models_dataset_warning\",\n          \"normalized_message\": \"models_dataset_warning\",\n          \"occurrences\": 1,\n          \"request_id\": null,\n          \"result\": {\n            \"artifact_ids\": [\n              \"models-dataset-bc6a34a27df472f8-60b0b027\"\n            ],\n            \"call_id\": \"tool_fc08727cd22f\",\n            \"created_at\": \"2026-04-09T12:26:56.950566+00:00\",\n            \"duration_ms\": 611,\n            \"error_class\": \"\",\n            \"key_facts\": {\n              \"final_status\": \"running_compute\",\n              \"operation.attempt_id\": \"models-dataset-bc6a34a27df472f8-60b0b027\",\n              \"operation.operation_id\": \"models-dataset-bc6a34a27df472f8-60b0b027\",\n              \"operation.status\": \"running_compute\",\n              \"summary\": \"Dataset preparation is still running.\",\n              \"wait_satisfied\": true,\n              \"wait_timeout\": false\n            },\n            \"ok\": true,\n            \"operation_ref\": \"models-dataset-bc6a34a27df472f8-60b0b027\",\n            \"plan_id\": \"cov\",\n            \"raw_result_ref\": \"plans/runs/probe_models/broker/raw/tool_fc08727cd22f.json\",\n            \"request_arguments\": {\n              \"action\": \"preview\",\n              \"spec\": {\n                \"anchor_timeframe\": \"1h\",\n                \"description\": \"Small preview dataset for broker coverage\",\n                \"end_at\": \"2024-01-15T23:00:00+00:00\",\n                \"input_fields\": [\n                  {\n                    \"column\": \"open\",\n                    \"name\": \"open_now\",\n                    \"source_kind\": \"ohlcv\",\n                    \"timeframe\": \"1h\",\n                    \"transform\": \"current\"\n                  },\n                  {\n                    \"column\": \"close\",\n                    \"name\": \"close_now\",\n                    \"source_kind\": \"ohlcv\",\n                    \"timeframe\": \"1h\",\n                    \"transform\": \"current\"\n                  },\n                  {\n                    \"column\": \"rsi_1\",\n                    \"name\": \"rsi_now\",\n                    \"source_kind\": \"feature\",\n                    \"timeframe\": \"1h\",\n                    \"transform\": \"current\"\n                  }\n                ],\n                \"name\": \"Coverage Python Target Preview\",\n                \"split\": {\n                  \"test_fraction\": 0.2,\n                  \"train_fraction\": 0.6,\n                  \"validation_fraction\": 0.2\n                },\n                \"start_at\": \"2024-01-01T00:00:00+00:00\",\n                \"symbol\": \"BTCUSDT\",\n                \"target\": {\n                  \"code\": \"def compute_target(step):\\n    return 1 if step.current('close') > step.current('open') else 0\\n\",\n                  \"kind\": \"python_target\",\n                  \"lookback_bars\": 1,\n                  \"required_columns\": [\n                    \"open\",\n                    \"close\"\n                  ],\n                  \"required_features\": [\n                    \"rsi_1\"\n                  ],\n                  \"required_timeframes\": [\n                    \"1h\"\n                  ]\n                }\n              },\n              \"wait\": \"started\"\n            },\n            \"response_status\": \"running_compute\",\n            \"resume_arguments\": {},\n            \"resume_token\": \"\",\n            \"resume_tool\": \"models_dataset\",\n            \"retryable\": false,\n            \"slice_id\": \"preview\",\n            \"summary\": \"Dataset preparation is still running.\",\n            \"tool\": \"models_dataset\",\n            \"tool_response_status\": \"ok\",\n            \"warnings\": [\n              \"broker_contract_trap:expensive_async_wait_completed_rewritten\"\n            ]\n          },\n          \"server_session_id\": null,\n          \"service\": \"dev_space1\",\n          \"severity\": \"medium\",\n          \"state\": \"open\"\n        },\n        \"source_refs\": [],\n        \"external_ref\": \"incident:78776d48cdb25c4c5e486917\",\n        \"dedupe_key\": \"78776d48cdb25c4c5e486917\",\n        \"pinned\": false,\n        \"protection_reason\": null,\n        \"created_at\": \"2026-04-09T12:26:57.281974+00:00\",\n        \"updated_at\": \"2026-04-09T12:26:57.281981+00:00\",\n        \"incident_id\": \"incident:78776d48cdb25c4c5e486917\"\n      },\n      {\n        \"node_id\": \"node-a6d4f972ba614607859980238d68cf95\",\n        \"project_id\": \"mcp-infra-incidents\",\n        \"branch_id\": \"branch-52fbeb31fd074ba39daf2ed99a72d977\",\n        \"node_type\": \"note\",\n        \"title\": \"models_dataset: expensive_async_wait_completed_rewritten\",\n        \"summary\": \"expensive_async_wait_completed_rewritten\",\n        \"status\": \"active\",\n        \"content\": {\n          \"error\": {\n            \"message\": \"models_dataset wait='completed' is blocked for expensive async tools; broker rewrote it to wait='started'.\"\n          },\n          \"events\": [],\n          \"log_excerpt\": null\n        },\n        \"metadata\": {\n          \"affected_tool\": \"models_dataset\",\n          \"correlation_id\": null,\n          \"error_code\": \"unknown_error\",\n          \"evidence\": {},\n          \"first_seen_at\": \"2026-04-09T12:26:57.051691+00:00\",\n          \"kind\": \"infrastructure_incident\",\n          \"last_seen_at\": \"2026-04-09T12:26:57.051691+00:00\",\n          \"message\": \"expensive_async_wait_completed_rewritten\",\n          \"normalized_message\": \"expensive_async_wait_completed_rewritten\",\n          \"occurrences\": 1,\n          \"original_arguments\": {\n            \"action\": \"preview\",\n            \"spec\": {\n              \"anchor_timeframe\": \"1h\",\n              \"description\": \"Small preview dataset for broker coverage\",\n              \"end_at\": \"2024-01-15T23:00:00+00:00\",\n              \"input_fields\": [\n                {\n                  \"column\": \"open\",\n                  \"name\": \"open_now\",\n                  \"source_kind\": \"ohlcv\",\n                  \"timeframe\": \"1h\",\n                  \"transform\": \"current\"\n                },\n                {\n                  \"column\": \"close\",\n                  \"name\": \"close_now\",\n                  \"source_kind\": \"ohlcv\",\n                  \"timeframe\": \"1h\",\n                  \"transform\": \"current\"\n                },\n                {\n                  \"column\": \"rsi_1\",\n                  \"name\": \"rsi_now\",\n                  \"source_kind\": \"feature\",\n                  \"timeframe\": \"1h\",\n                  \"transform\": \"current\"\n                }\n              ],\n              \"name\": \"Coverage Python Target Preview\",\n              \"split\": {\n                \"test_fraction\": 0.2,\n                \"train_fraction\": 0.6,\n                \"validation_fraction\": 0.2\n              },\n              \"start_at\": \"2024-01-01T00:00:00+00:00\",\n              \"symbol\": \"BTCUSDT\",\n              \"target\": {\n                \"code\": \"def compute_target(step):\\n    return 1 if step.current('close') > step.current('open') else 0\\n\",\n                \"kind\": \"python_target\",\n                \"lookback_bars\": 1,\n                \"required_columns\": [\n                  \"open\",\n                  \"close\"\n                ],\n                \"required_features\": [\n                  \"rsi_1\"\n                ],\n                \"required_timeframes\": [\n                  \"1h\"\n                ]\n              }\n            },\n            \"wait\": \"completed\"\n          },\n          \"reason_code\": \"expensive_async_wait_completed_rewritten\",\n          \"request_id\": null,\n          \"rewritten_arguments\": {\n            \"action\": \"preview\",\n            \"spec\": {\n              \"anchor_timeframe\": \"1h\",\n              \"description\": \"Small preview dataset for broker coverage\",\n              \"end_at\": \"2024-01-15T23:00:00+00:00\",\n              \"input_fields\": [\n                {\n                  \"column\": \"open\",\n                  \"name\": \"open_now\",\n                  \"source_kind\": \"ohlcv\",\n                  \"timeframe\": \"1h\",\n                  \"transform\": \"current\"\n                },\n                {\n                  \"column\": \"close\",\n                  \"name\": \"close_now\",\n                  \"source_kind\": \"ohlcv\",\n                  \"timeframe\": \"1h\",\n                  \"transform\": \"current\"\n                },\n                {\n                  \"column\": \"rsi_1\",\n                  \"name\": \"rsi_now\",\n                  \"source_kind\": \"feature\",\n                  \"timeframe\": \"1h\",\n                  \"transform\": \"current\"\n                }\n              ],\n              \"name\": \"Coverage Python Target Preview\",\n              \"split\": {\n                \"test_fraction\": 0.2,\n                \"train_fraction\": 0.6,\n                \"validation_fraction\": 0.2\n              },\n              \"start_at\": \"2024-01-01T00:00:00+00:00\",\n              \"symbol\": \"BTCUSDT\",\n              \"target\": {\n                \"code\": \"def compute_target(step):\\n    return 1 if step.current('close') > step.current('open') else 0\\n\",\n                \"kind\": \"python_target\",\n                \"lookback_bars\": 1,\n                \"required_columns\": [\n                  \"open\",\n                  \"close\"\n                ],\n                \"required_features\": [\n                  \"rsi_1\"\n                ],\n                \"required_timeframes\": [\n                  \"1h\"\n                ]\n              }\n            },\n            \"wait\": \"started\"\n          },\n          \"server_session_id\": null,\n          \"service\": \"dev_space1\",\n          \"severity\": \"medium\",\n          \"state\": \"open\"\n        },\n        \"source_refs\": [],\n        \"external_ref\": \"incident:2f4e51a033b70fd2b02e12c8\",\n        \"dedupe_key\": \"2f4e51a033b70fd2b02e12c8\",\n        \"pinned\": false,\n        \"protection_reason\": null,\n        \"created_at\": \"2026-04-09T12:26:57.054170+00:00\",\n        \"updated_at\": \"2026-04-09T12:26:57.054178+00:00\",\n        \"incident_id\": \"incident:2f4e51a033b70fd2b02e12c8\"\n      },\n      {\n        \"node_id\": \"node-0be1538a20dc4a278efdbe03032bf363\",\n        \"project_id\": \"mcp-infra-incidents\",\n        \"branch_id\": \"branch-52fbeb31fd074ba39daf2ed99a72d977\",\n        \"node_type\": \"note\",\n        \"title\": \"models_to_feature: Brokered tool call failed: models_to_feature\",\n        \"summary\": \"Brokered tool call failed: models_to_feature\",\n        \"status\": \"active\",\n        \"content\": {\n          \"error\": {\n            \"message\": \"[Errno 2] No such file or directory: '/home/ubuntu/MARKET_DATA/_crypto_data/models/registry/dummy/versions/1/manifest.json'\"\n          },\n          \"events\": [],\n          \"log_excerpt\": null\n        },\n        \"metadata\": {\n          \"affected_tool\": \"models_to_feature\",\n          \"arguments\": {\n            \"action\": \"inspect\",\n            \"model_id\": \"dummy\",\n            \"version\": \"1\",\n            \"view\": \"contract\"\n          },\n          \"correlation_id\": null,\n          \"error_code\": \"unknown_error\",\n          \"evidence\": {},\n          \"first_seen_at\": \"2026-04-09T12:24:58.511440+00:00\",\n          \"kind\": \"infrastructure_incident\",\n          \"last_seen_at\": \"2026-04-09T12:24:58.511440+00:00\",\n          \"message\": \"Brokered tool call failed: models_to_feature\",\n          \"normalized_message\": \"brokered tool call failed: models_to_feature\",\n          \"occurrences\": 1,\n          \"request_id\": null,\n          \"result\": {\n            \"artifact_ids\": [],\n            \"call_id\": \"tool_97e3f56e9f73\",\n            \"created_at\": \"2026-04-09T12:24:58.410799+00:00\",\n            \"duration_ms\": 199,\n            \"error_class\": \"resource_not_found\",\n            \"key_facts\": {},\n            \"ok\": false,\n            \"operation_ref\": \"\",\n            \"plan_id\": \"coverage\",\n            \"raw_result_ref\": \"plans/runs/coverage_probe/broker/raw/tool_97e3f56e9f73.json\",\n            \"request_arguments\": {\n              \"action\": \"inspect\",\n              \"model_id\": \"dummy\",\n              \"version\": \"1\",\n              \"view\": \"contract\"\n            },\n            \"response_status\": \"\",\n            \"resume_arguments\": {},\n            \"resume_token\": \"\",\n            \"resume_tool\": \"models_to_feature\",\n            \"retryable\": false,\n            \"slice_id\": \"models_to_feature\",\n            \"summary\": \"[Errno 2] No such file or directory: '/home/ubuntu/MARKET_DATA/_crypto_data/models/registry/dummy/versions/1/manifest.json'\",\n            \"tool\": \"models_to_feature\",\n            \"tool_response_status\": \"error\",\n            \"warnings\": []\n          },\n          \"server_session_id\": null,\n          \"service\": \"dev_space1\",\n          \"severity\": \"medium\",\n          \"state\": \"open\"\n        },\n        \"source_refs\": [],\n        \"external_ref\": \"incident:a654c81ab0ab1b43b5ba7e07\",\n        \"dedupe_key\": \"a654c81ab0ab1b43b5ba7e07\",\n        \"pinned\": false,\n        \"protection_reason\": null,\n        \"created_at\": \"2026-04-09T12:24:58.513934+00:00\",\n        \"updated_at\": \"2026-04-09T12:24:58.513941+00:00\",\n        \"incident_id\": \"incident:a654c81ab0ab1b43b5ba7e07\"\n      },\n      {\n        \"node_id\": \"node-b5e3739e2df34cfcb7fdd470ff1be019\",\n        \"project_id\": \"mcp-infra-incidents\",\n        \"branch_id\": \"branch-52fbeb31fd074ba39daf2ed99a72d977\",\n        \"node_type\": \"note\",\n        \"title\": \"features_catalog: features_catalog output was truncated and saved to file, preventing full inline review of all 46 features\",\n        \"summary\": \"features_catalog output was truncated and saved to file, preventing full inline review of all 46 features\",\n        \"status\": \"active\",\n        \"content\": {\n          \"error\": {\n            \"message\": \"The catalog response exceeded inline display limits. Key volume-related feature definitions may have been in the truncated section.\"\n          },\n          \"events\": [],\n          \"log_excerpt\": null\n        },\n        \"metadata\": {\n          \"affected_tool\": \"features_catalog\",\n          \"category\": \"runtime\",\n          \"correlation_id\": null,\n          \"details\": \"The catalog response exceeded inline display limits. Key volume-related feature definitions may have been in the truncated section.\",\n          \"error_code\": \"unknown_error\",\n          \"evidence\": {},\n          \"first_seen_at\": \"2026-04-09T12:18:28.402056+00:00\",\n          \"kind\": \"infrastructure_incident\",\n          \"last_seen_at\": \"2026-04-09T12:18:28.402056+00:00\",\n          \"message\": \"features_catalog output was truncated and saved to file, preventing full inline review of all 46 features\",\n          \"normalized_message\": \"features_catalog output was truncated and saved to file, preventing full inline review of all 46 features\",\n          \"occurrences\": 1,\n          \"request_id\": null,\n          \"server_session_id\": null,\n          \"service\": \"dev_space1\",\n          \"severity\": \"low\",\n          \"state\": \"open\",\n          \"summary\": \"features_catalog output was truncated and saved to file, preventing full inline review of all 46 features\"\n        },\n        \"source_refs\": [],\n        \"external_ref\": \"incident:984f0667a8c0694ed8d6d20b\",\n        \"dedupe_key\": \"984f0667a8c0694ed8d6d20b\",\n        \"pinned\": false,\n        \"protection_reason\": null,\n        \"created_at\": \"2026-04-09T12:18:28.403186+00:00\",\n        \"updated_at\": \"2026-04-09T12:18:28.403189+00:00\",\n        \"incident_id\": \"incident:984f0667a8c0694ed8d6d20b\"\n      }\n    ],\n    \"backlog_project_id\": \"mcp-infra-incidents\",\n    \"warnings\": [],\n    \"memory_persistence\": {\n      \"database_path\": \"/home/ubuntu/.foundation_state/research_memory/research_memory.sqlite3\",\n      \"artifacts_root\": \"/home/ubuntu/.foundation_state/research_memory\",\n      \"continuity_warning\": null\n    },\n    \"important_warnings\": [],\n    \"next_recommended_actions\": [\n      \"Use incidents(action='update') when the investigation or fix state changes.\",\n      \"Use system_debug_recent_events and system_logs to gather more evidence before updating the incident.\"\n    ],\n    \"recommended_follow_up_tool\": null,\n    \"state_summary\": {},\n    \"exact_next_call_examples\": [\n      {\n        \"tool\": \"incidents\",\n        \"arguments\": {\n          \"action\": \"inspect\",\n          \"view\": \"list\"\n        }\n      }\n    ],\n    \"raw_refs\": [],\n    \"raw_tool_hints\": [],\n    \"summary\": \"Loaded infrastructure incident state from durable memory.\"\n  },\n  \"warnings\": [],\n  \"refs\": [],\n  \"error\": null\n}"
+    }
+  ],
+  "structuredContent": {
+    "status": "ok",
+    "message": "Infrastructure incident payload loaded.",
+    "tool_name": "incidents",
+    "request_id": "69",
+    "correlation_id": "69",
+    "server_session_id": "fbf2ef6510c34fd58f805b982a099afd",
+    "response_generated_at": "2026-04-09T13:50:26.601041+00:00",
+    "data": {
+      "view": "summary",
+      "project_id": "mcp-infra-incidents",
+      "counts_by_state": {
+        "open": 60,
+        "investigating": 0,
+        "fixed": 2,
+        "verified": 0,
+        "closed": 0
+      },
+      "latest_open_incidents": [
+        {
+          "node_id": "node-341390cefc9d413cbc8f87fc26a6b463",
+          "project_id": "mcp-infra-incidents",
+          "branch_id": "branch-52fbeb31fd074ba39daf2ed99a72d977",
+          "node_type": "note",
+          "title": "backtests_plan: backtests_plan_warning",
+          "summary": "backtests_plan_warning",
+          "status": "active",
+          "content": {
+            "error": {
+              "message": "stale_snapshot_feature_refs: snapshot feature_source.fields contains names that are not currently resolved through the feature registry/window guard."
+            },
+            "events": [],
+            "log_excerpt": null
+          },
+          "metadata": {
+            "affected_tool": "backtests_plan",
+            "arguments": {
+              "anchor_timeframe": "1h",
+              "end_at": "2026-01-07T00:00:00+00:00",
+              "execution_timeframe": "5m",
+              "snapshot_id": "active-signal-v1",
+              "start_at": "2026-01-01T00:00:00+00:00",
+              "symbol": "BTCUSDT",
+              "version": "1"
+            },
+            "correlation_id": null,
+            "error_code": "unknown_error",
+            "evidence": {},
+            "first_seen_at": "2026-04-09T12:32:00.921177+00:00",
+            "kind": "infrastructure_incident",
+            "last_seen_at": "2026-04-09T13:50:00.968970+00:00",
+            "message": "backtests_plan_warning",
+            "normalized_message": "backtests_plan_warning",
+            "occurrences": 47,
+            "request_id": null,
+            "result": {
+              "artifact_ids": [],
+              "call_id": "tool_e944584939f3",
+              "created_at": "2026-04-09T13:50:00.691251+00:00",
+              "duration_ms": 6352,
+              "error_class": "",
+              "key_facts": {
+                "summary": "Planned backtest run window for active-signal-v1 on BTCUSDT@1h/5m."
+              },
+              "ok": true,
+              "operation_ref": "",
+              "plan_id": "live_coverage",
+              "raw_result_ref": "plans/runs/live_coverage_038882df8f/broker/raw/tool_e944584939f3.json",
+              "request_arguments": {
+                "anchor_timeframe": "1h",
+                "end_at": "2026-01-07T00:00:00+00:00",
+                "execution_timeframe": "5m",
+                "snapshot_id": "active-signal-v1",
+                "start_at": "2026-01-01T00:00:00+00:00",
+                "symbol": "BTCUSDT",
+                "version": 1
+              },
+              "response_status": "",
+              "resume_arguments": {},
+              "resume_token": "",
+              "resume_tool": "backtests_plan",
+              "retryable": false,
+              "slice_id": "backtests_plan_window",
+              "summary": "Planned backtest run window for active-signal-v1 on BTCUSDT@1h/5m.",
+              "tool": "backtests_plan",
+              "tool_response_status": "ok",
+              "warnings": [
+                "Snapshot logic depends on explicit anchor-context columns; keep using the computed causal lower bound.",
+                "stale_snapshot_feature_refs: snapshot feature_source.fields contains names that are not currently resolved through the feature registry/window guard."
+              ]
+            },
+            "server_session_id": null,
+            "service": "dev_space1",
+            "severity": "medium",
+            "state": "open"
+          },
+          "source_refs": [],
+          "external_ref": "incident:f8e690a485647b6bffeb3f32",
+          "dedupe_key": "f8e690a485647b6bffeb3f32",
+          "pinned": false,
+          "protection_reason": null,
+          "created_at": "2026-04-09T12:32:00.922338+00:00",
+          "updated_at": "2026-04-09T13:50:00.972416+00:00",
+          "incident_id": "incident:f8e690a485647b6bffeb3f32"
+        },
+        {
+          "node_id": "node-b9bf4bfdf9634340b214505ed850d3b3",
+          "project_id": "mcp-infra-incidents",
+          "branch_id": "branch-52fbeb31fd074ba39daf2ed99a72d977",
+          "node_type": "note",
+          "title": "features_analytics: features_analytics_warning",
+          "summary": "features_analytics_warning",
+          "status": "active",
+          "content": {
+            "error": {
+              "message": "shift_audit_custom_features_only"
+            },
+            "events": [],
+            "log_excerpt": null
+          },
+          "metadata": {
+            "affected_tool": "features_analytics",
+            "arguments": {
+              "action": "analytics",
+              "feature_name": "rsi_1",
+              "symbol": "BTCUSDT"
+            },
+            "correlation_id": null,
+            "error_code": "unknown_error",
+            "evidence": {},
+            "first_seen_at": "2026-04-09T04:19:26.773801+00:00",
+            "kind": "infrastructure_incident",
+            "last_seen_at": "2026-04-09T13:49:00.408330+00:00",
+            "message": "features_analytics_warning",
+            "normalized_message": "features_analytics_warning",
+            "occurrences": 27,
+            "request_id": null,
+            "result": {
+              "artifact_ids": [],
+              "call_id": "tool_90f84eda680b",
+              "created_at": "2026-04-09T13:49:00.270448+00:00",
+              "duration_ms": 503,
+              "error_class": "",
+              "key_facts": {},
+              "ok": true,
+              "operation_ref": "",
+              "plan_id": "live_coverage",
+              "raw_result_ref": "plans/runs/live_coverage_038882df8f/broker/raw/tool_90f84eda680b.json",
+              "request_arguments": {
+                "action": "analytics",
+                "feature_name": "rsi_1",
+                "symbol": "BTCUSDT"
+              },
+              "response_status": "",
+              "resume_arguments": {},
+              "resume_token": "",
+              "resume_tool": "features_analytics",
+              "retryable": false,
+              "slice_id": "features_analytics_rsi",
+              "summary": "Feature analytics action completed.",
+              "tool": "features_analytics",
+              "tool_response_status": "ok",
+              "warnings": [
+                "shift_audit_custom_features_only"
+              ]
+            },
+            "server_session_id": null,
+            "service": "dev_space1",
+            "severity": "medium",
+            "state": "open"
+          },
+          "source_refs": [],
+          "external_ref": "incident:1843cfa8b423842d7b6b6635",
+          "dedupe_key": "1843cfa8b423842d7b6b6635",
+          "pinned": false,
+          "protection_reason": null,
+          "created_at": "2026-04-09T04:19:26.774882+00:00",
+          "updated_at": "2026-04-09T13:49:00.856999+00:00",
+          "incident_id": "incident:1843cfa8b423842d7b6b6635"
+        },
+        {
+          "node_id": "node-25bf4dcce3e445ab82edb6898cb4bf13",
+          "project_id": "mcp-infra-incidents",
+          "branch_id": "branch-52fbeb31fd074ba39daf2ed99a72d977",
+          "node_type": "note",
+          "title": "system_reset_space: system_reset_space_warning",
+          "summary": "system_reset_space_warning",
+          "status": "active",
+          "content": {
+            "error": {
+              "message": "normalized_boolean:research_memory"
+            },
+            "events": [],
+            "log_excerpt": null
+          },
+          "metadata": {
+            "affected_tool": "system_reset_space",
+            "arguments": {
+              "action": "preview",
+              "research_memory": "false"
+            },
+            "correlation_id": null,
+            "error_code": "unknown_error",
+            "evidence": {},
+            "first_seen_at": "2026-04-09T12:39:26.545606+00:00",
+            "kind": "infrastructure_incident",
+            "last_seen_at": "2026-04-09T13:26:17.805970+00:00",
+            "message": "system_reset_space_warning",
+            "normalized_message": "system_reset_space_warning",
+            "occurrences": 17,
+            "request_id": null,
+            "result": {
+              "artifact_ids": [],
+              "call_id": "tool_382a7f2755a4",
+              "created_at": "2026-04-09T13:26:17.697546+00:00",
+              "duration_ms": 485,
+              "error_class": "",
+              "key_facts": {
+                "summary": "Explicit system reset preview completed."
+              },
+              "ok": true,
+              "operation_ref": "",
+              "plan_id": "live_coverage",
+              "raw_result_ref": "plans/runs/live_coverage_0abad64a84/broker/raw/tool_382a7f2755a4.json",
+              "request_arguments": {
+                "action": "preview",
+                "research_memory": "false"
+              },
+              "response_status": "",
+              "resume_arguments": {},
+              "resume_token": "",
+              "resume_tool": "system_reset_space",
+              "retryable": false,
+              "slice_id": "system_reset_preview",
+              "summary": "Explicit system reset preview completed.",
+              "tool": "system_reset_space",
+              "tool_response_status": "ok",
+              "warnings": [
+                "normalized_boolean:research_memory"
+              ]
+            },
+            "server_session_id": null,
+            "service": "dev_space1",
+            "severity": "medium",
+            "state": "open"
+          },
+          "source_refs": [],
+          "external_ref": "incident:38282462bc82cd17ca73d5cf",
+          "dedupe_key": "38282462bc82cd17ca73d5cf",
+          "pinned": false,
+          "protection_reason": null,
+          "created_at": "2026-04-09T12:39:26.549726+00:00",
+          "updated_at": "2026-04-09T13:26:17.810944+00:00",
+          "incident_id": "incident:38282462bc82cd17ca73d5cf"
+        },
+        {
+          "node_id": "node-cab754771ee7495580959affd1d4d909",
+          "project_id": "mcp-infra-incidents",
+          "branch_id": "branch-52fbeb31fd074ba39daf2ed99a72d977",
+          "node_type": "note",
+          "title": "research_search: research_search_warning",
+          "summary": "research_search_warning",
+          "status": "active",
+          "content": {
+            "error": {
+              "message": "broker_contract_trap:research_search_compact_level_rewritten"
+            },
+            "events": [],
+            "log_excerpt": null
+          },
+          "metadata": {
+            "affected_tool": "research_search",
+            "arguments": {
+              "level": "compact",
+              "limit": "5",
+              "project_id": "coverage-project-live-coverage-0abad64a84-3-b1506b56",
+              "query": "coverage note"
+            },
+            "correlation_id": null,
+            "error_code": "unknown_error",
+            "evidence": {},
+            "first_seen_at": "2026-04-09T10:18:39.889269+00:00",
+            "kind": "infrastructure_incident",
+            "last_seen_at": "2026-04-09T13:23:57.777926+00:00",
+            "message": "research_search_warning",
+            "normalized_message": "research_search_warning",
+            "occurrences": 20,
+            "request_id": null,
+            "result": {
+              "artifact_ids": [],
+              "call_id": "tool_9cde453734fb",
+              "created_at": "2026-04-09T13:23:57.238045+00:00",
+              "duration_ms": 197,
+              "error_class": "",
+              "key_facts": {
+                "project_id": "coverage-project-live-coverage-0abad64a84-3-b1506b56",
+                "summary": "Loaded research search results."
+              },
+              "ok": true,
+              "operation_ref": "",
+              "plan_id": "live_coverage",
+              "raw_result_ref": "plans/runs/live_coverage_0abad64a84/broker/raw/tool_9cde453734fb.json",
+              "request_arguments": {
+                "level": "normal",
+                "limit": 5,
+                "project_id": "coverage-project-live-coverage-0abad64a84-3-b1506b56",
+                "query": "coverage note"
+              },
+              "response_status": "",
+              "resume_arguments": {},
+              "resume_token": "",
+              "resume_tool": "research_search",
+              "retryable": false,
+              "slice_id": "research_search_compact_rewritten",
+              "summary": "Loaded research search results.",
+              "tool": "research_search",
+              "tool_response_status": "ok",
+              "warnings": [
+                "broker_contract_trap:research_search_compact_level_rewritten"
+              ]
+            },
+            "server_session_id": null,
+            "service": "dev_space1",
+            "severity": "medium",
+            "state": "open"
+          },
+          "source_refs": [],
+          "external_ref": "incident:ab76138f1bb3fbd331db485e",
+          "dedupe_key": "ab76138f1bb3fbd331db485e",
+          "pinned": false,
+          "protection_reason": null,
+          "created_at": "2026-04-09T10:18:39.890958+00:00",
+          "updated_at": "2026-04-09T13:23:57.832457+00:00",
+          "incident_id": "incident:ab76138f1bb3fbd331db485e"
+        },
+        {
+          "node_id": "node-c4d2760da5f9440986c344a39da246f5",
+          "project_id": "mcp-infra-incidents",
+          "branch_id": "branch-52fbeb31fd074ba39daf2ed99a72d977",
+          "node_type": "note",
+          "title": "research_search: research_search_compact_level_rewritten",
+          "summary": "research_search_compact_level_rewritten",
+          "status": "active",
+          "content": {
+            "error": {
+              "message": "research_search level='compact' is advertised by schema/docs but rejected by runtime; broker rewrote it to level='normal'."
+            },
+            "events": [],
+            "log_excerpt": null
+          },
+          "metadata": {
+            "affected_tool": "research_search",
+            "correlation_id": null,
+            "error_code": "unknown_error",
+            "evidence": {},
+            "first_seen_at": "2026-04-09T10:18:39.694222+00:00",
+            "kind": "infrastructure_incident",
+            "last_seen_at": "2026-04-09T13:23:57.377548+00:00",
+            "message": "research_search_compact_level_rewritten",
+            "normalized_message": "research_search_compact_level_rewritten",
+            "occurrences": 20,
+            "original_arguments": {
+              "level": "compact",
+              "limit": "5",
+              "project_id": "coverage-project-live-coverage-0abad64a84-3-b1506b56",
+              "query": "coverage note"
+            },
+            "reason_code": "research_search_compact_level_rewritten",
+            "request_id": null,
+            "rewritten_arguments": {
+              "level": "normal",
+              "limit": "5",
+              "project_id": "coverage-project-live-coverage-0abad64a84-3-b1506b56",
+              "query": "coverage note"
+            },
+            "server_session_id": null,
+            "service": "dev_space1",
+            "severity": "medium",
+            "state": "open"
+          },
+          "source_refs": [],
+          "external_ref": "incident:0b25fd13e319998b8287f16b",
+          "dedupe_key": "0b25fd13e319998b8287f16b",
+          "pinned": false,
+          "protection_reason": null,
+          "created_at": "2026-04-09T10:18:39.696234+00:00",
+          "updated_at": "2026-04-09T13:23:57.384328+00:00",
+          "incident_id": "incident:0b25fd13e319998b8287f16b"
+        },
+        {
+          "node_id": "node-b24e44feeed14d34a8d1777adf866455",
+          "project_id": "mcp-infra-incidents",
+          "branch_id": "branch-52fbeb31fd074ba39daf2ed99a72d977",
+          "node_type": "note",
+          "title": "experiments_read: Brokered tool call failed: experiments_read",
+          "summary": "Brokered tool call failed: experiments_read",
+          "status": "active",
+          "content": {
+            "error": {
+              "message": "Unknown experiment artifact: summary.json"
+            },
+            "events": [],
+            "log_excerpt": null
+          },
+          "metadata": {
+            "affected_tool": "experiments_read",
+            "arguments": {
+              "artifact_path": "summary.json",
+              "job_id": "20260409-130621-e6335e91",
+              "view": "json"
+            },
+            "correlation_id": null,
+            "error_code": "unknown_error",
+            "evidence": {},
+            "first_seen_at": "2026-04-09T13:06:23.273072+00:00",
+            "kind": "infrastructure_incident",
+            "last_seen_at": "2026-04-09T13:06:23.273072+00:00",
+            "message": "Brokered tool call failed: experiments_read",
+            "normalized_message": "brokered tool call failed: experiments_read",
+            "occurrences": 1,
+            "request_id": null,
+            "result": {
+              "artifact_ids": [],
+              "call_id": "tool_72a618a6b182",
+              "created_at": "2026-04-09T13:06:23.121386+00:00",
+              "duration_ms": 185,
+              "error_class": "not_found",
+              "key_facts": {},
+              "ok": false,
+              "operation_ref": "",
+              "plan_id": "live_coverage",
+              "raw_result_ref": "plans/runs/live_coverage_07f4453564/broker/raw/tool_72a618a6b182.json",
+              "request_arguments": {
+                "artifact_path": "summary.json",
+                "job_id": "20260409-130621-e6335e91",
+                "view": "json"
+              },
+              "response_status": "",
+              "resume_arguments": {},
+              "resume_token": "",
+              "resume_tool": "experiments_read",
+              "retryable": false,
+              "slice_id": "experiments_read_summary_json",
+              "summary": "Unknown experiment artifact: summary.json",
+              "tool": "experiments_read",
+              "tool_response_status": "error",
+              "warnings": []
+            },
+            "server_session_id": null,
+            "service": "dev_space1",
+            "severity": "medium",
+            "state": "open"
+          },
+          "source_refs": [],
+          "external_ref": "incident:d20743ec73b0066341ec67b2",
+          "dedupe_key": "d20743ec73b0066341ec67b2",
+          "pinned": false,
+          "protection_reason": null,
+          "created_at": "2026-04-09T13:06:23.276299+00:00",
+          "updated_at": "2026-04-09T13:06:23.276303+00:00",
+          "incident_id": "incident:d20743ec73b0066341ec67b2"
+        },
+        {
+          "node_id": "node-8a8c013ae34e4e8b9c7af2526b1d6547",
+          "project_id": "mcp-infra-incidents",
+          "branch_id": "branch-52fbeb31fd074ba39daf2ed99a72d977",
+          "node_type": "note",
+          "title": "backtests_analysis: Brokered tool call failed: backtests_analysis",
+          "summary": "Brokered tool call failed: backtests_analysis",
+          "status": "active",
+          "content": {
+            "error": {
+              "message": "Canonical analysis requires persisted completed run artifacts for run_id='20260409-125059-965fdc06'."
+            },
+            "events": [],
+            "log_excerpt": null
+          },
+          "metadata": {
+            "affected_tool": "backtests_analysis",
+            "arguments": {
+              "action": "start",
+              "analysis": "diagnostics",
+              "run_id": "20260409-125059-965fdc06",
+              "wait": "started"
+            },
+            "correlation_id": null,
+            "error_code": "unknown_error",
+            "evidence": {},
+            "first_seen_at": "2026-04-09T12:51:10.778684+00:00",
+            "kind": "infrastructure_incident",
+            "last_seen_at": "2026-04-09T12:51:10.778684+00:00",
+            "message": "Brokered tool call failed: backtests_analysis",
+            "normalized_message": "brokered tool call failed: backtests_analysis",
+            "occurrences": 1,
+            "request_id": null,
+            "result": {
+              "artifact_ids": [],
+              "call_id": "tool_eb04454a0b8a",
+              "created_at": "2026-04-09T12:51:10.674867+00:00",
+              "duration_ms": 178,
+              "error_class": "invalid_input",
+              "key_facts": {},
+              "ok": false,
+              "operation_ref": "",
+              "plan_id": "live_coverage",
+              "raw_result_ref": "plans/runs/live_coverage_e6a4e7b944/broker/raw/tool_eb04454a0b8a.json",
+              "request_arguments": {
+                "action": "start",
+                "analysis": "diagnostics",
+                "run_id": "20260409-125059-965fdc06",
+                "wait": "started"
+              },
+              "response_status": "",
+              "resume_arguments": {},
+              "resume_token": "",
+              "resume_tool": "backtests_analysis",
+              "retryable": false,
+              "slice_id": "backtests_analysis_diagnostics",
+              "summary": "Canonical analysis requires persisted completed run artifacts for run_id='20260409-125059-965fdc06'.",
+              "tool": "backtests_analysis",
+              "tool_response_status": "error",
+              "warnings": []
+            },
+            "server_session_id": null,
+            "service": "dev_space1",
+            "severity": "medium",
+            "state": "open"
+          },
+          "source_refs": [],
+          "external_ref": "incident:eac4c3077aa0f4244fdaf85a",
+          "dedupe_key": "eac4c3077aa0f4244fdaf85a",
+          "pinned": false,
+          "protection_reason": null,
+          "created_at": "2026-04-09T12:51:10.782164+00:00",
+          "updated_at": "2026-04-09T12:51:10.782169+00:00",
+          "incident_id": "incident:eac4c3077aa0f4244fdaf85a"
+        },
+        {
+          "node_id": "node-df531995024741ee82ccafb1d4731fa8",
+          "project_id": "mcp-infra-incidents",
+          "branch_id": "branch-52fbeb31fd074ba39daf2ed99a72d977",
+          "node_type": "note",
+          "title": "features_cleanup: Brokered tool call failed: features_cleanup",
+          "summary": "Brokered tool call failed: features_cleanup",
+          "status": "active",
+          "content": {
+            "error": {
+              "message": "No published custom features matched the requested cleanup selectors."
+            },
+            "events": [],
+            "log_excerpt": null
+          },
+          "metadata": {
+            "affected_tool": "features_cleanup",
+            "arguments": {
+              "action": "preview",
+              "cf_patterns": "cf_coverage_*",
+              "dry_run": "true",
+              "scope": "features_only"
+            },
+            "correlation_id": null,
+            "error_code": "unknown_error",
+            "evidence": {},
+            "first_seen_at": "2026-04-09T12:37:18.638491+00:00",
+            "kind": "infrastructure_incident",
+            "last_seen_at": "2026-04-09T12:42:51.968886+00:00",
+            "message": "Brokered tool call failed: features_cleanup",
+            "normalized_message": "brokered tool call failed: features_cleanup",
+            "occurrences": 4,
+            "request_id": null,
+            "result": {
+              "artifact_ids": [],
+              "call_id": "tool_33f0c96001db",
+              "created_at": "2026-04-09T12:42:51.869991+00:00",
+              "duration_ms": 178,
+              "error_class": "invalid_input",
+              "key_facts": {},
+              "ok": false,
+              "operation_ref": "",
+              "plan_id": "live_coverage",
+              "raw_result_ref": "plans/runs/live_coverage_5026d7e9cb/broker/raw/tool_33f0c96001db.json",
+              "request_arguments": {
+                "action": "preview",
+                "cf_patterns": "cf_coverage_*",
+                "dry_run": true,
+                "scope": "features_only"
+              },
+              "response_status": "",
+              "resume_arguments": {},
+              "resume_token": "",
+              "resume_tool": "features_cleanup",
+              "retryable": false,
+              "slice_id": "features_cleanup_preview",
+              "summary": "No published custom features matched the requested cleanup selectors.",
+              "tool": "features_cleanup",
+              "tool_response_status": "error",
+              "warnings": []
+            },
+            "server_session_id": null,
+            "service": "dev_space1",
+            "severity": "medium",
+            "state": "open"
+          },
+          "source_refs": [],
+          "external_ref": "incident:7660ac30d2814fd915b0d267",
+          "dedupe_key": "7660ac30d2814fd915b0d267",
+          "pinned": false,
+          "protection_reason": null,
+          "created_at": "2026-04-09T12:37:18.640330+00:00",
+          "updated_at": "2026-04-09T12:42:51.972986+00:00",
+          "incident_id": "incident:7660ac30d2814fd915b0d267"
+        },
+        {
+          "node_id": "node-de2310c1df544ccb9c9d586a85f9d455",
+          "project_id": "mcp-infra-incidents",
+          "branch_id": "branch-52fbeb31fd074ba39daf2ed99a72d977",
+          "node_type": "note",
+          "title": "research_map: Brokered tool call failed: research_map",
+          "summary": "Brokered tool call failed: research_map",
+          "status": "active",
+          "content": {
+            "error": {
+              "message": "research_map requires project_id."
+            },
+            "events": [],
+            "log_excerpt": null
+          },
+          "metadata": {
+            "affected_tool": "research_map",
+            "arguments": {
+              "action": "inspect",
+              "project_id": "",
+              "view": "summary"
+            },
+            "correlation_id": null,
+            "error_code": "unknown_error",
+            "evidence": {},
+            "first_seen_at": "2026-04-09T12:37:20.521513+00:00",
+            "kind": "infrastructure_incident",
+            "last_seen_at": "2026-04-09T12:38:36.205468+00:00",
+            "message": "Brokered tool call failed: research_map",
+            "normalized_message": "brokered tool call failed: research_map",
+            "occurrences": 3,
+            "request_id": null,
+            "result": {
+              "artifact_ids": [],
+              "call_id": "tool_a54745a32249",
+              "created_at": "2026-04-09T12:38:36.121568+00:00",
+              "duration_ms": 174,
+              "error_class": "invalid_input",
+              "key_facts": {},
+              "ok": false,
+              "operation_ref": "",
+              "plan_id": "live_coverage",
+              "raw_result_ref": "plans/runs/live_coverage_d0b4bb7c66/broker/raw/tool_a54745a32249.json",
+              "request_arguments": {
+                "action": "inspect",
+                "project_id": "",
+                "view": "summary"
+              },
+              "response_status": "",
+              "resume_arguments": {},
+              "resume_token": "",
+              "resume_tool": "research_map",
+              "retryable": false,
+              "slice_id": "research_map_summary",
+              "summary": "research_map requires project_id.",
+              "tool": "research_map",
+              "tool_response_status": "error",
+              "warnings": []
+            },
+            "server_session_id": null,
+            "service": "dev_space1",
+            "severity": "medium",
+            "state": "open"
+          },
+          "source_refs": [],
+          "external_ref": "incident:2446699d79f2baf90242056f",
+          "dedupe_key": "2446699d79f2baf90242056f",
+          "pinned": false,
+          "protection_reason": null,
+          "created_at": "2026-04-09T12:37:20.523362+00:00",
+          "updated_at": "2026-04-09T12:38:36.208344+00:00",
+          "incident_id": "incident:2446699d79f2baf90242056f"
+        },
+        {
+          "node_id": "node-0f688b12c27b402aa3306370a25e4ef5",
+          "project_id": "mcp-infra-incidents",
+          "branch_id": "branch-52fbeb31fd074ba39daf2ed99a72d977",
+          "node_type": "note",
+          "title": "research_map: research_map requires project_id.",
+          "summary": "research_map requires project_id.",
+          "status": "active",
+          "content": {
+            "error": {
+              "code": "invalid_input",
+              "details": {
+                "classification": "agent_contract_misuse",
+                "failure_signature": "research_map|reason:missing_project_id|message:research_map requires project_id."
+              },
+              "message": "research_map requires project_id."
+            },
+            "events": [],
+            "log_excerpt": null
+          },
+          "metadata": {
+            "affected_tool": "research_map",
+            "classification": "agent_contract_misuse",
+            "correlation_id": null,
+            "domain": "research_memory",
+            "error_code": "invalid_input",
+            "error_field": null,
+            "evidence": {},
+            "exact_repair_examples": [
+              {
+                "arguments": {
+                  "action": "list"
+                },
+                "tool": "research_project"
+              },
+              {
+                "arguments": {
+                  "action": "open",
+                  "project_id": "mcp-infra-incidents",
+                  "view": "summary"
+                },
+                "tool": "research_project"
+              }
+            ],
+            "failure_signature": "research_map|reason:missing_project_id|message:research_map requires project_id.",
+            "first_seen_at": "2026-04-09T12:38:06.831205+00:00",
+            "incident_kind": "contract_usability_trap",
+            "kind": "infrastructure_incident",
+            "last_seen_at": "2026-04-09T12:38:36.044978+00:00",
+            "latest_example": {
+              "correlation_id": "28",
+              "error_expected": null,
+              "error_received_value": null,
+              "message": "research_map requires project_id.",
+              "request_id": "28"
+            },
+            "message": "research_map requires project_id.",
+            "normalized_message": "research_map requires project_id.",
+            "occurrence_count": 3,
+            "occurrences": 2,
+            "recommended_contract_fix_owner": "mcp_server",
+            "request_id": null,
+            "server_session_id": null,
+            "service": "mcp_server",
+            "severity": "medium",
+            "state": "open",
+            "tool_name": "research_map"
+          },
+          "source_refs": [],
+          "external_ref": "incident:95c7008d0b1903b54271f345",
+          "dedupe_key": "95c7008d0b1903b54271f345",
+          "pinned": false,
+          "protection_reason": null,
+          "created_at": "2026-04-09T12:38:06.832436+00:00",
+          "updated_at": "2026-04-09T12:38:36.078397+00:00",
+          "incident_id": "incident:95c7008d0b1903b54271f345"
+        },
+        {
+          "node_id": "node-04bf9be9609f4560b1dc4ebb20869188",
+          "project_id": "mcp-infra-incidents",
+          "branch_id": "branch-52fbeb31fd074ba39daf2ed99a72d977",
+          "node_type": "note",
+          "title": "research_search: Brokered tool call failed: research_search",
+          "summary": "Brokered tool call failed: research_search",
+          "status": "active",
+          "content": {
+            "error": {
+              "message": "research_search requires project_id."
+            },
+            "events": [],
+            "log_excerpt": null
+          },
+          "metadata": {
+            "affected_tool": "research_search",
+            "arguments": {
+              "level": "compact",
+              "limit": "5",
+              "project_id": "",
+              "query": "coverage note"
+            },
+            "correlation_id": null,
+            "error_code": "unknown_error",
+            "evidence": {},
+            "first_seen_at": "2026-04-09T10:03:11.404948+00:00",
+            "kind": "infrastructure_incident",
+            "last_seen_at": "2026-04-09T12:38:35.864914+00:00",
+            "message": "Brokered tool call failed: research_search",
+            "normalized_message": "brokered tool call failed: research_search",
+            "occurrences": 5,
+            "request_id": null,
+            "result": {
+              "artifact_ids": [],
+              "call_id": "tool_fbe9b25a56fb",
+              "created_at": "2026-04-09T12:38:35.425008+00:00",
+              "duration_ms": 160,
+              "error_class": "invalid_input",
+              "key_facts": {},
+              "ok": false,
+              "operation_ref": "",
+              "plan_id": "live_coverage",
+              "raw_result_ref": "plans/runs/live_coverage_d0b4bb7c66/broker/raw/tool_fbe9b25a56fb.json",
+              "request_arguments": {
+                "level": "normal",
+                "limit": 5,
+                "project_id": "",
+                "query": "coverage note"
+              },
+              "response_status": "",
+              "resume_arguments": {},
+              "resume_token": "",
+              "resume_tool": "research_search",
+              "retryable": false,
+              "slice_id": "research_search_compact_rewritten",
+              "summary": "research_search requires project_id.",
+              "tool": "research_search",
+              "tool_response_status": "error",
+              "warnings": [
+                "broker_contract_trap:research_search_compact_level_rewritten"
+              ]
+            },
+            "server_session_id": null,
+            "service": "dev_space1",
+            "severity": "medium",
+            "state": "open"
+          },
+          "source_refs": [],
+          "external_ref": "incident:33f2e956d027e2831a1ac4b3",
+          "dedupe_key": "33f2e956d027e2831a1ac4b3",
+          "pinned": false,
+          "protection_reason": null,
+          "created_at": "2026-04-09T10:03:11.406575+00:00",
+          "updated_at": "2026-04-09T12:38:35.868255+00:00",
+          "incident_id": "incident:33f2e956d027e2831a1ac4b3"
+        },
+        {
+          "node_id": "node-7b7379fc2d2b4260bc7b6164d7b7400d",
+          "project_id": "mcp-infra-incidents",
+          "branch_id": "branch-52fbeb31fd074ba39daf2ed99a72d977",
+          "node_type": "note",
+          "title": "research_search: research_search requires project_id.",
+          "summary": "research_search requires project_id.",
+          "status": "active",
+          "content": {
+            "error": {
+              "code": "invalid_input",
+              "details": {
+                "classification": "agent_contract_misuse",
+                "failure_signature": "research_search|reason:missing_project_id|message:research_search requires project_id."
+              },
+              "message": "research_search requires project_id."
+            },
+            "events": [],
+            "log_excerpt": null
+          },
+          "metadata": {
+            "affected_tool": "research_search",
+            "classification": "agent_contract_misuse",
+            "correlation_id": null,
+            "domain": "research_memory",
+            "error_code": "invalid_input",
+            "error_field": null,
+            "evidence": {},
+            "exact_repair_examples": [
+              {
+                "arguments": {
+                  "action": "list"
+                },
+                "tool": "research_project"
+              },
+              {
+                "arguments": {
+                  "action": "open",
+                  "project_id": "mcp-infra-incidents",
+                  "view": "summary"
+                },
+                "tool": "research_project"
+              }
+            ],
+            "failure_signature": "research_search|reason:missing_project_id|message:research_search requires project_id.",
+            "first_seen_at": "2026-04-09T12:38:06.088735+00:00",
+            "incident_kind": "contract_usability_trap",
+            "kind": "infrastructure_incident",
+            "last_seen_at": "2026-04-09T12:38:35.410197+00:00",
+            "latest_example": {
+              "correlation_id": "24",
+              "error_expected": null,
+              "error_received_value": null,
+              "message": "research_search requires project_id.",
+              "request_id": "24"
+            },
+            "message": "research_search requires project_id.",
+            "normalized_message": "research_search requires project_id.",
+            "occurrence_count": 3,
+            "occurrences": 2,
+            "recommended_contract_fix_owner": "mcp_server",
+            "request_id": null,
+            "server_session_id": null,
+            "service": "mcp_server",
+            "severity": "medium",
+            "state": "open",
+            "tool_name": "research_search"
+          },
+          "source_refs": [],
+          "external_ref": "incident:bd74cd8f9bc5c0c7187fb973",
+          "dedupe_key": "bd74cd8f9bc5c0c7187fb973",
+          "pinned": false,
+          "protection_reason": null,
+          "created_at": "2026-04-09T12:38:06.090869+00:00",
+          "updated_at": "2026-04-09T12:38:35.412624+00:00",
+          "incident_id": "incident:bd74cd8f9bc5c0c7187fb973"
+        },
+        {
+          "node_id": "node-309fe474ce18493d807f1bfa18bf1d3f",
+          "project_id": "mcp-infra-incidents",
+          "branch_id": "branch-52fbeb31fd074ba39daf2ed99a72d977",
+          "node_type": "note",
+          "title": "research_record: research_record_warning",
+          "summary": "research_record_warning",
+          "status": "active",
+          "content": {
+            "error": {
+              "message": "broker_contract_trap:expensive_async_wait_completed_rewritten"
+            },
+            "events": [],
+            "log_excerpt": null
+          },
+          "metadata": {
+            "affected_tool": "research_record",
+            "arguments": {
+              "action": "create",
+              "kind": "note",
+              "project_id": "",
+              "record": {
+                "metadata": {
+                  "cycle": 1
+                },
+                "summary": "Live broker coverage note",
+                "title": "Coverage note"
+              },
+              "wait": "completed"
+            },
+            "correlation_id": null,
+            "error_code": "unknown_error",
+            "evidence": {},
+            "first_seen_at": "2026-04-09T12:37:19.435983+00:00",
+            "kind": "infrastructure_incident",
+            "last_seen_at": "2026-04-09T12:38:35.169252+00:00",
+            "message": "research_record_warning",
+            "normalized_message": "research_record_warning",
+            "occurrences": 3,
+            "request_id": null,
+            "result": {
+              "artifact_ids": [
+                "0f1036c2459a",
+                "None"
+              ],
+              "call_id": "tool_3396e5c27814",
+              "created_at": "2026-04-09T12:38:34.923622+00:00",
+              "duration_ms": 158,
+              "error_class": "",
+              "key_facts": {
+                "final_status": "failed",
+                "operation.blocking_operation_id": null,
+                "operation.operation_id": "0f1036c2459a",
+                "operation.project_id": null,
+                "operation.queue_id": null,
+                "operation.scheduler_state": null,
+                "operation.status": "failed",
+                "wait_satisfied": true,
+                "wait_timeout": false
+              },
+              "ok": true,
+              "operation_ref": "0f1036c2459a",
+              "plan_id": "live_coverage",
+              "raw_result_ref": "plans/runs/live_coverage_d0b4bb7c66/broker/raw/tool_3396e5c27814.json",
+              "request_arguments": {
+                "action": "create",
+                "kind": "note",
+                "project_id": "",
+                "record": {
+                  "metadata": {
+                    "cycle": 1
+                  },
+                  "summary": "Live broker coverage note",
+                  "title": "Coverage note"
+                },
+                "wait": "started"
+              },
+              "response_status": "failed",
+              "resume_arguments": {
+                "action": "status",
+                "operation_id": "0f1036c2459a"
+              },
+              "resume_token": "0f1036c2459a",
+              "resume_tool": "research_record",
+              "retryable": false,
+              "slice_id": "research_record_create",
+              "summary": "Research record operation loaded.",
+              "tool": "research_record",
+              "tool_response_status": "ok",
+              "warnings": [
+                "broker_contract_trap:expensive_async_wait_completed_rewritten"
+              ]
+            },
+            "server_session_id": null,
+            "service": "dev_space1",
+            "severity": "medium",
+            "state": "open"
+          },
+          "source_refs": [],
+          "external_ref": "incident:bd18cc095e428808f95e05ac",
+          "dedupe_key": "bd18cc095e428808f95e05ac",
+          "pinned": false,
+          "protection_reason": null,
+          "created_at": "2026-04-09T12:37:19.437635+00:00",
+          "updated_at": "2026-04-09T12:38:35.172111+00:00",
+          "incident_id": "incident:bd18cc095e428808f95e05ac"
+        },
+        {
+          "node_id": "node-48d304de15e54d9ba1b735d6c606bd8a",
+          "project_id": "mcp-infra-incidents",
+          "branch_id": "branch-52fbeb31fd074ba39daf2ed99a72d977",
+          "node_type": "note",
+          "title": "research_record: expensive_async_wait_completed_rewritten",
+          "summary": "expensive_async_wait_completed_rewritten",
+          "status": "active",
+          "content": {
+            "error": {
+              "message": "research_record wait='completed' is blocked for expensive async tools; broker rewrote it to wait='started'."
+            },
+            "events": [],
+            "log_excerpt": null
+          },
+          "metadata": {
+            "affected_tool": "research_record",
+            "correlation_id": null,
+            "error_code": "unknown_error",
+            "evidence": {},
+            "first_seen_at": "2026-04-09T12:37:19.244844+00:00",
+            "kind": "infrastructure_incident",
+            "last_seen_at": "2026-04-09T12:38:35.009004+00:00",
+            "message": "expensive_async_wait_completed_rewritten",
+            "normalized_message": "expensive_async_wait_completed_rewritten",
+            "occurrences": 3,
+            "original_arguments": {
+              "action": "create",
+              "kind": "note",
+              "project_id": "",
+              "record": {
+                "metadata": {
+                  "cycle": 1
+                },
+                "summary": "Live broker coverage note",
+                "title": "Coverage note"
+              },
+              "wait": "completed"
+            },
+            "reason_code": "expensive_async_wait_completed_rewritten",
+            "request_id": null,
+            "rewritten_arguments": {
+              "action": "create",
+              "kind": "note",
+              "project_id": "",
+              "record": {
+                "metadata": {
+                  "cycle": 1
+                },
+                "summary": "Live broker coverage note",
+                "title": "Coverage note"
+              },
+              "wait": "started"
+            },
+            "server_session_id": null,
+            "service": "dev_space1",
+            "severity": "medium",
+            "state": "open"
+          },
+          "source_refs": [],
+          "external_ref": "incident:ef7f740ea827b9f2e5cfcaff",
+          "dedupe_key": "ef7f740ea827b9f2e5cfcaff",
+          "pinned": false,
+          "protection_reason": null,
+          "created_at": "2026-04-09T12:37:19.246800+00:00",
+          "updated_at": "2026-04-09T12:38:35.011542+00:00",
+          "incident_id": "incident:ef7f740ea827b9f2e5cfcaff"
+        },
+        {
+          "node_id": "node-0ef34323cd1a43f7ac4e428e06427f51",
+          "project_id": "mcp-infra-incidents",
+          "branch_id": "branch-52fbeb31fd074ba39daf2ed99a72d977",
+          "node_type": "note",
+          "title": "features_cleanup: Unsupported features_cleanup scope: 'registry'. (field=scope; received=registry)",
+          "summary": "Unsupported features_cleanup scope: 'registry'. (field=scope; received=registry)",
+          "status": "active",
+          "content": {
+            "error": {
+              "code": "invalid_input",
+              "details": {
+                "classification": "agent_contract_misuse",
+                "failure_signature": "features_cleanup|field:scope|message:unsupported features_cleanup scope: 'registry'. (field=scope; received=registry)"
+              },
+              "message": "Unsupported features_cleanup scope: 'registry'. (field=scope; received=registry)"
+            },
+            "events": [],
+            "log_excerpt": null
+          },
+          "metadata": {
+            "affected_tool": "features_cleanup",
+            "classification": "agent_contract_misuse",
+            "correlation_id": null,
+            "domain": "features",
+            "error_code": "invalid_input",
+            "error_field": "scope",
+            "evidence": {},
+            "failure_signature": "features_cleanup|field:scope|message:unsupported features_cleanup scope: 'registry'. (field=scope; received=registry)",
+            "first_seen_at": "2026-04-09T12:38:05.097492+00:00",
+            "incident_kind": "contract_usability_trap",
+            "kind": "infrastructure_incident",
+            "last_seen_at": "2026-04-09T12:38:34.422292+00:00",
+            "latest_example": {
+              "correlation_id": "18",
+              "error_expected": null,
+              "error_received_value": "registry",
+              "message": "Unsupported features_cleanup scope: 'registry'. (field=scope; received=registry)",
+              "request_id": "18"
+            },
+            "message": "Unsupported features_cleanup scope: 'registry'. (field=scope; received=registry)",
+            "normalized_message": "unsupported features_cleanup scope: 'registry'. (field=scope; received=registry)",
+            "occurrence_count": 3,
+            "occurrences": 2,
+            "recommended_contract_fix_owner": "mcp_server",
+            "request_id": null,
+            "server_session_id": null,
+            "service": "mcp_server",
+            "severity": "medium",
+            "state": "open",
+            "tool_name": "features_cleanup"
+          },
+          "source_refs": [],
+          "external_ref": "incident:2cdb5bd3d2ba9bbaa18a3bdf",
+          "dedupe_key": "2cdb5bd3d2ba9bbaa18a3bdf",
+          "pinned": false,
+          "protection_reason": null,
+          "created_at": "2026-04-09T12:38:05.098919+00:00",
+          "updated_at": "2026-04-09T12:38:34.424631+00:00",
+          "incident_id": "incident:2cdb5bd3d2ba9bbaa18a3bdf"
+        },
+        {
+          "node_id": "node-68fb6368553a438c8f814b0863418180",
+          "project_id": "mcp-infra-incidents",
+          "branch_id": "branch-52fbeb31fd074ba39daf2ed99a72d977",
+          "node_type": "note",
+          "title": "backtests_runs: Broker argument validation failed: backtests_runs",
+          "summary": "Broker argument validation failed: backtests_runs",
+          "status": "active",
+          "content": {
+            "error": {
+              "message": "backtests_runs.starting_capital_usd: '1000' is not valid under any of the given schemas"
+            },
+            "events": [],
+            "log_excerpt": null
+          },
+          "metadata": {
+            "affected_tool": "backtests_runs",
+            "arguments": {
+              "action": "start",
+              "anchor_timeframe": "1h",
+              "end_at": "2026-01-07T00:00:00+00:00",
+              "execution_timeframe": "5m",
+              "snapshot_id": "active-signal-v1",
+              "start_at": "2026-01-01T00:00:00+00:00",
+              "starting_capital_usd": "1000",
+              "symbol": "BTCUSDT",
+              "version": 1,
+              "wait": "started"
+            },
+            "correlation_id": null,
+            "error_code": "unknown_error",
+            "evidence": {},
+            "first_seen_at": "2026-04-09T12:32:02.308928+00:00",
+            "input_schema": {
+              "properties": {
+                "action": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": "inspect",
+                  "description": "Operation to run on this unified backtests tool.",
+                  "title": "Action"
+                },
+                "anchor_timeframe": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null,
+                  "description": "Feature anchor timeframe used by the strategy logic. Currently policy-locked to '1h' — do not use any other value.",
+                  "title": "Anchor Timeframe"
+                },
+                "auto_complete_work_items": {
+                  "anyOf": [
+                    {
+                      "type": "boolean"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": false,
+                  "description": "Set true to auto-complete all open work items before the run starts (avoids workflow blocking errors for project-bound runs).",
+                  "title": "Auto Complete Work Items"
+                },
+                "base_run_id": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null,
+                  "description": "Alias for baseline_run_id retained for agent convenience on compare_summary read views.",
+                  "title": "Base Run Id"
+                },
+                "baseline_run_id": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null,
+                  "description": "Baseline saved run id used by compare_summary read views.",
+                  "title": "Baseline Run Id"
+                },
+                "before_started_at": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null,
+                  "description": "Only list runs started before this UTC timestamp.",
+                  "title": "Before Started At"
+                },
+                "branch_id": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null,
+                  "description": "Optional project branch id used for checkpointed writes.",
+                  "title": "Branch Id"
+                },
+                "context_path": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null,
+                  "description": "Optional context override path; usually leave unset unless a non-default context is required.",
+                  "title": "Context Path"
+                },
+                "debug_signal_enabled": {
+                  "default": false,
+                  "description": "Set true to capture extra signal-debug output for this run.",
+                  "title": "Debug Signal Enabled"
+                },
+                "dry_run": {
+                  "default": true,
+                  "description": "Set true to inspect lifecycle actions without applying destructive saved-run changes.",
+                  "title": "Dry Run"
+                },
+                "end_at": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null,
+                  "description": "Inclusive UTC end timestamp for the evaluation window.",
+                  "title": "End At"
+                },
+                "exact_candles": {
+                  "default": false,
+                  "description": "Set true to render charts with exact saved candles instead of compact defaults.",
+                  "title": "Exact Candles"
+                },
+                "execution_timeframe": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null,
+                  "description": "Execution timeframe used for entries, exits, and fills. Currently policy-locked to '5m' — do not use any other value.",
+                  "title": "Execution Timeframe"
+                },
+                "include": {
+                  "anyOf": [
+                    {
+                      "items": {
+                        "type": "string"
+                      },
+                      "type": "array"
+                    },
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null,
+                  "description": "Optional extra sections to include in the response.",
+                  "title": "Include"
+                },
+                "include_analysis": {
+                  "anyOf": [
+                    {
+                      "type": "boolean"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": false,
+                  "description": "Set true to include cached analysis previews in run detail output.",
+                  "title": "Include Analysis"
+                },
+                "include_trades": {
+                  "anyOf": [
+                    {
+                      "type": "boolean"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": false,
+                  "description": "Set true to include trade records in run detail output.",
+                  "title": "Include Trades"
+                },
+                "intent_summary": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null,
+                  "description": "Optional short note describing why this run is being launched.",
+                  "title": "Intent Summary"
+                },
+                "limit": {
+                  "anyOf": [
+                    {},
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null,
+                  "description": "Maximum number of matching records to return.",
+                  "title": "Limit"
+                },
+                "live_chart_enabled": {
+                  "default": true,
+                  "description": "Set true to keep live chart payloads updated while the run is active.",
+                  "title": "Live Chart Enabled"
+                },
+                "on_fail": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": "summary",
+                  "description": "Failure reporting mode to return when the async job does not complete cleanly.",
+                  "title": "On Fail"
+                },
+                "poll_interval_seconds": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null,
+                  "description": "Seconds between status polls while waiting.",
+                  "title": "Poll Interval Seconds"
+                },
+                "project_id": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null,
+                  "description": "Optional research project id that should receive checkpoints or lineage.",
+                  "title": "Project Id"
+                },
+                "run_id": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null,
+                  "description": "Saved or active backtest run id from `backtests_runs(action='inspect')`.",
+                  "title": "Run Id"
+                },
+                "run_ids": {
+                  "anyOf": [
+                    {
+                      "items": {
+                        "type": "string"
+                      },
+                      "type": "array"
+                    },
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null,
+                  "description": "Optional run id list when inspecting several saved runs together.",
+                  "title": "Run Ids"
+                },
+                "scope": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": "all",
+                  "description": "Run inventory scope to inspect, such as active, saved, or all.",
+                  "title": "Scope"
+                },
+                "snapshot_id": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null,
+                  "description": "Snapshot line id from `backtests_strategy(action='inspect')`. Inspect-style reads also accept snapshot refs like `snapshot_id@version`.",
+                  "title": "Snapshot Id"
+                },
+                "snapshot_version": {
+                  "anyOf": [
+                    {},
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null,
+                  "description": "Deprecated version alias for agent compatibility; canonical callers should use `version`.",
+                  "title": "Snapshot Version"
+                },
+                "start_at": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null,
+                  "description": "Inclusive UTC start timestamp for the evaluation window.",
+                  "title": "Start At"
+                },
+                "starting_capital_usd": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null,
+                  "description": "Optional starting capital in USD for the run or evaluation.",
+                  "title": "Starting Capital Usd"
+                },
+                "status": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null,
+                  "description": "Optional lifecycle status filter for listing jobs or runs.",
+                  "title": "Status"
+                },
+                "strategy_snapshot_id": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null,
+                  "description": "Optional snapshot line filter when listing saved or active runs.",
+                  "title": "Strategy Snapshot Id"
+                },
+                "strict_preflight": {
+                  "anyOf": [
+                    {
+                      "type": "boolean"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": false,
+                  "description": "Set true to require strict preflight success before admitting the run.",
+                  "title": "Strict Preflight"
+                },
+                "symbol": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null,
+                  "description": "Market symbol to load data for, such as `BTCUSDT`.",
+                  "title": "Symbol"
+                },
+                "terminal_logging_enabled": {
+                  "default": true,
+                  "description": "Set true to emit operational run logs while the run executes.",
+                  "title": "Terminal Logging Enabled"
+                },
+                "timeout_seconds": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null,
+                  "description": "Maximum seconds to wait before the call times out. Accepts integer or float values.",
+                  "title": "Timeout Seconds"
+                },
+                "trade_limit": {
+                  "anyOf": [
+                    {},
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null,
+                  "description": "Maximum number of trades to include when trade data is requested.",
+                  "title": "Trade Limit"
+                },
+                "ui_streaming_enabled": {
+                  "default": true,
+                  "description": "Set true to stream live progress updates to UI-oriented consumers.",
+                  "title": "Ui Streaming Enabled"
+                },
+                "version": {
+                  "anyOf": [
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": null,
+                  "description": "Immutable snapshot version number for the referenced snapshot line. Accepts integer values directly; numeric strings are normalized with warnings.",
+                  "title": "Version"
+                },
+                "view": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": "list",
+                  "description": "Response view to load for the selected run, snapshot, or job.",
+                  "title": "View"
+                },
+                "wait": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "default": "none",
+                  "description": "How long the tool should wait before returning control.",
+                  "title": "Wait"
+                }
+              },
+              "title": "backtests_runsArguments",
+              "type": "object"
+            },
+            "kind": "infrastructure_incident",
+            "last_seen_at": "2026-04-09T12:32:02.308928+00:00",
+            "message": "Broker argument validation failed: backtests_runs",
+            "normalized_message": "broker argument validation failed: backtests_runs",
+            "occurrences": 1,
+            "request_id": null,
+            "server_session_id": null,
+            "service": "dev_space1",
+            "severity": "medium",
+            "state": "open"
+          },
+          "source_refs": [],
+          "external_ref": "incident:f139ea304fd9c2e871a66903",
+          "dedupe_key": "f139ea304fd9c2e871a66903",
+          "pinned": false,
+          "protection_reason": null,
+          "created_at": "2026-04-09T12:32:02.310040+00:00",
+          "updated_at": "2026-04-09T12:32:02.310043+00:00",
+          "incident_id": "incident:f139ea304fd9c2e871a66903"
+        },
+        {
+          "node_id": "node-88d9fe35286f4ee090347845bddf901e",
+          "project_id": "mcp-infra-incidents",
+          "branch_id": "branch-52fbeb31fd074ba39daf2ed99a72d977",
+          "node_type": "note",
+          "title": "models_dataset: models_dataset_warning",
+          "summary": "models_dataset_warning",
+          "status": "active",
+          "content": {
+            "error": {
+              "message": "broker_contract_trap:expensive_async_wait_completed_rewritten"
+            },
+            "events": [],
+            "log_excerpt": null
+          },
+          "metadata": {
+            "affected_tool": "models_dataset",
+            "arguments": {
+              "action": "preview",
+              "spec": {
+                "anchor_timeframe": "1h",
+                "description": "Small preview dataset for broker coverage",
+                "end_at": "2024-01-15T23:00:00+00:00",
+                "input_fields": [
+                  {
+                    "column": "open",
+                    "name": "open_now",
+                    "source_kind": "ohlcv",
+                    "timeframe": "1h",
+                    "transform": "current"
+                  },
+                  {
+                    "column": "close",
+                    "name": "close_now",
+                    "source_kind": "ohlcv",
+                    "timeframe": "1h",
+                    "transform": "current"
+                  },
+                  {
+                    "column": "rsi_1",
+                    "name": "rsi_now",
+                    "source_kind": "feature",
+                    "timeframe": "1h",
+                    "transform": "current"
+                  }
+                ],
+                "name": "Coverage Python Target Preview",
+                "split": {
+                  "test_fraction": 0.2,
+                  "train_fraction": 0.6,
+                  "validation_fraction": 0.2
+                },
+                "start_at": "2024-01-01T00:00:00+00:00",
+                "symbol": "BTCUSDT",
+                "target": {
+                  "code": "def compute_target(step):\n    return 1 if step.current('close') > step.current('open') else 0\n",
+                  "kind": "python_target",
+                  "lookback_bars": 1,
+                  "required_columns": [
+                    "open",
+                    "close"
+                  ],
+                  "required_features": [
+                    "rsi_1"
+                  ],
+                  "required_timeframes": [
+                    "1h"
+                  ]
+                }
+              },
+              "wait": "completed"
+            },
+            "correlation_id": null,
+            "error_code": "unknown_error",
+            "evidence": {},
+            "first_seen_at": "2026-04-09T12:26:57.279375+00:00",
+            "kind": "infrastructure_incident",
+            "last_seen_at": "2026-04-09T12:26:57.279375+00:00",
+            "message": "models_dataset_warning",
+            "normalized_message": "models_dataset_warning",
+            "occurrences": 1,
+            "request_id": null,
+            "result": {
+              "artifact_ids": [
+                "models-dataset-bc6a34a27df472f8-60b0b027"
+              ],
+              "call_id": "tool_fc08727cd22f",
+              "created_at": "2026-04-09T12:26:56.950566+00:00",
+              "duration_ms": 611,
+              "error_class": "",
+              "key_facts": {
+                "final_status": "running_compute",
+                "operation.attempt_id": "models-dataset-bc6a34a27df472f8-60b0b027",
+                "operation.operation_id": "models-dataset-bc6a34a27df472f8-60b0b027",
+                "operation.status": "running_compute",
+                "summary": "Dataset preparation is still running.",
+                "wait_satisfied": true,
+                "wait_timeout": false
+              },
+              "ok": true,
+              "operation_ref": "models-dataset-bc6a34a27df472f8-60b0b027",
+              "plan_id": "cov",
+              "raw_result_ref": "plans/runs/probe_models/broker/raw/tool_fc08727cd22f.json",
+              "request_arguments": {
+                "action": "preview",
+                "spec": {
+                  "anchor_timeframe": "1h",
+                  "description": "Small preview dataset for broker coverage",
+                  "end_at": "2024-01-15T23:00:00+00:00",
+                  "input_fields": [
+                    {
+                      "column": "open",
+                      "name": "open_now",
+                      "source_kind": "ohlcv",
+                      "timeframe": "1h",
+                      "transform": "current"
+                    },
+                    {
+                      "column": "close",
+                      "name": "close_now",
+                      "source_kind": "ohlcv",
+                      "timeframe": "1h",
+                      "transform": "current"
+                    },
+                    {
+                      "column": "rsi_1",
+                      "name": "rsi_now",
+                      "source_kind": "feature",
+                      "timeframe": "1h",
+                      "transform": "current"
+                    }
+                  ],
+                  "name": "Coverage Python Target Preview",
+                  "split": {
+                    "test_fraction": 0.2,
+                    "train_fraction": 0.6,
+                    "validation_fraction": 0.2
+                  },
+                  "start_at": "2024-01-01T00:00:00+00:00",
+                  "symbol": "BTCUSDT",
+                  "target": {
+                    "code": "def compute_target(step):\n    return 1 if step.current('close') > step.current('open') else 0\n",
+                    "kind": "python_target",
+                    "lookback_bars": 1,
+                    "required_columns": [
+                      "open",
+                      "close"
+                    ],
+                    "required_features": [
+                      "rsi_1"
+                    ],
+                    "required_timeframes": [
+                      "1h"
+                    ]
+                  }
+                },
+                "wait": "started"
+              },
+              "response_status": "running_compute",
+              "resume_arguments": {},
+              "resume_token": "",
+              "resume_tool": "models_dataset",
+              "retryable": false,
+              "slice_id": "preview",
+              "summary": "Dataset preparation is still running.",
+              "tool": "models_dataset",
+              "tool_response_status": "ok",
+              "warnings": [
+                "broker_contract_trap:expensive_async_wait_completed_rewritten"
+              ]
+            },
+            "server_session_id": null,
+            "service": "dev_space1",
+            "severity": "medium",
+            "state": "open"
+          },
+          "source_refs": [],
+          "external_ref": "incident:78776d48cdb25c4c5e486917",
+          "dedupe_key": "78776d48cdb25c4c5e486917",
+          "pinned": false,
+          "protection_reason": null,
+          "created_at": "2026-04-09T12:26:57.281974+00:00",
+          "updated_at": "2026-04-09T12:26:57.281981+00:00",
+          "incident_id": "incident:78776d48cdb25c4c5e486917"
+        },
+        {
+          "node_id": "node-a6d4f972ba614607859980238d68cf95",
+          "project_id": "mcp-infra-incidents",
+          "branch_id": "branch-52fbeb31fd074ba39daf2ed99a72d977",
+          "node_type": "note",
+          "title": "models_dataset: expensive_async_wait_completed_rewritten",
+          "summary": "expensive_async_wait_completed_rewritten",
+          "status": "active",
+          "content": {
+            "error": {
+              "message": "models_dataset wait='completed' is blocked for expensive async tools; broker rewrote it to wait='started'."
+            },
+            "events": [],
+            "log_excerpt": null
+          },
+          "metadata": {
+            "affected_tool": "models_dataset",
+            "correlation_id": null,
+            "error_code": "unknown_error",
+            "evidence": {},
+            "first_seen_at": "2026-04-09T12:26:57.051691+00:00",
+            "kind": "infrastructure_incident",
+            "last_seen_at": "2026-04-09T12:26:57.051691+00:00",
+            "message": "expensive_async_wait_completed_rewritten",
+            "normalized_message": "expensive_async_wait_completed_rewritten",
+            "occurrences": 1,
+            "original_arguments": {
+              "action": "preview",
+              "spec": {
+                "anchor_timeframe": "1h",
+                "description": "Small preview dataset for broker coverage",
+                "end_at": "2024-01-15T23:00:00+00:00",
+                "input_fields": [
+                  {
+                    "column": "open",
+                    "name": "open_now",
+                    "source_kind": "ohlcv",
+                    "timeframe": "1h",
+                    "transform": "current"
+                  },
+                  {
+                    "column": "close",
+                    "name": "close_now",
+                    "source_kind": "ohlcv",
+                    "timeframe": "1h",
+                    "transform": "current"
+                  },
+                  {
+                    "column": "rsi_1",
+                    "name": "rsi_now",
+                    "source_kind": "feature",
+                    "timeframe": "1h",
+                    "transform": "current"
+                  }
+                ],
+                "name": "Coverage Python Target Preview",
+                "split": {
+                  "test_fraction": 0.2,
+                  "train_fraction": 0.6,
+                  "validation_fraction": 0.2
+                },
+                "start_at": "2024-01-01T00:00:00+00:00",
+                "symbol": "BTCUSDT",
+                "target": {
+                  "code": "def compute_target(step):\n    return 1 if step.current('close') > step.current('open') else 0\n",
+                  "kind": "python_target",
+                  "lookback_bars": 1,
+                  "required_columns": [
+                    "open",
+                    "close"
+                  ],
+                  "required_features": [
+                    "rsi_1"
+                  ],
+                  "required_timeframes": [
+                    "1h"
+                  ]
+                }
+              },
+              "wait": "completed"
+            },
+            "reason_code": "expensive_async_wait_completed_rewritten",
+            "request_id": null,
+            "rewritten_arguments": {
+              "action": "preview",
+              "spec": {
+                "anchor_timeframe": "1h",
+                "description": "Small preview dataset for broker coverage",
+                "end_at": "2024-01-15T23:00:00+00:00",
+                "input_fields": [
+                  {
+                    "column": "open",
+                    "name": "open_now",
+                    "source_kind": "ohlcv",
+                    "timeframe": "1h",
+                    "transform": "current"
+                  },
+                  {
+                    "column": "close",
+                    "name": "close_now",
+                    "source_kind": "ohlcv",
+                    "timeframe": "1h",
+                    "transform": "current"
+                  },
+                  {
+                    "column": "rsi_1",
+                    "name": "rsi_now",
+                    "source_kind": "feature",
+                    "timeframe": "1h",
+                    "transform": "current"
+                  }
+                ],
+                "name": "Coverage Python Target Preview",
+                "split": {
+                  "test_fraction": 0.2,
+                  "train_fraction": 0.6,
+                  "validation_fraction": 0.2
+                },
+                "start_at": "2024-01-01T00:00:00+00:00",
+                "symbol": "BTCUSDT",
+                "target": {
+                  "code": "def compute_target(step):\n    return 1 if step.current('close') > step.current('open') else 0\n",
+                  "kind": "python_target",
+                  "lookback_bars": 1,
+                  "required_columns": [
+                    "open",
+                    "close"
+                  ],
+                  "required_features": [
+                    "rsi_1"
+                  ],
+                  "required_timeframes": [
+                    "1h"
+                  ]
+                }
+              },
+              "wait": "started"
+            },
+            "server_session_id": null,
+            "service": "dev_space1",
+            "severity": "medium",
+            "state": "open"
+          },
+          "source_refs": [],
+          "external_ref": "incident:2f4e51a033b70fd2b02e12c8",
+          "dedupe_key": "2f4e51a033b70fd2b02e12c8",
+          "pinned": false,
+          "protection_reason": null,
+          "created_at": "2026-04-09T12:26:57.054170+00:00",
+          "updated_at": "2026-04-09T12:26:57.054178+00:00",
+          "incident_id": "incident:2f4e51a033b70fd2b02e12c8"
+        },
+        {
+          "node_id": "node-0be1538a20dc4a278efdbe03032bf363",
+          "project_id": "mcp-infra-incidents",
+          "branch_id": "branch-52fbeb31fd074ba39daf2ed99a72d977",
+          "node_type": "note",
+          "title": "models_to_feature: Brokered tool call failed: models_to_feature",
+          "summary": "Brokered tool call failed: models_to_feature",
+          "status": "active",
+          "content": {
+            "error": {
+              "message": "[Errno 2] No such file or directory: '/home/ubuntu/MARKET_DATA/_crypto_data/models/registry/dummy/versions/1/manifest.json'"
+            },
+            "events": [],
+            "log_excerpt": null
+          },
+          "metadata": {
+            "affected_tool": "models_to_feature",
+            "arguments": {
+              "action": "inspect",
+              "model_id": "dummy",
+              "version": "1",
+              "view": "contract"
+            },
+            "correlation_id": null,
+            "error_code": "unknown_error",
+            "evidence": {},
+            "first_seen_at": "2026-04-09T12:24:58.511440+00:00",
+            "kind": "infrastructure_incident",
+            "last_seen_at": "2026-04-09T12:24:58.511440+00:00",
+            "message": "Brokered tool call failed: models_to_feature",
+            "normalized_message": "brokered tool call failed: models_to_feature",
+            "occurrences": 1,
+            "request_id": null,
+            "result": {
+              "artifact_ids": [],
+              "call_id": "tool_97e3f56e9f73",
+              "created_at": "2026-04-09T12:24:58.410799+00:00",
+              "duration_ms": 199,
+              "error_class": "resource_not_found",
+              "key_facts": {},
+              "ok": false,
+              "operation_ref": "",
+              "plan_id": "coverage",
+              "raw_result_ref": "plans/runs/coverage_probe/broker/raw/tool_97e3f56e9f73.json",
+              "request_arguments": {
+                "action": "inspect",
+                "model_id": "dummy",
+                "version": "1",
+                "view": "contract"
+              },
+              "response_status": "",
+              "resume_arguments": {},
+              "resume_token": "",
+              "resume_tool": "models_to_feature",
+              "retryable": false,
+              "slice_id": "models_to_feature",
+              "summary": "[Errno 2] No such file or directory: '/home/ubuntu/MARKET_DATA/_crypto_data/models/registry/dummy/versions/1/manifest.json'",
+              "tool": "models_to_feature",
+              "tool_response_status": "error",
+              "warnings": []
+            },
+            "server_session_id": null,
+            "service": "dev_space1",
+            "severity": "medium",
+            "state": "open"
+          },
+          "source_refs": [],
+          "external_ref": "incident:a654c81ab0ab1b43b5ba7e07",
+          "dedupe_key": "a654c81ab0ab1b43b5ba7e07",
+          "pinned": false,
+          "protection_reason": null,
+          "created_at": "2026-04-09T12:24:58.513934+00:00",
+          "updated_at": "2026-04-09T12:24:58.513941+00:00",
+          "incident_id": "incident:a654c81ab0ab1b43b5ba7e07"
+        },
+        {
+          "node_id": "node-b5e3739e2df34cfcb7fdd470ff1be019",
+          "project_id": "mcp-infra-incidents",
+          "branch_id": "branch-52fbeb31fd074ba39daf2ed99a72d977",
+          "node_type": "note",
+          "title": "features_catalog: features_catalog output was truncated and saved to file, preventing full inline review of all 46 features",
+          "summary": "features_catalog output was truncated and saved to file, preventing full inline review of all 46 features",
+          "status": "active",
+          "content": {
+            "error": {
+              "message": "The catalog response exceeded inline display limits. Key volume-related feature definitions may have been in the truncated section."
+            },
+            "events": [],
+            "log_excerpt": null
+          },
+          "metadata": {
+            "affected_tool": "features_catalog",
+            "category": "runtime",
+            "correlation_id": null,
+            "details": "The catalog response exceeded inline display limits. Key volume-related feature definitions may have been in the truncated section.",
+            "error_code": "unknown_error",
+            "evidence": {},
+            "first_seen_at": "2026-04-09T12:18:28.402056+00:00",
+            "kind": "infrastructure_incident",
+            "last_seen_at": "2026-04-09T12:18:28.402056+00:00",
+            "message": "features_catalog output was truncated and saved to file, preventing full inline review of all 46 features",
+            "normalized_message": "features_catalog output was truncated and saved to file, preventing full inline review of all 46 features",
+            "occurrences": 1,
+            "request_id": null,
+            "server_session_id": null,
+            "service": "dev_space1",
+            "severity": "low",
+            "state": "open",
+            "summary": "features_catalog output was truncated and saved to file, preventing full inline review of all 46 features"
+          },
+          "source_refs": [],
+          "external_ref": "incident:984f0667a8c0694ed8d6d20b",
+          "dedupe_key": "984f0667a8c0694ed8d6d20b",
+          "pinned": false,
+          "protection_reason": null,
+          "created_at": "2026-04-09T12:18:28.403186+00:00",
+          "updated_at": "2026-04-09T12:18:28.403189+00:00",
+          "incident_id": "incident:984f0667a8c0694ed8d6d20b"
+        }
+      ],
+      "backlog_project_id": "mcp-infra-incidents",
+      "warnings": [],
+      "memory_persistence": {
+        "database_path": "/home/ubuntu/.foundation_state/research_memory/research_memory.sqlite3",
+        "artifacts_root": "/home/ubuntu/.foundation_state/research_memory",
+        "continuity_warning": null
+      },
+      "important_warnings": [],
+      "next_recommended_actions": [
+        "Use incidents(action='update') when the investigation or fix state changes.",
+        "Use system_debug_recent_events and system_logs to gather more evidence before updating the incident."
+      ],
+      "recommended_follow_up_tool": null,
+      "state_summary": {},
+      "exact_next_call_examples": [
+        {
+          "tool": "incidents",
+          "arguments": {
+            "action": "inspect",
+            "view": "list"
+          }
+        }
+      ],
+      "raw_refs": [],
+      "raw_tool_hints": [],
+      "summary": "Loaded infrastructure incident state from durable memory."
+    },
+    "warnings": [],
+    "refs": [],
+    "error": null
+  },
+  "isError": false
+}

@@ -18,11 +18,15 @@ import time
 from typing import Any
 
 from app.adapters.base import AdapterResponse, BaseAdapter, ProcessHandle
-from app.planner_structured_output import extract_planner_structured_output
 from app.planner_stream import consume_stream_fragment
 from app.subprocess_io import drain_pipe_text, read_available_text
 
 logger = logging.getLogger("orchestrator.adapter.claude")
+
+_RAW_STDOUT_LIMIT = 800_000
+_RAW_STDERR_LIMIT = 200_000
+_PARTIAL_OUTPUT_LIMIT = 180_000
+_LOG_PROMPT_EXCERPT = 240
 
 
 class ClaudePlannerCli(BaseAdapter):
@@ -35,9 +39,10 @@ class ClaudePlannerCli(BaseAdapter):
         extra_flags: list[str] | None = None,
         *,
         mode: str = "batch_json",
-        use_bare: bool = True,
+        use_bare: bool = False,
         no_session_persistence: bool = True,
         capture_stderr_live: bool = True,
+        effort: str = "",
     ) -> None:
         self.cli_path = cli_path
         self.model = model
@@ -45,7 +50,8 @@ class ClaudePlannerCli(BaseAdapter):
         self.use_bare = use_bare
         self.no_session_persistence = no_session_persistence
         self.capture_stderr_live = capture_stderr_live
-        self._mandatory_flags = ["--tools", ""]
+        self.effort = effort
+        self._mandatory_flags = []
         self.extra_flags = extra_flags or []
 
     def name(self) -> str:
@@ -84,12 +90,19 @@ class ClaudePlannerCli(BaseAdapter):
             json_schema=kwargs.get("json_schema"),
         )
         logger.info("Calling Claude CLI (model=%s, timeout=%ds, mode=%s)", self.model, timeout, output_mode)
-        logger.debug("Claude CLI command: %s (prompt: %d chars)", cmd[:8], len(prompt))
+        logger.debug(
+            "Claude CLI command: exec=%s mode=%s prompt_chars=%d excerpt=%r",
+            cmd[0],
+            output_mode,
+            len(prompt),
+            prompt[:_LOG_PROMPT_EXCERPT],
+        )
         start = time.monotonic()
 
         try:
             result = subprocess.run(
                 cmd,
+                stdin=subprocess.DEVNULL,
                 capture_output=True,
                 text=True,
                 timeout=timeout,
@@ -159,10 +172,17 @@ class ClaudePlannerCli(BaseAdapter):
             json_schema=kwargs.get("json_schema"),
         )
         logger.info("Starting Claude CLI (model=%s, mode=%s) as background process", self.model, output_mode)
-        logger.debug("Claude CLI command: %s (prompt: %d chars)", cmd[:10], len(prompt))
+        logger.debug(
+            "Claude CLI command: exec=%s mode=%s prompt_chars=%d excerpt=%r",
+            cmd[0],
+            output_mode,
+            len(prompt),
+            prompt[:_LOG_PROMPT_EXCERPT],
+        )
 
         process = subprocess.Popen(
             cmd,
+            stdin=subprocess.DEVNULL,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=False,
@@ -199,8 +219,12 @@ class ClaudePlannerCli(BaseAdapter):
 
         rendered_fragment = self._consume_stdout_fragment(handle, stdout_fragment)
         if stderr_fragment:
-            handle.partial_error_output += stderr_fragment
-            handle.metadata["raw_stderr"] = handle.metadata.get("raw_stderr", "") + stderr_fragment
+            handle.partial_error_output = _append_limited(handle.partial_error_output, stderr_fragment, _RAW_STDERR_LIMIT)
+            handle.metadata["raw_stderr"] = _append_limited(
+                handle.metadata.get("raw_stderr", ""),
+                stderr_fragment,
+                _RAW_STDERR_LIMIT,
+            )
 
         is_finished = proc.poll() is not None
 
@@ -211,8 +235,12 @@ class ClaudePlannerCli(BaseAdapter):
             if final_stdout:
                 rendered_fragment += self._consume_stdout_fragment(handle, final_stdout)
             if final_stderr:
-                handle.partial_error_output += final_stderr
-                handle.metadata["raw_stderr"] = handle.metadata.get("raw_stderr", "") + final_stderr
+                handle.partial_error_output = _append_limited(handle.partial_error_output, final_stderr, _RAW_STDERR_LIMIT)
+                handle.metadata["raw_stderr"] = _append_limited(
+                    handle.metadata.get("raw_stderr", ""),
+                    final_stderr,
+                    _RAW_STDERR_LIMIT,
+                )
             if proc.returncode and proc.returncode != 0:
                 logger.warning(
                     "Planner pid=%d exited %d: %s",
@@ -233,15 +261,19 @@ class ClaudePlannerCli(BaseAdapter):
             cmd.append("--bare")
         if self.no_session_persistence:
             cmd.append("--no-session-persistence")
+        if self.effort:
+            cmd.extend(["--effort", self.effort])
 
         if self.mode == "batch_json":
             output_mode = "stream-json"
             cmd.extend(["--output-format", "stream-json", "--include-partial-messages"])
-            if json_schema:
-                cmd.extend(["--json-schema", json_schema])
+            # NOTE: --json-schema omitted — forces structured output which
+            # non-Anthropic backends (e.g. glm-5.1 via z.ai) don't support.
+            # The planner parser extracts JSON from rendered text instead.
         elif self.mode == "batch_text":
             output_mode = "text"
-            # Plain text output — no stream-json, no --json-schema
+            cmd.extend(["--output-format", "text"])
+            # Plain text output — explicit format to ensure stdout streaming
 
         cmd.extend(self._mandatory_flags)
         cmd.extend(self.extra_flags)
@@ -251,7 +283,11 @@ class ClaudePlannerCli(BaseAdapter):
         if not fragment:
             return ""
 
-        handle.metadata["raw_stdout"] = handle.metadata.get("raw_stdout", "") + fragment
+        handle.metadata["raw_stdout"] = _append_limited(
+            handle.metadata.get("raw_stdout", ""),
+            fragment,
+            _RAW_STDOUT_LIMIT,
+        )
         output_mode = str(handle.metadata.get("output_mode", "text"))
         rendered_fragment = fragment
         if output_mode == "stream-json":
@@ -262,16 +298,13 @@ class ClaudePlannerCli(BaseAdapter):
             handle.metadata["stream_buffer"] = buffer
             handle.metadata["stream_event_count"] = int(handle.metadata.get("stream_event_count", 0)) + event_count
 
-        handle.partial_output += rendered_fragment
+        handle.partial_output = _append_limited(handle.partial_output, rendered_fragment, _PARTIAL_OUTPUT_LIMIT)
         return rendered_fragment
 
     @staticmethod
     def _render_output(stdout: str, output_mode: str) -> str:
         if output_mode != "stream-json":
             return stdout.strip()
-        extraction = extract_planner_structured_output(stdout, rendered_text="")
-        if extraction.structured_payload is not None:
-            return json.dumps(extraction.structured_payload, ensure_ascii=False).strip()
         rendered, buffer, _event_count = consume_stream_fragment(stdout, "")
         if buffer.strip():
             rendered += buffer
@@ -306,3 +339,10 @@ class ClaudePlannerCli(BaseAdapter):
         except Exception as exc:
             logger.debug("Failed to read Claude settings %s: %s", settings_path, exc)
             return {}
+
+
+def _append_limited(existing: str, fragment: str, limit: int) -> str:
+    combined = f"{existing}{fragment}"
+    if len(combined) <= limit:
+        return combined
+    return combined[-limit:]

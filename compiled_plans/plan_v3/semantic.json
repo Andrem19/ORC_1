@@ -1,0 +1,324 @@
+{
+  "source_file": "raw_plans/plan_v3.md",
+  "source_hash": "5ae5c7f47d6dba65f942f9d6e3ca35863e78662922e4f57baf2e51b68788d8eb",
+  "source_title": "План дальнейших исследований для v3",
+  "goal": "Close the unfinished A1 branch from v2 to a definitive PROMOTE/REJECT decision, then open exactly one next low-friction branch only if A1 fails promotion.",
+  "baseline_ref": {
+    "snapshot_id": "active-signal-v1",
+    "version": 1,
+    "symbol": "BTCUSDT",
+    "anchor_timeframe": "1h",
+    "execution_timeframe": "5m"
+  },
+  "global_constraints": [
+    "active-signal-v1@1 is immutable — never modify base hours, days, thresholds, or execution logic",
+    "Nothing counts as improvement unless it passes strict additive integration, permissive integration, ownership, and cannibalization proof",
+    "Only one candidate branch open at a time; no parallel wide search",
+    "Medium-friction wave B is forbidden until A1 is closed and one low-friction branch (A2 or A3) is fully closed with no promoted candidate"
+  ],
+  "stages": [
+    {
+      "stage_id": "stage_1",
+      "title": "Аудит артефактов v2 и фиксация инвариантов v3",
+      "objective": "Clean up organizational debt from v2 before starting the new cycle: create a fresh v3 project, lock the single immutable reference, and define the hypothesis map.",
+      "actions": [
+        "Open a new research_project for v3",
+        "Record an explicit v2 postmortem in research_record",
+        "Lock the single immutable reference: active-signal-v1@1",
+        "Create research_map axes: branch, data_layer, regime_type, acceptance_stage, final_decision",
+        "Define explicit branch status vocabulary: active, hold, rejected, promoted, watchlist",
+        "Record v3 invariants and closure discipline rules"
+      ],
+      "success_criteria": [
+        "Clean v3 project exists with no reference confusion",
+        "Hypothesis atlas axes are defined",
+        "Branch closure discipline is formally recorded"
+      ],
+      "tool_hints": [
+        "research_memory",
+        "research_project"
+      ],
+      "policy_tags": [
+        "setup",
+        "cheap_first"
+      ],
+      "depends_on": [],
+      "required": true,
+      "parallelizable": false,
+      "gate_hint": "",
+      "raw_stage_ref": "stage_1"
+    },
+    {
+      "stage_id": "stage_2",
+      "title": "Полный forensic-review ветки A1",
+      "objective": "Recover and reproduce the exact logic and results of A1_high_iv_long_v1 from v2 artifacts before any new testing.",
+      "actions": [
+        "Retrieve all A1 artifacts from v2",
+        "Reproduce exact A1 logic and record it formally",
+        "Check for drift or mismatch between v2 claims and actual reproducible results",
+        "Produce a concise trade anatomy for A1",
+        "Compute per-trade statistics"
+      ],
+      "success_criteria": [
+        "A1 is described strictly and reproducibly with no ambiguity",
+        "v2 claimed results vs v3 actual results are documented"
+      ],
+      "tool_hints": [
+        "research_memory",
+        "analysis"
+      ],
+      "policy_tags": [
+        "cheap_first"
+      ],
+      "depends_on": [
+        "stage_1"
+      ],
+      "required": true,
+      "parallelizable": false,
+      "gate_hint": "",
+      "raw_stage_ref": "stage_2"
+    },
+    {
+      "stage_id": "stage_3",
+      "title": "Stability и concentration для A1",
+      "objective": "Determine whether A1 survives as a genuine specialist-layer across time windows and is not propped up by a single lucky segment.",
+      "actions": [
+        "Run window stability analysis on A1 (quarters, half-years, rolling windows)",
+        "Check stability across hour, day-of-week, and cl_1h conditions",
+        "Test resilience after removing the strongest historical segment",
+        "Perform concentration analysis on top trades"
+      ],
+      "success_criteria": [
+        "Honest verdict on whether A1 remains positive after removing any single strong segment"
+      ],
+      "tool_hints": [
+        "analysis",
+        "backtesting"
+      ],
+      "policy_tags": [],
+      "depends_on": [
+        "stage_2"
+      ],
+      "required": true,
+      "parallelizable": false,
+      "gate_hint": "",
+      "raw_stage_ref": "stage_3"
+    },
+    {
+      "stage_id": "stage_4",
+      "title": "Обязательная интеграция A1 в двух режимах",
+      "objective": "Close the main gap from v2: prove whether A1 is truly additive to the base by running both strict-additive and permissive integration modes.",
+      "actions": [
+        "Run strict additive integration of A1 against unchanged base",
+        "Run permissive integration of A1 against unchanged base",
+        "Compare both modes against base-only performance",
+        "Compare strict vs permissive deltas"
+      ],
+      "success_criteria": [
+        "Complete integration picture for A1 exists with delta PnL, trades, profit factor, and drawdown vs base"
+      ],
+      "tool_hints": [
+        "modeling",
+        "backtesting"
+      ],
+      "policy_tags": [],
+      "depends_on": [
+        "stage_3"
+      ],
+      "required": true,
+      "parallelizable": false,
+      "gate_hint": "",
+      "raw_stage_ref": "stage_4"
+    },
+    {
+      "stage_id": "stage_5",
+      "title": "Ownership, cannibalization и proof of new entries для A1",
+      "objective": "Prove the nature of A1's delta: quantify overlap with base, truly new trades, replaced base trades, and coverage expansion.",
+      "actions": [
+        "Compute trade overlap between A1 and base",
+        "Count truly new trades and replaced base trades",
+        "Run layer_compare and signal_ownership analyses",
+        "Check coverage expansion of the combined system",
+        "Answer definitively: does A1 genuinely expand the system?"
+      ],
+      "success_criteria": [
+        "Enough evidence to make a final PROMOTE / WATCHLIST / REJECT decision on A1"
+      ],
+      "tool_hints": [
+        "feature_contract",
+        "analysis"
+      ],
+      "policy_tags": [],
+      "depends_on": [
+        "stage_4"
+      ],
+      "required": true,
+      "parallelizable": false,
+      "gate_hint": "",
+      "raw_stage_ref": "stage_5"
+    },
+    {
+      "stage_id": "stage_6",
+      "title": "Финальное решение по A1",
+      "objective": "Render a definitive verdict on A1: PROMOTE, WATCHLIST, or REJECT — no leaving the branch in limbo.",
+      "actions": [
+        "Aggregate all evidence from stages 2–5",
+        "Apply decision rules: PROMOTE if additive with ownership proof, WATCHLIST if borderline but promising, REJECT if fails any hard gate",
+        "Record decision with main reason, revisit conditions, and notes"
+      ],
+      "success_criteria": [
+        "A1 is closed with a final irreversible decision"
+      ],
+      "tool_hints": [
+        "finalization"
+      ],
+      "policy_tags": [],
+      "depends_on": [
+        "stage_5"
+      ],
+      "required": true,
+      "parallelizable": false,
+      "gate_hint": "",
+      "raw_stage_ref": "stage_6"
+    },
+    {
+      "stage_id": "stage_7",
+      "title": "Открыть ровно одну следующую ветку (если A1 не promoted)",
+      "objective": "If A1 was not promoted, select exactly one next low-friction branch and prepare it for clean testing — no wide search.",
+      "actions": [
+        "Select exactly one branch: priority A2_iv_acceleration, fallback A3_broader_cl_transition",
+        "Prepare feature contract and hypothesis contract for the chosen branch",
+        "Do not touch wave B until the chosen branch passes plausibility, strict prototype build, and standalone test"
+      ],
+      "success_criteria": [
+        "Exactly one next branch is selected and ready for clean testing with documented rationale"
+      ],
+      "tool_hints": [
+        "research_memory",
+        "feature_contract"
+      ],
+      "policy_tags": [
+        "cheap_first"
+      ],
+      "depends_on": [
+        "stage_6"
+      ],
+      "required": false,
+      "parallelizable": false,
+      "gate_hint": "Activate only if A1 decision is not PROMOTE",
+      "raw_stage_ref": "stage_7"
+    },
+    {
+      "stage_id": "stage_8",
+      "title": "A2_iv_acceleration — проверка динамики IV",
+      "objective": "Test whether IV dynamics produce a genuine new specialist-layer, with a compact feature set and strict prototype discipline.",
+      "actions": [
+        "Build a compact feature set (max 3–4 features) capturing IV dynamics",
+        "Run causality check, warmup check, and materialization check",
+        "Test on base_absent surface",
+        "Build max 2–3 strict prototypes"
+      ],
+      "success_criteria": [
+        "Either one mature A2 prototype passes plausibility and standalone, or an honest early rejection is recorded"
+      ],
+      "tool_hints": [
+        "features_custom",
+        "modeling",
+        "backtesting"
+      ],
+      "policy_tags": [],
+      "depends_on": [
+        "stage_7"
+      ],
+      "required": false,
+      "parallelizable": false,
+      "gate_hint": "Activate only if A2_iv_acceleration was selected as the next branch in stage_7",
+      "raw_stage_ref": "stage_8"
+    },
+    {
+      "stage_id": "stage_9",
+      "title": "A3_broader_cl_transition — проверка расширенных classifier transitions",
+      "objective": "Test whether broader classifier transitions produce a genuine new specialist-layer with grouped transition features.",
+      "actions": [
+        "Build transition features for broader classifier classes",
+        "Group transitions by semantic meaning",
+        "Test on base_absent surface",
+        "Build max 2 strict prototypes"
+      ],
+      "success_criteria": [
+        "Either one mature A3 prototype passes plausibility and standalone, or an honest early rejection is recorded"
+      ],
+      "tool_hints": [
+        "features_custom",
+        "modeling",
+        "backtesting"
+      ],
+      "policy_tags": [],
+      "depends_on": [
+        "stage_7"
+      ],
+      "required": false,
+      "parallelizable": false,
+      "gate_hint": "Activate only if A3_broader_cl_transition was selected as the next branch in stage_7",
+      "raw_stage_ref": "stage_9"
+    },
+    {
+      "stage_id": "stage_10",
+      "title": "Контроль запрета на medium-friction wave",
+      "objective": "Enforce the hard gate: wave B is forbidden until A1 is closed and one low-friction branch is fully closed with no promoted candidate.",
+      "actions": [
+        "Verify A1 is closed with final decision",
+        "Verify exactly one low-friction branch (A2 or A3) is fully closed",
+        "Confirm no promoted candidate exists before allowing wave B"
+      ],
+      "success_criteria": [
+        "Control table is filled: A1 closed, selected low-friction branch closed, wave B NOT opened prematurely"
+      ],
+      "tool_hints": [
+        "finalization"
+      ],
+      "policy_tags": [],
+      "depends_on": [
+        "stage_6",
+        "stage_8",
+        "stage_9"
+      ],
+      "required": false,
+      "parallelizable": false,
+      "gate_hint": "Activate only after at least one of stage_8 or stage_9 is completed, or if stage_7 was skipped (A1 promoted)",
+      "raw_stage_ref": "stage_10"
+    },
+    {
+      "stage_id": "stage_11",
+      "title": "Финальный отчет агента",
+      "objective": "Produce a structured final report answering all mandatory questions about v3 results, A1 outcome, next branch outcome, and v4 recommendations.",
+      "actions": [
+        "Document what was left unfinished in v2 and how v3 addressed it",
+        "Document how A1 was closed and whether it was a genuine additive layer",
+        "Document which next branch was chosen, why, and what it showed",
+        "State the main outcome of plan_v3",
+        "Provide explicit recommendations for plan_v4"
+      ],
+      "success_criteria": [
+        "Complete structured report covering all 7 mandatory sections exists"
+      ],
+      "tool_hints": [
+        "finalization"
+      ],
+      "policy_tags": [],
+      "depends_on": [
+        "stage_6",
+        "stage_10"
+      ],
+      "required": true,
+      "parallelizable": false,
+      "gate_hint": "",
+      "raw_stage_ref": "stage_11"
+    }
+  ],
+  "warnings": [
+    "Plan text is in Russian; stage titles preserved verbatim for traceability",
+    "Stages 8–9 (A2/A3) are mutually exclusive alternatives gated on A1 not being promoted"
+  ],
+  "parse_confidence": 0.95
+}

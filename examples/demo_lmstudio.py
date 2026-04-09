@@ -47,23 +47,41 @@ class MockLmStudio(BaseHTTPRequestHandler):
             if n == 1:
                 content = json.dumps({
                     "status": "success",
-                    "summary": "Created project structure: main.py, config.py, utils.py",
+                    "what_was_requested": "Create project structure and core logic",
+                    "what_was_done": "Created the initial project structure for the utility library.",
+                    "results_table": [{"artifact": "main.py", "status": "created"}],
+                    "key_metrics": {"files_created": 2},
                     "artifacts": ["main.py", "config.py"],
+                    "verdict": "WATCHLIST",
                     "confidence": 0.9,
+                    "error": "",
+                    "mcp_problems": [],
                 })
             elif n == 2:
                 content = json.dumps({
                     "status": "success",
-                    "summary": "Implemented core logic with error handling",
+                    "what_was_requested": "Implement core logic",
+                    "what_was_done": "Implemented the core utility logic with basic error handling.",
+                    "results_table": [{"artifact": "core.py", "status": "created"}],
+                    "key_metrics": {"modules_added": 1},
                     "artifacts": ["core.py"],
+                    "verdict": "PROMOTE",
                     "confidence": 0.85,
+                    "error": "",
+                    "mcp_problems": [],
                 })
             else:
                 content = json.dumps({
                     "status": "success",
-                    "summary": "Added tests and documentation",
+                    "what_was_requested": "Add tests and documentation",
+                    "what_was_done": "Added tests and documented the delivered components in the final report.",
+                    "results_table": [{"artifact": "test_main.py", "status": "created"}],
+                    "key_metrics": {"tests_added": 1},
                     "artifacts": ["test_main.py"],
+                    "verdict": "PROMOTE",
                     "confidence": 0.8,
+                    "error": "",
+                    "mcp_problems": [],
                 })
 
             resp = json.dumps({
@@ -113,20 +131,88 @@ def main():
 
     # Planner scripts the workflow
     planner = FakePlanner(responses=[
-        {"decision": "launch_worker", "target_worker_id": "lmstudio-1",
-         "task_instruction": "Create project structure", "reason": "start",
-         "check_after_seconds": 0},
-        {"decision": "launch_worker", "target_worker_id": "lmstudio-1",
-         "task_instruction": "Implement core logic", "reason": "structure done",
-         "memory_update": "Project structure created",
-         "check_after_seconds": 0},
-        {"decision": "launch_worker", "target_worker_id": "lmstudio-1",
-         "task_instruction": "Add tests", "reason": "core done",
-         "memory_update": "Core logic implemented",
-         "check_after_seconds": 0},
-        {"decision": "finish", "should_finish": True,
-         "final_summary": "Library built with LM Studio worker",
-         "reason": "all done"},
+        """# Plan v1
+
+## Status and Frame
+Mock LM Studio demo baseline.
+
+## Goal
+Create the project skeleton and core logic.
+
+## Baseline
+Start from an empty utility library skeleton.
+
+## Research Principles
+- Keep the plan concrete and sequential.
+
+## dev_space1 Capabilities
+Workers available: 1.
+
+## ETAP 1: Structure
+Goal: create the project structure.
+1. Create the initial library files.
+Completion criteria: project skeleton exists.
+| artifact | status |
+| --- | --- |
+| structure | pending |
+
+## ETAP 2: Core Logic
+Goal: implement the core module.
+1. Add the main utility logic with error handling.
+Completion criteria: core module exists.
+| artifact | status |
+| --- | --- |
+| core | pending |
+
+## ETAP 3: Summary
+Goal: summarize the implementation.
+1. Return a worker report with artifacts.
+Completion criteria: structured report emitted.
+| artifact | status |
+| --- | --- |
+| summary | pending |
+""",
+        """# Plan v2
+
+## Status and Frame
+Continue from the existing library implementation.
+
+## Goal
+Add tests and final validation.
+
+## Baseline
+Do not rewrite completed modules.
+
+## Research Principles
+- Extend coverage cleanly.
+
+## dev_space1 Capabilities
+Workers available: 1.
+
+## ETAP 1: Tests
+Goal: add automated coverage.
+1. Create tests for the main utility flow.
+Completion criteria: test file exists.
+| artifact | status |
+| --- | --- |
+| tests | pending |
+
+## ETAP 2: Documentation
+Goal: summarize behavior.
+1. Document the delivered components in the worker report.
+Completion criteria: report includes tests and docs artifacts.
+| artifact | status |
+| --- | --- |
+| docs | pending |
+
+## ETAP 3: Summary
+Goal: finalize output.
+1. Return the structured worker report.
+Completion criteria: verdict recorded.
+| artifact | status |
+| --- | --- |
+| summary | pending |
+""",
     ])
 
     tmp = Path(tempfile.mkdtemp())

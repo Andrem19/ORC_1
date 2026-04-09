@@ -1,0 +1,52 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\n  \"status\": \"ok\",\n  \"message\": \"Signal API binding inspect payload loaded.\",\n  \"tool_name\": \"signal_api_binding_inspect\",\n  \"request_id\": \"110\",\n  \"correlation_id\": \"110\",\n  \"server_session_id\": \"e09983af9aca43a09d26b21e52921957\",\n  \"response_generated_at\": \"2026-04-09T12:51:20.253165+00:00\",\n  \"data\": {\n    \"binding_present\": true,\n    \"snapshot_ref\": \"active-signal-v1@1\",\n    \"active_binding\": {\n      \"snapshot_id\": \"active-signal-v1\",\n      \"version\": 1,\n      \"symbol\": \"BTCUSDT\",\n      \"anchor_timeframe\": \"1h\",\n      \"execution_timeframe\": \"5m\",\n      \"context_path_override\": null,\n      \"notes\": \"Restored from v13 Pack C — returning to default active-signal-v1\",\n      \"updated_at\": \"2026-04-05T13:11:54.663383+00:00\"\n    },\n    \"readiness\": {\n      \"ready\": true,\n      \"issues\": [],\n      \"warnings\": []\n    },\n    \"storage_ref\": {\n      \"active_snapshot_state_path\": \"/home/ubuntu/FOUNDATION/artifacts/signal_api/active_snapshot.json\"\n    },\n    \"summary\": \"Loaded active signal-api binding for active-signal-v1@1.\",\n    \"important_warnings\": [],\n    \"next_recommended_actions\": [\n      \"Use signal_api_binding_apply to replace the current live snapshot binding.\",\n      \"Use backtests_plan when the current binding is not ready and needs more backtest-side investigation.\",\n      \"Use features_dataset or features_custom(action='publish') if readiness reports missing runtime feature artifacts.\"\n    ],\n    \"raw_refs\": [],\n    \"raw_tool_hints\": []\n  },\n  \"warnings\": [],\n  \"refs\": [],\n  \"error\": null\n}"
+    }
+  ],
+  "structuredContent": {
+    "status": "ok",
+    "message": "Signal API binding inspect payload loaded.",
+    "tool_name": "signal_api_binding_inspect",
+    "request_id": "110",
+    "correlation_id": "110",
+    "server_session_id": "e09983af9aca43a09d26b21e52921957",
+    "response_generated_at": "2026-04-09T12:51:20.253165+00:00",
+    "data": {
+      "binding_present": true,
+      "snapshot_ref": "active-signal-v1@1",
+      "active_binding": {
+        "snapshot_id": "active-signal-v1",
+        "version": 1,
+        "symbol": "BTCUSDT",
+        "anchor_timeframe": "1h",
+        "execution_timeframe": "5m",
+        "context_path_override": null,
+        "notes": "Restored from v13 Pack C — returning to default active-signal-v1",
+        "updated_at": "2026-04-05T13:11:54.663383+00:00"
+      },
+      "readiness": {
+        "ready": true,
+        "issues": [],
+        "warnings": []
+      },
+      "storage_ref": {
+        "active_snapshot_state_path": "/home/ubuntu/FOUNDATION/artifacts/signal_api/active_snapshot.json"
+      },
+      "summary": "Loaded active signal-api binding for active-signal-v1@1.",
+      "important_warnings": [],
+      "next_recommended_actions": [
+        "Use signal_api_binding_apply to replace the current live snapshot binding.",
+        "Use backtests_plan when the current binding is not ready and needs more backtest-side investigation.",
+        "Use features_dataset or features_custom(action='publish') if readiness reports missing runtime feature artifacts."
+      ],
+      "raw_refs": [],
+      "raw_tool_hints": []
+    },
+    "warnings": [],
+    "refs": [],
+    "error": null
+  },
+  "isError": false
+}

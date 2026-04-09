@@ -1,0 +1,1014 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\n  \"status\": \"ok\",\n  \"message\": \"Custom feature facade action completed.\",\n  \"tool_name\": \"features_custom\",\n  \"request_id\": \"20\",\n  \"correlation_id\": \"20\",\n  \"server_session_id\": \"a5e38bd0a1c14b9a9b2771868d3175d8\",\n  \"response_generated_at\": \"2026-04-09T13:10:44.991212+00:00\",\n  \"data\": {\n    \"view\": \"contract\",\n    \"copy_paste_safe_blocks\": {\n      \"vectorized\": \"def compute_series(ctx):\\n    return ctx.series('close')\\n\",\n      \"stepwise\": \"def compute_feature(step):\\n    return step.current('close')\\n\"\n    },\n    \"contract\": {\n      \"entrypoint\": \"def compute_series(ctx): ... or def compute_feature(step): ...\",\n      \"allowed_return_types\": [\n        \"int\",\n        \"float\",\n        \"bool\",\n        \"str\",\n        \"None\"\n      ],\n      \"required_name_prefix\": \"cf_\",\n      \"tool_name_style\": \"dotted_mcp\",\n      \"fixed_entrypoint_name\": \"compute_series\",\n      \"preferred_entrypoint_name\": \"compute_series\",\n      \"fallback_entrypoint_name\": \"compute_feature\",\n      \"supported_entrypoint_names\": [\n        \"compute_series\",\n        \"compute_feature\"\n      ],\n      \"required_fields_by_action\": {\n        \"validate\": [\n          \"description\",\n          \"code\",\n          \"symbol\",\n          \"timeframe\"\n        ],\n        \"publish\": [\n          \"name\",\n          \"description\",\n          \"code\",\n          \"symbol\",\n          \"timeframe\"\n        ],\n        \"delete\": [\n          \"name\"\n        ]\n      },\n      \"minimal_validate_payload\": {\n        \"description\": \"Minimal custom feature.\",\n        \"code\": \"def compute_series(ctx):\\n    return ctx.series('close')\\n\",\n        \"symbol\": \"BTCUSDT\",\n        \"timeframe\": \"1h\"\n      },\n      \"minimal_publish_payload\": {\n        \"name\": \"cf_example_feature\",\n        \"description\": \"Minimal custom feature.\",\n        \"code\": \"def compute_series(ctx):\\n    return ctx.series('close')\\n\",\n        \"symbol\": \"BTCUSDT\",\n        \"timeframe\": \"1h\"\n      },\n      \"runtime_data_matrix\": {\n        \"direct_runtime_inputs\": {\n          \"vectorized\": [\n            \"ctx.series(column)\",\n            \"ctx.frame()\",\n            \"ctx.aligned_series(column, timeframe='4h')\",\n            \"ctx.feature_series(name)\",\n            \"ctx.option_metric_series(name)\",\n            \"ctx.model_predict_series(model_ref)\"\n          ],\n          \"stepwise\": [\n            \"step.current(column)\",\n            \"step.series(column)\",\n            \"step.window(N)\",\n            \"step.feature_value(name)\",\n            \"step.feature_series(name)\",\n            \"step.model_predict(model_ref)\",\n            \"step.option_metric_series(name)\"\n          ]\n        },\n        \"managed_dependency_only_inputs\": {\n          \"funding\": [\n            \"is_funding_settlement\",\n            \"bars_until_funding_settlement\",\n            \"bars_since_funding_settlement\"\n          ],\n          \"expiry\": [\n            \"is_expiry\",\n            \"bars_until_expiry\",\n            \"bars_since_expiry\"\n          ]\n        },\n        \"not_available\": {\n          \"raw_event_context\": [\n            \"events_df\",\n            \"ctx.events\",\n            \"step.events\"\n          ],\n          \"raw_funding_columns\": [\n            \"funding_rate\"\n          ]\n        },\n        \"event_driven_workflow\": {\n          \"sync_events_when_needed\": \"Use events_sync(...) when the local normalized event store is stale or missing for the target family/symbol.\",\n          \"align_preview_before_authoring\": \"Use events(view='align_preview', ...) to confirm the event-to-anchor contract before writing event-backed feature logic.\",\n          \"dataset_activation_required\": \"Publishing the definition is not enough; run features_dataset(action='build', columns=['cf_name']) before downstream workflows depend on the feature.\"\n        }\n      },\n      \"managed_event_columns\": {\n        \"funding\": [\n          \"is_funding_settlement\",\n          \"bars_until_funding_settlement\",\n          \"bars_since_funding_settlement\"\n        ],\n        \"expiry\": [\n          \"is_expiry\",\n          \"bars_until_expiry\",\n          \"bars_since_expiry\"\n        ]\n      },\n      \"publish_then_build_sequence\": [\n        \"features_custom(action='publish')\",\n        \"features_dataset(action='build', columns=['cf_name'])\"\n      ],\n      \"event_runtime_recipes\": {\n        \"funding\": [\n          \"events(view='catalog', family='funding')\",\n          \"events_sync(family='funding', scope='incremental', symbol='BTCUSDT')\",\n          \"events(view='align_preview', family='funding', symbol='BTCUSDT')\",\n          \"Use only managed event-backed columns in features_custom depends_on_features.\",\n          \"features_dataset(action='build', columns=['cf_name'])\"\n        ],\n        \"expiry\": [\n          \"events(view='catalog', family='expiry')\",\n          \"events_sync(family='expiry', scope='incremental', currency='BTC')\",\n          \"events(view='align_preview', family='expiry', symbol='BTCUSDT')\",\n          \"Use only managed event-backed columns in features_custom depends_on_features.\",\n          \"features_dataset(action='build', columns=['cf_name'])\"\n        ]\n      },\n      \"anti_patterns\": [\n        \"Use compute_series(ctx) or compute_feature(step); do not stop at def compute(...).\",\n        \"Apply cf_ to the feature name, not to the Python function name.\",\n        \"Raw event context such as events_df / ctx.events / step.events is unsupported; depend on managed event-backed columns instead.\",\n        \"Publishing a custom feature does not activate it in the managed dataset; follow with features_dataset(action='build', columns=['cf_name']) unless auto_build_dataset=true is explicit.\"\n      ],\n      \"name_prefix_scope\": \"feature_name\",\n      \"recommended_flow\": [\n        \"features_custom\",\n        \"models_to_feature\",\n        \"features_custom\",\n        \"features_custom\",\n        \"features_dataset\",\n        \"features_catalog\"\n      ],\n      \"canonical_tool_examples\": [\n        {\n          \"tool\": \"features_custom\",\n          \"purpose\": \"Load the canonical authoring contract before writing code.\",\n          \"example_args\": {\n            \"action\": \"inspect\",\n            \"view\": \"contract\"\n          }\n        },\n        {\n          \"tool\": \"features_custom\",\n          \"purpose\": \"Smoke-test a vectorized custom feature without publishing it.\",\n          \"example_args\": {\n            \"action\": \"validate\",\n            \"name\": \"cf_example_feature\",\n            \"description\": \"Minimal example custom feature.\",\n            \"code\": \"import pandas as pd\\n\\ndef compute_series(ctx):\\n    return pd.Series(ctx.series('close')).reset_index(drop=True)\\n\",\n            \"symbol\": \"BTCUSDT\",\n            \"timeframe\": \"1h\",\n            \"required_columns\": [\n              \"close\"\n            ],\n            \"lookback_bars\": 1\n          }\n        },\n        {\n          \"tool\": \"features_custom\",\n          \"purpose\": \"Validate one anchor-aligned multi-timeframe vectorized custom feature.\",\n          \"example_args\": {\n            \"action\": \"validate\",\n            \"name\": \"cf_4h_close_aligned\",\n            \"description\": \"Anchor-aligned 4h close projected onto the 1h anchor frame.\",\n            \"code\": \"import pandas as pd\\n\\ndef compute_series(ctx):\\n    return pd.Series(ctx.aligned_series('close', timeframe='4h')).reset_index(drop=True)\\n\",\n            \"symbol\": \"BTCUSDT\",\n            \"timeframe\": \"1h\",\n            \"required_columns\": [\n              \"close\"\n            ],\n            \"required_timeframes\": [\n              \"4h\"\n            ],\n            \"lookback_bars\": 1\n          }\n        },\n        {\n          \"tool\": \"features_custom\",\n          \"purpose\": \"Validate one lower-timeframe aggregation feature that resamples 5m candles into one 1h anchor-aligned value.\",\n          \"example_args\": {\n            \"action\": \"validate\",\n            \"name\": \"cf_micro_imbalance_1h\",\n            \"description\": \"Aggregate 5m signed-volume imbalance into one 1h anchor-aligned series.\",\n            \"code\": \"import pandas as pd\\n\\nfrom app.features.custom.lower_timeframe import aggregate_completed_lower_timeframe\\n\\ndef compute_series(ctx):\\n    frame = ctx.frame(timeframe='5m')[['open', 'high', 'low', 'close', 'volume', 'timestamp_utc']].copy()\\n    def _aggregate(lower_frame):\\n        indexed = lower_frame.set_index('timestamp_utc')\\n        rng = (indexed['high'] - indexed['low']).replace(0, pd.NA)\\n        signed_range = (indexed['close'] - indexed['open']) / rng\\n        signed_volume = signed_range * indexed['volume']\\n        hourly_signed = signed_volume.resample('1h', label='right', closed='left').sum()\\n        hourly_volume = indexed['volume'].resample('1h', label='right', closed='left').sum().replace(0, pd.NA)\\n        return hourly_signed / hourly_volume\\n    return aggregate_completed_lower_timeframe(\\n        anchor_frame=ctx.frame(),\\n        lower_frame=frame,\\n        lower_timeframe='5m',\\n        anchor_timeframe='1h',\\n        feature_name='cf_micro_imbalance_1h',\\n        aggregator=_aggregate,\\n    )\\n\",\n            \"symbol\": \"BTCUSDT\",\n            \"timeframe\": \"1h\",\n            \"required_columns\": [\n              \"open\",\n              \"high\",\n              \"low\",\n              \"close\",\n              \"volume\",\n              \"timestamp_utc\"\n            ],\n            \"required_timeframes\": [\n              \"5m\"\n            ],\n            \"lookback_bars\": 1\n          }\n        },\n        {\n          \"tool\": \"features_custom\",\n          \"purpose\": \"Validate one vectorized dependency-driven custom feature.\",\n          \"example_args\": {\n            \"action\": \"validate\",\n            \"name\": \"cf_rsi_copy_vectorized\",\n            \"description\": \"Copy an already-computed dependency feature through the vectorized contract.\",\n            \"code\": \"import pandas as pd\\n\\ndef compute_series(ctx):\\n    return pd.Series(ctx.feature_series('rsi_1')).reset_index(drop=True)\\n\",\n            \"symbol\": \"BTCUSDT\",\n            \"timeframe\": \"1h\",\n            \"depends_on_features\": [\n              \"rsi_1\"\n            ],\n            \"lookback_bars\": 1\n          }\n        },\n        {\n          \"tool\": \"features_custom\",\n          \"purpose\": \"Validate one offline cross-symbol vectorized custom feature.\",\n          \"example_args\": {\n            \"action\": \"validate\",\n            \"name\": \"cf_eth_btc_ratio\",\n            \"description\": \"Compare BTC close to aligned ETH close.\",\n            \"code\": \"import pandas as pd\\n\\ndef compute_series(ctx):\\n    peer = ctx.for_symbol('ETHUSDT')\\n    return pd.Series(ctx.series('close') / peer.aligned_series('close', timeframe='4h')).reset_index(drop=True)\\n\",\n            \"symbol\": \"BTCUSDT\",\n            \"timeframe\": \"1h\",\n            \"required_columns\": [\n              \"close\"\n            ],\n            \"cross_symbol_inputs\": [\n              {\n                \"symbol\": \"ETHUSDT\",\n                \"required_timeframes\": [\n                  \"4h\"\n                ],\n                \"depends_on_features\": []\n              }\n            ],\n            \"lookback_bars\": 1\n          }\n        },\n        {\n          \"tool\": \"features_custom\",\n          \"purpose\": \"Validate a step-wise feature that depends on managed feature columns.\",\n          \"example_args\": {\n            \"action\": \"validate\",\n            \"name\": \"cf_rsi_regime_gate\",\n            \"description\": \"Example dependency-driven custom feature.\",\n            \"code\": \"def compute_feature(step):\\n    rsi = step.feature_value('rsi_1')\\n    if rsi is None:\\n        return None\\n    return 1 if float(rsi) >= 55 else 0\\n\",\n            \"symbol\": \"BTCUSDT\",\n            \"timeframe\": \"1h\",\n            \"depends_on_features\": [\n              \"rsi_1\"\n            ],\n            \"required_columns\": [\n              \"close\"\n            ],\n            \"lookback_bars\": 1\n          }\n        },\n        {\n          \"tool\": \"features_custom\",\n          \"purpose\": \"Validate a step-wise feature that reads the hour dependency through the canonical dependency accessor.\",\n          \"example_args\": {\n            \"action\": \"validate\",\n            \"name\": \"cf_hour_gate\",\n            \"description\": \"Gate on the managed hour feature.\",\n            \"code\": \"def compute_feature(step):\\n    hour = step.feature_value('hour')\\n    if hour is None:\\n        return None\\n    return 1 if int(hour) in {6, 7, 8} else 0\\n\",\n            \"symbol\": \"BTCUSDT\",\n            \"timeframe\": \"1h\",\n            \"depends_on_features\": [\n              \"hour\"\n            ],\n            \"lookback_bars\": 1\n          }\n        },\n        {\n          \"tool\": \"features_custom\",\n          \"purpose\": \"Validate a step-wise feature that consumes one published custom-feature dependency.\",\n          \"example_args\": {\n            \"action\": \"validate\",\n            \"name\": \"cf_peer_gate\",\n            \"description\": \"Use one custom-feature dependency through step.feature_value(...).\",\n            \"code\": \"def compute_feature(step):\\n    value = step.feature_value('cf_peer_regime')\\n    return None if value is None else float(value)\\n\",\n            \"symbol\": \"BTCUSDT\",\n            \"timeframe\": \"1h\",\n            \"depends_on_features\": [\n              \"cf_peer_regime\"\n            ],\n            \"lookback_bars\": 1\n          }\n        },\n        {\n          \"tool\": \"features_custom\",\n          \"purpose\": \"Validate one vectorized option-metrics feature through the canonical runtime accessor.\",\n          \"example_args\": {\n            \"action\": \"validate\",\n            \"name\": \"cf_opt_rr25_delta_6h\",\n            \"description\": \"Six-hour rr25 delta built from the option metrics runtime.\",\n            \"code\": \"from app.options_metrics.series import time_window_delta\\n\\n\\ndef compute_series(ctx):\\n    base = ctx.option_metric_series('rr25')\\n    open_times = ctx.series('open_time')\\n    return time_window_delta(series=base, anchor_open_times_ms=open_times, horizon_ms=6 * 60 * 60 * 1000)\\n\",\n            \"symbol\": \"BTCUSDT\",\n            \"timeframe\": \"1h\",\n            \"lookback_bars\": 8\n          }\n        },\n        {\n          \"tool\": \"features_custom\",\n          \"purpose\": \"Validate one funding-settlement event-backed feature using managed event columns.\",\n          \"example_args\": {\n            \"action\": \"validate\",\n            \"name\": \"cf_funding_settlement_gate\",\n            \"description\": \"Funding-settlement event-backed gate built from managed event columns.\",\n            \"code\": \"def compute_feature(step):\\n    is_settlement = step.feature_value('is_funding_settlement')\\n    bars_since = step.feature_value('bars_since_funding_settlement')\\n    if is_settlement is None or bars_since is None:\\n        return None\\n    return 1 if bool(is_settlement) or float(bars_since) <= 1 else 0\\n\",\n            \"symbol\": \"BTCUSDT\",\n            \"timeframe\": \"1h\",\n            \"depends_on_features\": [\n              \"is_funding_settlement\",\n              \"bars_since_funding_settlement\"\n            ],\n            \"lookback_bars\": 1\n          }\n        },\n        {\n          \"tool\": \"features_custom\",\n          \"purpose\": \"Validate one expiry event-backed feature using managed expiry columns.\",\n          \"example_args\": {\n            \"action\": \"validate\",\n            \"name\": \"cf_expiry_proximity_gate\",\n            \"description\": \"Expiry proximity gate from managed expiry columns.\",\n            \"code\": \"def compute_feature(step):\\n    bars_until = step.feature_value('bars_until_expiry')\\n    if bars_until is None:\\n        return None\\n    return 1 if float(bars_until) <= 2 else 0\\n\",\n            \"symbol\": \"BTCUSDT\",\n            \"timeframe\": \"1h\",\n            \"depends_on_features\": [\n              \"bars_until_expiry\"\n            ],\n            \"lookback_bars\": 1\n          }\n        },\n        {\n          \"tool\": \"features_custom\",\n          \"purpose\": \"Validate one synthetic funding proxy that is honestly named as a price-only proxy.\",\n          \"example_args\": {\n            \"action\": \"validate\",\n            \"name\": \"cf_synthetic_funding_proxy\",\n            \"description\": \"Synthetic price-only proxy for funding stress; not an event-backed funding feature.\",\n            \"code\": \"def compute_series(ctx):\\n    close = ctx.series('close')\\n    returns = close.pct_change()\\n    return (returns - returns.rolling(24).mean()) / returns.rolling(24).std()\\n\",\n            \"symbol\": \"BTCUSDT\",\n            \"timeframe\": \"1h\",\n            \"required_columns\": [\n              \"close\"\n            ],\n            \"lookback_bars\": 24\n          }\n        },\n        {\n          \"tool\": \"models_to_feature\",\n          \"purpose\": \"Project one immutable model version into a ready-to-validate custom-feature payload.\",\n          \"example_args\": {\n            \"action\": \"scaffold\",\n            \"model_id\": \"btc_profit_regressor\",\n            \"version\": \"20260315101500-ab12cd\"\n          }\n        },\n        {\n          \"tool\": \"features_custom\",\n          \"purpose\": \"Validate and publish a custom feature definition.\",\n          \"example_args\": {\n            \"action\": \"publish\",\n            \"name\": \"cf_model_feature\",\n            \"description\": \"Minimal model-backed custom feature.\",\n            \"code\": \"def compute_feature(step):\\n    return step.model_predict('btc_profit_regressor')\\n\",\n            \"symbol\": \"BTCUSDT\",\n            \"timeframe\": \"1h\",\n            \"required_columns\": [\n              \"close\"\n            ],\n            \"depends_on_features\": [],\n            \"depends_on_models\": [\n              \"btc_profit_regressor\"\n            ],\n            \"lookback_bars\": 1\n          }\n        },\n        {\n          \"tool\": \"models_to_feature\",\n          \"purpose\": \"Publish a model-backed custom feature with automatic runtime wiring.\",\n          \"example_args\": {\n            \"action\": \"publish\",\n            \"model_id\": \"btc_regime_confidence\",\n            \"version\": \"20260315101500-ab12cd\",\n            \"feature_name\": \"cf_btc_regime_confidence\",\n            \"build_dataset\": true\n          }\n        }\n      ],\n      \"stepwise_supported_accessors\": [\n        {\n          \"name\": \"step.current(column, timeframe=None)\",\n          \"returns\": \"scalar_frame_value\",\n          \"dependency_accessor\": false,\n          \"description\": \"Return one scalar from raw timeframe frame columns only.\"\n        },\n        {\n          \"name\": \"step.series(column, timeframe=None)\",\n          \"returns\": \"frame_series\",\n          \"dependency_accessor\": false,\n          \"description\": \"Return one history series from raw timeframe frame columns only.\"\n        },\n        {\n          \"name\": \"step.window(rows, timeframe=None)\",\n          \"returns\": \"frame_window\",\n          \"dependency_accessor\": false,\n          \"description\": \"Return one trailing frame window from raw timeframe data only.\"\n        },\n        {\n          \"name\": \"step.feature_value(name)\",\n          \"returns\": \"scalar_dependency_value\",\n          \"dependency_accessor\": true,\n          \"description\": \"Return one scalar from declared or reused dependency features.\"\n        },\n        {\n          \"name\": \"step.feature_series(name)\",\n          \"returns\": \"dependency_series\",\n          \"dependency_accessor\": true,\n          \"description\": \"Return one history series from declared or reused dependency features.\"\n        },\n        {\n          \"name\": \"step.option_metric_value(name)\",\n          \"returns\": \"scalar_option_metric_value\",\n          \"dependency_accessor\": false,\n          \"description\": \"Return one scalar from raw anchor-aligned option metrics such as rr25 or bf25.\"\n        },\n        {\n          \"name\": \"step.option_metric_series(name)\",\n          \"returns\": \"option_metric_series\",\n          \"dependency_accessor\": false,\n          \"description\": \"Return one history series from raw anchor-aligned option metrics only.\"\n        },\n        {\n          \"name\": \"step.for_symbol(symbol)\",\n          \"returns\": \"symbol_scoped_view\",\n          \"dependency_accessor\": false,\n          \"description\": \"Return one explicit symbol-scoped step view for offline cross-symbol reads.\"\n        }\n      ],\n      \"stepwise_access_rules\": [\n        \"step.current/step.series/step.window read raw timeframe frame columns only.\",\n        \"step.feature_value/step.feature_series read only declared or reused depends_on_features dependencies.\",\n        \"step.option_metric_value/step.option_metric_series read raw anchor-aligned option metrics only: iv_call25, iv_put25, rr25, bf25.\",\n        \"Managed feature columns such as hour, dow, rsi_1, cl_1h, or cf_* remain dependency features when declared through depends_on_features; they are not exposed through step.current(...).\",\n        \"step.for_symbol(symbol) keeps the same contract split: raw frame access through current/series/window, dependency access through feature_value/feature_series.\"\n      ],\n      \"vectorized_supported_accessors\": [\n        {\n          \"name\": \"ctx.frame(timeframe=None)\",\n          \"returns\": \"raw_frame\",\n          \"anchor_aligned\": false,\n          \"description\": \"Return the raw frame for one timeframe without anchor alignment.\"\n        },\n        {\n          \"name\": \"ctx.series(column, timeframe=None)\",\n          \"returns\": \"raw_series\",\n          \"anchor_aligned\": false,\n          \"description\": \"Return the raw column series for one timeframe without anchor alignment.\"\n        },\n        {\n          \"name\": \"ctx.aligned_frame(timeframe, columns=None)\",\n          \"returns\": \"anchor_aligned_frame\",\n          \"anchor_aligned\": true,\n          \"description\": \"Return one backward-asof aligned frame with rows matching the current anchor calculation window.\"\n        },\n        {\n          \"name\": \"ctx.aligned_series(column, timeframe)\",\n          \"returns\": \"anchor_aligned_series\",\n          \"anchor_aligned\": true,\n          \"description\": \"Return one backward-asof aligned series with rows matching the current anchor calculation window.\"\n        },\n        {\n          \"name\": \"ctx.feature_series(name)\",\n          \"returns\": \"anchor_aligned_dependency_series\",\n          \"anchor_aligned\": true,\n          \"description\": \"Return one already-computed dependency feature aligned to the anchor frame.\"\n        },\n        {\n          \"name\": \"ctx.option_metric_series(name)\",\n          \"returns\": \"anchor_aligned_series\",\n          \"anchor_aligned\": true,\n          \"description\": \"Return one anchor-aligned raw Deribit option-metric series such as rr25 or bf25.\"\n        },\n        {\n          \"name\": \"ctx.for_symbol(symbol)\",\n          \"returns\": \"symbol_scoped_view\",\n          \"anchor_aligned\": false,\n          \"description\": \"Return one explicit symbol-scoped view for offline cross-symbol raw/aligned/feature reads.\"\n        },\n        {\n          \"name\": \"ctx.decision_time_ms_series()\",\n          \"returns\": \"anchor_aligned_series\",\n          \"anchor_aligned\": true,\n          \"description\": \"Return the decision-time series aligned to the anchor frame.\"\n        },\n        {\n          \"name\": \"ctx.model_predict_series(model_ref, output='default', dtype=None)\",\n          \"returns\": \"anchor_aligned_series\",\n          \"anchor_aligned\": true,\n          \"description\": \"Run vectorized model-backed inference aligned to the anchor frame.\"\n        },\n        {\n          \"name\": \"ctx.model_info(model_ref)\",\n          \"returns\": \"model_metadata\",\n          \"anchor_aligned\": false,\n          \"description\": \"Return model metadata for one declared model dependency.\"\n        }\n      ],\n      \"vectorized_unsupported_accessors\": [\n        \"ctx[...]\",\n        \"ctx.load(...)\",\n        \"ctx.df\",\n        \"ctx.features\",\n        \"ctx.column(...)\",\n        \"ctx.get_symbol_df(...)\",\n        \"ctx.datasets\"\n      ],\n      \"vectorized_alignment_rules\": [\n        \"ctx.frame(...) and ctx.series(...) are raw timeframe readers and may return non-anchor row counts.\",\n        \"Use ctx.aligned_frame(...) or ctx.aligned_series(...) when multi-timeframe data must match the current anchor calculation window row count.\",\n        \"Lower-timeframe raw reads such as ctx.frame(timeframe='5m') require required_timeframes=['5m'], explicit timestamp_utc handling, completed-bin aggregation, and alignment to the first honest anchor row.\",\n        \"ctx.feature_series(...) always returns dependency features aligned to the anchor frame.\",\n        \"ctx.option_metric_series(name) exposes only raw option-metric series: iv_call25, iv_put25, rr25, bf25.\",\n        \"ctx.for_symbol(symbol).aligned_series(...) uses backward-asof alignment against context.source_frame for the current build or validation window and requires an explicit cross_symbol_inputs declaration.\",\n        \"Lower-timeframe aggregates must be aligned to the first anchor row where the completed bin is fully usable, not blindly reindexed to ctx.decision_time_ms_series().\"\n      ],\n      \"cross_symbol_input_schema\": {\n        \"fields\": [\n          \"symbol\",\n          \"required_timeframes\",\n          \"depends_on_features\"\n        ],\n        \"example\": {\n          \"symbol\": \"ETHUSDT\",\n          \"required_timeframes\": [\n            \"1h\",\n            \"4h\"\n          ],\n          \"depends_on_features\": [\n            \"rsi_1\",\n            \"cf_peer_regime\"\n          ]\n        },\n        \"notes\": [\n          \"Declare every external symbol explicitly before calling ctx.for_symbol(...) or step.for_symbol(...).\",\n          \"External feature dependencies are read from already-built managed feature datasets on the anchor timeframe.\",\n          \"Cross-symbol custom features are offline-only in v1 and are rejected by live signal runtime.\"\n        ]\n      },\n      \"not_supported_inputs\": {\n        \"raw_event_context\": [\n          \"events_df\",\n          \"ctx.events\",\n          \"step.events\"\n        ],\n        \"raw_funding_columns\": [\n          \"funding_rate\"\n        ],\n        \"pseudo_vectorized_accessors\": [\n          \"ctx.df\",\n          \"ctx.load(...)\",\n          \"ctx.features\",\n          \"ctx.column(...)\"\n        ],\n        \"guidance\": [\n          \"Use managed event-backed columns such as is_funding_settlement, bars_until_funding_settlement, and bars_since_funding_settlement via depends_on_features.\",\n          \"Publish definition first, then build into managed dataset, then reference from snapshot or downstream workflows.\",\n          \"Use features_custom(action='inspect', view='examples') before writing an event-backed feature from scratch.\"\n        ]\n      },\n      \"common_mistakes\": [\n        \"Use the facade tool features_custom(action='inspect'|'validate'|'publish'), not hidden primitive tool names.\",\n        \"Prefer compute_series(ctx) for rolling/statistical features; use compute_feature(step) only when logic is genuinely step-dependent.\",\n        \"Apply the cf_ prefix to the feature name, not to the Python function name.\",\n        \"Declare runtime-managed model dependencies through depends_on_models when using step.model_predict(...).\",\n        \"Do not send required_features to features.custom.* tools; the valid fields are depends_on_features and required_columns.\",\n        \"Do not guess model-backed dependencies by hand; inspect models_registry(action='inspect', view='version_detail').feature_runtime_requirements and copy the derived template.\",\n        \"Prefer models_to_feature(action='scaffold') when you want a copy-paste-ready model-backed feature payload instead of wiring fields manually.\",\n        \"Inspect models_registry(action='inspect', view='version_detail') before using a model from a custom feature, especially when deployability or required feature inputs matter.\",\n        \"step.series(column) returns the full history controlled by lookback_bars; its second argument is timeframe (e.g. '4h'), NOT a row count. To get N recent rows use step.window(N) or step.series(column).tail(N).\",\n        \"compute_series(ctx) must return one pandas.Series aligned 1:1 to the anchor frame; returning a scalar, list, or wrong-length series is invalid.\",\n        \"Lower-timeframe reads such as ctx.frame(timeframe='5m') are supported only after declaring required_timeframes=['5m']; raw lower-timeframe reads are not anchor-aligned until you aggregate completed bins and align them to the first honest anchor row.\",\n        \"Custom-feature values persisted on an anchor dataset row are keyed by the anchor row open_time. A value is causal for that row only when every dependency is fully available no later than that anchor open.\",\n        \"Lower-timeframe aggregates must be aligned to the first anchor row where the completed bin is fully usable, not blindly reindexed to ctx.decision_time_ms_series().\",\n        \"compute_feature(step) does not expose ctx-only vectorized fields such as decision_time_ms_series; use compute_series(ctx) for vectorized time-aware logic.\",\n        \"ctx.load(...), ctx.df, ctx.features, and ctx.column(...) are not part of the vectorized contract. Use the explicit compute_series(ctx) accessors from features_custom(action='inspect', view='contract').\",\n        \"Raw event stores are not injected into custom feature code. events_df / ctx.events / step.events are unsupported; use managed event columns such as is_funding_settlement or bars_until_funding_settlement via depends_on_features.\",\n        \"ctx.series(column, timeframe='4h') is a raw higher-timeframe reader and is not anchor-aligned. Use ctx.aligned_series(column, timeframe='4h') when row counts must match the current anchor calculation window.\",\n        \"Cross-symbol access is not implicit. Declare external symbols in cross_symbol_inputs, then use ctx.for_symbol('ETHUSDT') or step.for_symbol('ETHUSDT').\",\n        \"step.current(name) and step.series(name) are raw timeframe accessors only. If a value was declared in depends_on_features, use step.feature_value(name) or step.feature_series(name) instead.\",\n        \"Do not read metrics_mini.csv directly inside published custom features. Use ctx.option_metric_series(name) or step.option_metric_series(name) so live signal runtime can supply the data safely.\",\n        \"Publishing a custom feature does not rebuild managed datasets automatically. After publish, run features_dataset(action='build', columns=['cf_name']) or publish with auto_build_dataset=true when you want an explicit opt-in rebuild.\"\n      ],\n      \"notes\": [\n        \"Custom feature code runs in a trusted subprocess using the server Python environment.\",\n        \"Imports from env6 such as numpy, pandas, and talib are allowed when available to the server runtime.\",\n        \"compute_series(ctx) is the preferred fast path for non-model custom features and should return the full anchor-aligned series in one call.\",\n        \"compute_feature(step) remains supported for backward compatibility and for model-backed or truly step-dependent logic.\",\n        \"Use step.current/series/window/feature_value/feature_series to inspect source and dependency history.\",\n        \"Use ctx.frame/series/aligned_frame/aligned_series/feature_series/option_metric_series/decision_time_ms_series for vectorized custom features.\",\n        \"Custom-feature values persisted on an anchor dataset row are keyed by the anchor row open_time. A value is causal for that row only when every dependency is fully available no later than that anchor open.\",\n        \"Backtest and live entry eligibility may start after the anchor bar closes, but persisted anchor-row feature values must still be honest at the row open unless an explicitly different storage contract is documented.\",\n        \"Use step.model_predict(model_ref, output='default') and step.model_info(model_ref) for runtime-managed trained models.\",\n        \"Read models_registry(action='inspect', view='version_detail') to inspect a model's input_contract, output_contract, deployability_report, artifact summaries, and retrain metadata before wiring it into a feature.\",\n        \"For model-backed features, depends_on_features declares managed feature columns required by runtime inference; required_columns declares raw OHLCV columns such as close, open, high, low, or volume.\",\n        \"Use step.feature_value(name) / step.feature_series(name) for depends_on_features dependencies. step.current(name) reads timeframe frame columns and is not a substitute for dependency features.\",\n        \"Managed features such as hour, dow, rsi_1, cl_1h, and cf_* remain dependency features when declared through depends_on_features; they are not exposed through step.current(name).\",\n        \"Field required_features does not exist in the custom-feature MCP contract. Use depends_on_features instead.\",\n        \"If step.model_predict(...) depends on runtime feature inputs, declare those feature columns in depends_on_features so feature runtime inference can rebuild them.\",\n        \"Vectorized compute_series(ctx) supports model-backed inference through ctx.model_predict_series(...).\",\n        \"ctx.frame(...) and ctx.series(...) are raw readers. They can return non-anchor row counts for higher timeframes.\",\n        \"Lower-timeframe vectorized reads such as ctx.frame(timeframe='5m') are also raw readers. Declare required_timeframes for the source timeframe, convert timestamp_utc into a DatetimeIndex when needed, aggregate completed bins, then align them to the first honest anchor row.\",\n        \"Lower-timeframe aggregates must be aligned to the first anchor row where the completed bin is fully usable, not blindly reindexed to ctx.decision_time_ms_series().\",\n        \"ctx.aligned_frame(...) and ctx.aligned_series(...) are the canonical anchor-aligned accessors for higher-timeframe vectorized logic and always align to the current anchor calculation window.\",\n        \"Use ctx.option_metric_series(name) or step.option_metric_series(name) for raw Deribit option metrics such as iv_call25, iv_put25, rr25, and bf25.\",\n        \"Funding / expiry event families are available through managed event-backed feature columns, not through raw events_df inside custom feature code.\",\n        \"Use ctx.for_symbol(symbol) / step.for_symbol(symbol) for offline cross-symbol reads after declaring the symbol under cross_symbol_inputs.\",\n        \"External-symbol feature_series(...) reads already-built managed feature datasets for that symbol on the anchor timeframe and aligns them back to the anchor frame.\",\n        \"Cross-symbol custom features are offline-only in v1. Live signal runtime and model-backed live feature inference reject them explicitly.\",\n        \"Model-backed validation reuses already-built managed feature columns when available; if validation is slow or times out, prefer lower wait modes and inspect the normalized operation diagnostics returned by features_custom(action='validate')/publish.\",\n        \"When a custom-feature operation fails, inspect the inline logs returned by features_custom(action='validate')/publish before changing the payload.\",\n        \"Network access and filesystem side effects are forbidden by contract even though v1 does not OS-sandbox them.\",\n        \"Historical liquidation-dependent features require a real datasource under artifacts/research_data; validation and publish are blocked when that source is absent.\"\n      ],\n      \"stepwise_rewrite_examples\": {\n        \"dependency_feature_access\": {\n          \"anti_example\": {\n            \"code\": \"def compute_feature(step):\\n    return step.current('cl_1h')\\n\",\n            \"why_invalid\": \"step.current(...) reads raw timeframe columns, not declared dependency features.\"\n          },\n          \"correct_example\": {\n            \"code\": \"def compute_feature(step):\\n    return step.feature_value('cl_1h')\\n\",\n            \"why_valid\": \"step.feature_value(...) reads the managed dependency feature declared under depends_on_features.\"\n          }\n        }\n      },\n      \"cross_symbol_rewrite_examples\": {\n        \"stepwise\": {\n          \"anti_example\": {\n            \"code\": \"def compute_feature(step):\\n    peer = step.for_symbol(target_symbol)\\n    return peer.current('close')\\n\",\n            \"why_invalid\": \"v1 requires a declared string-literal symbol in cross_symbol_inputs.\"\n          },\n          \"correct_example\": {\n            \"code\": \"def compute_feature(step):\\n    peer = step.for_symbol('ETHUSDT')\\n    return peer.current('close')\\n\",\n            \"cross_symbol_inputs\": [\n              {\n                \"symbol\": \"ETHUSDT\",\n                \"required_timeframes\": [\n                  \"1h\"\n                ],\n                \"depends_on_features\": []\n              }\n            ]\n          }\n        },\n        \"vectorized\": {\n          \"anti_example\": {\n            \"code\": \"def compute_series(ctx):\\n    peer = ctx.for_symbol(target_symbol)\\n    return peer.series('close')\\n\",\n            \"why_invalid\": \"v1 requires a declared string-literal symbol in cross_symbol_inputs.\"\n          },\n          \"correct_example\": {\n            \"code\": \"import pandas as pd\\n\\ndef compute_series(ctx):\\n    peer = ctx.for_symbol('ETHUSDT')\\n    return pd.Series(peer.series('close')).reset_index(drop=True)\\n\",\n            \"cross_symbol_inputs\": [\n              {\n                \"symbol\": \"ETHUSDT\",\n                \"required_timeframes\": [\n                  \"1h\"\n                ],\n                \"depends_on_features\": []\n              }\n            ]\n          }\n        }\n      }\n    },\n    \"canonical_block\": {\n      \"preferred_entrypoint\": \"compute_series(ctx)\",\n      \"alternate_entrypoint\": \"compute_feature(step)\",\n      \"cross_symbol_return_type\": \"ctx.for_symbol(...) returns one symbol-scoped view object, not a pandas.DataFrame.\",\n      \"time_alignment_rule\": \"Use series(...) for raw reads and aligned_series(...) when the result must stay 1:1 with the current anchor window.\",\n      \"lower_timeframe_rule\": \"For lower-timeframe raw reads such as 5m->1h, declare required_timeframes=['5m'], aggregate completed bins via timestamp_utc/DatetimeIndex, then align to the first honest anchor row.\",\n      \"cross_symbol_rule\": \"Use string-literal symbols in for_symbol(...) and declare them under cross_symbol_inputs.\",\n      \"row_count_invariant\": \"compute_series(ctx) must return exactly one row per current anchor row.\",\n      \"publish_build_rule\": \"Publishing a custom feature does not activate it in managed datasets. Follow publish with features_dataset(action='build', columns=['cf_name']) or opt into auto_build_dataset=true.\",\n      \"anchor_storage_rule\": \"Custom-feature values persisted on an anchor dataset row are keyed by the anchor row open_time. A value is causal for that row only when every dependency is fully available no later than that anchor open.\",\n      \"causal_lower_timeframe_rule\": \"Lower-timeframe aggregates must be aligned to the first anchor row where the completed bin is fully usable, not blindly reindexed to ctx.decision_time_ms_series().\"\n    },\n    \"contract_quick_fixes\": [\n      \"Do not send required_features to features.custom.* tools; the valid fields are depends_on_features and required_columns.\",\n      \"Lower-timeframe reads such as ctx.frame(timeframe='5m') are supported only after declaring required_timeframes=['5m']; raw lower-timeframe reads are not anchor-aligned until you aggregate completed bins and align them to the first honest anchor row.\",\n      \"Lower-timeframe aggregates must be aligned to the first anchor row where the completed bin is fully usable, not blindly reindexed to ctx.decision_time_ms_series().\",\n      \"compute_feature(step) does not expose ctx-only vectorized fields such as decision_time_ms_series; use compute_series(ctx) for vectorized time-aware logic.\",\n      \"step.current(name) and step.series(name) are raw timeframe accessors only. If a value was declared in depends_on_features, use step.feature_value(name) or step.feature_series(name) instead.\",\n      \"Publishing a custom feature does not rebuild managed datasets automatically. After publish, run features_dataset(action='build', columns=['cf_name']) or publish with auto_build_dataset=true when you want an explicit opt-in rebuild.\",\n      \"Use ctx.frame/series/aligned_frame/aligned_series/feature_series/option_metric_series/decision_time_ms_series for vectorized custom features.\",\n      \"Use step.feature_value(name) / step.feature_series(name) for depends_on_features dependencies. step.current(name) reads timeframe frame columns and is not a substitute for dependency features.\",\n      \"Managed features such as hour, dow, rsi_1, cl_1h, and cf_* remain dependency features when declared through depends_on_features; they are not exposed through step.current(name).\",\n      \"Field required_features does not exist in the custom-feature MCP contract. Use depends_on_features instead.\",\n      \"Lower-timeframe aggregates must be aligned to the first anchor row where the completed bin is fully usable, not blindly reindexed to ctx.decision_time_ms_series().\"\n    ],\n    \"expected_entrypoints\": [\n      \"compute_series\",\n      \"compute_feature\"\n    ],\n    \"required_fields_by_action\": {\n      \"validate\": [\n        \"description\",\n        \"code\",\n        \"symbol\",\n        \"timeframe\"\n      ],\n      \"publish\": [\n        \"name\",\n        \"description\",\n        \"code\",\n        \"symbol\",\n        \"timeframe\"\n      ],\n      \"delete\": [\n        \"name\"\n      ]\n    },\n    \"minimal_validate_payload\": {\n      \"description\": \"Minimal custom feature.\",\n      \"code\": \"def compute_series(ctx):\\n    return ctx.series('close')\\n\",\n      \"symbol\": \"BTCUSDT\",\n      \"timeframe\": \"1h\"\n    },\n    \"minimal_publish_payload\": {\n      \"name\": \"cf_example_feature\",\n      \"description\": \"Minimal custom feature.\",\n      \"code\": \"def compute_series(ctx):\\n    return ctx.series('close')\\n\",\n      \"symbol\": \"BTCUSDT\",\n      \"timeframe\": \"1h\"\n    },\n    \"runtime_available_inputs\": {\n      \"vectorized\": [\n        \"ctx.series(...)\",\n        \"ctx.frame()\",\n        \"ctx.aligned_series(...)\",\n        \"ctx.feature_series(...)\"\n      ],\n      \"stepwise\": [\n        \"step.current(...)\",\n        \"step.series(...)\",\n        \"step.feature_value(...)\",\n        \"step.feature_series(...)\"\n      ]\n    },\n    \"runtime_data_matrix\": {\n      \"direct_runtime_inputs\": {\n        \"vectorized\": [\n          \"ctx.series(column)\",\n          \"ctx.frame()\",\n          \"ctx.aligned_series(column, timeframe='4h')\",\n          \"ctx.feature_series(name)\",\n          \"ctx.option_metric_series(name)\",\n          \"ctx.model_predict_series(model_ref)\"\n        ],\n        \"stepwise\": [\n          \"step.current(column)\",\n          \"step.series(column)\",\n          \"step.window(N)\",\n          \"step.feature_value(name)\",\n          \"step.feature_series(name)\",\n          \"step.model_predict(model_ref)\",\n          \"step.option_metric_series(name)\"\n        ]\n      },\n      \"managed_dependency_only_inputs\": {\n        \"funding\": [\n          \"is_funding_settlement\",\n          \"bars_until_funding_settlement\",\n          \"bars_since_funding_settlement\"\n        ],\n        \"expiry\": [\n          \"is_expiry\",\n          \"bars_until_expiry\",\n          \"bars_since_expiry\"\n        ]\n      },\n      \"not_available\": {\n        \"raw_event_context\": [\n          \"events_df\",\n          \"ctx.events\",\n          \"step.events\"\n        ],\n        \"raw_funding_columns\": [\n          \"funding_rate\"\n        ]\n      },\n      \"event_driven_workflow\": {\n        \"sync_events_when_needed\": \"Use events_sync(...) when the local normalized event store is stale or missing for the target family/symbol.\",\n        \"align_preview_before_authoring\": \"Use events(view='align_preview', ...) to confirm the event-to-anchor contract before writing event-backed feature logic.\",\n        \"dataset_activation_required\": \"Publishing the definition is not enough; run features_dataset(action='build', columns=['cf_name']) before downstream workflows depend on the feature.\"\n      }\n    },\n    \"unsupported_runtime_inputs\": {\n      \"raw_event_context\": [\n        \"events_df\",\n        \"ctx.events\",\n        \"step.events\"\n      ],\n      \"raw_funding_columns\": [\n        \"funding_rate\"\n      ],\n      \"pseudo_vectorized_accessors\": [\n        \"ctx.df\",\n        \"ctx.load(...)\",\n        \"ctx.features\",\n        \"ctx.column(...)\"\n      ],\n      \"guidance\": [\n        \"Use managed event-backed columns such as is_funding_settlement, bars_until_funding_settlement, and bars_since_funding_settlement via depends_on_features.\",\n        \"Publish definition first, then build into managed dataset, then reference from snapshot or downstream workflows.\",\n        \"Use features_custom(action='inspect', view='examples') before writing an event-backed feature from scratch.\"\n      ]\n    },\n    \"authoring_sequence\": [\n      \"features_custom(action='inspect', view='contract')\",\n      \"features_custom(action='inspect', view='examples')\",\n      \"features_custom(action='validate')\",\n      \"features_custom(action='publish')\"\n    ],\n    \"publish_activation_sequence\": [\n      \"features_custom(action='publish')\",\n      \"features_dataset(action='build', columns=['cf_name'])\"\n    ],\n    \"event_backed_runtime_recipe\": [\n      \"events(view='catalog', family='funding')\",\n      \"events_sync(family='funding', scope='incremental', symbol='BTCUSDT')\",\n      \"events(view='align_preview', family='funding', symbol='BTCUSDT')\",\n      \"Use only managed event-backed columns in features_custom depends_on_features.\",\n      \"features_dataset(action='build', columns=['cf_name'])\"\n    ],\n    \"event_runtime_recipes\": {\n      \"funding\": [\n        \"events(view='catalog', family='funding')\",\n        \"events_sync(family='funding', scope='incremental', symbol='BTCUSDT')\",\n        \"events(view='align_preview', family='funding', symbol='BTCUSDT')\",\n        \"Use only managed event-backed columns in features_custom depends_on_features.\",\n        \"features_dataset(action='build', columns=['cf_name'])\"\n      ],\n      \"expiry\": [\n        \"events(view='catalog', family='expiry')\",\n        \"events_sync(family='expiry', scope='incremental', currency='BTC')\",\n        \"events(view='align_preview', family='expiry', symbol='BTCUSDT')\",\n        \"Use only managed event-backed columns in features_custom depends_on_features.\",\n        \"features_dataset(action='build', columns=['cf_name'])\"\n      ]\n    },\n    \"available_managed_event_columns\": {\n      \"funding\": [\n        \"is_funding_settlement\",\n        \"bars_until_funding_settlement\",\n        \"bars_since_funding_settlement\"\n      ],\n      \"expiry\": [\n        \"is_expiry\",\n        \"bars_until_expiry\",\n        \"bars_since_expiry\"\n      ]\n    },\n    \"anti_patterns\": [\n      \"Use compute_series(ctx) or compute_feature(step); do not stop at def compute(...).\",\n      \"Apply cf_ to the feature name, not to the Python function name.\",\n      \"Raw event context such as events_df / ctx.events / step.events is unsupported; depend on managed event-backed columns instead.\",\n      \"Publishing a custom feature does not activate it in the managed dataset; follow with features_dataset(action='build', columns=['cf_name']) unless auto_build_dataset=true is explicit.\"\n    ],\n    \"task_oriented_examples\": {\n      \"vectorized_minimal\": {\n        \"tool\": \"features_custom\",\n        \"purpose\": \"Load the canonical authoring contract before writing code.\",\n        \"example_args\": {\n          \"action\": \"inspect\",\n          \"view\": \"contract\"\n        }\n      },\n      \"stepwise_minimal\": null,\n      \"event_backed_funding\": {\n        \"tool\": \"features_custom\",\n        \"purpose\": \"Validate one funding-settlement event-backed feature using managed event columns.\",\n        \"example_args\": {\n          \"action\": \"validate\",\n          \"name\": \"cf_funding_settlement_gate\",\n          \"description\": \"Funding-settlement event-backed gate built from managed event columns.\",\n          \"code\": \"def compute_feature(step):\\n    is_settlement = step.feature_value('is_funding_settlement')\\n    bars_since = step.feature_value('bars_since_funding_settlement')\\n    if is_settlement is None or bars_since is None:\\n        return None\\n    return 1 if bool(is_settlement) or float(bars_since) <= 1 else 0\\n\",\n          \"symbol\": \"BTCUSDT\",\n          \"timeframe\": \"1h\",\n          \"depends_on_features\": [\n            \"is_funding_settlement\",\n            \"bars_since_funding_settlement\"\n          ],\n          \"lookback_bars\": 1\n        }\n      },\n      \"event_backed_expiry\": {\n        \"tool\": \"features_custom\",\n        \"purpose\": \"Validate one expiry event-backed feature using managed expiry columns.\",\n        \"example_args\": {\n          \"action\": \"validate\",\n          \"name\": \"cf_expiry_proximity_gate\",\n          \"description\": \"Expiry proximity gate from managed expiry columns.\",\n          \"code\": \"def compute_feature(step):\\n    bars_until = step.feature_value('bars_until_expiry')\\n    if bars_until is None:\\n        return None\\n    return 1 if float(bars_until) <= 2 else 0\\n\",\n          \"symbol\": \"BTCUSDT\",\n          \"timeframe\": \"1h\",\n          \"depends_on_features\": [\n            \"bars_until_expiry\"\n          ],\n          \"lookback_bars\": 1\n        }\n      },\n      \"model_backed\": {\n        \"tool\": \"features_custom\",\n        \"purpose\": \"Validate and publish a custom feature definition.\",\n        \"example_args\": {\n          \"action\": \"publish\",\n          \"name\": \"cf_model_feature\",\n          \"description\": \"Minimal model-backed custom feature.\",\n          \"code\": \"def compute_feature(step):\\n    return step.model_predict('btc_profit_regressor')\\n\",\n          \"symbol\": \"BTCUSDT\",\n          \"timeframe\": \"1h\",\n          \"required_columns\": [\n            \"close\"\n          ],\n          \"depends_on_features\": [],\n          \"depends_on_models\": [\n            \"btc_profit_regressor\"\n          ],\n          \"lookback_bars\": 1\n        }\n      },\n      \"cross_symbol_offline_only\": {\n        \"tool\": \"features_custom\",\n        \"purpose\": \"Validate one offline cross-symbol vectorized custom feature.\",\n        \"example_args\": {\n          \"action\": \"validate\",\n          \"name\": \"cf_eth_btc_ratio\",\n          \"description\": \"Compare BTC close to aligned ETH close.\",\n          \"code\": \"import pandas as pd\\n\\ndef compute_series(ctx):\\n    peer = ctx.for_symbol('ETHUSDT')\\n    return pd.Series(ctx.series('close') / peer.aligned_series('close', timeframe='4h')).reset_index(drop=True)\\n\",\n          \"symbol\": \"BTCUSDT\",\n          \"timeframe\": \"1h\",\n          \"required_columns\": [\n            \"close\"\n          ],\n          \"cross_symbol_inputs\": [\n            {\n              \"symbol\": \"ETHUSDT\",\n              \"required_timeframes\": [\n                \"4h\"\n              ],\n              \"depends_on_features\": []\n            }\n          ],\n          \"lookback_bars\": 1\n        }\n      }\n    },\n    \"important_warnings\": [],\n    \"next_recommended_actions\": [\n      \"Use features_custom(action='validate') to smoke-test a draft custom feature before publication.\"\n    ],\n    \"recommended_follow_up_tool\": null,\n    \"state_summary\": {},\n    \"exact_next_call_examples\": [],\n    \"raw_refs\": [],\n    \"raw_tool_hints\": [],\n    \"next_action\": \"Use features_custom(action='validate') to smoke-test a draft custom feature before publication.\"\n  },\n  \"warnings\": [],\n  \"refs\": [],\n  \"error\": null\n}"
+    }
+  ],
+  "structuredContent": {
+    "status": "ok",
+    "message": "Custom feature facade action completed.",
+    "tool_name": "features_custom",
+    "request_id": "20",
+    "correlation_id": "20",
+    "server_session_id": "a5e38bd0a1c14b9a9b2771868d3175d8",
+    "response_generated_at": "2026-04-09T13:10:44.991212+00:00",
+    "data": {
+      "view": "contract",
+      "copy_paste_safe_blocks": {
+        "vectorized": "def compute_series(ctx):\n    return ctx.series('close')\n",
+        "stepwise": "def compute_feature(step):\n    return step.current('close')\n"
+      },
+      "contract": {
+        "entrypoint": "def compute_series(ctx): ... or def compute_feature(step): ...",
+        "allowed_return_types": [
+          "int",
+          "float",
+          "bool",
+          "str",
+          "None"
+        ],
+        "required_name_prefix": "cf_",
+        "tool_name_style": "dotted_mcp",
+        "fixed_entrypoint_name": "compute_series",
+        "preferred_entrypoint_name": "compute_series",
+        "fallback_entrypoint_name": "compute_feature",
+        "supported_entrypoint_names": [
+          "compute_series",
+          "compute_feature"
+        ],
+        "required_fields_by_action": {
+          "validate": [
+            "description",
+            "code",
+            "symbol",
+            "timeframe"
+          ],
+          "publish": [
+            "name",
+            "description",
+            "code",
+            "symbol",
+            "timeframe"
+          ],
+          "delete": [
+            "name"
+          ]
+        },
+        "minimal_validate_payload": {
+          "description": "Minimal custom feature.",
+          "code": "def compute_series(ctx):\n    return ctx.series('close')\n",
+          "symbol": "BTCUSDT",
+          "timeframe": "1h"
+        },
+        "minimal_publish_payload": {
+          "name": "cf_example_feature",
+          "description": "Minimal custom feature.",
+          "code": "def compute_series(ctx):\n    return ctx.series('close')\n",
+          "symbol": "BTCUSDT",
+          "timeframe": "1h"
+        },
+        "runtime_data_matrix": {
+          "direct_runtime_inputs": {
+            "vectorized": [
+              "ctx.series(column)",
+              "ctx.frame()",
+              "ctx.aligned_series(column, timeframe='4h')",
+              "ctx.feature_series(name)",
+              "ctx.option_metric_series(name)",
+              "ctx.model_predict_series(model_ref)"
+            ],
+            "stepwise": [
+              "step.current(column)",
+              "step.series(column)",
+              "step.window(N)",
+              "step.feature_value(name)",
+              "step.feature_series(name)",
+              "step.model_predict(model_ref)",
+              "step.option_metric_series(name)"
+            ]
+          },
+          "managed_dependency_only_inputs": {
+            "funding": [
+              "is_funding_settlement",
+              "bars_until_funding_settlement",
+              "bars_since_funding_settlement"
+            ],
+            "expiry": [
+              "is_expiry",
+              "bars_until_expiry",
+              "bars_since_expiry"
+            ]
+          },
+          "not_available": {
+            "raw_event_context": [
+              "events_df",
+              "ctx.events",
+              "step.events"
+            ],
+            "raw_funding_columns": [
+              "funding_rate"
+            ]
+          },
+          "event_driven_workflow": {
+            "sync_events_when_needed": "Use events_sync(...) when the local normalized event store is stale or missing for the target family/symbol.",
+            "align_preview_before_authoring": "Use events(view='align_preview', ...) to confirm the event-to-anchor contract before writing event-backed feature logic.",
+            "dataset_activation_required": "Publishing the definition is not enough; run features_dataset(action='build', columns=['cf_name']) before downstream workflows depend on the feature."
+          }
+        },
+        "managed_event_columns": {
+          "funding": [
+            "is_funding_settlement",
+            "bars_until_funding_settlement",
+            "bars_since_funding_settlement"
+          ],
+          "expiry": [
+            "is_expiry",
+            "bars_until_expiry",
+            "bars_since_expiry"
+          ]
+        },
+        "publish_then_build_sequence": [
+          "features_custom(action='publish')",
+          "features_dataset(action='build', columns=['cf_name'])"
+        ],
+        "event_runtime_recipes": {
+          "funding": [
+            "events(view='catalog', family='funding')",
+            "events_sync(family='funding', scope='incremental', symbol='BTCUSDT')",
+            "events(view='align_preview', family='funding', symbol='BTCUSDT')",
+            "Use only managed event-backed columns in features_custom depends_on_features.",
+            "features_dataset(action='build', columns=['cf_name'])"
+          ],
+          "expiry": [
+            "events(view='catalog', family='expiry')",
+            "events_sync(family='expiry', scope='incremental', currency='BTC')",
+            "events(view='align_preview', family='expiry', symbol='BTCUSDT')",
+            "Use only managed event-backed columns in features_custom depends_on_features.",
+            "features_dataset(action='build', columns=['cf_name'])"
+          ]
+        },
+        "anti_patterns": [
+          "Use compute_series(ctx) or compute_feature(step); do not stop at def compute(...).",
+          "Apply cf_ to the feature name, not to the Python function name.",
+          "Raw event context such as events_df / ctx.events / step.events is unsupported; depend on managed event-backed columns instead.",
+          "Publishing a custom feature does not activate it in the managed dataset; follow with features_dataset(action='build', columns=['cf_name']) unless auto_build_dataset=true is explicit."
+        ],
+        "name_prefix_scope": "feature_name",
+        "recommended_flow": [
+          "features_custom",
+          "models_to_feature",
+          "features_custom",
+          "features_custom",
+          "features_dataset",
+          "features_catalog"
+        ],
+        "canonical_tool_examples": [
+          {
+            "tool": "features_custom",
+            "purpose": "Load the canonical authoring contract before writing code.",
+            "example_args": {
+              "action": "inspect",
+              "view": "contract"
+            }
+          },
+          {
+            "tool": "features_custom",
+            "purpose": "Smoke-test a vectorized custom feature without publishing it.",
+            "example_args": {
+              "action": "validate",
+              "name": "cf_example_feature",
+              "description": "Minimal example custom feature.",
+              "code": "import pandas as pd\n\ndef compute_series(ctx):\n    return pd.Series(ctx.series('close')).reset_index(drop=True)\n",
+              "symbol": "BTCUSDT",
+              "timeframe": "1h",
+              "required_columns": [
+                "close"
+              ],
+              "lookback_bars": 1
+            }
+          },
+          {
+            "tool": "features_custom",
+            "purpose": "Validate one anchor-aligned multi-timeframe vectorized custom feature.",
+            "example_args": {
+              "action": "validate",
+              "name": "cf_4h_close_aligned",
+              "description": "Anchor-aligned 4h close projected onto the 1h anchor frame.",
+              "code": "import pandas as pd\n\ndef compute_series(ctx):\n    return pd.Series(ctx.aligned_series('close', timeframe='4h')).reset_index(drop=True)\n",
+              "symbol": "BTCUSDT",
+              "timeframe": "1h",
+              "required_columns": [
+                "close"
+              ],
+              "required_timeframes": [
+                "4h"
+              ],
+              "lookback_bars": 1
+            }
+          },
+          {
+            "tool": "features_custom",
+            "purpose": "Validate one lower-timeframe aggregation feature that resamples 5m candles into one 1h anchor-aligned value.",
+            "example_args": {
+              "action": "validate",
+              "name": "cf_micro_imbalance_1h",
+              "description": "Aggregate 5m signed-volume imbalance into one 1h anchor-aligned series.",
+              "code": "import pandas as pd\n\nfrom app.features.custom.lower_timeframe import aggregate_completed_lower_timeframe\n\ndef compute_series(ctx):\n    frame = ctx.frame(timeframe='5m')[['open', 'high', 'low', 'close', 'volume', 'timestamp_utc']].copy()\n    def _aggregate(lower_frame):\n        indexed = lower_frame.set_index('timestamp_utc')\n        rng = (indexed['high'] - indexed['low']).replace(0, pd.NA)\n        signed_range = (indexed['close'] - indexed['open']) / rng\n        signed_volume = signed_range * indexed['volume']\n        hourly_signed = signed_volume.resample('1h', label='right', closed='left').sum()\n        hourly_volume = indexed['volume'].resample('1h', label='right', closed='left').sum().replace(0, pd.NA)\n        return hourly_signed / hourly_volume\n    return aggregate_completed_lower_timeframe(\n        anchor_frame=ctx.frame(),\n        lower_frame=frame,\n        lower_timeframe='5m',\n        anchor_timeframe='1h',\n        feature_name='cf_micro_imbalance_1h',\n        aggregator=_aggregate,\n    )\n",
+              "symbol": "BTCUSDT",
+              "timeframe": "1h",
+              "required_columns": [
+                "open",
+                "high",
+                "low",
+                "close",
+                "volume",
+                "timestamp_utc"
+              ],
+              "required_timeframes": [
+                "5m"
+              ],
+              "lookback_bars": 1
+            }
+          },
+          {
+            "tool": "features_custom",
+            "purpose": "Validate one vectorized dependency-driven custom feature.",
+            "example_args": {
+              "action": "validate",
+              "name": "cf_rsi_copy_vectorized",
+              "description": "Copy an already-computed dependency feature through the vectorized contract.",
+              "code": "import pandas as pd\n\ndef compute_series(ctx):\n    return pd.Series(ctx.feature_series('rsi_1')).reset_index(drop=True)\n",
+              "symbol": "BTCUSDT",
+              "timeframe": "1h",
+              "depends_on_features": [
+                "rsi_1"
+              ],
+              "lookback_bars": 1
+            }
+          },
+          {
+            "tool": "features_custom",
+            "purpose": "Validate one offline cross-symbol vectorized custom feature.",
+            "example_args": {
+              "action": "validate",
+              "name": "cf_eth_btc_ratio",
+              "description": "Compare BTC close to aligned ETH close.",
+              "code": "import pandas as pd\n\ndef compute_series(ctx):\n    peer = ctx.for_symbol('ETHUSDT')\n    return pd.Series(ctx.series('close') / peer.aligned_series('close', timeframe='4h')).reset_index(drop=True)\n",
+              "symbol": "BTCUSDT",
+              "timeframe": "1h",
+              "required_columns": [
+                "close"
+              ],
+              "cross_symbol_inputs": [
+                {
+                  "symbol": "ETHUSDT",
+                  "required_timeframes": [
+                    "4h"
+                  ],
+                  "depends_on_features": []
+                }
+              ],
+              "lookback_bars": 1
+            }
+          },
+          {
+            "tool": "features_custom",
+            "purpose": "Validate a step-wise feature that depends on managed feature columns.",
+            "example_args": {
+              "action": "validate",
+              "name": "cf_rsi_regime_gate",
+              "description": "Example dependency-driven custom feature.",
+              "code": "def compute_feature(step):\n    rsi = step.feature_value('rsi_1')\n    if rsi is None:\n        return None\n    return 1 if float(rsi) >= 55 else 0\n",
+              "symbol": "BTCUSDT",
+              "timeframe": "1h",
+              "depends_on_features": [
+                "rsi_1"
+              ],
+              "required_columns": [
+                "close"
+              ],
+              "lookback_bars": 1
+            }
+          },
+          {
+            "tool": "features_custom",
+            "purpose": "Validate a step-wise feature that reads the hour dependency through the canonical dependency accessor.",
+            "example_args": {
+              "action": "validate",
+              "name": "cf_hour_gate",
+              "description": "Gate on the managed hour feature.",
+              "code": "def compute_feature(step):\n    hour = step.feature_value('hour')\n    if hour is None:\n        return None\n    return 1 if int(hour) in {6, 7, 8} else 0\n",
+              "symbol": "BTCUSDT",
+              "timeframe": "1h",
+              "depends_on_features": [
+                "hour"
+              ],
+              "lookback_bars": 1
+            }
+          },
+          {
+            "tool": "features_custom",
+            "purpose": "Validate a step-wise feature that consumes one published custom-feature dependency.",
+            "example_args": {
+              "action": "validate",
+              "name": "cf_peer_gate",
+              "description": "Use one custom-feature dependency through step.feature_value(...).",
+              "code": "def compute_feature(step):\n    value = step.feature_value('cf_peer_regime')\n    return None if value is None else float(value)\n",
+              "symbol": "BTCUSDT",
+              "timeframe": "1h",
+              "depends_on_features": [
+                "cf_peer_regime"
+              ],
+              "lookback_bars": 1
+            }
+          },
+          {
+            "tool": "features_custom",
+            "purpose": "Validate one vectorized option-metrics feature through the canonical runtime accessor.",
+            "example_args": {
+              "action": "validate",
+              "name": "cf_opt_rr25_delta_6h",
+              "description": "Six-hour rr25 delta built from the option metrics runtime.",
+              "code": "from app.options_metrics.series import time_window_delta\n\n\ndef compute_series(ctx):\n    base = ctx.option_metric_series('rr25')\n    open_times = ctx.series('open_time')\n    return time_window_delta(series=base, anchor_open_times_ms=open_times, horizon_ms=6 * 60 * 60 * 1000)\n",
+              "symbol": "BTCUSDT",
+              "timeframe": "1h",
+              "lookback_bars": 8
+            }
+          },
+          {
+            "tool": "features_custom",
+            "purpose": "Validate one funding-settlement event-backed feature using managed event columns.",
+            "example_args": {
+              "action": "validate",
+              "name": "cf_funding_settlement_gate",
+              "description": "Funding-settlement event-backed gate built from managed event columns.",
+              "code": "def compute_feature(step):\n    is_settlement = step.feature_value('is_funding_settlement')\n    bars_since = step.feature_value('bars_since_funding_settlement')\n    if is_settlement is None or bars_since is None:\n        return None\n    return 1 if bool(is_settlement) or float(bars_since) <= 1 else 0\n",
+              "symbol": "BTCUSDT",
+              "timeframe": "1h",
+              "depends_on_features": [
+                "is_funding_settlement",
+                "bars_since_funding_settlement"
+              ],
+              "lookback_bars": 1
+            }
+          },
+          {
+            "tool": "features_custom",
+            "purpose": "Validate one expiry event-backed feature using managed expiry columns.",
+            "example_args": {
+              "action": "validate",
+              "name": "cf_expiry_proximity_gate",
+              "description": "Expiry proximity gate from managed expiry columns.",
+              "code": "def compute_feature(step):\n    bars_until = step.feature_value('bars_until_expiry')\n    if bars_until is None:\n        return None\n    return 1 if float(bars_until) <= 2 else 0\n",
+              "symbol": "BTCUSDT",
+              "timeframe": "1h",
+              "depends_on_features": [
+                "bars_until_expiry"
+              ],
+              "lookback_bars": 1
+            }
+          },
+          {
+            "tool": "features_custom",
+            "purpose": "Validate one synthetic funding proxy that is honestly named as a price-only proxy.",
+            "example_args": {
+              "action": "validate",
+              "name": "cf_synthetic_funding_proxy",
+              "description": "Synthetic price-only proxy for funding stress; not an event-backed funding feature.",
+              "code": "def compute_series(ctx):\n    close = ctx.series('close')\n    returns = close.pct_change()\n    return (returns - returns.rolling(24).mean()) / returns.rolling(24).std()\n",
+              "symbol": "BTCUSDT",
+              "timeframe": "1h",
+              "required_columns": [
+                "close"
+              ],
+              "lookback_bars": 24
+            }
+          },
+          {
+            "tool": "models_to_feature",
+            "purpose": "Project one immutable model version into a ready-to-validate custom-feature payload.",
+            "example_args": {
+              "action": "scaffold",
+              "model_id": "btc_profit_regressor",
+              "version": "20260315101500-ab12cd"
+            }
+          },
+          {
+            "tool": "features_custom",
+            "purpose": "Validate and publish a custom feature definition.",
+            "example_args": {
+              "action": "publish",
+              "name": "cf_model_feature",
+              "description": "Minimal model-backed custom feature.",
+              "code": "def compute_feature(step):\n    return step.model_predict('btc_profit_regressor')\n",
+              "symbol": "BTCUSDT",
+              "timeframe": "1h",
+              "required_columns": [
+                "close"
+              ],
+              "depends_on_features": [],
+              "depends_on_models": [
+                "btc_profit_regressor"
+              ],
+              "lookback_bars": 1
+            }
+          },
+          {
+            "tool": "models_to_feature",
+            "purpose": "Publish a model-backed custom feature with automatic runtime wiring.",
+            "example_args": {
+              "action": "publish",
+              "model_id": "btc_regime_confidence",
+              "version": "20260315101500-ab12cd",
+              "feature_name": "cf_btc_regime_confidence",
+              "build_dataset": true
+            }
+          }
+        ],
+        "stepwise_supported_accessors": [
+          {
+            "name": "step.current(column, timeframe=None)",
+            "returns": "scalar_frame_value",
+            "dependency_accessor": false,
+            "description": "Return one scalar from raw timeframe frame columns only."
+          },
+          {
+            "name": "step.series(column, timeframe=None)",
+            "returns": "frame_series",
+            "dependency_accessor": false,
+            "description": "Return one history series from raw timeframe frame columns only."
+          },
+          {
+            "name": "step.window(rows, timeframe=None)",
+            "returns": "frame_window",
+            "dependency_accessor": false,
+            "description": "Return one trailing frame window from raw timeframe data only."
+          },
+          {
+            "name": "step.feature_value(name)",
+            "returns": "scalar_dependency_value",
+            "dependency_accessor": true,
+            "description": "Return one scalar from declared or reused dependency features."
+          },
+          {
+            "name": "step.feature_series(name)",
+            "returns": "dependency_series",
+            "dependency_accessor": true,
+            "description": "Return one history series from declared or reused dependency features."
+          },
+          {
+            "name": "step.option_metric_value(name)",
+            "returns": "scalar_option_metric_value",
+            "dependency_accessor": false,
+            "description": "Return one scalar from raw anchor-aligned option metrics such as rr25 or bf25."
+          },
+          {
+            "name": "step.option_metric_series(name)",
+            "returns": "option_metric_series",
+            "dependency_accessor": false,
+            "description": "Return one history series from raw anchor-aligned option metrics only."
+          },
+          {
+            "name": "step.for_symbol(symbol)",
+            "returns": "symbol_scoped_view",
+            "dependency_accessor": false,
+            "description": "Return one explicit symbol-scoped step view for offline cross-symbol reads."
+          }
+        ],
+        "stepwise_access_rules": [
+          "step.current/step.series/step.window read raw timeframe frame columns only.",
+          "step.feature_value/step.feature_series read only declared or reused depends_on_features dependencies.",
+          "step.option_metric_value/step.option_metric_series read raw anchor-aligned option metrics only: iv_call25, iv_put25, rr25, bf25.",
+          "Managed feature columns such as hour, dow, rsi_1, cl_1h, or cf_* remain dependency features when declared through depends_on_features; they are not exposed through step.current(...).",
+          "step.for_symbol(symbol) keeps the same contract split: raw frame access through current/series/window, dependency access through feature_value/feature_series."
+        ],
+        "vectorized_supported_accessors": [
+          {
+            "name": "ctx.frame(timeframe=None)",
+            "returns": "raw_frame",
+            "anchor_aligned": false,
+            "description": "Return the raw frame for one timeframe without anchor alignment."
+          },
+          {
+            "name": "ctx.series(column, timeframe=None)",
+            "returns": "raw_series",
+            "anchor_aligned": false,
+            "description": "Return the raw column series for one timeframe without anchor alignment."
+          },
+          {
+            "name": "ctx.aligned_frame(timeframe, columns=None)",
+            "returns": "anchor_aligned_frame",
+            "anchor_aligned": true,
+            "description": "Return one backward-asof aligned frame with rows matching the current anchor calculation window."
+          },
+          {
+            "name": "ctx.aligned_series(column, timeframe)",
+            "returns": "anchor_aligned_series",
+            "anchor_aligned": true,
+            "description": "Return one backward-asof aligned series with rows matching the current anchor calculation window."
+          },
+          {
+            "name": "ctx.feature_series(name)",
+            "returns": "anchor_aligned_dependency_series",
+            "anchor_aligned": true,
+            "description": "Return one already-computed dependency feature aligned to the anchor frame."
+          },
+          {
+            "name": "ctx.option_metric_series(name)",
+            "returns": "anchor_aligned_series",
+            "anchor_aligned": true,
+            "description": "Return one anchor-aligned raw Deribit option-metric series such as rr25 or bf25."
+          },
+          {
+            "name": "ctx.for_symbol(symbol)",
+            "returns": "symbol_scoped_view",
+            "anchor_aligned": false,
+            "description": "Return one explicit symbol-scoped view for offline cross-symbol raw/aligned/feature reads."
+          },
+          {
+            "name": "ctx.decision_time_ms_series()",
+            "returns": "anchor_aligned_series",
+            "anchor_aligned": true,
+            "description": "Return the decision-time series aligned to the anchor frame."
+          },
+          {
+            "name": "ctx.model_predict_series(model_ref, output='default', dtype=None)",
+            "returns": "anchor_aligned_series",
+            "anchor_aligned": true,
+            "description": "Run vectorized model-backed inference aligned to the anchor frame."
+          },
+          {
+            "name": "ctx.model_info(model_ref)",
+            "returns": "model_metadata",
+            "anchor_aligned": false,
+            "description": "Return model metadata for one declared model dependency."
+          }
+        ],
+        "vectorized_unsupported_accessors": [
+          "ctx[...]",
+          "ctx.load(...)",
+          "ctx.df",
+          "ctx.features",
+          "ctx.column(...)",
+          "ctx.get_symbol_df(...)",
+          "ctx.datasets"
+        ],
+        "vectorized_alignment_rules": [
+          "ctx.frame(...) and ctx.series(...) are raw timeframe readers and may return non-anchor row counts.",
+          "Use ctx.aligned_frame(...) or ctx.aligned_series(...) when multi-timeframe data must match the current anchor calculation window row count.",
+          "Lower-timeframe raw reads such as ctx.frame(timeframe='5m') require required_timeframes=['5m'], explicit timestamp_utc handling, completed-bin aggregation, and alignment to the first honest anchor row.",
+          "ctx.feature_series(...) always returns dependency features aligned to the anchor frame.",
+          "ctx.option_metric_series(name) exposes only raw option-metric series: iv_call25, iv_put25, rr25, bf25.",
+          "ctx.for_symbol(symbol).aligned_series(...) uses backward-asof alignment against context.source_frame for the current build or validation window and requires an explicit cross_symbol_inputs declaration.",
+          "Lower-timeframe aggregates must be aligned to the first anchor row where the completed bin is fully usable, not blindly reindexed to ctx.decision_time_ms_series()."
+        ],
+        "cross_symbol_input_schema": {
+          "fields": [
+            "symbol",
+            "required_timeframes",
+            "depends_on_features"
+          ],
+          "example": {
+            "symbol": "ETHUSDT",
+            "required_timeframes": [
+              "1h",
+              "4h"
+            ],
+            "depends_on_features": [
+              "rsi_1",
+              "cf_peer_regime"
+            ]
+          },
+          "notes": [
+            "Declare every external symbol explicitly before calling ctx.for_symbol(...) or step.for_symbol(...).",
+            "External feature dependencies are read from already-built managed feature datasets on the anchor timeframe.",
+            "Cross-symbol custom features are offline-only in v1 and are rejected by live signal runtime."
+          ]
+        },
+        "not_supported_inputs": {
+          "raw_event_context": [
+            "events_df",
+            "ctx.events",
+            "step.events"
+          ],
+          "raw_funding_columns": [
+            "funding_rate"
+          ],
+          "pseudo_vectorized_accessors": [
+            "ctx.df",
+            "ctx.load(...)",
+            "ctx.features",
+            "ctx.column(...)"
+          ],
+          "guidance": [
+            "Use managed event-backed columns such as is_funding_settlement, bars_until_funding_settlement, and bars_since_funding_settlement via depends_on_features.",
+            "Publish definition first, then build into managed dataset, then reference from snapshot or downstream workflows.",
+            "Use features_custom(action='inspect', view='examples') before writing an event-backed feature from scratch."
+          ]
+        },
+        "common_mistakes": [
+          "Use the facade tool features_custom(action='inspect'|'validate'|'publish'), not hidden primitive tool names.",
+          "Prefer compute_series(ctx) for rolling/statistical features; use compute_feature(step) only when logic is genuinely step-dependent.",
+          "Apply the cf_ prefix to the feature name, not to the Python function name.",
+          "Declare runtime-managed model dependencies through depends_on_models when using step.model_predict(...).",
+          "Do not send required_features to features.custom.* tools; the valid fields are depends_on_features and required_columns.",
+          "Do not guess model-backed dependencies by hand; inspect models_registry(action='inspect', view='version_detail').feature_runtime_requirements and copy the derived template.",
+          "Prefer models_to_feature(action='scaffold') when you want a copy-paste-ready model-backed feature payload instead of wiring fields manually.",
+          "Inspect models_registry(action='inspect', view='version_detail') before using a model from a custom feature, especially when deployability or required feature inputs matter.",
+          "step.series(column) returns the full history controlled by lookback_bars; its second argument is timeframe (e.g. '4h'), NOT a row count. To get N recent rows use step.window(N) or step.series(column).tail(N).",
+          "compute_series(ctx) must return one pandas.Series aligned 1:1 to the anchor frame; returning a scalar, list, or wrong-length series is invalid.",
+          "Lower-timeframe reads such as ctx.frame(timeframe='5m') are supported only after declaring required_timeframes=['5m']; raw lower-timeframe reads are not anchor-aligned until you aggregate completed bins and align them to the first honest anchor row.",
+          "Custom-feature values persisted on an anchor dataset row are keyed by the anchor row open_time. A value is causal for that row only when every dependency is fully available no later than that anchor open.",
+          "Lower-timeframe aggregates must be aligned to the first anchor row where the completed bin is fully usable, not blindly reindexed to ctx.decision_time_ms_series().",
+          "compute_feature(step) does not expose ctx-only vectorized fields such as decision_time_ms_series; use compute_series(ctx) for vectorized time-aware logic.",
+          "ctx.load(...), ctx.df, ctx.features, and ctx.column(...) are not part of the vectorized contract. Use the explicit compute_series(ctx) accessors from features_custom(action='inspect', view='contract').",
+          "Raw event stores are not injected into custom feature code. events_df / ctx.events / step.events are unsupported; use managed event columns such as is_funding_settlement or bars_until_funding_settlement via depends_on_features.",
+          "ctx.series(column, timeframe='4h') is a raw higher-timeframe reader and is not anchor-aligned. Use ctx.aligned_series(column, timeframe='4h') when row counts must match the current anchor calculation window.",
+          "Cross-symbol access is not implicit. Declare external symbols in cross_symbol_inputs, then use ctx.for_symbol('ETHUSDT') or step.for_symbol('ETHUSDT').",
+          "step.current(name) and step.series(name) are raw timeframe accessors only. If a value was declared in depends_on_features, use step.feature_value(name) or step.feature_series(name) instead.",
+          "Do not read metrics_mini.csv directly inside published custom features. Use ctx.option_metric_series(name) or step.option_metric_series(name) so live signal runtime can supply the data safely.",
+          "Publishing a custom feature does not rebuild managed datasets automatically. After publish, run features_dataset(action='build', columns=['cf_name']) or publish with auto_build_dataset=true when you want an explicit opt-in rebuild."
+        ],
+        "notes": [
+          "Custom feature code runs in a trusted subprocess using the server Python environment.",
+          "Imports from env6 such as numpy, pandas, and talib are allowed when available to the server runtime.",
+          "compute_series(ctx) is the preferred fast path for non-model custom features and should return the full anchor-aligned series in one call.",
+          "compute_feature(step) remains supported for backward compatibility and for model-backed or truly step-dependent logic.",
+          "Use step.current/series/window/feature_value/feature_series to inspect source and dependency history.",
+          "Use ctx.frame/series/aligned_frame/aligned_series/feature_series/option_metric_series/decision_time_ms_series for vectorized custom features.",
+          "Custom-feature values persisted on an anchor dataset row are keyed by the anchor row open_time. A value is causal for that row only when every dependency is fully available no later than that anchor open.",
+          "Backtest and live entry eligibility may start after the anchor bar closes, but persisted anchor-row feature values must still be honest at the row open unless an explicitly different storage contract is documented.",
+          "Use step.model_predict(model_ref, output='default') and step.model_info(model_ref) for runtime-managed trained models.",
+          "Read models_registry(action='inspect', view='version_detail') to inspect a model's input_contract, output_contract, deployability_report, artifact summaries, and retrain metadata before wiring it into a feature.",
+          "For model-backed features, depends_on_features declares managed feature columns required by runtime inference; required_columns declares raw OHLCV columns such as close, open, high, low, or volume.",
+          "Use step.feature_value(name) / step.feature_series(name) for depends_on_features dependencies. step.current(name) reads timeframe frame columns and is not a substitute for dependency features.",
+          "Managed features such as hour, dow, rsi_1, cl_1h, and cf_* remain dependency features when declared through depends_on_features; they are not exposed through step.current(name).",
+          "Field required_features does not exist in the custom-feature MCP contract. Use depends_on_features instead.",
+          "If step.model_predict(...) depends on runtime feature inputs, declare those feature columns in depends_on_features so feature runtime inference can rebuild them.",
+          "Vectorized compute_series(ctx) supports model-backed inference through ctx.model_predict_series(...).",
+          "ctx.frame(...) and ctx.series(...) are raw readers. They can return non-anchor row counts for higher timeframes.",
+          "Lower-timeframe vectorized reads such as ctx.frame(timeframe='5m') are also raw readers. Declare required_timeframes for the source timeframe, convert timestamp_utc into a DatetimeIndex when needed, aggregate completed bins, then align them to the first honest anchor row.",
+          "Lower-timeframe aggregates must be aligned to the first anchor row where the completed bin is fully usable, not blindly reindexed to ctx.decision_time_ms_series().",
+          "ctx.aligned_frame(...) and ctx.aligned_series(...) are the canonical anchor-aligned accessors for higher-timeframe vectorized logic and always align to the current anchor calculation window.",
+          "Use ctx.option_metric_series(name) or step.option_metric_series(name) for raw Deribit option metrics such as iv_call25, iv_put25, rr25, and bf25.",
+          "Funding / expiry event families are available through managed event-backed feature columns, not through raw events_df inside custom feature code.",
+          "Use ctx.for_symbol(symbol) / step.for_symbol(symbol) for offline cross-symbol reads after declaring the symbol under cross_symbol_inputs.",
+          "External-symbol feature_series(...) reads already-built managed feature datasets for that symbol on the anchor timeframe and aligns them back to the anchor frame.",
+          "Cross-symbol custom features are offline-only in v1. Live signal runtime and model-backed live feature inference reject them explicitly.",
+          "Model-backed validation reuses already-built managed feature columns when available; if validation is slow or times out, prefer lower wait modes and inspect the normalized operation diagnostics returned by features_custom(action='validate')/publish.",
+          "When a custom-feature operation fails, inspect the inline logs returned by features_custom(action='validate')/publish before changing the payload.",
+          "Network access and filesystem side effects are forbidden by contract even though v1 does not OS-sandbox them.",
+          "Historical liquidation-dependent features require a real datasource under artifacts/research_data; validation and publish are blocked when that source is absent."
+        ],
+        "stepwise_rewrite_examples": {
+          "dependency_feature_access": {
+            "anti_example": {
+              "code": "def compute_feature(step):\n    return step.current('cl_1h')\n",
+              "why_invalid": "step.current(...) reads raw timeframe columns, not declared dependency features."
+            },
+            "correct_example": {
+              "code": "def compute_feature(step):\n    return step.feature_value('cl_1h')\n",
+              "why_valid": "step.feature_value(...) reads the managed dependency feature declared under depends_on_features."
+            }
+          }
+        },
+        "cross_symbol_rewrite_examples": {
+          "stepwise": {
+            "anti_example": {
+              "code": "def compute_feature(step):\n    peer = step.for_symbol(target_symbol)\n    return peer.current('close')\n",
+              "why_invalid": "v1 requires a declared string-literal symbol in cross_symbol_inputs."
+            },
+            "correct_example": {
+              "code": "def compute_feature(step):\n    peer = step.for_symbol('ETHUSDT')\n    return peer.current('close')\n",
+              "cross_symbol_inputs": [
+                {
+                  "symbol": "ETHUSDT",
+                  "required_timeframes": [
+                    "1h"
+                  ],
+                  "depends_on_features": []
+                }
+              ]
+            }
+          },
+          "vectorized": {
+            "anti_example": {
+              "code": "def compute_series(ctx):\n    peer = ctx.for_symbol(target_symbol)\n    return peer.series('close')\n",
+              "why_invalid": "v1 requires a declared string-literal symbol in cross_symbol_inputs."
+            },
+            "correct_example": {
+              "code": "import pandas as pd\n\ndef compute_series(ctx):\n    peer = ctx.for_symbol('ETHUSDT')\n    return pd.Series(peer.series('close')).reset_index(drop=True)\n",
+              "cross_symbol_inputs": [
+                {
+                  "symbol": "ETHUSDT",
+                  "required_timeframes": [
+                    "1h"
+                  ],
+                  "depends_on_features": []
+                }
+              ]
+            }
+          }
+        }
+      },
+      "canonical_block": {
+        "preferred_entrypoint": "compute_series(ctx)",
+        "alternate_entrypoint": "compute_feature(step)",
+        "cross_symbol_return_type": "ctx.for_symbol(...) returns one symbol-scoped view object, not a pandas.DataFrame.",
+        "time_alignment_rule": "Use series(...) for raw reads and aligned_series(...) when the result must stay 1:1 with the current anchor window.",
+        "lower_timeframe_rule": "For lower-timeframe raw reads such as 5m->1h, declare required_timeframes=['5m'], aggregate completed bins via timestamp_utc/DatetimeIndex, then align to the first honest anchor row.",
+        "cross_symbol_rule": "Use string-literal symbols in for_symbol(...) and declare them under cross_symbol_inputs.",
+        "row_count_invariant": "compute_series(ctx) must return exactly one row per current anchor row.",
+        "publish_build_rule": "Publishing a custom feature does not activate it in managed datasets. Follow publish with features_dataset(action='build', columns=['cf_name']) or opt into auto_build_dataset=true.",
+        "anchor_storage_rule": "Custom-feature values persisted on an anchor dataset row are keyed by the anchor row open_time. A value is causal for that row only when every dependency is fully available no later than that anchor open.",
+        "causal_lower_timeframe_rule": "Lower-timeframe aggregates must be aligned to the first anchor row where the completed bin is fully usable, not blindly reindexed to ctx.decision_time_ms_series()."
+      },
+      "contract_quick_fixes": [
+        "Do not send required_features to features.custom.* tools; the valid fields are depends_on_features and required_columns.",
+        "Lower-timeframe reads such as ctx.frame(timeframe='5m') are supported only after declaring required_timeframes=['5m']; raw lower-timeframe reads are not anchor-aligned until you aggregate completed bins and align them to the first honest anchor row.",
+        "Lower-timeframe aggregates must be aligned to the first anchor row where the completed bin is fully usable, not blindly reindexed to ctx.decision_time_ms_series().",
+        "compute_feature(step) does not expose ctx-only vectorized fields such as decision_time_ms_series; use compute_series(ctx) for vectorized time-aware logic.",
+        "step.current(name) and step.series(name) are raw timeframe accessors only. If a value was declared in depends_on_features, use step.feature_value(name) or step.feature_series(name) instead.",
+        "Publishing a custom feature does not rebuild managed datasets automatically. After publish, run features_dataset(action='build', columns=['cf_name']) or publish with auto_build_dataset=true when you want an explicit opt-in rebuild.",
+        "Use ctx.frame/series/aligned_frame/aligned_series/feature_series/option_metric_series/decision_time_ms_series for vectorized custom features.",
+        "Use step.feature_value(name) / step.feature_series(name) for depends_on_features dependencies. step.current(name) reads timeframe frame columns and is not a substitute for dependency features.",
+        "Managed features such as hour, dow, rsi_1, cl_1h, and cf_* remain dependency features when declared through depends_on_features; they are not exposed through step.current(name).",
+        "Field required_features does not exist in the custom-feature MCP contract. Use depends_on_features instead.",
+        "Lower-timeframe aggregates must be aligned to the first anchor row where the completed bin is fully usable, not blindly reindexed to ctx.decision_time_ms_series()."
+      ],
+      "expected_entrypoints": [
+        "compute_series",
+        "compute_feature"
+      ],
+      "required_fields_by_action": {
+        "validate": [
+          "description",
+          "code",
+          "symbol",
+          "timeframe"
+        ],
+        "publish": [
+          "name",
+          "description",
+          "code",
+          "symbol",
+          "timeframe"
+        ],
+        "delete": [
+          "name"
+        ]
+      },
+      "minimal_validate_payload": {
+        "description": "Minimal custom feature.",
+        "code": "def compute_series(ctx):\n    return ctx.series('close')\n",
+        "symbol": "BTCUSDT",
+        "timeframe": "1h"
+      },
+      "minimal_publish_payload": {
+        "name": "cf_example_feature",
+        "description": "Minimal custom feature.",
+        "code": "def compute_series(ctx):\n    return ctx.series('close')\n",
+        "symbol": "BTCUSDT",
+        "timeframe": "1h"
+      },
+      "runtime_available_inputs": {
+        "vectorized": [
+          "ctx.series(...)",
+          "ctx.frame()",
+          "ctx.aligned_series(...)",
+          "ctx.feature_series(...)"
+        ],
+        "stepwise": [
+          "step.current(...)",
+          "step.series(...)",
+          "step.feature_value(...)",
+          "step.feature_series(...)"
+        ]
+      },
+      "runtime_data_matrix": {
+        "direct_runtime_inputs": {
+          "vectorized": [
+            "ctx.series(column)",
+            "ctx.frame()",
+            "ctx.aligned_series(column, timeframe='4h')",
+            "ctx.feature_series(name)",
+            "ctx.option_metric_series(name)",
+            "ctx.model_predict_series(model_ref)"
+          ],
+          "stepwise": [
+            "step.current(column)",
+            "step.series(column)",
+            "step.window(N)",
+            "step.feature_value(name)",
+            "step.feature_series(name)",
+            "step.model_predict(model_ref)",
+            "step.option_metric_series(name)"
+          ]
+        },
+        "managed_dependency_only_inputs": {
+          "funding": [
+            "is_funding_settlement",
+            "bars_until_funding_settlement",
+            "bars_since_funding_settlement"
+          ],
+          "expiry": [
+            "is_expiry",
+            "bars_until_expiry",
+            "bars_since_expiry"
+          ]
+        },
+        "not_available": {
+          "raw_event_context": [
+            "events_df",
+            "ctx.events",
+            "step.events"
+          ],
+          "raw_funding_columns": [
+            "funding_rate"
+          ]
+        },
+        "event_driven_workflow": {
+          "sync_events_when_needed": "Use events_sync(...) when the local normalized event store is stale or missing for the target family/symbol.",
+          "align_preview_before_authoring": "Use events(view='align_preview', ...) to confirm the event-to-anchor contract before writing event-backed feature logic.",
+          "dataset_activation_required": "Publishing the definition is not enough; run features_dataset(action='build', columns=['cf_name']) before downstream workflows depend on the feature."
+        }
+      },
+      "unsupported_runtime_inputs": {
+        "raw_event_context": [
+          "events_df",
+          "ctx.events",
+          "step.events"
+        ],
+        "raw_funding_columns": [
+          "funding_rate"
+        ],
+        "pseudo_vectorized_accessors": [
+          "ctx.df",
+          "ctx.load(...)",
+          "ctx.features",
+          "ctx.column(...)"
+        ],
+        "guidance": [
+          "Use managed event-backed columns such as is_funding_settlement, bars_until_funding_settlement, and bars_since_funding_settlement via depends_on_features.",
+          "Publish definition first, then build into managed dataset, then reference from snapshot or downstream workflows.",
+          "Use features_custom(action='inspect', view='examples') before writing an event-backed feature from scratch."
+        ]
+      },
+      "authoring_sequence": [
+        "features_custom(action='inspect', view='contract')",
+        "features_custom(action='inspect', view='examples')",
+        "features_custom(action='validate')",
+        "features_custom(action='publish')"
+      ],
+      "publish_activation_sequence": [
+        "features_custom(action='publish')",
+        "features_dataset(action='build', columns=['cf_name'])"
+      ],
+      "event_backed_runtime_recipe": [
+        "events(view='catalog', family='funding')",
+        "events_sync(family='funding', scope='incremental', symbol='BTCUSDT')",
+        "events(view='align_preview', family='funding', symbol='BTCUSDT')",
+        "Use only managed event-backed columns in features_custom depends_on_features.",
+        "features_dataset(action='build', columns=['cf_name'])"
+      ],
+      "event_runtime_recipes": {
+        "funding": [
+          "events(view='catalog', family='funding')",
+          "events_sync(family='funding', scope='incremental', symbol='BTCUSDT')",
+          "events(view='align_preview', family='funding', symbol='BTCUSDT')",
+          "Use only managed event-backed columns in features_custom depends_on_features.",
+          "features_dataset(action='build', columns=['cf_name'])"
+        ],
+        "expiry": [
+          "events(view='catalog', family='expiry')",
+          "events_sync(family='expiry', scope='incremental', currency='BTC')",
+          "events(view='align_preview', family='expiry', symbol='BTCUSDT')",
+          "Use only managed event-backed columns in features_custom depends_on_features.",
+          "features_dataset(action='build', columns=['cf_name'])"
+        ]
+      },
+      "available_managed_event_columns": {
+        "funding": [
+          "is_funding_settlement",
+          "bars_until_funding_settlement",
+          "bars_since_funding_settlement"
+        ],
+        "expiry": [
+          "is_expiry",
+          "bars_until_expiry",
+          "bars_since_expiry"
+        ]
+      },
+      "anti_patterns": [
+        "Use compute_series(ctx) or compute_feature(step); do not stop at def compute(...).",
+        "Apply cf_ to the feature name, not to the Python function name.",
+        "Raw event context such as events_df / ctx.events / step.events is unsupported; depend on managed event-backed columns instead.",
+        "Publishing a custom feature does not activate it in the managed dataset; follow with features_dataset(action='build', columns=['cf_name']) unless auto_build_dataset=true is explicit."
+      ],
+      "task_oriented_examples": {
+        "vectorized_minimal": {
+          "tool": "features_custom",
+          "purpose": "Load the canonical authoring contract before writing code.",
+          "example_args": {
+            "action": "inspect",
+            "view": "contract"
+          }
+        },
+        "stepwise_minimal": null,
+        "event_backed_funding": {
+          "tool": "features_custom",
+          "purpose": "Validate one funding-settlement event-backed feature using managed event columns.",
+          "example_args": {
+            "action": "validate",
+            "name": "cf_funding_settlement_gate",
+            "description": "Funding-settlement event-backed gate built from managed event columns.",
+            "code": "def compute_feature(step):\n    is_settlement = step.feature_value('is_funding_settlement')\n    bars_since = step.feature_value('bars_since_funding_settlement')\n    if is_settlement is None or bars_since is None:\n        return None\n    return 1 if bool(is_settlement) or float(bars_since) <= 1 else 0\n",
+            "symbol": "BTCUSDT",
+            "timeframe": "1h",
+            "depends_on_features": [
+              "is_funding_settlement",
+              "bars_since_funding_settlement"
+            ],
+            "lookback_bars": 1
+          }
+        },
+        "event_backed_expiry": {
+          "tool": "features_custom",
+          "purpose": "Validate one expiry event-backed feature using managed expiry columns.",
+          "example_args": {
+            "action": "validate",
+            "name": "cf_expiry_proximity_gate",
+            "description": "Expiry proximity gate from managed expiry columns.",
+            "code": "def compute_feature(step):\n    bars_until = step.feature_value('bars_until_expiry')\n    if bars_until is None:\n        return None\n    return 1 if float(bars_until) <= 2 else 0\n",
+            "symbol": "BTCUSDT",
+            "timeframe": "1h",
+            "depends_on_features": [
+              "bars_until_expiry"
+            ],
+            "lookback_bars": 1
+          }
+        },
+        "model_backed": {
+          "tool": "features_custom",
+          "purpose": "Validate and publish a custom feature definition.",
+          "example_args": {
+            "action": "publish",
+            "name": "cf_model_feature",
+            "description": "Minimal model-backed custom feature.",
+            "code": "def compute_feature(step):\n    return step.model_predict('btc_profit_regressor')\n",
+            "symbol": "BTCUSDT",
+            "timeframe": "1h",
+            "required_columns": [
+              "close"
+            ],
+            "depends_on_features": [],
+            "depends_on_models": [
+              "btc_profit_regressor"
+            ],
+            "lookback_bars": 1
+          }
+        },
+        "cross_symbol_offline_only": {
+          "tool": "features_custom",
+          "purpose": "Validate one offline cross-symbol vectorized custom feature.",
+          "example_args": {
+            "action": "validate",
+            "name": "cf_eth_btc_ratio",
+            "description": "Compare BTC close to aligned ETH close.",
+            "code": "import pandas as pd\n\ndef compute_series(ctx):\n    peer = ctx.for_symbol('ETHUSDT')\n    return pd.Series(ctx.series('close') / peer.aligned_series('close', timeframe='4h')).reset_index(drop=True)\n",
+            "symbol": "BTCUSDT",
+            "timeframe": "1h",
+            "required_columns": [
+              "close"
+            ],
+            "cross_symbol_inputs": [
+              {
+                "symbol": "ETHUSDT",
+                "required_timeframes": [
+                  "4h"
+                ],
+                "depends_on_features": []
+              }
+            ],
+            "lookback_bars": 1
+          }
+        }
+      },
+      "important_warnings": [],
+      "next_recommended_actions": [
+        "Use features_custom(action='validate') to smoke-test a draft custom feature before publication."
+      ],
+      "recommended_follow_up_tool": null,
+      "state_summary": {},
+      "exact_next_call_examples": [],
+      "raw_refs": [],
+      "raw_tool_hints": [],
+      "next_action": "Use features_custom(action='validate') to smoke-test a draft custom feature before publication."
+    },
+    "warnings": [],
+    "refs": [],
+    "error": null
+  },
+  "isError": false
+}

@@ -1,0 +1,319 @@
+{
+  "source_file": "raw_plans/plan_v12.md",
+  "source_hash": "530689a3be45494539fade665e51f6e03e4c9d75b79f43e541e3059184176e85",
+  "source_title": "План дальнейших исследований для v12 — окончательная квалификация microstructure-route",
+  "goal": "Квалифицировать microstructure-route в один из трёх честных статусов: confirmed true overlay, confirmed replacement layer, или watchlist/reject.",
+  "baseline_ref": {
+    "snapshot_id": "active-signal-v1",
+    "version": 1,
+    "symbol": "BTCUSDT",
+    "anchor_timeframe": "1h",
+    "execution_timeframe": "5m"
+  },
+  "global_constraints": [
+    "База active-signal-v1@1 — immutable reference; запрещено менять базу или подбирать ей параметры.",
+    "Все ключевые reruns обязаны использовать @1 как единственную базу принятия решений; @3 только вспомогательный исторический reference.",
+    "Overlay и replacement — разные продукты; запрещено смешивать их в одном рассказе или эксперименте.",
+    "Каждый threshold должен иметь documented provenance: quantile rule или selection-OOS search with frozen lockbox.",
+    "Запрещено открывать новые data universe, model families или macro-маршруты до завершения microstructure qualification.",
+    "Сравнение только same-window: base @1, overlay/replacement, combined — на одном и том же окне.",
+    "Simple rules first: bucket → threshold → quantile → logistic → small CatBoost.",
+    "Short-first, but not short-only: v12 обязан честно закрыть short-only, long-only и combined."
+  ],
+  "stages": [
+    {
+      "stage_id": "stage_1",
+      "title": "Freeze терминологии и correction log",
+      "objective": "Исправить язык и рамку, зафиксировать v11 downgrade, создать clean project v12 с corrected terminology и open-items register.",
+      "actions": [
+        "Открыть новый research_project для v12.",
+        "Записать в research_record: v11 downgraded to watchlist; v10 result mischaracterized as model-based veto overlay but actually rule-based microstructure replacement candidate.",
+        "Зафиксировать immutable reference: snapshot_id=active-signal-v1, version=1, symbol=BTCUSDT, anchor=1h, execution=5m.",
+        "Завести оси в research_map: track, side, route_type, threshold_origin, comparison_window, final_decision.",
+        "Создать open-items register: true_overlay_track, replacement_track, threshold_provenance, same_window_ref1_runs, short_long_combined_split, cannibalization_audit, model_need_assessment, final_v12_verdict."
+      ],
+      "success_criteria": [
+        "Есть clean project v12 и corrected terminology.",
+        "Open-items register создан со всеми eight items."
+      ],
+      "tool_hints": [
+        "research_memory"
+      ],
+      "policy_tags": [
+        "setup",
+        "cheap_first"
+      ],
+      "depends_on": [],
+      "required": true,
+      "parallelizable": false,
+      "gate_hint": "",
+      "raw_stage_ref": "stage_1"
+    },
+    {
+      "stage_id": "stage_2",
+      "title": "Rebuild exact base @1 comparison frame",
+      "objective": "Получить единственный canonical reference-run для base @1 на lockbox окне с полной декомпозицией метрик.",
+      "actions": [
+        "Поднять exact base snapshot @1.",
+        "Зафиксировать exact lockbox window, использованный в v10/v11.",
+        "Прогнать immutable base @1 отдельно на этом окне.",
+        "Сохранить trades list, timestamps, side split, PnL, PF, DD, win rate.",
+        "Сохранить этот run как единственный reference-run для v12."
+      ],
+      "success_criteria": [
+        "Есть один canonical base_ref1_lockbox_run с полной метрикой."
+      ],
+      "tool_hints": [
+        "backtesting"
+      ],
+      "policy_tags": [
+        "setup"
+      ],
+      "depends_on": [
+        "stage_1"
+      ],
+      "required": true,
+      "parallelizable": false,
+      "gate_hint": "",
+      "raw_stage_ref": "stage_2"
+    },
+    {
+      "stage_id": "stage_3",
+      "title": "Threshold provenance and selection discipline",
+      "objective": "Перевести hand-tuned thresholds в честную процедуру выбора с documented provenance и freeze до lockbox.",
+      "actions": [
+        "Зафиксировать candidate threshold families для cf_micro_imbalance_1h: quantile-based, fixed numeric, symmetric, asymmetric cutoffs.",
+        "Разделить окна: threshold selection window и lockbox verification window.",
+        "На selection window выбрать максимум 3 candidate threshold sets: conservative, balanced, aggressive.",
+        "Freeze thresholds до lockbox rerun.",
+        "Задокументировать происхождение каждого threshold."
+      ],
+      "success_criteria": [
+        "Есть frozen threshold sets с documented provenance для каждого cutoff."
+      ],
+      "tool_hints": [
+        "feature_contract"
+      ],
+      "policy_tags": [
+        "cheap_first"
+      ],
+      "depends_on": [
+        "stage_2"
+      ],
+      "required": true,
+      "parallelizable": false,
+      "gate_hint": "",
+      "raw_stage_ref": "stage_3"
+    },
+    {
+      "stage_id": "stage_4",
+      "title": "Build true overlay implementation over @1",
+      "objective": "Построить true overlay variant где microstructure применяется только как veto/filter gate поверх неизменных базовых signal IDs и entry logic.",
+      "actions": [
+        "Построить true overlay variant: базовые signal IDs и базовая логика entry неизменны; microstructure только allow/block gate.",
+        "Отдельно собрать: short-only overlay, long-only overlay, combined overlay.",
+        "Верифицировать на уровне snapshot assembly: signal IDs base preserved, entry timing preserved, trade blocked only at decision moment, no retroactive replacement.",
+        "Сохранить три separate overlay snapshots."
+      ],
+      "success_criteria": [
+        "Есть честные true-overlay snapshots (short, long, combined) с подтверждённым отсутствием replacement-логики."
+      ],
+      "tool_hints": [
+        "modeling"
+      ],
+      "policy_tags": [
+        "setup"
+      ],
+      "depends_on": [
+        "stage_3"
+      ],
+      "required": true,
+      "parallelizable": false,
+      "gate_hint": "",
+      "raw_stage_ref": "stage_4"
+    },
+    {
+      "stage_id": "stage_5",
+      "title": "Simple-rule overlay tests on selection window",
+      "objective": "Понять, работает ли true overlay вообще на selection window до lockbox, получить shortlist кандидатов.",
+      "actions": [
+        "Для каждого frozen threshold set прогнать на selection window: short-only, long-only, combined true overlay.",
+        "Посчитать: delta PnL vs base, delta PF vs base, delta DD vs base, removed trades, removed winners, removed losers, veto precision.",
+        "Продвинуть в lockbox только variants с meaningful delta, не режущие слишком много winners, без coverage collapse."
+      ],
+      "success_criteria": [
+        "Есть shortlist true-overlay candidates с положительным selection-window профилем."
+      ],
+      "tool_hints": [
+        "backtesting",
+        "analysis"
+      ],
+      "policy_tags": [
+        "cheap_first"
+      ],
+      "depends_on": [
+        "stage_4"
+      ],
+      "required": true,
+      "parallelizable": false,
+      "gate_hint": "",
+      "raw_stage_ref": "stage_5"
+    },
+    {
+      "stage_id": "stage_6",
+      "title": "True overlay lockbox test against base @1",
+      "objective": "Получить честный итоговый ответ, работает ли именно overlay поверх @1 на frozen lockbox окне.",
+      "actions": [
+        "Для каждого surviving true-overlay candidate прогнать на lockbox окне: base @1, base @1 + short-only overlay, base @1 + long-only overlay, base @1 + combined overlay.",
+        "Посчитать: trades, PnL, PF, DD, win rate, removed trades, removed winners, removed losers, ownership of improvement.",
+        "Сформировать final verdict по true-overlay track."
+      ],
+      "success_criteria": [
+        "Есть final verdict по true-overlay track: confirmed, weak, или failed."
+      ],
+      "tool_hints": [
+        "backtesting",
+        "analysis"
+      ],
+      "policy_tags": [],
+      "depends_on": [
+        "stage_5"
+      ],
+      "required": true,
+      "parallelizable": false,
+      "gate_hint": "",
+      "raw_stage_ref": "stage_6"
+    },
+    {
+      "stage_id": "stage_7",
+      "title": "Honest replacement track vs base @1",
+      "objective": "Если overlay слабый или невозможен, честно проверить microstructure как отдельный replacement-layer против @1 на том же окне.",
+      "actions": [
+        "Построить отдельные replacement snapshots: short-only, long-only, combined replacement.",
+        "Зафиксировать для каждого: exact signal logic, threshold logic, difference from base, no claim of being overlay.",
+        "Прогнать все replacement variants против base @1 на том же lockbox окне.",
+        "Сформировать final verdict по replacement track."
+      ],
+      "success_criteria": [
+        "Есть final verdict по replacement track с honest comparison против @1."
+      ],
+      "tool_hints": [
+        "backtesting",
+        "modeling",
+        "analysis"
+      ],
+      "policy_tags": [],
+      "depends_on": [
+        "stage_6"
+      ],
+      "required": true,
+      "parallelizable": false,
+      "gate_hint": "Открывается если true overlay track показал слабый или отрицательный результат; но формально обязателен для полной квалификации v12.",
+      "raw_stage_ref": "stage_7"
+    },
+    {
+      "stage_id": "stage_8",
+      "title": "Cannibalization, ownership and regime analysis",
+      "objective": "Понять, идёт ли улучшение от удаления плохих trades или от смены signal coverage профиля, оценить regime-зависимость и side asymmetry.",
+      "actions": [
+        "Для всех surviving variants из overlay/replacement tracks посчитать: removed losers share, removed winners share, PnL of removed trades, strongest improved regime, weakest affected regime, weak-window repair, profitable cluster damage, side asymmetry.",
+        "Ответить: improvement от удаления плохих trades? От смены coverage профиля? Не ухудшаются ли важные режимы?"
+      ],
+      "success_criteria": [
+        "Есть ownership/cannibalization map по всем жизнеспособным вариантам.",
+        "Понятна природа улучшения для каждого route variant."
+      ],
+      "tool_hints": [
+        "analysis"
+      ],
+      "policy_tags": [],
+      "depends_on": [
+        "stage_6",
+        "stage_7"
+      ],
+      "required": true,
+      "parallelizable": false,
+      "gate_hint": "",
+      "raw_stage_ref": "stage_8"
+    },
+    {
+      "stage_id": "stage_9",
+      "title": "Does model layer add anything?",
+      "objective": "Определить, нужен ли ML сверх simple micro rule, или threshold rule уже является лучшей формой найденной альфы.",
+      "actions": [
+        "Для лучшего surviving route сравнить: simple bucket rule, threshold rule, logistic baseline, small CatBoost.",
+        "Сравнивать только на fixed windows и fixed labels, без wide HPO."
+      ],
+      "success_criteria": [
+        "Есть ясный verdict: simple_rule_enough, model_adds_value, или model_not_worth_complexity."
+      ],
+      "tool_hints": [
+        "modeling",
+        "experiments"
+      ],
+      "policy_tags": [
+        "cheap_first"
+      ],
+      "depends_on": [
+        "stage_8"
+      ],
+      "required": true,
+      "parallelizable": false,
+      "gate_hint": "",
+      "raw_stage_ref": "stage_9"
+    },
+    {
+      "stage_id": "stage_10",
+      "title": "Optional gate: early-cut or directional scout",
+      "objective": "Открыть дальнейшие ветки развития только если v12 уже подтвердил хотя бы один route.",
+      "actions": [
+        "Проверить early-cut gate условия: true overlay confirmed или strong watchlist; losers распознаются по раннему post-entry micro behavior.",
+        "Проверить directional scout gate условия: replacement track confirmed или strong watchlist; monotonicity и regime behavior coherent; signal живёт как entry timing layer.",
+        "Принять lock/unlock decision; открыть максимум одну ветку."
+      ],
+      "success_criteria": [
+        "Есть lock/unlock decision по дальнейшему развитию с documented rationale."
+      ],
+      "tool_hints": [
+        "analysis"
+      ],
+      "policy_tags": [],
+      "depends_on": [
+        "stage_9"
+      ],
+      "required": false,
+      "parallelizable": false,
+      "gate_hint": "Открывается только если хотя бы один track (overlay или replacement) получил confirmed или strong watchlist verdict. Early-cut gate требует overlay confirmed + post-entry micro behavior паттерн. Directional scout gate требует replacement confirmed + monotonicity + entry-timing signal. Максимум одна ветка.",
+      "raw_stage_ref": "stage_10"
+    },
+    {
+      "stage_id": "stage_11",
+      "title": "Финальный вердикт по v12",
+      "objective": "Получить окончательную честную квалификацию microstructure-route в один из четырёх статусов.",
+      "actions": [
+        "Свести результаты всех tracks, cannibalization audit и model assessment.",
+        "Классифицировать route: CONFIRMED TRUE OVERLAY (veto/filter реально работает поверх @1), CONFIRMED REPLACEMENT (отдельный layer честно лучше @1), WATCHLIST (signal живой но fragile/requires-more-work), REJECTED (результат исчезает при честном rerun).",
+        "Определить понятный next step за пределами v12."
+      ],
+      "success_criteria": [
+        "Есть final route classification и documented next step."
+      ],
+      "tool_hints": [
+        "finalization"
+      ],
+      "policy_tags": [],
+      "depends_on": [
+        "stage_9"
+      ],
+      "required": true,
+      "parallelizable": false,
+      "gate_hint": "",
+      "raw_stage_ref": "stage_11"
+    }
+  ],
+  "warnings": [
+    "parse_confidence=0.95: plan is well-structured but contains Russian-language stage descriptions; objective translations are condensed.",
+    "stage_7 (replacement track) is formally required in the execution draft but conceptually conditional on overlay track weakness; gate_hint notes this."
+  ],
+  "parse_confidence": 0.95
+}

@@ -1,0 +1,16 @@
+{
+  "source_file": "raw_plans/plan_v4.md",
+  "source_hash": "5f893e59f6395c11f80524bf4a5f550955fa6484442db247b274c0c80d75cd4b",
+  "sequence_id": "compiled_plan_v4",
+  "compile_status": "compiled",
+  "parser_confidence": 0.8999999999999999,
+  "semantic_method": "llm",
+  "stage_count": 8,
+  "compiled_plan_count": 3,
+  "warnings": [
+    "Parse confidence 0.90 — sub-steps within stages (e.g. 2.1–2.5, 3.1–3.5, 5.1–5.4) were not materialized as separate actions because the source text contained only headings without body text.",
+    "Stage 8 (final report) had empty objective/actions/criteria hints in the source; inferred from context."
+  ],
+  "errors": [],
+  "compiled_at": "2026-04-09T14:21:37.708596+00:00"
+}

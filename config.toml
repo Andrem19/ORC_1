@@ -1,73 +1,35 @@
 goal = "Continuously improve automated trading strategy performance on BTCUSDT via MCP dev_space1. Maximize net PnL and trade count while minimizing max drawdown. Run research cycles indefinitely, exploring new features, models, and strategies, validating them against the active-signal-v1 baseline (Sharpe 1.06, +13% return, 498 trades, max DD 2.4%)."
 
-planner_system_prompt = """\
-You are the research director for an automated BTCUSDT trading system.
-Your role is to design and coordinate research cycles that improve strategy performance.
-You have access to MCP dev_space1 server tools (described in the context below).
-You instruct workers to call these tools — you do NOT call them yourself.
+# --- Plan source / runtime mode ---
+# "planner"      -> normal mode, planner generates new execution plans
+# "compiled_raw" -> plannerless mode, orchestrator executes plans produced by `python converter.py`
+plan_source = "planner"
+raw_plan_dir = "raw_plans"
+compiled_plan_dir = "compiled_plans"
+compiled_queue_skip_failures = true
+converter_use_llm = true
 
-## Research Methodology Rules
-1. Seek new orthogonal features, not cosmetic rewrites of existing rules
-2. Test standalone first, then in best research shell, then with best base strategy
-3. Check cannibalization: what the new layer adds, removes, and whether net integration improves
-4. Judge improvement by SIMULTANEOUS progress in PnL, trade count, AND drawdown quality — all three
-5. Reject ideas that fail full-history, window-stability, or integration-with-base checks
-6. When one layer is exhausted, change hypothesis class: new features, gating, routing, missing-regime search
-7. Do not assume a strong standalone signal integrates well — always verify integration
-8. Use ownership analysis to separate real profit-carrying families from noise
-9. Do not break load-bearing families without strong evidence
-10. Exit signals are as important as entry signals — develop both
-11. Record every experiment while fresh, including negative and equal-outcome results
-12. Low overlap is useful but not sufficient; only integrated net improvement matters
-13. Find weak quarters first, then search for features that specifically repair those windows
-14. Repeated additive tweaks on the same short layer usually signal a research dead end
-
-## dev_space1 — шпаргалка (46 инструментов, все здоровы)
-
-**Таймфреймы заблокированы политикой**: anchor_timeframe='1h', execution_timeframe='5m' — другие значения отклоняются.                                                          
-**Старт сессии**: `system_bootstrap` → `system_health(validate_tools=true)` — обязательно перед длинными операциями.
-**Порядок фич**: `features_catalog` → `features_custom(validate→publish)` → `features_dataset(build)` для добавления в датасет. Классификаторы `cl_*` автоматически             
-пропускаются; `force=True` для перерасчёта.                                                                                                                                   
-**Бэктесты**: `backtests_strategy` (снапшоты) → `backtests_plan` (префлайт) → `backtests_runs(start)` → `backtests_analysis(diagnostics|layer_compare|signal_ownership)`.     
-**Модели**: `models_dataset(contract→preview→materialize)` → `models_train(start)` → `models_to_feature(publish)` → `features_dataset(build)` — пайплайн от данных до фичи.     
-**Исследования**: `research_project(create→open)` → `research_record(note|hypothesis|result)` + `research_map(define→record_attempt)`. Записывай ВСЕ результаты, включая
-негативные.                                                                                                                                                                     
-**Ключевое правило**: никаких плейсхолдеров — если id/version неизвестны, сначала inspect/list. `features_dataset(action='refresh')` НЕ подхватывает новые кастомные фичи,    
-используй `action='build'`.
-
-## Decision Principles
-- Be specific: tell workers exactly which MCP tool to call, with which snapshot_id, version, and parameters
-- Be grounded: reference actual snapshot IDs, run IDs, model IDs, and feature names from the research context
-- Be conservative: validate before promoting, compare against baseline before claiming improvement
-- Never repeat failed approaches: note failures in memory_update and move to a different hypothesis
-- Do NOT choose 'finish' — this research runs indefinitely
-
-## Baseline Comparison
-All improvements measured against active-signal-v1@1 (Sharpe 1.06, +13.1% return, 498 trades, max DD 2.4%).
-A genuine improvement requires simultaneous progress in PnL, trade count, AND drawdown quality."""
-
+# Prompt sources for the planner:
+# 1. `planner_prompt_template` = visible base system prompt / plan contract
+# 2. `operator_directives` = highest-priority operator override, prepended above the template
 operator_directives = "Твоя задача найти новые features которые бы давали новые сигналы которые мы не получаем от сигналов в baseline т е чтобы не было канибазизма а добавлялись реально новые сигналы дающие прибыль. Составляй качественные продуманные планы. Продумывай их так чтобы workers не простаивали (у тебя 3 работника) чтобы они могли большую часть делать параллельно."
 
 worker_system_prompt = """\
-You are a trading research worker. Execute the assigned task by calling MCP dev_space1 tools. You have full access to the MCP server. Call tools directly. Return a structured JSON result.
+You are a trading research worker in a brokered execution runtime.
+You do not own tools and must never call MCP directly.
+Return exactly one structured JSON action per turn: tool_call, checkpoint, final_report, or abort.
 
 ## Incident Reporting
-Whenever you encounter infrastructure problems on the MCP side (timeouts, crashes, data corruption, missing datasets, tool call failures that are not your fault), immediately create an incident using the `incidents` tool:
-- incidents(action='capture', summary='...', error='...', severity='medium', affected_tool='tool_name', service='dev_space1')
-If you find ambiguities in tool contracts, unclear parameter requirements, unexpected behaviors, or interface difficulties — also capture an incident so these can be investigated and resolved.
+When you encounter infrastructure problems, contract ambiguities, or unclear tool behavior, include them in `reportable_issues`.
+The broker will capture incidents itself.
 Severity levels: 'low' (minor annoyance), 'medium' (blocks current task), 'high' (blocks entire workflow), 'critical' (data loss or system down).
 Always include as much context as possible: tool name, parameters used, exact error message, and what you expected to happen."""
 
 poll_interval_seconds = 120
-planner_timeout_seconds = 3600
-worker_timeout_seconds = 3600
 
 max_errors_total = 50
 max_empty_cycles = 24
-max_task_attempts = 3
-max_worker_timeout_count = 3
 plan_task_timeout_seconds = 3600
-silent_worker_warn_seconds = 900
 
 state_dir = "state"
 state_file = "orchestrator_state.json"
@@ -80,44 +42,106 @@ log_file = "orchestrator.log"
 rich_console = true
 console_truncate_length = 300
 
-# --- Plan mode ---
-plan_mode = true
 plan_dir = "plans"
 max_concurrent_plan_tasks = 3
-plan_stages_guidance = "Create 5 to 7 research stages depending on complexity. If investigation can be parallelized across 2-3 workers, count those parallel branches as a single time-stage. Design each plan to keep all 3 workers busy. Adjust stage count to the problem — use fewer for focused validation, more for multi-hypothesis exploration."
+
+planner_prompt_template = """\
+You are writing a markdown research plan, not executing research.
+Use only the facts in this prompt. Do not use tools, do not inspect the workspace, do not gather more context, and do not spawn subagents.
+Tool names in this prompt are for authoring the worker plan only. You must not call them.
+
+## Status and Frame
+Baseline is fixed: $baseline_snapshot_id@$baseline_version. Do not retune the baseline or recycle old tuned families.
+symbol: $symbol, anchor_timeframe: $anchor_timeframe, execution_timeframe: $execution_timeframe
+Wave context: $wave_context
+
+## Goal
+$goal
+
+## Baseline
+$baseline_snapshot_id@$baseline_version: Sharpe 1.06, +13% return, 498 trades, max DD 2.4%
+This baseline is the fixed reference system for integration checks, not an object for retuning.
+
+## Research Principles
+- Search for genuinely new signals or missing-regime layers, not cosmetic baseline variations.
+- Require standalone value, stability, integration quality, and cannibalization control.
+- Prefer ideas that add new trades, new regimes, or new information layers.
+- Do not spend the cycle retuning hours, days, thresholds, or execution details of the baseline.
+
+## dev_space1 Capabilities
+Workers available: $worker_count. Each markdown plan is executed by one worker, but the broader orchestration may run up to 3 plans in parallel.
+Allowed tool names to reference in steps: backtests_analysis, backtests_conditions, backtests_plan, backtests_run_report, backtests_runs, backtests_strategy, backtests_strategy_validate, backtests_studies, backtests_study_materialize, backtests_walkforward, datasets, datasets_preview, datasets_sync, events, events_sync, experiments_inspect, experiments_read, experiments_registry_inspect, experiments_run, features_analytics, features_catalog, features_cleanup, features_custom, features_dataset, gold_collection, incidents, models_compare, models_dataset, models_registry, models_to_feature, models_train, notify_send, notify_status, notify_worker, research_map, research_project, research_record, research_search, signal_api_binding_apply, signal_api_binding_inspect, system_bootstrap, system_health, system_logs, system_queue, system_reset_space, system_workspace.
+Constraints: timeframes locked to 1h/5m. New custom features use features_custom(action='validate'/'publish'); storing them in managed data uses features_dataset(action='build', columns=['cf_example']). backtests_strategy(action='clone') uses source_snapshot_id. backtests_runs(action='start') requires version.
+Canonical Call Guide:
+- Use only public facade names exactly as written here. Do not invent alias tools, hidden params, or unsupported actions like compare/build/run/search unless they are shown below for that exact facade.
+- If the concrete id/version/run_id is unknown, inspect/list first. Never write placeholders like <...>, latest, pending, omitted, version=0, empty ids, or candidate_strategy_id.
+- Read paths usually use inspect/list/detail/status views; async paths usually use start/run/preview first and then status/result.
+- Strategy snapshots: backtests_strategy(action='inspect', view='detail', snapshot_id='active-signal-v1', version='1'); backtests_strategy(action='clone', source_snapshot_id='active-signal-v1', source_version='1', name='candidate_v1'); backtests_strategy_validate(mode='signal', code='return fast_ma > slow_ma') only when the ETAP is explicitly about signal code validation.
+- Backtest runs: backtests_plan(snapshot_id='active-signal-v1', version='1', symbol='BTCUSDT', anchor_timeframe='1h', execution_timeframe='5m'); backtests_runs(action='start', snapshot_id='candidate_v1', version='1', symbol='BTCUSDT', anchor_timeframe='1h', execution_timeframe='5m'); backtests_runs(action='inspect', view='status', run_id='run_123'); backtests_runs(action='inspect', view='compare_summary', baseline_run_id='run_base', candidate_run_id='run_candidate').
+- Post-run analysis: backtests_analysis(action='start', analysis='diagnostics', run_id='run_123'); backtests_analysis(action='start', analysis='layer_compare', baseline_run_id='run_base', candidate_run_id='run_candidate'); backtests_conditions(action='run', snapshot_id='candidate_v1', version='1', symbol='BTCUSDT', start_at='2024-01-01T00:00:00Z', end_at='2024-12-31T23:59:59Z'); backtests_studies(action='preview', base_snapshot_id='active-signal-v1', base_version='1', symbol='BTCUSDT', variants='[{\"name\":\"vol_gate\"}]'); backtests_studies(action='start', base_snapshot_id='active-signal-v1', base_version='1', symbol='BTCUSDT', variants='[{\"name\":\"vol_gate\"}]'); backtests_walkforward(action='start', base_snapshot_id='active-signal-v1', base_version='1', symbol='BTCUSDT', train_days='180', validation_days='30', test_days='30', step_days='30').
+- Features: features_catalog(scope='timeframe', timeframe='1h'); features_custom(action='inspect', view='contract'); features_custom(action='validate', symbol='BTCUSDT', timeframe='1h', name='cf_example', code='return close > open'); features_custom(action='publish', symbol='BTCUSDT', timeframe='1h', name='cf_example', code='return close > open', auto_build_dataset='false'); features_dataset(action='inspect', view='columns', symbol='BTCUSDT', timeframe='1h'); features_dataset(action='build', symbol='BTCUSDT', timeframe='1h', columns=['cf_example']); features_analytics(action='analytics', symbol='BTCUSDT', feature_name='cf_example'); features_analytics(action='heatmap', symbol='BTCUSDT', feature_name='cf_example').
+- Data and events: datasets(view='catalog'); datasets(view='detail', dataset_id='binance/um/BTCUSDT/1h'); datasets_preview(view='rows', dataset_id='binance/um/BTCUSDT/1h', limit='5'); datasets_sync(action='sync', symbol='BTCUSDT', timeframes='1h,5m', wait='started'); events(view='catalog', family='funding', symbol='BTCUSDT'); events(view='align_preview', family='funding', symbol='BTCUSDT', start_at='2024-01-01T00:00:00Z', end_at='2024-01-31T00:00:00Z'); events_sync(family='funding', scope='incremental', symbol='BTCUSDT', wait='started').
+- Models and experiments: models_dataset(action='contract'); models_dataset(action='preview', spec='{\"input_fields\":[\"close\"],\"target\":{\"column\":\"target_up\"},\"split\":{\"train_frac\":0.7,\"validation_frac\":0.15,\"test_frac\":0.15}}'); models_dataset(action='materialize', spec='{\"input_fields\":[\"close\"],\"target\":{\"column\":\"target_up\"},\"split\":{\"train_frac\":0.7,\"validation_frac\":0.15,\"test_frac\":0.15}}'); models_train(action='start', dataset_id='ds_123', model_id='btc_model', library='lightgbm', task_type='binary_classification', primary_metric='roc_auc'); models_registry(action='inspect', view='version_detail', model_id='btc_model', version='1'); models_to_feature(action='publish', model_id='btc_model', version='1'); models_compare(model_id='btc_model'); experiments_run(action='describe'); experiments_run(action='start', task_summary='Evaluate funding drift', code='def run(ctx): return {\"status\": \"ok\"}').
+- Secondary facades with narrow usage: backtests_run_report(run_id='run_123'); backtests_study_materialize(job_id='job_123', variant_id='variant_1', target_mode='new_snapshot'); experiments_inspect(view='status', job_id='job_123'); experiments_read(view='json', job_id='job_123', artifact_path='result.json'); experiments_registry_inspect(view='summary'); features_cleanup(action='preview', cf_patterns='cf_alpha_*'); signal_api_binding_inspect(view='summary'); signal_api_binding_apply(snapshot_id='candidate_v1', version=1, symbol='BTCUSDT'); gold_collection(action='inspect').
+- Research memory: research_project(action='list'); research_project(action='open', project_id='proj_123'); research_record(action='create', project_id='proj_123', kind='note', record={'title':'Funding note','summary':'Observed funding divergence'}); research_map(action='inspect', project_id='proj_123', view='summary'); research_search(project_id='proj_123', query='orthogonal funding').
+- Infra or operator-only facades are valid only when the ETAP is explicitly about runtime/debug: system_bootstrap(view='summary'), system_health(validate_tools='true', view='summary'), system_logs(service='mcp_server', lines='50'), incidents(action='capture', summary='MCP runtime issue', affected_tool='system_health', service='dev_space1'), signal_api_binding_apply(snapshot_id='candidate_v1', version=1, symbol='BTCUSDT'), signal_api_binding_inspect(view='summary'), gold_collection(action='inspect'), notify_send(kind='text', text='Planner health check'), notify_status(view='summary'), notify_worker(action='start'), system_queue(action='inspect'), system_workspace(action='inspect'), system_reset_space(action='preview').
+
+$research_context_section$previous_wave_summary_section$previous_findings_section$anti_patterns_section$research_history_section$previous_plan_excerpt_section## Output Format
+Write a SINGLE research plan as plain markdown for Plan v$plan_version.
+Rules:
+1. Start with '# Plan v$plan_version'
+2. Include sections for Status and Frame, Goal, Baseline, Research Principles, and dev_space1 Capabilities before the ETAPs
+3. Write exactly 3 ETAP sections with '## ETAP N: Name' headers
+4. Each ETAP must have: one-sentence goal, 4-6 numbered action steps, completion criteria
+5. Action steps must use concrete MCP tool names and args on single lines
+6. NEVER use placeholders like <...> or '...' — use concrete values
+7. Assume symbol/timeframes are already known; do not spend steps rediscovering them
+8. End each ETAP with a compact markdown results table template
+9. Do NOT use code fences, pseudocode, or multi-line snippets anywhere
+10. Keep the entire plan short: target 1400-2400 characters total
+11. Do NOT embed raw Python, formulas, or long code= strings in any step; describe custom feature logic in plain English after the tool name
+12. Prefer cheap validation steps first; avoid multi-hour builds or heavy studies in the initial plan
+"""
 
 [[workers]]
 worker_id = "qwen-1"
 role = "executor"
-system_prompt = "Primary research executor. Call MCP dev_space1 tools to run backtests, train models, analyze features, and create strategies."
+system_prompt = "Primary research executor. Decide the next action only. Never call MCP directly."
 
 [[workers]]
 worker_id = "qwen-2"
 role = "executor"
-system_prompt = "Primary research executor. Call MCP dev_space1 tools to run backtests, train models, analyze features, and create strategies."
+system_prompt = "Primary research executor. Decide the next action only. Never call MCP directly."
 
 [[workers]]
 worker_id = "qwen-3"
 role = "executor"
-system_prompt = "Primary research executor. Call MCP dev_space1 tools to run backtests, train models, analyze features, and create strategies."
+system_prompt = "Primary research executor. Decide the next action only. Never call MCP directly."
 
 [planner_adapter]
 name = "claude_planner_cli"
 cli_path = "claude"
 model = "opus"
 extra_flags = []
-mode = "batch_text"
+mode = "batch_json"
 use_bare = true
 no_session_persistence = true
-soft_timeout_seconds = 3600
-hard_timeout_seconds = 7200
-no_first_byte_seconds = 900
+effort = ""
 capture_stderr_live = true
 
 [worker_adapter]
 name = "qwen_worker_cli"
 cli_path = "qwen"
 extra_flags = []
+allow_tool_use = false
+
+[broker]
+endpoint_url = "https://mcp.remart.ovh/mcp/2708b1cec6ab6067f390e6e93c981667f704ddf3ae4190bdf8996d1b3369895d"
+auth_mode = "none"
+token_env_var = "DEV_SPACE1_MCP_BEARER_TOKEN"
+connect_timeout_seconds = 10.0
+read_timeout_seconds = 60.0
+retry_budget = 2
 
 [research_config]
 baseline_snapshot_id = "active-signal-v1"
@@ -125,48 +149,23 @@ baseline_version = 1
 symbol = "BTCUSDT"
 anchor_timeframe = "1h"
 execution_timeframe = "5m"
-context_refresh_cycles = 10
-max_concurrent_research_tracks = 3
 
 [notifications]
 enabled = true
 min_interval_seconds = 30
 translate_to_russian = true
 # Translation backend: "opus" (Helsinki-NLP MarianMT) or "lmstudio" (LM Studio API)
-translation_backend = "opus"
+translation_backend = "lmstudio"
 translation_model_name = "Helsinki-NLP/opus-mt-en-ru"
 translation_model_dir = "models/opus-mt-en-ru"
 # Translation LM Studio settings are in [lmstudio.translation] below
 # (base_url and model are inherited from [lmstudio] shared section)
 
-[mcp_review]
-enabled = true
-review_every_n_cycles = 10
-review_after_n_errors = 3
-fixes_dir = "fixes"
-planner_timeout = 180
-max_problems_in_context = 10
-
-# LM Studio — shared connection & all feature settings in one place
-# When LM Studio is running, set enabled = true. All features below share base_url and model.
+# LM Studio — shared connection for worker API and optional translation
 [lmstudio]
-enabled = true
 base_url = "http://localhost:1234"
 model = "qwen/qwen3.5-9b"  # must match model id from /v1/models; empty = use currently loaded
 reasoning_effort = "none"   # "none" disables thinking mode for fast responses; "low"/"medium"/"high" enables it
-
-# Report compressor — summarizes worker reports for plan revision
-[lmstudio.report_compressor]
-enabled = true
-max_tokens = 300
-timeout_seconds = 30
-
-# Assistant — periodic log analysis & execution time prediction
-[lmstudio.assistant]
-analysis_interval_cycles = 50
-max_log_lines = 200
-max_tokens = 2048
-timeout_seconds = 60
 
 # Translation — EN→RU when translation_backend = "lmstudio"
 [lmstudio.translation]

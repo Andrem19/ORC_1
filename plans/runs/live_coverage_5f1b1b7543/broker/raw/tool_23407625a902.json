@@ -1,0 +1,530 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\n  \"status\": \"ok\",\n  \"message\": \"Model dataset action completed.\",\n  \"tool_name\": \"models_dataset\",\n  \"request_id\": \"27\",\n  \"correlation_id\": \"27\",\n  \"server_session_id\": \"364b8f3a7df24b48bee3c8912a3bd3c7\",\n  \"response_generated_at\": \"2026-04-09T12:55:57.543198+00:00\",\n  \"data\": {\n    \"action\": \"contract\",\n    \"contract\": {\n      \"supported_libraries\": [\n        \"catboost\",\n        \"lightgbm\"\n      ],\n      \"supported_task_types\": [\n        \"regression\",\n        \"binary_classification\",\n        \"multiclass_classification\"\n      ],\n      \"supported_metrics\": {\n        \"regression\": [\n          \"r2\",\n          \"mae\",\n          \"rmse\"\n        ],\n        \"binary_classification\": [\n          \"accuracy\",\n          \"f1\",\n          \"precision\",\n          \"recall\",\n          \"logloss\",\n          \"roc_auc\"\n        ],\n        \"multiclass_classification\": [\n          \"accuracy\",\n          \"f1\",\n          \"precision\",\n          \"recall\",\n          \"logloss\"\n        ]\n      },\n      \"supported_input_transforms\": [\n        \"current\",\n        \"lag\",\n        \"rolling_mean\",\n        \"rolling_min\",\n        \"rolling_max\",\n        \"rolling_std\",\n        \"rolling_sum\"\n      ],\n      \"required_top_level_fields\": [\n        \"name\",\n        \"symbol\",\n        \"anchor_timeframe\",\n        \"input_fields\",\n        \"target\",\n        \"split\"\n      ],\n      \"fixed_python_target_entrypoint\": \"compute_target\",\n      \"fixed_execution_entrypoint\": \"execute_trade\",\n      \"fixed_execution_label_entrypoint\": \"compute_label\",\n      \"recommended_flow\": [\n        \"models_dataset(action='contract')\",\n        \"models_dataset(action='preview')\",\n        \"models_dataset(action='materialize')\",\n        \"models_dataset(action='status') if wait_timeout=true\",\n        \"models_train\",\n        \"models_registry\",\n        \"models_compare\",\n        \"models_registry\",\n        \"models_to_feature\"\n      ],\n      \"notes\": [\n        \"Training jobs are read-only with respect to canonical datasets and managed feature datasets.\",\n        \"Python targets must define def compute_target(step): ...\",\n        \"Execution targets must define def execute_trade(ctx): ... or omit code to use ctx.default_execute(direction).\",\n        \"Execution targets in label_mode='custom_code' must define def compute_label(ctx, outcome): ... to project one forward-looking scalar label from the normalized trade outcome.\",\n        \"Execution targets may add target_transform when you want a derived label such as net_pnl > 0 without inventing a python_target.\",\n        \"Only deployable declarative inputs may be used from step.model_predict(...) inside feature runtime.\"\n      ],\n      \"include_aliases\": {\n        \"authoring_details\": \"compact_authoring_explain_mode\",\n        \"full_contract\": \"full_machine_readable_contract\"\n      },\n      \"target_modes\": [\n        {\n          \"kind\": \"column_target\",\n          \"description\": \"Align a raw or feature source column to the anchor timeframe and use it directly as target.\"\n        },\n        {\n          \"kind\": \"python_target\",\n          \"description\": \"Define def compute_target(step): ... and compute one scalar target per anchor row from the current and historical context only.\"\n        },\n        {\n          \"kind\": \"execution_target\",\n          \"description\": \"Define def execute_trade(ctx): ... or use ctx.default_execute(direction) to label each anchor row from simulated trade outcomes, then either project one builtin outcome field or compute a custom scalar label.\"\n        }\n      ],\n      \"decision_rules\": [\n        {\n          \"when\": \"You want labels derived from future trade execution, profitability, TP/SL hits, duration, exit reason, or PnL.\",\n          \"use\": \"execution_target\",\n          \"because\": \"python_target only receives current and past context; it cannot look into future candles.\"\n        },\n        {\n          \"when\": \"You want a custom binary or scalar label computed from forward-looking execution context and the normalized trade outcome.\",\n          \"use\": \"execution_target(label_mode='custom_code')\",\n          \"because\": \"This keeps future-aware logic in the execution runtime while letting compute_label(ctx, outcome) emit the final scalar training label.\"\n        },\n        {\n          \"when\": \"You want labels derived only from current and historical context available at the anchor candle.\",\n          \"use\": \"python_target\",\n          \"because\": \"compute_target(step) is evaluated row-by-row on the current and past context only.\"\n        },\n        {\n          \"when\": \"You already have the aligned target as a raw or feature column.\",\n          \"use\": \"column_target\",\n          \"because\": \"column_target is the simplest and most reproducible target mode for precomputed labels.\"\n        }\n      ],\n      \"spec_templates\": {\n        \"dataset_spec_column_target\": {\n          \"name\": \"BTC 1h precomputed target labels\",\n          \"description\": \"Column target example.\",\n          \"symbol\": \"BTCUSDT\",\n          \"anchor_timeframe\": \"1h\",\n          \"start_at\": \"2024-01-01T00:00:00+00:00\",\n          \"end_at\": \"2024-06-30T23:00:00+00:00\",\n          \"input_fields\": [\n            {\n              \"name\": \"close_now\",\n              \"source_kind\": \"ohlcv\",\n              \"column\": \"close\",\n              \"timeframe\": \"1h\",\n              \"transform\": \"current\"\n            },\n            {\n              \"name\": \"rsi_now\",\n              \"source_kind\": \"feature\",\n              \"column\": \"rsi_1\",\n              \"timeframe\": \"1h\",\n              \"transform\": \"current\"\n            }\n          ],\n          \"target\": {\n            \"kind\": \"column_target\",\n            \"source_kind\": \"feature\",\n            \"column\": \"cf_precomputed_label\",\n            \"timeframe\": \"1h\"\n          },\n          \"split\": {\n            \"train_fraction\": 0.6,\n            \"validation_fraction\": 0.2,\n            \"test_fraction\": 0.2\n          }\n        },\n        \"dataset_spec_python_target\": {\n          \"name\": \"BTC 1h current-context labels\",\n          \"description\": \"Python target example that only uses current and historical context.\",\n          \"symbol\": \"BTCUSDT\",\n          \"anchor_timeframe\": \"1h\",\n          \"start_at\": \"2024-01-01T00:00:00+00:00\",\n          \"end_at\": \"2024-06-30T23:00:00+00:00\",\n          \"input_fields\": [\n            {\n              \"name\": \"open_now\",\n              \"source_kind\": \"ohlcv\",\n              \"column\": \"open\",\n              \"timeframe\": \"1h\",\n              \"transform\": \"current\"\n            },\n            {\n              \"name\": \"close_now\",\n              \"source_kind\": \"ohlcv\",\n              \"column\": \"close\",\n              \"timeframe\": \"1h\",\n              \"transform\": \"current\"\n            },\n            {\n              \"name\": \"rsi_now\",\n              \"source_kind\": \"feature\",\n              \"column\": \"rsi_1\",\n              \"timeframe\": \"1h\",\n              \"transform\": \"current\"\n            }\n          ],\n          \"target\": {\n            \"kind\": \"python_target\",\n            \"code\": \"def compute_target(step):\\n    return 'bull' if step.current('close') > step.current('open') else 'bear'\\n\",\n            \"required_columns\": [\n              \"open\",\n              \"close\"\n            ],\n            \"required_features\": [\n              \"rsi_1\"\n            ],\n            \"required_timeframes\": [\n              \"1h\"\n            ],\n            \"lookback_bars\": 1\n          },\n          \"split\": {\n            \"train_fraction\": 0.6,\n            \"validation_fraction\": 0.2,\n            \"test_fraction\": 0.2\n          }\n        },\n        \"dataset_spec_execution_target_profit_classification\": {\n          \"name\": \"BTC 1h profit labels\",\n          \"description\": \"Execution target example for long-profit classification.\",\n          \"symbol\": \"BTCUSDT\",\n          \"anchor_timeframe\": \"1h\",\n          \"start_at\": \"2024-01-01T00:00:00+00:00\",\n          \"end_at\": \"2024-06-30T23:00:00+00:00\",\n          \"input_fields\": [\n            {\n              \"name\": \"close_now\",\n              \"source_kind\": \"ohlcv\",\n              \"column\": \"close\",\n              \"timeframe\": \"1h\",\n              \"transform\": \"current\"\n            },\n            {\n              \"name\": \"rsi_now\",\n              \"source_kind\": \"feature\",\n              \"column\": \"rsi_1\",\n              \"timeframe\": \"1h\",\n              \"transform\": \"current\"\n            },\n            {\n              \"name\": \"hour_now\",\n              \"source_kind\": \"feature\",\n              \"column\": \"hour\",\n              \"timeframe\": \"1h\",\n              \"transform\": \"current\"\n            }\n          ],\n          \"target\": {\n            \"kind\": \"execution_target\",\n            \"label_mode\": \"outcome_field\",\n            \"execution_timeframe\": \"5m\",\n            \"default_direction\": \"long\",\n            \"target_value_field\": \"net_pnl\",\n            \"target_transform\": {\n              \"kind\": \"threshold_gt\",\n              \"threshold\": 0.0,\n              \"positive_label\": 1,\n              \"negative_label\": 0\n            },\n            \"profile\": {\n              \"notional_usd\": 1000.0,\n              \"max_duration_hours\": 4.0,\n              \"take_profit_pct\": 0.01,\n              \"stop_loss_pct\": 0.01,\n              \"fee_rate\": 0.00045\n            }\n          },\n          \"split\": {\n            \"train_fraction\": 0.6,\n            \"validation_fraction\": 0.2,\n            \"test_fraction\": 0.2\n          }\n        },\n        \"dataset_spec_execution_target_profit_regression\": {\n          \"name\": \"BTC 1h net-pnl labels\",\n          \"description\": \"Execution target example for regression on trade net_pnl.\",\n          \"symbol\": \"BTCUSDT\",\n          \"anchor_timeframe\": \"1h\",\n          \"start_at\": \"2024-01-01T00:00:00+00:00\",\n          \"end_at\": \"2024-06-30T23:00:00+00:00\",\n          \"input_fields\": [\n            {\n              \"name\": \"close_now\",\n              \"source_kind\": \"ohlcv\",\n              \"column\": \"close\",\n              \"timeframe\": \"1h\",\n              \"transform\": \"current\"\n            },\n            {\n              \"name\": \"atr_now\",\n              \"source_kind\": \"feature\",\n              \"column\": \"atr_1\",\n              \"timeframe\": \"1h\",\n              \"transform\": \"current\"\n            }\n          ],\n          \"target\": {\n            \"kind\": \"execution_target\",\n            \"label_mode\": \"outcome_field\",\n            \"execution_timeframe\": \"5m\",\n            \"default_direction\": \"long\",\n            \"target_value_field\": \"net_pnl\",\n            \"profile\": {\n              \"notional_usd\": 1000.0,\n              \"max_duration_hours\": 4.0,\n              \"take_profit_pct\": 0.01,\n              \"stop_loss_pct\": 0.01,\n              \"fee_rate\": 0.00045\n            }\n          },\n          \"split\": {\n            \"train_fraction\": 0.6,\n            \"validation_fraction\": 0.2,\n            \"test_fraction\": 0.2\n          }\n        },\n        \"dataset_spec_execution_target_custom_binary_label\": {\n          \"name\": \"BTC 1h custom forward label\",\n          \"description\": \"Execution target example for custom forward-looking binary labels.\",\n          \"symbol\": \"BTCUSDT\",\n          \"anchor_timeframe\": \"1h\",\n          \"start_at\": \"2024-01-01T00:00:00+00:00\",\n          \"end_at\": \"2024-06-30T23:00:00+00:00\",\n          \"input_fields\": [\n            {\n              \"name\": \"close_now\",\n              \"source_kind\": \"ohlcv\",\n              \"column\": \"close\",\n              \"timeframe\": \"1h\",\n              \"transform\": \"current\"\n            },\n            {\n              \"name\": \"atr_now\",\n              \"source_kind\": \"feature\",\n              \"column\": \"atr_1\",\n              \"timeframe\": \"1h\",\n              \"transform\": \"current\"\n            }\n          ],\n          \"target\": {\n            \"kind\": \"execution_target\",\n            \"label_mode\": \"custom_code\",\n            \"execution_timeframe\": \"5m\",\n            \"default_direction\": \"long\",\n            \"label_code\": \"def compute_label(ctx, outcome):\\n    quick_win = outcome.duration_bars <= 6\\n    return 1 if outcome.net_pnl > 0 and quick_win else 0\\n\",\n            \"profile\": {\n              \"notional_usd\": 1000.0,\n              \"max_duration_hours\": 4.0,\n              \"take_profit_pct\": 0.01,\n              \"stop_loss_pct\": 0.01,\n              \"fee_rate\": 0.00045\n            }\n          },\n          \"split\": {\n            \"train_fraction\": 0.6,\n            \"validation_fraction\": 0.2,\n            \"test_fraction\": 0.2\n          }\n        },\n        \"train_request\": {\n          \"model_id\": \"btc_profit_regressor\",\n          \"dataset_id\": \"training-dataset-id\",\n          \"library\": \"catboost\",\n          \"task_type\": \"regression\",\n          \"primary_metric\": \"r2\",\n          \"params\": {\n            \"depth\": 4,\n            \"learning_rate\": 0.05,\n            \"iterations\": 40\n          }\n        },\n        \"train_request_catboost_binary\": {\n          \"model_id\": \"btc_profit_classifier\",\n          \"dataset_id\": \"training-dataset-id\",\n          \"library\": \"catboost\",\n          \"task_type\": \"binary_classification\",\n          \"primary_metric\": \"accuracy\",\n          \"params\": {\n            \"depth\": 4,\n            \"learning_rate\": 0.05,\n            \"iterations\": 80\n          }\n        },\n        \"train_request_catboost_regression\": {\n          \"model_id\": \"btc_profit_regressor\",\n          \"dataset_id\": \"training-dataset-id\",\n          \"library\": \"catboost\",\n          \"task_type\": \"regression\",\n          \"primary_metric\": \"r2\",\n          \"params\": {\n            \"depth\": 4,\n            \"learning_rate\": 0.05,\n            \"iterations\": 40\n          }\n        },\n        \"model_backed_feature\": {\n          \"name\": \"cf_model_signal\",\n          \"description\": \"Example model-backed feature.\",\n          \"code\": \"def compute_feature(step):\\n    return step.model_predict('btc_profit_regressor')\\n\",\n          \"depends_on_models\": [\n            \"btc_profit_regressor\"\n          ],\n          \"depends_on_features\": [\n            \"rsi_1\"\n          ],\n          \"required_columns\": [\n            \"close\"\n          ],\n          \"lookback_bars\": 1,\n          \"supported_anchor_timeframes\": [\n            \"1h\"\n          ]\n        }\n      },\n      \"common_failures\": [\n        {\n          \"when\": \"training fails after process completion\",\n          \"remediation\": \"Inspect models_train(action='status', include=['logs','result','artifacts']) before retrying with new params or a revised dataset.\"\n        },\n        {\n          \"when\": \"model is analysis-only\",\n          \"remediation\": \"Inspect deployability_report in models_dataset(view='detail') or models_registry(action='inspect', view='version_detail') and remove analysis_input_code or unsupported feature timeframes.\"\n        },\n        {\n          \"when\": \"python_target is used for future trade profitability or other execution-derived labels\",\n          \"remediation\": \"Switch to execution_target and use ctx.default_execute(direction) or a custom execute_trade(ctx) implementation.\"\n        },\n        {\n          \"when\": \"you need a custom binary or scalar label from forward-looking execution context\",\n          \"remediation\": \"Use execution_target(label_mode='custom_code') and define compute_label(ctx, outcome) instead of forcing the logic into python_target or target_transform.\"\n        },\n        {\n          \"when\": \"input_fields use source_kind='builtin', timeframe=null, or offset instead of lag\",\n          \"remediation\": \"Use source_kind 'ohlcv' or 'feature', always supply an explicit timeframe string, and use lag instead of offset.\"\n        }\n      ],\n      \"predictive_cutoff_policy\": {\n        \"applies_to_strategy_usage_class\": \"predictive_signal\",\n        \"max_allowed_train_end_at\": \"2024-12-31T23:59:59+00:00\",\n        \"warning\": \"Predictive strategy-usable datasets and training runs cannot extend past this cutoff.\"\n      },\n      \"target_contracts\": {\n        \"execution_target\": {\n          \"supported_label_modes\": [\n            \"outcome_field\",\n            \"custom_code\"\n          ],\n          \"supported_target_value_fields\": [\n            \"direction\",\n            \"entry_timestamp\",\n            \"exit_timestamp\",\n            \"entry_price\",\n            \"exit_price\",\n            \"gross_pnl\",\n            \"net_pnl\",\n            \"return_on_notional_pct\",\n            \"return_on_capital_pct\",\n            \"duration_bars\",\n            \"duration_minutes\",\n            \"exit_reason\",\n            \"entry_decision_timestamp\",\n            \"exit_decision_timestamp\"\n          ],\n          \"supported_target_transform_kinds\": [\n            \"identity\",\n            \"threshold_gt\",\n            \"threshold_gte\",\n            \"threshold_lt\",\n            \"threshold_lte\",\n            \"sign_to_binary\"\n          ],\n          \"label_mode_contracts\": {\n            \"outcome_field\": {\n              \"required_fields\": [\n                \"target_value_field\"\n              ],\n              \"optional_fields\": [\n                \"code\",\n                \"target_transform\"\n              ],\n              \"forbidden_fields\": [\n                \"label_code\"\n              ]\n            },\n            \"custom_code\": {\n              \"required_fields\": [\n                \"label_code\"\n              ],\n              \"optional_fields\": [\n                \"code\"\n              ],\n              \"forbidden_fields\": [\n                \"target_value_field\",\n                \"target_transform\"\n              ],\n              \"fixed_label_entrypoint\": \"compute_label\"\n            }\n          }\n        }\n      }\n    },\n    \"contract_mode\": \"compact\",\n    \"full_contract_available\": true,\n    \"wait\": \"none\",\n    \"wait_satisfied\": true,\n    \"wait_timeout\": false,\n    \"wait_satisfied_by_status\": null,\n    \"final_status\": null,\n    \"important_warnings\": [],\n    \"next_recommended_actions\": [\n      \"Use models_dataset(action='preview', spec={...}) to validate one dataset spec against this contract.\",\n      \"Use models_dataset(action='materialize', spec={...}) only after the preview looks correct.\"\n    ],\n    \"recommended_follow_up_tool\": null,\n    \"state_summary\": {},\n    \"exact_next_call_examples\": [],\n    \"raw_refs\": [\n      \"system_raw_call(tool_name='models_contract_describe')\"\n    ],\n    \"raw_tool_hints\": [],\n    \"summary\": \"Loaded the training dataset authoring contract.\",\n    \"predictive_training_cutoff\": {\n      \"max_allowed_end_at\": \"2024-12-31T23:59:59+00:00\",\n      \"warning\": \"spec.end_at must not exceed max_allowed_end_at for predictive_signal strategy_usage_class.\"\n    }\n  },\n  \"warnings\": [],\n  \"refs\": [],\n  \"error\": null\n}"
+    }
+  ],
+  "structuredContent": {
+    "status": "ok",
+    "message": "Model dataset action completed.",
+    "tool_name": "models_dataset",
+    "request_id": "27",
+    "correlation_id": "27",
+    "server_session_id": "364b8f3a7df24b48bee3c8912a3bd3c7",
+    "response_generated_at": "2026-04-09T12:55:57.543198+00:00",
+    "data": {
+      "action": "contract",
+      "contract": {
+        "supported_libraries": [
+          "catboost",
+          "lightgbm"
+        ],
+        "supported_task_types": [
+          "regression",
+          "binary_classification",
+          "multiclass_classification"
+        ],
+        "supported_metrics": {
+          "regression": [
+            "r2",
+            "mae",
+            "rmse"
+          ],
+          "binary_classification": [
+            "accuracy",
+            "f1",
+            "precision",
+            "recall",
+            "logloss",
+            "roc_auc"
+          ],
+          "multiclass_classification": [
+            "accuracy",
+            "f1",
+            "precision",
+            "recall",
+            "logloss"
+          ]
+        },
+        "supported_input_transforms": [
+          "current",
+          "lag",
+          "rolling_mean",
+          "rolling_min",
+          "rolling_max",
+          "rolling_std",
+          "rolling_sum"
+        ],
+        "required_top_level_fields": [
+          "name",
+          "symbol",
+          "anchor_timeframe",
+          "input_fields",
+          "target",
+          "split"
+        ],
+        "fixed_python_target_entrypoint": "compute_target",
+        "fixed_execution_entrypoint": "execute_trade",
+        "fixed_execution_label_entrypoint": "compute_label",
+        "recommended_flow": [
+          "models_dataset(action='contract')",
+          "models_dataset(action='preview')",
+          "models_dataset(action='materialize')",
+          "models_dataset(action='status') if wait_timeout=true",
+          "models_train",
+          "models_registry",
+          "models_compare",
+          "models_registry",
+          "models_to_feature"
+        ],
+        "notes": [
+          "Training jobs are read-only with respect to canonical datasets and managed feature datasets.",
+          "Python targets must define def compute_target(step): ...",
+          "Execution targets must define def execute_trade(ctx): ... or omit code to use ctx.default_execute(direction).",
+          "Execution targets in label_mode='custom_code' must define def compute_label(ctx, outcome): ... to project one forward-looking scalar label from the normalized trade outcome.",
+          "Execution targets may add target_transform when you want a derived label such as net_pnl > 0 without inventing a python_target.",
+          "Only deployable declarative inputs may be used from step.model_predict(...) inside feature runtime."
+        ],
+        "include_aliases": {
+          "authoring_details": "compact_authoring_explain_mode",
+          "full_contract": "full_machine_readable_contract"
+        },
+        "target_modes": [
+          {
+            "kind": "column_target",
+            "description": "Align a raw or feature source column to the anchor timeframe and use it directly as target."
+          },
+          {
+            "kind": "python_target",
+            "description": "Define def compute_target(step): ... and compute one scalar target per anchor row from the current and historical context only."
+          },
+          {
+            "kind": "execution_target",
+            "description": "Define def execute_trade(ctx): ... or use ctx.default_execute(direction) to label each anchor row from simulated trade outcomes, then either project one builtin outcome field or compute a custom scalar label."
+          }
+        ],
+        "decision_rules": [
+          {
+            "when": "You want labels derived from future trade execution, profitability, TP/SL hits, duration, exit reason, or PnL.",
+            "use": "execution_target",
+            "because": "python_target only receives current and past context; it cannot look into future candles."
+          },
+          {
+            "when": "You want a custom binary or scalar label computed from forward-looking execution context and the normalized trade outcome.",
+            "use": "execution_target(label_mode='custom_code')",
+            "because": "This keeps future-aware logic in the execution runtime while letting compute_label(ctx, outcome) emit the final scalar training label."
+          },
+          {
+            "when": "You want labels derived only from current and historical context available at the anchor candle.",
+            "use": "python_target",
+            "because": "compute_target(step) is evaluated row-by-row on the current and past context only."
+          },
+          {
+            "when": "You already have the aligned target as a raw or feature column.",
+            "use": "column_target",
+            "because": "column_target is the simplest and most reproducible target mode for precomputed labels."
+          }
+        ],
+        "spec_templates": {
+          "dataset_spec_column_target": {
+            "name": "BTC 1h precomputed target labels",
+            "description": "Column target example.",
+            "symbol": "BTCUSDT",
+            "anchor_timeframe": "1h",
+            "start_at": "2024-01-01T00:00:00+00:00",
+            "end_at": "2024-06-30T23:00:00+00:00",
+            "input_fields": [
+              {
+                "name": "close_now",
+                "source_kind": "ohlcv",
+                "column": "close",
+                "timeframe": "1h",
+                "transform": "current"
+              },
+              {
+                "name": "rsi_now",
+                "source_kind": "feature",
+                "column": "rsi_1",
+                "timeframe": "1h",
+                "transform": "current"
+              }
+            ],
+            "target": {
+              "kind": "column_target",
+              "source_kind": "feature",
+              "column": "cf_precomputed_label",
+              "timeframe": "1h"
+            },
+            "split": {
+              "train_fraction": 0.6,
+              "validation_fraction": 0.2,
+              "test_fraction": 0.2
+            }
+          },
+          "dataset_spec_python_target": {
+            "name": "BTC 1h current-context labels",
+            "description": "Python target example that only uses current and historical context.",
+            "symbol": "BTCUSDT",
+            "anchor_timeframe": "1h",
+            "start_at": "2024-01-01T00:00:00+00:00",
+            "end_at": "2024-06-30T23:00:00+00:00",
+            "input_fields": [
+              {
+                "name": "open_now",
+                "source_kind": "ohlcv",
+                "column": "open",
+                "timeframe": "1h",
+                "transform": "current"
+              },
+              {
+                "name": "close_now",
+                "source_kind": "ohlcv",
+                "column": "close",
+                "timeframe": "1h",
+                "transform": "current"
+              },
+              {
+                "name": "rsi_now",
+                "source_kind": "feature",
+                "column": "rsi_1",
+                "timeframe": "1h",
+                "transform": "current"
+              }
+            ],
+            "target": {
+              "kind": "python_target",
+              "code": "def compute_target(step):\n    return 'bull' if step.current('close') > step.current('open') else 'bear'\n",
+              "required_columns": [
+                "open",
+                "close"
+              ],
+              "required_features": [
+                "rsi_1"
+              ],
+              "required_timeframes": [
+                "1h"
+              ],
+              "lookback_bars": 1
+            },
+            "split": {
+              "train_fraction": 0.6,
+              "validation_fraction": 0.2,
+              "test_fraction": 0.2
+            }
+          },
+          "dataset_spec_execution_target_profit_classification": {
+            "name": "BTC 1h profit labels",
+            "description": "Execution target example for long-profit classification.",
+            "symbol": "BTCUSDT",
+            "anchor_timeframe": "1h",
+            "start_at": "2024-01-01T00:00:00+00:00",
+            "end_at": "2024-06-30T23:00:00+00:00",
+            "input_fields": [
+              {
+                "name": "close_now",
+                "source_kind": "ohlcv",
+                "column": "close",
+                "timeframe": "1h",
+                "transform": "current"
+              },
+              {
+                "name": "rsi_now",
+                "source_kind": "feature",
+                "column": "rsi_1",
+                "timeframe": "1h",
+                "transform": "current"
+              },
+              {
+                "name": "hour_now",
+                "source_kind": "feature",
+                "column": "hour",
+                "timeframe": "1h",
+                "transform": "current"
+              }
+            ],
+            "target": {
+              "kind": "execution_target",
+              "label_mode": "outcome_field",
+              "execution_timeframe": "5m",
+              "default_direction": "long",
+              "target_value_field": "net_pnl",
+              "target_transform": {
+                "kind": "threshold_gt",
+                "threshold": 0.0,
+                "positive_label": 1,
+                "negative_label": 0
+              },
+              "profile": {
+                "notional_usd": 1000.0,
+                "max_duration_hours": 4.0,
+                "take_profit_pct": 0.01,
+                "stop_loss_pct": 0.01,
+                "fee_rate": 0.00045
+              }
+            },
+            "split": {
+              "train_fraction": 0.6,
+              "validation_fraction": 0.2,
+              "test_fraction": 0.2
+            }
+          },
+          "dataset_spec_execution_target_profit_regression": {
+            "name": "BTC 1h net-pnl labels",
+            "description": "Execution target example for regression on trade net_pnl.",
+            "symbol": "BTCUSDT",
+            "anchor_timeframe": "1h",
+            "start_at": "2024-01-01T00:00:00+00:00",
+            "end_at": "2024-06-30T23:00:00+00:00",
+            "input_fields": [
+              {
+                "name": "close_now",
+                "source_kind": "ohlcv",
+                "column": "close",
+                "timeframe": "1h",
+                "transform": "current"
+              },
+              {
+                "name": "atr_now",
+                "source_kind": "feature",
+                "column": "atr_1",
+                "timeframe": "1h",
+                "transform": "current"
+              }
+            ],
+            "target": {
+              "kind": "execution_target",
+              "label_mode": "outcome_field",
+              "execution_timeframe": "5m",
+              "default_direction": "long",
+              "target_value_field": "net_pnl",
+              "profile": {
+                "notional_usd": 1000.0,
+                "max_duration_hours": 4.0,
+                "take_profit_pct": 0.01,
+                "stop_loss_pct": 0.01,
+                "fee_rate": 0.00045
+              }
+            },
+            "split": {
+              "train_fraction": 0.6,
+              "validation_fraction": 0.2,
+              "test_fraction": 0.2
+            }
+          },
+          "dataset_spec_execution_target_custom_binary_label": {
+            "name": "BTC 1h custom forward label",
+            "description": "Execution target example for custom forward-looking binary labels.",
+            "symbol": "BTCUSDT",
+            "anchor_timeframe": "1h",
+            "start_at": "2024-01-01T00:00:00+00:00",
+            "end_at": "2024-06-30T23:00:00+00:00",
+            "input_fields": [
+              {
+                "name": "close_now",
+                "source_kind": "ohlcv",
+                "column": "close",
+                "timeframe": "1h",
+                "transform": "current"
+              },
+              {
+                "name": "atr_now",
+                "source_kind": "feature",
+                "column": "atr_1",
+                "timeframe": "1h",
+                "transform": "current"
+              }
+            ],
+            "target": {
+              "kind": "execution_target",
+              "label_mode": "custom_code",
+              "execution_timeframe": "5m",
+              "default_direction": "long",
+              "label_code": "def compute_label(ctx, outcome):\n    quick_win = outcome.duration_bars <= 6\n    return 1 if outcome.net_pnl > 0 and quick_win else 0\n",
+              "profile": {
+                "notional_usd": 1000.0,
+                "max_duration_hours": 4.0,
+                "take_profit_pct": 0.01,
+                "stop_loss_pct": 0.01,
+                "fee_rate": 0.00045
+              }
+            },
+            "split": {
+              "train_fraction": 0.6,
+              "validation_fraction": 0.2,
+              "test_fraction": 0.2
+            }
+          },
+          "train_request": {
+            "model_id": "btc_profit_regressor",
+            "dataset_id": "training-dataset-id",
+            "library": "catboost",
+            "task_type": "regression",
+            "primary_metric": "r2",
+            "params": {
+              "depth": 4,
+              "learning_rate": 0.05,
+              "iterations": 40
+            }
+          },
+          "train_request_catboost_binary": {
+            "model_id": "btc_profit_classifier",
+            "dataset_id": "training-dataset-id",
+            "library": "catboost",
+            "task_type": "binary_classification",
+            "primary_metric": "accuracy",
+            "params": {
+              "depth": 4,
+              "learning_rate": 0.05,
+              "iterations": 80
+            }
+          },
+          "train_request_catboost_regression": {
+            "model_id": "btc_profit_regressor",
+            "dataset_id": "training-dataset-id",
+            "library": "catboost",
+            "task_type": "regression",
+            "primary_metric": "r2",
+            "params": {
+              "depth": 4,
+              "learning_rate": 0.05,
+              "iterations": 40
+            }
+          },
+          "model_backed_feature": {
+            "name": "cf_model_signal",
+            "description": "Example model-backed feature.",
+            "code": "def compute_feature(step):\n    return step.model_predict('btc_profit_regressor')\n",
+            "depends_on_models": [
+              "btc_profit_regressor"
+            ],
+            "depends_on_features": [
+              "rsi_1"
+            ],
+            "required_columns": [
+              "close"
+            ],
+            "lookback_bars": 1,
+            "supported_anchor_timeframes": [
+              "1h"
+            ]
+          }
+        },
+        "common_failures": [
+          {
+            "when": "training fails after process completion",
+            "remediation": "Inspect models_train(action='status', include=['logs','result','artifacts']) before retrying with new params or a revised dataset."
+          },
+          {
+            "when": "model is analysis-only",
+            "remediation": "Inspect deployability_report in models_dataset(view='detail') or models_registry(action='inspect', view='version_detail') and remove analysis_input_code or unsupported feature timeframes."
+          },
+          {
+            "when": "python_target is used for future trade profitability or other execution-derived labels",
+            "remediation": "Switch to execution_target and use ctx.default_execute(direction) or a custom execute_trade(ctx) implementation."
+          },
+          {
+            "when": "you need a custom binary or scalar label from forward-looking execution context",
+            "remediation": "Use execution_target(label_mode='custom_code') and define compute_label(ctx, outcome) instead of forcing the logic into python_target or target_transform."
+          },
+          {
+            "when": "input_fields use source_kind='builtin', timeframe=null, or offset instead of lag",
+            "remediation": "Use source_kind 'ohlcv' or 'feature', always supply an explicit timeframe string, and use lag instead of offset."
+          }
+        ],
+        "predictive_cutoff_policy": {
+          "applies_to_strategy_usage_class": "predictive_signal",
+          "max_allowed_train_end_at": "2024-12-31T23:59:59+00:00",
+          "warning": "Predictive strategy-usable datasets and training runs cannot extend past this cutoff."
+        },
+        "target_contracts": {
+          "execution_target": {
+            "supported_label_modes": [
+              "outcome_field",
+              "custom_code"
+            ],
+            "supported_target_value_fields": [
+              "direction",
+              "entry_timestamp",
+              "exit_timestamp",
+              "entry_price",
+              "exit_price",
+              "gross_pnl",
+              "net_pnl",
+              "return_on_notional_pct",
+              "return_on_capital_pct",
+              "duration_bars",
+              "duration_minutes",
+              "exit_reason",
+              "entry_decision_timestamp",
+              "exit_decision_timestamp"
+            ],
+            "supported_target_transform_kinds": [
+              "identity",
+              "threshold_gt",
+              "threshold_gte",
+              "threshold_lt",
+              "threshold_lte",
+              "sign_to_binary"
+            ],
+            "label_mode_contracts": {
+              "outcome_field": {
+                "required_fields": [
+                  "target_value_field"
+                ],
+                "optional_fields": [
+                  "code",
+                  "target_transform"
+                ],
+                "forbidden_fields": [
+                  "label_code"
+                ]
+              },
+              "custom_code": {
+                "required_fields": [
+                  "label_code"
+                ],
+                "optional_fields": [
+                  "code"
+                ],
+                "forbidden_fields": [
+                  "target_value_field",
+                  "target_transform"
+                ],
+                "fixed_label_entrypoint": "compute_label"
+              }
+            }
+          }
+        }
+      },
+      "contract_mode": "compact",
+      "full_contract_available": true,
+      "wait": "none",
+      "wait_satisfied": true,
+      "wait_timeout": false,
+      "wait_satisfied_by_status": null,
+      "final_status": null,
+      "important_warnings": [],
+      "next_recommended_actions": [
+        "Use models_dataset(action='preview', spec={...}) to validate one dataset spec against this contract.",
+        "Use models_dataset(action='materialize', spec={...}) only after the preview looks correct."
+      ],
+      "recommended_follow_up_tool": null,
+      "state_summary": {},
+      "exact_next_call_examples": [],
+      "raw_refs": [
+        "system_raw_call(tool_name='models_contract_describe')"
+      ],
+      "raw_tool_hints": [],
+      "summary": "Loaded the training dataset authoring contract.",
+      "predictive_training_cutoff": {
+        "max_allowed_end_at": "2024-12-31T23:59:59+00:00",
+        "warning": "spec.end_at must not exceed max_allowed_end_at for predictive_signal strategy_usage_class."
+      }
+    },
+    "warnings": [],
+    "refs": [],
+    "error": null
+  },
+  "isError": false
+}

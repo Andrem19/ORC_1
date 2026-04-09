@@ -1,0 +1,16 @@
+{
+  "source_file": "raw_plans/plan_v5.md",
+  "source_hash": "c21a9aced25f3fb034b4f6b839bf8ec6d7705db97fd2ea5ba66ef82f7f09f5f4",
+  "sequence_id": "compiled_plan_v5",
+  "compile_status": "compiled",
+  "parser_confidence": 0.95,
+  "semantic_method": "llm",
+  "stage_count": 10,
+  "compiled_plan_count": 4,
+  "warnings": [
+    "full_text field was empty; stages inferred entirely from candidate_stages and global_sections",
+    "optional model m3 (catboost-router) is mentioned in global_sections but has no dedicated stage — handled within existing stages if promoted from plausibility check"
+  ],
+  "errors": [],
+  "compiled_at": "2026-04-09T14:22:54.023203+00:00"
+}

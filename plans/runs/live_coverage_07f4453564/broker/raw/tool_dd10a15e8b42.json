@@ -1,0 +1,233 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\n  \"status\": \"ok\",\n  \"message\": \"Bootstrap guidance loaded.\",\n  \"tool_name\": \"system_bootstrap\",\n  \"request_id\": \"8\",\n  \"correlation_id\": \"8\",\n  \"server_session_id\": \"e71ae3223f614c80b0655f06cba7ad68\",\n  \"response_generated_at\": \"2026-04-09T13:06:13.622589+00:00\",\n  \"data\": {\n    \"summary\": \"Mandatory MCP bootstrap guidance loaded.\",\n    \"bootstrap_version\": \"2026-03-23\",\n    \"mandatory_rules\": [\n      \"Start every new MCP session with system_bootstrap.\",\n      \"Use system_bootstrap before guessing domain workflow or tool contracts.\",\n      \"Prefer public facade tools over system_raw_call.\",\n      \"For async workflows, start first and then inspect or poll.\",\n      \"Use research_project(action='open', project_id='...') for long investigations and incidents.* for infrastructure failures.\",\n      \"For research_record, use kind='milestone' for non-metric checkpoints and kind='result' only for ranked or metrics-bearing outcomes.\",\n      \"For features_custom, always inspect contract and examples first; raw funding_rate and events_df are not part of the runtime contract.\",\n      \"Classifier columns (cl_*) are automatically excluded from bulk feature builds when they already exist. Only request cl_* columns when building a brand-new dataset or use force=True for intentional recalculation. Never include cl_* alongside other columns in a routine build.\",\n      \"Use features_dataset(action='build', columns=[...]) to add a newly published custom feature to the stored dataset. Do not use action='refresh' to pick up published custom features.\",\n      \"features_dataset(action='refresh') is a safe refresh path: existing classifier columns (cl_*) are skipped by default unless force=True is explicit.\",\n      \"For backtests_analysis layer_compare, pass exactly two persisted completed run ids; the server will not guess baseline vs candidate.\",\n      \"Backtest timeframes are policy-locked: always use anchor_timeframe='1h' and execution_timeframe='5m'. Do not attempt other values — they will be rejected.\",\n      \"Do not emit placeholders such as <...>, omitted, placeholder, pending, latest_version, empty id strings, or version=0. If the concrete id/version is unknown, inspect/list first.\"\n    ],\n    \"startup_sequence\": [\n      {\n        \"step\": 1,\n        \"tool\": \"system_bootstrap\",\n        \"purpose\": \"Load the mandatory operating rules for this MCP.\"\n      },\n      {\n        \"step\": 2,\n        \"tool\": \"system_bootstrap\",\n        \"purpose\": \"Choose the correct domain, scenario, or tool guidance.\"\n      },\n      {\n        \"step\": 3,\n        \"tool\": \"system_health\",\n        \"purpose\": \"Run the cheap runtime probe with validate_tools=true before long-running or infrastructure-sensitive work.\"\n      }\n    ],\n    \"incident_workflow\": [\n      {\n        \"step\": 1,\n        \"tool\": \"system_debug_recent_events\",\n        \"purpose\": \"Inspect recent MCP-side runtime failures and correlation ids.\"\n      },\n      {\n        \"step\": 2,\n        \"tool\": \"system_logs\",\n        \"purpose\": \"Read server log lines when recent events are not enough.\"\n      },\n      {\n        \"step\": 3,\n        \"tool\": \"incidents\",\n        \"purpose\": \"Record the infrastructure incident in the canonical backlog using action='capture'.\"\n      },\n      {\n        \"step\": 4,\n        \"tool\": \"incidents\",\n        \"purpose\": \"Review backlog state and stored evidence while working on the fix using action='inspect'.\"\n      },\n      {\n        \"step\": 5,\n        \"tool\": \"incidents\",\n        \"purpose\": \"Move the incident through fixed, verified, and closed using action='update'.\"\n      }\n    ],\n    \"contract_index\": [\n      {\n        \"domain\": \"research\",\n        \"tool\": \"research_record\",\n        \"first_call\": \"research_project(action='open')\",\n        \"authoring_surface\": \"research_record + research_map\",\n        \"canonical_sequence\": [\n          \"research_project(action='open')\",\n          \"research_record(action='create')\"\n        ]\n      },\n      {\n        \"domain\": \"features\",\n        \"tool\": \"features_custom\",\n        \"first_call\": \"features_custom(action='inspect', view='contract')\",\n        \"authoring_surface\": \"features_custom contract/examples\",\n        \"canonical_sequence\": [\n          \"features_custom(action='inspect', view='contract')\",\n          \"features_custom(action='inspect', view='examples')\",\n          \"features_custom(action='validate')\",\n          \"features_custom(action='publish')\",\n          \"features_dataset(action='build')\"\n        ]\n      },\n      {\n        \"domain\": \"features\",\n        \"tool\": \"features_dataset\",\n        \"first_call\": \"features_dataset(action='inspect', view='list')\",\n        \"authoring_surface\": \"managed dataset inspect/build facade\",\n        \"canonical_sequence\": [\n          \"features_dataset(action='inspect', view='list')\",\n          \"features_dataset(action='build'|'refresh')\"\n        ]\n      },\n      {\n        \"domain\": \"models\",\n        \"tool\": \"models_dataset\",\n        \"first_call\": \"models_dataset(action='contract')\",\n        \"authoring_surface\": \"compact/full dataset authoring contract\"\n      },\n      {\n        \"domain\": \"experiments\",\n        \"tool\": \"experiments_run\",\n        \"first_call\": \"experiments_run(action='describe')\",\n        \"authoring_surface\": \"run(ctx) contract\"\n      },\n      {\n        \"domain\": \"backtests\",\n        \"tool\": \"backtests_strategy\",\n        \"first_call\": \"backtests_strategy(action='inspect', view='detail')\",\n        \"authoring_surface\": \"snapshot detail + validate flows\",\n        \"canonical_sequence\": [\n          \"backtests_strategy(action='inspect', view='detail')\",\n          \"backtests_strategy(action='save_version')\"\n        ]\n      }\n    ],\n    \"research_rules\": [\n      \"Look for new features, not cosmetic rewrites of the same old rules.\",\n      \"Check every new idea for stability across time windows before trusting it.\",\n      \"Reject ideas whose effect depends on one lucky window or one outlier move.\",\n      \"Treat improvement as simultaneous progress in PnL, trade count, and drawdown quality.\",\n      \"Do not call it an improvement when one metric rises by damaging the others.\",\n      \"Test a signal alone first, then in the best research shell, then with the best base strategy.\",\n      \"Always check cannibalization: what the new layer adds, what it removes, and whether net integration improves.\",\n      \"Value new signals for orthogonal contribution, not just for novelty or low overlap.\",\n      \"Do not assume a strong standalone signal will integrate well into the best base strategy.\",\n      \"If a signal works alone but breaks in integration, suspect architecture and interaction before discarding the signal.\",\n      \"Repeated additive or replacement tweaks on the same short layer usually signal a research dead end.\",\n      \"When one layer is exhausted, change hypothesis class: new features, gating, routing, or missing-regime search.\",\n      \"Find weak quarters first, then search for features that specifically repair those windows.\",\n      \"Use ownership analysis to separate real profit-carrying families from noise-producing families.\",\n      \"Do not break load-bearing families without strong evidence.\",\n      \"Treat consistently weak layers on full history as suspects, not foundations.\",\n      \"When short-side research is exhausted, shift toward orthogonal long-side specialists and missing-regime features.\",\n      \"Low overlap is useful but not sufficient; only integrated net improvement matters.\",\n      \"For non-model snapshots use the full causally available history.\",\n      \"Do not change execution_profile notional_usd to claim research improvement; compare strategy logic under fixed notionals.\",\n      \"Predictive model-backed features require an explicit backtest start after the consumed training window; current-state models are exempt.\",\n      \"Do not focus only on entry signals. Develop and test exit signals as well, because exit logic can produce substantial net strategy improvements.\",\n      \"Record every experiment while it is fresh, including negative results and equal-outcome results.\",\n      \"The best findings survive full-history, window-stability, and integration-with-base checks together.\"\n    ],\n    \"research_checklist\": [\n      \"Read the full research rules in project://mcp/agent-operating-manual before major research work.\",\n      \"Search for new orthogonal features, not small rewrites of the same exhausted layer.\",\n      \"Reject ideas that fail full-history, window-stability, or integration-with-base.\",\n      \"Judge improvements by combined PnL, trade count, and drawdown quality.\",\n      \"Check standalone behavior, integration behavior, and cannibalization every time.\",\n      \"Record every meaningful result immediately, including negative and equal-outcome cases.\"\n    ],\n    \"recommended_first_calls\": [\n      \"system_bootstrap\",\n      \"system_health\"\n    ],\n    \"probe_contract\": {\n      \"canonical_probe_tool\": \"system_health\",\n      \"probe_call_form\": {\n        \"tool\": \"system_health\",\n        \"arguments\": {\n          \"validate_tools\": true,\n          \"view\": \"summary\"\n        }\n      },\n      \"recovery_playbook\": [\n        {\n          \"step\": 1,\n          \"tool\": \"system_health\",\n          \"arguments\": {\n            \"validate_tools\": true,\n            \"view\": \"summary\"\n          }\n        },\n        {\n          \"step\": 2,\n          \"tool\": \"system_debug_validate_path\",\n          \"arguments\": {\n            \"raw_path\": \"/dev_space1/system_health\"\n          }\n        },\n        {\n          \"step\": 3,\n          \"tool\": \"system_logs\",\n          \"arguments\": {\n            \"service\": \"mcp_server\",\n            \"lines\": 50\n          }\n        },\n        {\n          \"step\": 4,\n          \"tool\": \"incidents\",\n          \"arguments\": {\n            \"action\": \"capture\",\n            \"summary\": \"MCP runtime routing/session failure\",\n            \"affected_tool\": \"system_health\",\n            \"service\": \"mcp_server\"\n          }\n        }\n      ]\n    },\n    \"related_resources\": [\n      \"project://mcp/agent-operating-manual\",\n      \"project://mcp/domains\",\n      \"project://overview\"\n    ],\n    \"acknowledgement_policy\": {\n      \"read_required\": true,\n      \"ack_api_required\": false\n    }\n  },\n  \"warnings\": [],\n  \"refs\": [],\n  \"error\": null\n}"
+    }
+  ],
+  "structuredContent": {
+    "status": "ok",
+    "message": "Bootstrap guidance loaded.",
+    "tool_name": "system_bootstrap",
+    "request_id": "8",
+    "correlation_id": "8",
+    "server_session_id": "e71ae3223f614c80b0655f06cba7ad68",
+    "response_generated_at": "2026-04-09T13:06:13.622589+00:00",
+    "data": {
+      "summary": "Mandatory MCP bootstrap guidance loaded.",
+      "bootstrap_version": "2026-03-23",
+      "mandatory_rules": [
+        "Start every new MCP session with system_bootstrap.",
+        "Use system_bootstrap before guessing domain workflow or tool contracts.",
+        "Prefer public facade tools over system_raw_call.",
+        "For async workflows, start first and then inspect or poll.",
+        "Use research_project(action='open', project_id='...') for long investigations and incidents.* for infrastructure failures.",
+        "For research_record, use kind='milestone' for non-metric checkpoints and kind='result' only for ranked or metrics-bearing outcomes.",
+        "For features_custom, always inspect contract and examples first; raw funding_rate and events_df are not part of the runtime contract.",
+        "Classifier columns (cl_*) are automatically excluded from bulk feature builds when they already exist. Only request cl_* columns when building a brand-new dataset or use force=True for intentional recalculation. Never include cl_* alongside other columns in a routine build.",
+        "Use features_dataset(action='build', columns=[...]) to add a newly published custom feature to the stored dataset. Do not use action='refresh' to pick up published custom features.",
+        "features_dataset(action='refresh') is a safe refresh path: existing classifier columns (cl_*) are skipped by default unless force=True is explicit.",
+        "For backtests_analysis layer_compare, pass exactly two persisted completed run ids; the server will not guess baseline vs candidate.",
+        "Backtest timeframes are policy-locked: always use anchor_timeframe='1h' and execution_timeframe='5m'. Do not attempt other values — they will be rejected.",
+        "Do not emit placeholders such as <...>, omitted, placeholder, pending, latest_version, empty id strings, or version=0. If the concrete id/version is unknown, inspect/list first."
+      ],
+      "startup_sequence": [
+        {
+          "step": 1,
+          "tool": "system_bootstrap",
+          "purpose": "Load the mandatory operating rules for this MCP."
+        },
+        {
+          "step": 2,
+          "tool": "system_bootstrap",
+          "purpose": "Choose the correct domain, scenario, or tool guidance."
+        },
+        {
+          "step": 3,
+          "tool": "system_health",
+          "purpose": "Run the cheap runtime probe with validate_tools=true before long-running or infrastructure-sensitive work."
+        }
+      ],
+      "incident_workflow": [
+        {
+          "step": 1,
+          "tool": "system_debug_recent_events",
+          "purpose": "Inspect recent MCP-side runtime failures and correlation ids."
+        },
+        {
+          "step": 2,
+          "tool": "system_logs",
+          "purpose": "Read server log lines when recent events are not enough."
+        },
+        {
+          "step": 3,
+          "tool": "incidents",
+          "purpose": "Record the infrastructure incident in the canonical backlog using action='capture'."
+        },
+        {
+          "step": 4,
+          "tool": "incidents",
+          "purpose": "Review backlog state and stored evidence while working on the fix using action='inspect'."
+        },
+        {
+          "step": 5,
+          "tool": "incidents",
+          "purpose": "Move the incident through fixed, verified, and closed using action='update'."
+        }
+      ],
+      "contract_index": [
+        {
+          "domain": "research",
+          "tool": "research_record",
+          "first_call": "research_project(action='open')",
+          "authoring_surface": "research_record + research_map",
+          "canonical_sequence": [
+            "research_project(action='open')",
+            "research_record(action='create')"
+          ]
+        },
+        {
+          "domain": "features",
+          "tool": "features_custom",
+          "first_call": "features_custom(action='inspect', view='contract')",
+          "authoring_surface": "features_custom contract/examples",
+          "canonical_sequence": [
+            "features_custom(action='inspect', view='contract')",
+            "features_custom(action='inspect', view='examples')",
+            "features_custom(action='validate')",
+            "features_custom(action='publish')",
+            "features_dataset(action='build')"
+          ]
+        },
+        {
+          "domain": "features",
+          "tool": "features_dataset",
+          "first_call": "features_dataset(action='inspect', view='list')",
+          "authoring_surface": "managed dataset inspect/build facade",
+          "canonical_sequence": [
+            "features_dataset(action='inspect', view='list')",
+            "features_dataset(action='build'|'refresh')"
+          ]
+        },
+        {
+          "domain": "models",
+          "tool": "models_dataset",
+          "first_call": "models_dataset(action='contract')",
+          "authoring_surface": "compact/full dataset authoring contract"
+        },
+        {
+          "domain": "experiments",
+          "tool": "experiments_run",
+          "first_call": "experiments_run(action='describe')",
+          "authoring_surface": "run(ctx) contract"
+        },
+        {
+          "domain": "backtests",
+          "tool": "backtests_strategy",
+          "first_call": "backtests_strategy(action='inspect', view='detail')",
+          "authoring_surface": "snapshot detail + validate flows",
+          "canonical_sequence": [
+            "backtests_strategy(action='inspect', view='detail')",
+            "backtests_strategy(action='save_version')"
+          ]
+        }
+      ],
+      "research_rules": [
+        "Look for new features, not cosmetic rewrites of the same old rules.",
+        "Check every new idea for stability across time windows before trusting it.",
+        "Reject ideas whose effect depends on one lucky window or one outlier move.",
+        "Treat improvement as simultaneous progress in PnL, trade count, and drawdown quality.",
+        "Do not call it an improvement when one metric rises by damaging the others.",
+        "Test a signal alone first, then in the best research shell, then with the best base strategy.",
+        "Always check cannibalization: what the new layer adds, what it removes, and whether net integration improves.",
+        "Value new signals for orthogonal contribution, not just for novelty or low overlap.",
+        "Do not assume a strong standalone signal will integrate well into the best base strategy.",
+        "If a signal works alone but breaks in integration, suspect architecture and interaction before discarding the signal.",
+        "Repeated additive or replacement tweaks on the same short layer usually signal a research dead end.",
+        "When one layer is exhausted, change hypothesis class: new features, gating, routing, or missing-regime search.",
+        "Find weak quarters first, then search for features that specifically repair those windows.",
+        "Use ownership analysis to separate real profit-carrying families from noise-producing families.",
+        "Do not break load-bearing families without strong evidence.",
+        "Treat consistently weak layers on full history as suspects, not foundations.",
+        "When short-side research is exhausted, shift toward orthogonal long-side specialists and missing-regime features.",
+        "Low overlap is useful but not sufficient; only integrated net improvement matters.",
+        "For non-model snapshots use the full causally available history.",
+        "Do not change execution_profile notional_usd to claim research improvement; compare strategy logic under fixed notionals.",
+        "Predictive model-backed features require an explicit backtest start after the consumed training window; current-state models are exempt.",
+        "Do not focus only on entry signals. Develop and test exit signals as well, because exit logic can produce substantial net strategy improvements.",
+        "Record every experiment while it is fresh, including negative results and equal-outcome results.",
+        "The best findings survive full-history, window-stability, and integration-with-base checks together."
+      ],
+      "research_checklist": [
+        "Read the full research rules in project://mcp/agent-operating-manual before major research work.",
+        "Search for new orthogonal features, not small rewrites of the same exhausted layer.",
+        "Reject ideas that fail full-history, window-stability, or integration-with-base.",
+        "Judge improvements by combined PnL, trade count, and drawdown quality.",
+        "Check standalone behavior, integration behavior, and cannibalization every time.",
+        "Record every meaningful result immediately, including negative and equal-outcome cases."
+      ],
+      "recommended_first_calls": [
+        "system_bootstrap",
+        "system_health"
+      ],
+      "probe_contract": {
+        "canonical_probe_tool": "system_health",
+        "probe_call_form": {
+          "tool": "system_health",
+          "arguments": {
+            "validate_tools": true,
+            "view": "summary"
+          }
+        },
+        "recovery_playbook": [
+          {
+            "step": 1,
+            "tool": "system_health",
+            "arguments": {
+              "validate_tools": true,
+              "view": "summary"
+            }
+          },
+          {
+            "step": 2,
+            "tool": "system_debug_validate_path",
+            "arguments": {
+              "raw_path": "/dev_space1/system_health"
+            }
+          },
+          {
+            "step": 3,
+            "tool": "system_logs",
+            "arguments": {
+              "service": "mcp_server",
+              "lines": 50
+            }
+          },
+          {
+            "step": 4,
+            "tool": "incidents",
+            "arguments": {
+              "action": "capture",
+              "summary": "MCP runtime routing/session failure",
+              "affected_tool": "system_health",
+              "service": "mcp_server"
+            }
+          }
+        ]
+      },
+      "related_resources": [
+        "project://mcp/agent-operating-manual",
+        "project://mcp/domains",
+        "project://overview"
+      ],
+      "acknowledgement_policy": {
+        "read_required": true,
+        "ack_api_required": false
+      }
+    },
+    "warnings": [],
+    "refs": [],
+    "error": null
+  },
+  "isError": false
+}

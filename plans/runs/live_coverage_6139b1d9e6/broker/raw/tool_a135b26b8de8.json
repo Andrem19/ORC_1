@@ -1,0 +1,1143 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\n  \"status\": \"ok\",\n  \"message\": \"System health loaded.\",\n  \"tool_name\": \"system_health\",\n  \"request_id\": \"7\",\n  \"correlation_id\": \"7\",\n  \"server_session_id\": \"ef0c97ea826540ab94c9156391a00ced\",\n  \"response_generated_at\": \"2026-04-09T12:37:14.277304+00:00\",\n  \"data\": {\n    \"summary\": \"System health returned the current server, domain, queue, path, and anomaly state.\",\n    \"runtime_health_state\": \"healthy\",\n    \"workflow_readiness_state\": \"degraded\",\n    \"server_health\": {\n      \"healthy\": true,\n      \"auth_mode\": \"none\",\n      \"protected_resource_metadata_available\": false,\n      \"oauth_enabled\": false,\n      \"legacy_bearer_enabled\": false,\n      \"issuer\": \"https://auth.remart.ovh/realms/mcp\",\n      \"audience\": \"https://mcp.remart.ovh/mcp\",\n      \"required_scopes\": {\n        \"tools\": \"mcp:tools\",\n        \"prompts\": \"mcp:prompts\",\n        \"resources\": \"mcp:resources\"\n      },\n      \"discovery_cache_ttl_seconds\": 300,\n      \"jwks_cache_ttl_seconds\": 300,\n      \"tool_surface\": {\n        \"surface_version\": \"workspace-cutover-v1\",\n        \"surface_fingerprint\": \"86486263ca96ded4\",\n        \"tool_surface_generation\": \"86486263ca96ded4\",\n        \"registry_generation\": \"86486263ca96ded4\",\n        \"registered_tool_count\": 46,\n        \"degraded\": false,\n        \"degraded_reason\": null,\n        \"discovery_expectation_note\": \"This snapshot reflects the repo-side MCP registry only. If it is healthy while an external client shows an empty tool surface, the stale layer is outside this server.\",\n        \"workspace_tool_names\": [\n          \"system_workspace\"\n        ]\n      }\n    },\n    \"domain_health\": [\n      {\n        \"domain\": \"datasets\",\n        \"health_state\": \"healthy\",\n        \"reason\": null\n      },\n      {\n        \"domain\": \"features\",\n        \"health_state\": \"healthy\",\n        \"reason\": null\n      },\n      {\n        \"domain\": \"models\",\n        \"health_state\": \"healthy\",\n        \"reason\": null\n      },\n      {\n        \"domain\": \"backtests_runs\",\n        \"health_state\": \"healthy\",\n        \"reason\": null\n      },\n      {\n        \"domain\": \"backtests_snapshots\",\n        \"health_state\": \"healthy\",\n        \"reason\": null\n      },\n      {\n        \"domain\": \"backtests_research\",\n        \"health_state\": \"healthy\",\n        \"reason\": null\n      },\n      {\n        \"domain\": \"experiments\",\n        \"health_state\": \"healthy\",\n        \"reason\": null\n      },\n      {\n        \"domain\": \"research_memory\",\n        \"health_state\": \"healthy\",\n        \"reason\": null\n      },\n      {\n        \"domain\": \"telegram\",\n        \"health_state\": \"healthy\",\n        \"reason\": null\n      },\n      {\n        \"domain\": \"system\",\n        \"health_state\": \"healthy\",\n        \"reason\": \"System discovery and status tools are registered.\"\n      }\n    ],\n    \"queue_health\": {\n      \"queue_depth\": 0,\n      \"record_count\": 120,\n      \"nonterminal_record_count\": 0,\n      \"active_operation_kind\": null,\n      \"active_operation_id\": null,\n      \"stalled_count\": 0,\n      \"recovery_required_count\": 0,\n      \"startup_recoveries_total\": 0,\n      \"manual_stop_requests_total\": 0,\n      \"queued_cancellations_total\": 0,\n      \"average_admitted_seconds\": 64.94,\n      \"control_plane_queue_degraded\": false\n    },\n    \"control_plane_queue_degraded\": false,\n    \"active_long_operation\": null,\n    \"path_health\": null,\n    \"runtime_storage\": null,\n    \"runtime_logs\": null,\n    \"canonical_probe_tool\": \"system_health\",\n    \"probe_call_form\": {\n      \"tool\": \"system_health\",\n      \"arguments\": {\n        \"validate_tools\": true,\n        \"view\": \"summary\"\n      }\n    },\n    \"surface_fingerprint\": null,\n    \"server_dispatch_generation\": null,\n    \"transport_sessions_summary\": {},\n    \"repo_side_dispatch_ok\": null,\n    \"external_bridge_state_unknown\": null,\n    \"recommended_client_action\": \"Use canonical tool names or the normalized /dev_space1/... form exposed by the current client; treat link_* mismatch as an external bridge issue when repo-side dispatch remains healthy.\",\n    \"recovery_playbook\": [\n      {\n        \"tool\": \"system_health\",\n        \"arguments\": {\n          \"validate_tools\": true,\n          \"view\": \"summary\"\n        }\n      },\n      {\n        \"tool\": \"system_debug_validate_path\",\n        \"arguments\": {\n          \"raw_path\": \"/dev_space1/system_health\"\n        }\n      },\n      {\n        \"tool\": \"system_logs\",\n        \"arguments\": {\n          \"service\": \"mcp_server\",\n          \"lines\": 50\n        }\n      },\n      {\n        \"tool\": \"incidents\",\n        \"arguments\": {\n          \"action\": \"capture\",\n          \"summary\": \"MCP runtime routing/session failure\",\n          \"affected_tool\": \"system_health\",\n          \"service\": \"mcp_server\"\n        }\n      }\n    ],\n    \"recent_anomalies\": [],\n    \"notify_readiness\": {\n      \"state\": \"ready\",\n      \"health_state\": \"healthy\",\n      \"reason\": null\n    },\n    \"incident_backlog\": {\n      \"project_id\": \"mcp-infra-incidents\",\n      \"counts_by_state\": {\n        \"open\": 50,\n        \"investigating\": 0,\n        \"fixed\": 2,\n        \"verified\": 0,\n        \"closed\": 0\n      },\n      \"latest_open_incidents\": [\n        {\n          \"node_id\": \"node-68fb6368553a438c8f814b0863418180\",\n          \"project_id\": \"mcp-infra-incidents\",\n          \"branch_id\": \"branch-52fbeb31fd074ba39daf2ed99a72d977\",\n          \"node_type\": \"note\",\n          \"title\": \"backtests_runs: Broker argument validation failed: backtests_runs\",\n          \"summary\": \"Broker argument validation failed: backtests_runs\",\n          \"status\": \"active\",\n          \"content\": {\n            \"error\": {\n              \"message\": \"backtests_runs.starting_capital_usd: '1000' is not valid under any of the given schemas\"\n            },\n            \"events\": [],\n            \"log_excerpt\": null\n          },\n          \"metadata\": {\n            \"affected_tool\": \"backtests_runs\",\n            \"arguments\": {\n              \"action\": \"start\",\n              \"anchor_timeframe\": \"1h\",\n              \"end_at\": \"2026-01-07T00:00:00+00:00\",\n              \"execution_timeframe\": \"5m\",\n              \"snapshot_id\": \"active-signal-v1\",\n              \"start_at\": \"2026-01-01T00:00:00+00:00\",\n              \"starting_capital_usd\": \"1000\",\n              \"symbol\": \"BTCUSDT\",\n              \"version\": 1,\n              \"wait\": \"started\"\n            },\n            \"correlation_id\": null,\n            \"error_code\": \"unknown_error\",\n            \"evidence\": {},\n            \"first_seen_at\": \"2026-04-09T12:32:02.308928+00:00\",\n            \"input_schema\": {\n              \"properties\": {\n                \"action\": {\n                  \"anyOf\": [\n                    {\n                      \"type\": \"string\"\n                    },\n                    {\n                      \"type\": \"null\"\n                    }\n                  ],\n                  \"default\": \"inspect\",\n                  \"description\": \"Operation to run on this unified backtests tool.\",\n                  \"title\": \"Action\"\n                },\n                \"anchor_timeframe\": {\n                  \"anyOf\": [\n                    {\n                      \"type\": \"string\"\n                    },\n                    {\n                      \"type\": \"null\"\n                    }\n                  ],\n                  \"default\": null,\n                  \"description\": \"Feature anchor timeframe used by the strategy logic. Currently policy-locked to '1h' — do not use any other value.\",\n                  \"title\": \"Anchor Timeframe\"\n                },\n                \"auto_complete_work_items\": {\n                  \"anyOf\": [\n                    {\n                      \"type\": \"boolean\"\n                    },\n                    {\n                      \"type\": \"null\"\n                    }\n                  ],\n                  \"default\": false,\n                  \"description\": \"Set true to auto-complete all open work items before the run starts (avoids workflow blocking errors for project-bound runs).\",\n                  \"title\": \"Auto Complete Work Items\"\n                },\n                \"base_run_id\": {\n                  \"anyOf\": [\n                    {\n                      \"type\": \"string\"\n                    },\n                    {\n                      \"type\": \"null\"\n                    }\n                  ],\n                  \"default\": null,\n                  \"description\": \"Alias for baseline_run_id retained for agent convenience on compare_summary read views.\",\n                  \"title\": \"Base Run Id\"\n                },\n                \"baseline_run_id\": {\n                  \"anyOf\": [\n                    {\n                      \"type\": \"string\"\n                    },\n                    {\n                      \"type\": \"null\"\n                    }\n                  ],\n                  \"default\": null,\n                  \"description\": \"Baseline saved run id used by compare_summary read views.\",\n                  \"title\": \"Baseline Run Id\"\n                },\n                \"before_started_at\": {\n                  \"anyOf\": [\n                    {\n                      \"type\": \"string\"\n                    },\n                    {\n                      \"type\": \"null\"\n                    }\n                  ],\n                  \"default\": null,\n                  \"description\": \"Only list runs started before this UTC timestamp.\",\n                  \"title\": \"Before Started At\"\n                },\n                \"branch_id\": {\n                  \"anyOf\": [\n                    {\n                      \"type\": \"string\"\n                    },\n                    {\n                      \"type\": \"null\"\n                    }\n                  ],\n                  \"default\": null,\n                  \"description\": \"Optional project branch id used for checkpointed writes.\",\n                  \"title\": \"Branch Id\"\n                },\n                \"context_path\": {\n                  \"anyOf\": [\n                    {\n                      \"type\": \"string\"\n                    },\n                    {\n                      \"type\": \"null\"\n                    }\n                  ],\n                  \"default\": null,\n                  \"description\": \"Optional context override path; usually leave unset unless a non-default context is required.\",\n                  \"title\": \"Context Path\"\n                },\n                \"debug_signal_enabled\": {\n                  \"default\": false,\n                  \"description\": \"Set true to capture extra signal-debug output for this run.\",\n                  \"title\": \"Debug Signal Enabled\"\n                },\n                \"dry_run\": {\n                  \"default\": true,\n                  \"description\": \"Set true to inspect lifecycle actions without applying destructive saved-run changes.\",\n                  \"title\": \"Dry Run\"\n                },\n                \"end_at\": {\n                  \"anyOf\": [\n                    {\n                      \"type\": \"string\"\n                    },\n                    {\n                      \"type\": \"null\"\n                    }\n                  ],\n                  \"default\": null,\n                  \"description\": \"Inclusive UTC end timestamp for the evaluation window.\",\n                  \"title\": \"End At\"\n                },\n                \"exact_candles\": {\n                  \"default\": false,\n                  \"description\": \"Set true to render charts with exact saved candles instead of compact defaults.\",\n                  \"title\": \"Exact Candles\"\n                },\n                \"execution_timeframe\": {\n                  \"anyOf\": [\n                    {\n                      \"type\": \"string\"\n                    },\n                    {\n                      \"type\": \"null\"\n                    }\n                  ],\n                  \"default\": null,\n                  \"description\": \"Execution timeframe used for entries, exits, and fills. Currently policy-locked to '5m' — do not use any other value.\",\n                  \"title\": \"Execution Timeframe\"\n                },\n                \"include\": {\n                  \"anyOf\": [\n                    {\n                      \"items\": {\n                        \"type\": \"string\"\n                      },\n                      \"type\": \"array\"\n                    },\n                    {\n                      \"type\": \"string\"\n                    },\n                    {\n                      \"type\": \"null\"\n                    }\n                  ],\n                  \"default\": null,\n                  \"description\": \"Optional extra sections to include in the response.\",\n                  \"title\": \"Include\"\n                },\n                \"include_analysis\": {\n                  \"anyOf\": [\n                    {\n                      \"type\": \"boolean\"\n                    },\n                    {\n                      \"type\": \"null\"\n                    }\n                  ],\n                  \"default\": false,\n                  \"description\": \"Set true to include cached analysis previews in run detail output.\",\n                  \"title\": \"Include Analysis\"\n                },\n                \"include_trades\": {\n                  \"anyOf\": [\n                    {\n                      \"type\": \"boolean\"\n                    },\n                    {\n                      \"type\": \"null\"\n                    }\n                  ],\n                  \"default\": false,\n                  \"description\": \"Set true to include trade records in run detail output.\",\n                  \"title\": \"Include Trades\"\n                },\n                \"intent_summary\": {\n                  \"anyOf\": [\n                    {\n                      \"type\": \"string\"\n                    },\n                    {\n                      \"type\": \"null\"\n                    }\n                  ],\n                  \"default\": null,\n                  \"description\": \"Optional short note describing why this run is being launched.\",\n                  \"title\": \"Intent Summary\"\n                },\n                \"limit\": {\n                  \"anyOf\": [\n                    {},\n                    {\n                      \"type\": \"null\"\n                    }\n                  ],\n                  \"default\": null,\n                  \"description\": \"Maximum number of matching records to return.\",\n                  \"title\": \"Limit\"\n                },\n                \"live_chart_enabled\": {\n                  \"default\": true,\n                  \"description\": \"Set true to keep live chart payloads updated while the run is active.\",\n                  \"title\": \"Live Chart Enabled\"\n                },\n                \"on_fail\": {\n                  \"anyOf\": [\n                    {\n                      \"type\": \"string\"\n                    },\n                    {\n                      \"type\": \"null\"\n                    }\n                  ],\n                  \"default\": \"summary\",\n                  \"description\": \"Failure reporting mode to return when the async job does not complete cleanly.\",\n                  \"title\": \"On Fail\"\n                },\n                \"poll_interval_seconds\": {\n                  \"anyOf\": [\n                    {\n                      \"type\": \"number\"\n                    },\n                    {\n                      \"type\": \"null\"\n                    }\n                  ],\n                  \"default\": null,\n                  \"description\": \"Seconds between status polls while waiting.\",\n                  \"title\": \"Poll Interval Seconds\"\n                },\n                \"project_id\": {\n                  \"anyOf\": [\n                    {\n                      \"type\": \"string\"\n                    },\n                    {\n                      \"type\": \"null\"\n                    }\n                  ],\n                  \"default\": null,\n                  \"description\": \"Optional research project id that should receive checkpoints or lineage.\",\n                  \"title\": \"Project Id\"\n                },\n                \"run_id\": {\n                  \"anyOf\": [\n                    {\n                      \"type\": \"string\"\n                    },\n                    {\n                      \"type\": \"null\"\n                    }\n                  ],\n                  \"default\": null,\n                  \"description\": \"Saved or active backtest run id from `backtests_runs(action='inspect')`.\",\n                  \"title\": \"Run Id\"\n                },\n                \"run_ids\": {\n                  \"anyOf\": [\n                    {\n                      \"items\": {\n                        \"type\": \"string\"\n                      },\n                      \"type\": \"array\"\n                    },\n                    {\n                      \"type\": \"string\"\n                    },\n                    {\n                      \"type\": \"null\"\n                    }\n                  ],\n                  \"default\": null,\n                  \"description\": \"Optional run id list when inspecting several saved runs together.\",\n                  \"title\": \"Run Ids\"\n                },\n                \"scope\": {\n                  \"anyOf\": [\n                    {\n                      \"type\": \"string\"\n                    },\n                    {\n                      \"type\": \"null\"\n                    }\n                  ],\n                  \"default\": \"all\",\n                  \"description\": \"Run inventory scope to inspect, such as active, saved, or all.\",\n                  \"title\": \"Scope\"\n                },\n                \"snapshot_id\": {\n                  \"anyOf\": [\n                    {\n                      \"type\": \"string\"\n                    },\n                    {\n                      \"type\": \"null\"\n                    }\n                  ],\n                  \"default\": null,\n                  \"description\": \"Snapshot line id from `backtests_strategy(action='inspect')`. Inspect-style reads also accept snapshot refs like `snapshot_id@version`.\",\n                  \"title\": \"Snapshot Id\"\n                },\n                \"snapshot_version\": {\n                  \"anyOf\": [\n                    {},\n                    {\n                      \"type\": \"null\"\n                    }\n                  ],\n                  \"default\": null,\n                  \"description\": \"Deprecated version alias for agent compatibility; canonical callers should use `version`.\",\n                  \"title\": \"Snapshot Version\"\n                },\n                \"start_at\": {\n                  \"anyOf\": [\n                    {\n                      \"type\": \"string\"\n                    },\n                    {\n                      \"type\": \"null\"\n                    }\n                  ],\n                  \"default\": null,\n                  \"description\": \"Inclusive UTC start timestamp for the evaluation window.\",\n                  \"title\": \"Start At\"\n                },\n                \"starting_capital_usd\": {\n                  \"anyOf\": [\n                    {\n                      \"type\": \"number\"\n                    },\n                    {\n                      \"type\": \"null\"\n                    }\n                  ],\n                  \"default\": null,\n                  \"description\": \"Optional starting capital in USD for the run or evaluation.\",\n                  \"title\": \"Starting Capital Usd\"\n                },\n                \"status\": {\n                  \"anyOf\": [\n                    {\n                      \"type\": \"string\"\n                    },\n                    {\n                      \"type\": \"null\"\n                    }\n                  ],\n                  \"default\": null,\n                  \"description\": \"Optional lifecycle status filter for listing jobs or runs.\",\n                  \"title\": \"Status\"\n                },\n                \"strategy_snapshot_id\": {\n                  \"anyOf\": [\n                    {\n                      \"type\": \"string\"\n                    },\n                    {\n                      \"type\": \"null\"\n                    }\n                  ],\n                  \"default\": null,\n                  \"description\": \"Optional snapshot line filter when listing saved or active runs.\",\n                  \"title\": \"Strategy Snapshot Id\"\n                },\n                \"strict_preflight\": {\n                  \"anyOf\": [\n                    {\n                      \"type\": \"boolean\"\n                    },\n                    {\n                      \"type\": \"null\"\n                    }\n                  ],\n                  \"default\": false,\n                  \"description\": \"Set true to require strict preflight success before admitting the run.\",\n                  \"title\": \"Strict Preflight\"\n                },\n                \"symbol\": {\n                  \"anyOf\": [\n                    {\n                      \"type\": \"string\"\n                    },\n                    {\n                      \"type\": \"null\"\n                    }\n                  ],\n                  \"default\": null,\n                  \"description\": \"Market symbol to load data for, such as `BTCUSDT`.\",\n                  \"title\": \"Symbol\"\n                },\n                \"terminal_logging_enabled\": {\n                  \"default\": true,\n                  \"description\": \"Set true to emit operational run logs while the run executes.\",\n                  \"title\": \"Terminal Logging Enabled\"\n                },\n                \"timeout_seconds\": {\n                  \"anyOf\": [\n                    {\n                      \"type\": \"number\"\n                    },\n                    {\n                      \"type\": \"null\"\n                    }\n                  ],\n                  \"default\": null,\n                  \"description\": \"Maximum seconds to wait before the call times out. Accepts integer or float values.\",\n                  \"title\": \"Timeout Seconds\"\n                },\n                \"trade_limit\": {\n                  \"anyOf\": [\n                    {},\n                    {\n                      \"type\": \"null\"\n                    }\n                  ],\n                  \"default\": null,\n                  \"description\": \"Maximum number of trades to include when trade data is requested.\",\n                  \"title\": \"Trade Limit\"\n                },\n                \"ui_streaming_enabled\": {\n                  \"default\": true,\n                  \"description\": \"Set true to stream live progress updates to UI-oriented consumers.\",\n                  \"title\": \"Ui Streaming Enabled\"\n                },\n                \"version\": {\n                  \"anyOf\": [\n                    {\n                      \"type\": \"integer\"\n                    },\n                    {\n                      \"type\": \"string\"\n                    },\n                    {\n                      \"type\": \"null\"\n                    }\n                  ],\n                  \"default\": null,\n                  \"description\": \"Immutable snapshot version number for the referenced snapshot line. Accepts integer values directly; numeric strings are normalized with warnings.\",\n                  \"title\": \"Version\"\n                },\n                \"view\": {\n                  \"anyOf\": [\n                    {\n                      \"type\": \"string\"\n                    },\n                    {\n                      \"type\": \"null\"\n                    }\n                  ],\n                  \"default\": \"list\",\n                  \"description\": \"Response view to load for the selected run, snapshot, or job.\",\n                  \"title\": \"View\"\n                },\n                \"wait\": {\n                  \"anyOf\": [\n                    {\n                      \"type\": \"string\"\n                    },\n                    {\n                      \"type\": \"null\"\n                    }\n                  ],\n                  \"default\": \"none\",\n                  \"description\": \"How long the tool should wait before returning control.\",\n                  \"title\": \"Wait\"\n                }\n              },\n              \"title\": \"backtests_runsArguments\",\n              \"type\": \"object\"\n            },\n            \"kind\": \"infrastructure_incident\",\n            \"last_seen_at\": \"2026-04-09T12:32:02.308928+00:00\",\n            \"message\": \"Broker argument validation failed: backtests_runs\",\n            \"normalized_message\": \"broker argument validation failed: backtests_runs\",\n            \"occurrences\": 1,\n            \"request_id\": null,\n            \"server_session_id\": null,\n            \"service\": \"dev_space1\",\n            \"severity\": \"medium\",\n            \"state\": \"open\"\n          },\n          \"source_refs\": [],\n          \"external_ref\": \"incident:f139ea304fd9c2e871a66903\",\n          \"dedupe_key\": \"f139ea304fd9c2e871a66903\",\n          \"pinned\": false,\n          \"protection_reason\": null,\n          \"created_at\": \"2026-04-09T12:32:02.310040+00:00\",\n          \"updated_at\": \"2026-04-09T12:32:02.310043+00:00\",\n          \"incident_id\": \"incident:f139ea304fd9c2e871a66903\"\n        },\n        {\n          \"node_id\": \"node-341390cefc9d413cbc8f87fc26a6b463\",\n          \"project_id\": \"mcp-infra-incidents\",\n          \"branch_id\": \"branch-52fbeb31fd074ba39daf2ed99a72d977\",\n          \"node_type\": \"note\",\n          \"title\": \"backtests_plan: backtests_plan_warning\",\n          \"summary\": \"backtests_plan_warning\",\n          \"status\": \"active\",\n          \"content\": {\n            \"error\": {\n              \"message\": \"stale_snapshot_feature_refs: snapshot feature_source.fields contains names that are not currently resolved through the feature registry/window guard.\"\n            },\n            \"events\": [],\n            \"log_excerpt\": null\n          },\n          \"metadata\": {\n            \"affected_tool\": \"backtests_plan\",\n            \"arguments\": {\n              \"anchor_timeframe\": \"1h\",\n              \"end_at\": \"2026-01-07T00:00:00+00:00\",\n              \"execution_timeframe\": \"5m\",\n              \"snapshot_id\": \"active-signal-v1\",\n              \"start_at\": \"2026-01-01T00:00:00+00:00\",\n              \"symbol\": \"BTCUSDT\",\n              \"version\": 1\n            },\n            \"correlation_id\": null,\n            \"error_code\": \"unknown_error\",\n            \"evidence\": {},\n            \"first_seen_at\": \"2026-04-09T12:32:00.921177+00:00\",\n            \"kind\": \"infrastructure_incident\",\n            \"last_seen_at\": \"2026-04-09T12:32:01.079895+00:00\",\n            \"message\": \"backtests_plan_warning\",\n            \"normalized_message\": \"backtests_plan_warning\",\n            \"occurrences\": 2,\n            \"request_id\": null,\n            \"result\": {\n              \"artifact_ids\": [],\n              \"call_id\": \"tool_ac10443b48dc\",\n              \"created_at\": \"2026-04-09T12:32:00.836168+00:00\",\n              \"duration_ms\": 5017,\n              \"error_class\": \"\",\n              \"key_facts\": {\n                \"summary\": \"Planned backtest run window for active-signal-v1 on BTCUSDT@1h/5m.\"\n              },\n              \"ok\": true,\n              \"operation_ref\": \"\",\n              \"plan_id\": \"cov\",\n              \"raw_result_ref\": \"plans/runs/probe_backtests/broker/raw/tool_ac10443b48dc.json\",\n              \"request_arguments\": {\n                \"anchor_timeframe\": \"1h\",\n                \"end_at\": \"2026-01-07T00:00:00+00:00\",\n                \"execution_timeframe\": \"5m\",\n                \"snapshot_id\": \"active-signal-v1\",\n                \"start_at\": \"2026-01-01T00:00:00+00:00\",\n                \"symbol\": \"BTCUSDT\",\n                \"version\": 1\n              },\n              \"response_status\": \"\",\n              \"resume_arguments\": {},\n              \"resume_token\": \"\",\n              \"resume_tool\": \"backtests_plan\",\n              \"retryable\": false,\n              \"slice_id\": \"plan\",\n              \"summary\": \"Planned backtest run window for active-signal-v1 on BTCUSDT@1h/5m.\",\n              \"tool\": \"backtests_plan\",\n              \"tool_response_status\": \"ok\",\n              \"warnings\": [\n                \"Snapshot logic depends on explicit anchor-context columns; keep using the computed causal lower bound.\",\n                \"stale_snapshot_feature_refs: snapshot feature_source.fields contains names that are not currently resolved through the feature registry/window guard.\"\n              ]\n            },\n            \"server_session_id\": null,\n            \"service\": \"dev_space1\",\n            \"severity\": \"medium\",\n            \"state\": \"open\"\n          },\n          \"source_refs\": [],\n          \"external_ref\": \"incident:f8e690a485647b6bffeb3f32\",\n          \"dedupe_key\": \"f8e690a485647b6bffeb3f32\",\n          \"pinned\": false,\n          \"protection_reason\": null,\n          \"created_at\": \"2026-04-09T12:32:00.922338+00:00\",\n          \"updated_at\": \"2026-04-09T12:32:01.083514+00:00\",\n          \"incident_id\": \"incident:f8e690a485647b6bffeb3f32\"\n        },\n        {\n          \"node_id\": \"node-88d9fe35286f4ee090347845bddf901e\",\n          \"project_id\": \"mcp-infra-incidents\",\n          \"branch_id\": \"branch-52fbeb31fd074ba39daf2ed99a72d977\",\n          \"node_type\": \"note\",\n          \"title\": \"models_dataset: models_dataset_warning\",\n          \"summary\": \"models_dataset_warning\",\n          \"status\": \"active\",\n          \"content\": {\n            \"error\": {\n              \"message\": \"broker_contract_trap:expensive_async_wait_completed_rewritten\"\n            },\n            \"events\": [],\n            \"log_excerpt\": null\n          },\n          \"metadata\": {\n            \"affected_tool\": \"models_dataset\",\n            \"arguments\": {\n              \"action\": \"preview\",\n              \"spec\": {\n                \"anchor_timeframe\": \"1h\",\n                \"description\": \"Small preview dataset for broker coverage\",\n                \"end_at\": \"2024-01-15T23:00:00+00:00\",\n                \"input_fields\": [\n                  {\n                    \"column\": \"open\",\n                    \"name\": \"open_now\",\n                    \"source_kind\": \"ohlcv\",\n                    \"timeframe\": \"1h\",\n                    \"transform\": \"current\"\n                  },\n                  {\n                    \"column\": \"close\",\n                    \"name\": \"close_now\",\n                    \"source_kind\": \"ohlcv\",\n                    \"timeframe\": \"1h\",\n                    \"transform\": \"current\"\n                  },\n                  {\n                    \"column\": \"rsi_1\",\n                    \"name\": \"rsi_now\",\n                    \"source_kind\": \"feature\",\n                    \"timeframe\": \"1h\",\n                    \"transform\": \"current\"\n                  }\n                ],\n                \"name\": \"Coverage Python Target Preview\",\n                \"split\": {\n                  \"test_fraction\": 0.2,\n                  \"train_fraction\": 0.6,\n                  \"validation_fraction\": 0.2\n                },\n                \"start_at\": \"2024-01-01T00:00:00+00:00\",\n                \"symbol\": \"BTCUSDT\",\n                \"target\": {\n                  \"code\": \"def compute_target(step):\\n    return 1 if step.current('close') > step.current('open') else 0\\n\",\n                  \"kind\": \"python_target\",\n                  \"lookback_bars\": 1,\n                  \"required_columns\": [\n                    \"open\",\n                    \"close\"\n                  ],\n                  \"required_features\": [\n                    \"rsi_1\"\n                  ],\n                  \"required_timeframes\": [\n                    \"1h\"\n                  ]\n                }\n              },\n              \"wait\": \"completed\"\n            },\n            \"correlation_id\": null,\n            \"error_code\": \"unknown_error\",\n            \"evidence\": {},\n            \"first_seen_at\": \"2026-04-09T12:26:57.279375+00:00\",\n            \"kind\": \"infrastructure_incident\",\n            \"last_seen_at\": \"2026-04-09T12:26:57.279375+00:00\",\n            \"message\": \"models_dataset_warning\",\n            \"normalized_message\": \"models_dataset_warning\",\n            \"occurrences\": 1,\n            \"request_id\": null,\n            \"result\": {\n              \"artifact_ids\": [\n                \"models-dataset-bc6a34a27df472f8-60b0b027\"\n              ],\n              \"call_id\": \"tool_fc08727cd22f\",\n              \"created_at\": \"2026-04-09T12:26:56.950566+00:00\",\n              \"duration_ms\": 611,\n              \"error_class\": \"\",\n              \"key_facts\": {\n                \"final_status\": \"running_compute\",\n                \"operation.attempt_id\": \"models-dataset-bc6a34a27df472f8-60b0b027\",\n                \"operation.operation_id\": \"models-dataset-bc6a34a27df472f8-60b0b027\",\n                \"operation.status\": \"running_compute\",\n                \"summary\": \"Dataset preparation is still running.\",\n                \"wait_satisfied\": true,\n                \"wait_timeout\": false\n              },\n              \"ok\": true,\n              \"operation_ref\": \"models-dataset-bc6a34a27df472f8-60b0b027\",\n              \"plan_id\": \"cov\",\n              \"raw_result_ref\": \"plans/runs/probe_models/broker/raw/tool_fc08727cd22f.json\",\n              \"request_arguments\": {\n                \"action\": \"preview\",\n                \"spec\": {\n                  \"anchor_timeframe\": \"1h\",\n                  \"description\": \"Small preview dataset for broker coverage\",\n                  \"end_at\": \"2024-01-15T23:00:00+00:00\",\n                  \"input_fields\": [\n                    {\n                      \"column\": \"open\",\n                      \"name\": \"open_now\",\n                      \"source_kind\": \"ohlcv\",\n                      \"timeframe\": \"1h\",\n                      \"transform\": \"current\"\n                    },\n                    {\n                      \"column\": \"close\",\n                      \"name\": \"close_now\",\n                      \"source_kind\": \"ohlcv\",\n                      \"timeframe\": \"1h\",\n                      \"transform\": \"current\"\n                    },\n                    {\n                      \"column\": \"rsi_1\",\n                      \"name\": \"rsi_now\",\n                      \"source_kind\": \"feature\",\n                      \"timeframe\": \"1h\",\n                      \"transform\": \"current\"\n                    }\n                  ],\n                  \"name\": \"Coverage Python Target Preview\",\n                  \"split\": {\n                    \"test_fraction\": 0.2,\n                    \"train_fraction\": 0.6,\n                    \"validation_fraction\": 0.2\n                  },\n                  \"start_at\": \"2024-01-01T00:00:00+00:00\",\n                  \"symbol\": \"BTCUSDT\",\n                  \"target\": {\n                    \"code\": \"def compute_target(step):\\n    return 1 if step.current('close') > step.current('open') else 0\\n\",\n                    \"kind\": \"python_target\",\n                    \"lookback_bars\": 1,\n                    \"required_columns\": [\n                      \"open\",\n                      \"close\"\n                    ],\n                    \"required_features\": [\n                      \"rsi_1\"\n                    ],\n                    \"required_timeframes\": [\n                      \"1h\"\n                    ]\n                  }\n                },\n                \"wait\": \"started\"\n              },\n              \"response_status\": \"running_compute\",\n              \"resume_arguments\": {},\n              \"resume_token\": \"\",\n              \"resume_tool\": \"models_dataset\",\n              \"retryable\": false,\n              \"slice_id\": \"preview\",\n              \"summary\": \"Dataset preparation is still running.\",\n              \"tool\": \"models_dataset\",\n              \"tool_response_status\": \"ok\",\n              \"warnings\": [\n                \"broker_contract_trap:expensive_async_wait_completed_rewritten\"\n              ]\n            },\n            \"server_session_id\": null,\n            \"service\": \"dev_space1\",\n            \"severity\": \"medium\",\n            \"state\": \"open\"\n          },\n          \"source_refs\": [],\n          \"external_ref\": \"incident:78776d48cdb25c4c5e486917\",\n          \"dedupe_key\": \"78776d48cdb25c4c5e486917\",\n          \"pinned\": false,\n          \"protection_reason\": null,\n          \"created_at\": \"2026-04-09T12:26:57.281974+00:00\",\n          \"updated_at\": \"2026-04-09T12:26:57.281981+00:00\",\n          \"incident_id\": \"incident:78776d48cdb25c4c5e486917\"\n        }\n      ],\n      \"memory_persistence\": {\n        \"database_path\": \"/home/ubuntu/.foundation_state/research_memory/research_memory.sqlite3\",\n        \"artifacts_root\": \"/home/ubuntu/.foundation_state/research_memory\",\n        \"continuity_warning\": null\n      }\n    },\n    \"contract_risks\": [\n      {\n        \"risk_code\": \"recent_open_incident\",\n        \"severity\": \"medium\",\n        \"summary\": \"backtests_runs: Broker argument validation failed: backtests_runs\"\n      },\n      {\n        \"risk_code\": \"recent_open_incident\",\n        \"severity\": \"medium\",\n        \"summary\": \"backtests_plan: backtests_plan_warning\"\n      },\n      {\n        \"risk_code\": \"recent_open_incident\",\n        \"severity\": \"medium\",\n        \"summary\": \"models_dataset: models_dataset_warning\"\n      },\n      {\n        \"risk_code\": \"async_argument_schema_parity\",\n        \"severity\": \"medium\",\n        \"summary\": \"Public async tool metadata no longer exposes the canonical wait/status contract consistently.\"\n      }\n    ],\n    \"workflow_risks\": [\n      {\n        \"risk_code\": \"recent_open_incident\",\n        \"severity\": \"medium\",\n        \"summary\": \"backtests_runs: Broker argument validation failed: backtests_runs\"\n      },\n      {\n        \"risk_code\": \"recent_open_incident\",\n        \"severity\": \"medium\",\n        \"summary\": \"backtests_plan: backtests_plan_warning\"\n      },\n      {\n        \"risk_code\": \"recent_open_incident\",\n        \"severity\": \"medium\",\n        \"summary\": \"models_dataset: models_dataset_warning\"\n      },\n      {\n        \"risk_code\": \"async_argument_schema_parity\",\n        \"severity\": \"medium\",\n        \"summary\": \"Public async tool metadata no longer exposes the canonical wait/status contract consistently.\"\n      }\n    ],\n    \"known_worker_traps\": [\n      {\n        \"risk_code\": \"recent_open_incident\",\n        \"severity\": \"medium\",\n        \"summary\": \"backtests_runs: Broker argument validation failed: backtests_runs\"\n      },\n      {\n        \"risk_code\": \"recent_open_incident\",\n        \"severity\": \"medium\",\n        \"summary\": \"backtests_plan: backtests_plan_warning\"\n      },\n      {\n        \"risk_code\": \"recent_open_incident\",\n        \"severity\": \"medium\",\n        \"summary\": \"models_dataset: models_dataset_warning\"\n      },\n      {\n        \"risk_code\": \"async_argument_schema_parity\",\n        \"severity\": \"medium\",\n        \"summary\": \"Public async tool metadata no longer exposes the canonical wait/status contract consistently.\"\n      }\n    ],\n    \"worker_traps\": [\n      {\n        \"risk_code\": \"recent_open_incident\",\n        \"severity\": \"medium\",\n        \"summary\": \"backtests_runs: Broker argument validation failed: backtests_runs\"\n      },\n      {\n        \"risk_code\": \"recent_open_incident\",\n        \"severity\": \"medium\",\n        \"summary\": \"backtests_plan: backtests_plan_warning\"\n      },\n      {\n        \"risk_code\": \"recent_open_incident\",\n        \"severity\": \"medium\",\n        \"summary\": \"models_dataset: models_dataset_warning\"\n      },\n      {\n        \"risk_code\": \"async_argument_schema_parity\",\n        \"severity\": \"medium\",\n        \"summary\": \"Public async tool metadata no longer exposes the canonical wait/status contract consistently.\"\n      }\n    ],\n    \"runtime_rules_ref\": \"project://mcp/agent-operating-manual\",\n    \"operating_guidance\": \"Start new sessions with system_bootstrap. Use system_health(validate_tools=true) as the cheap runtime probe. For infrastructure failures follow system_health -> system_debug_validate_path -> system_logs -> incidents(action='capture').\",\n    \"important_warnings\": [],\n    \"next_recommended_actions\": [\n      \"Use system_queue(action='inspect') when queue health looks degraded. For runtime failures, follow system_health(validate_tools=true) -> system_debug_validate_path -> system_logs -> incidents(action='capture').\"\n    ],\n    \"recommended_follow_up_tool\": null,\n    \"state_summary\": {},\n    \"exact_next_call_examples\": [\n      {\n        \"tool\": \"system_health\",\n        \"arguments\": {\n          \"validate_tools\": true,\n          \"view\": \"summary\"\n        }\n      },\n      {\n        \"tool\": \"system_debug_validate_path\",\n        \"arguments\": {\n          \"raw_path\": \"/dev_space1/system_health\"\n        }\n      },\n      {\n        \"tool\": \"system_logs\",\n        \"arguments\": {\n          \"service\": \"mcp_server\",\n          \"lines\": 50\n        }\n      },\n      {\n        \"tool\": \"incidents\",\n        \"arguments\": {\n          \"action\": \"capture\",\n          \"summary\": \"MCP runtime routing/session failure\",\n          \"affected_tool\": \"system_health\",\n          \"service\": \"mcp_server\"\n        }\n      }\n    ],\n    \"raw_refs\": [\n      \"system_raw_call(tool_name='system_status_get')\",\n      \"system_raw_call(tool_name='system_debug_get_infrastructure')\",\n      \"system_raw_call(tool_name='system_debug_read_logs')\"\n    ],\n    \"raw_tool_hints\": [\n      \"system_raw_call(tool_name='system_status_get')\",\n      \"system_raw_call(tool_name='system_debug_get_infrastructure')\",\n      \"system_raw_call(tool_name='system_debug_read_logs')\"\n    ],\n    \"next_action\": \"Use system_queue(action='inspect') when queue health looks degraded. For runtime failures, follow system_health(validate_tools=true) -> system_debug_validate_path -> system_logs -> incidents(action='capture').\"\n  },\n  \"warnings\": [],\n  \"refs\": [],\n  \"error\": null\n}"
+    }
+  ],
+  "structuredContent": {
+    "status": "ok",
+    "message": "System health loaded.",
+    "tool_name": "system_health",
+    "request_id": "7",
+    "correlation_id": "7",
+    "server_session_id": "ef0c97ea826540ab94c9156391a00ced",
+    "response_generated_at": "2026-04-09T12:37:14.277304+00:00",
+    "data": {
+      "summary": "System health returned the current server, domain, queue, path, and anomaly state.",
+      "runtime_health_state": "healthy",
+      "workflow_readiness_state": "degraded",
+      "server_health": {
+        "healthy": true,
+        "auth_mode": "none",
+        "protected_resource_metadata_available": false,
+        "oauth_enabled": false,
+        "legacy_bearer_enabled": false,
+        "issuer": "https://auth.remart.ovh/realms/mcp",
+        "audience": "https://mcp.remart.ovh/mcp",
+        "required_scopes": {
+          "tools": "mcp:tools",
+          "prompts": "mcp:prompts",
+          "resources": "mcp:resources"
+        },
+        "discovery_cache_ttl_seconds": 300,
+        "jwks_cache_ttl_seconds": 300,
+        "tool_surface": {
+          "surface_version": "workspace-cutover-v1",
+          "surface_fingerprint": "86486263ca96ded4",
+          "tool_surface_generation": "86486263ca96ded4",
+          "registry_generation": "86486263ca96ded4",
+          "registered_tool_count": 46,
+          "degraded": false,
+          "degraded_reason": null,
+          "discovery_expectation_note": "This snapshot reflects the repo-side MCP registry only. If it is healthy while an external client shows an empty tool surface, the stale layer is outside this server.",
+          "workspace_tool_names": [
+            "system_workspace"
+          ]
+        }
+      },
+      "domain_health": [
+        {
+          "domain": "datasets",
+          "health_state": "healthy",
+          "reason": null
+        },
+        {
+          "domain": "features",
+          "health_state": "healthy",
+          "reason": null
+        },
+        {
+          "domain": "models",
+          "health_state": "healthy",
+          "reason": null
+        },
+        {
+          "domain": "backtests_runs",
+          "health_state": "healthy",
+          "reason": null
+        },
+        {
+          "domain": "backtests_snapshots",
+          "health_state": "healthy",
+          "reason": null
+        },
+        {
+          "domain": "backtests_research",
+          "health_state": "healthy",
+          "reason": null
+        },
+        {
+          "domain": "experiments",
+          "health_state": "healthy",
+          "reason": null
+        },
+        {
+          "domain": "research_memory",
+          "health_state": "healthy",
+          "reason": null
+        },
+        {
+          "domain": "telegram",
+          "health_state": "healthy",
+          "reason": null
+        },
+        {
+          "domain": "system",
+          "health_state": "healthy",
+          "reason": "System discovery and status tools are registered."
+        }
+      ],
+      "queue_health": {
+        "queue_depth": 0,
+        "record_count": 120,
+        "nonterminal_record_count": 0,
+        "active_operation_kind": null,
+        "active_operation_id": null,
+        "stalled_count": 0,
+        "recovery_required_count": 0,
+        "startup_recoveries_total": 0,
+        "manual_stop_requests_total": 0,
+        "queued_cancellations_total": 0,
+        "average_admitted_seconds": 64.94,
+        "control_plane_queue_degraded": false
+      },
+      "control_plane_queue_degraded": false,
+      "active_long_operation": null,
+      "path_health": null,
+      "runtime_storage": null,
+      "runtime_logs": null,
+      "canonical_probe_tool": "system_health",
+      "probe_call_form": {
+        "tool": "system_health",
+        "arguments": {
+          "validate_tools": true,
+          "view": "summary"
+        }
+      },
+      "surface_fingerprint": null,
+      "server_dispatch_generation": null,
+      "transport_sessions_summary": {},
+      "repo_side_dispatch_ok": null,
+      "external_bridge_state_unknown": null,
+      "recommended_client_action": "Use canonical tool names or the normalized /dev_space1/... form exposed by the current client; treat link_* mismatch as an external bridge issue when repo-side dispatch remains healthy.",
+      "recovery_playbook": [
+        {
+          "tool": "system_health",
+          "arguments": {
+            "validate_tools": true,
+            "view": "summary"
+          }
+        },
+        {
+          "tool": "system_debug_validate_path",
+          "arguments": {
+            "raw_path": "/dev_space1/system_health"
+          }
+        },
+        {
+          "tool": "system_logs",
+          "arguments": {
+            "service": "mcp_server",
+            "lines": 50
+          }
+        },
+        {
+          "tool": "incidents",
+          "arguments": {
+            "action": "capture",
+            "summary": "MCP runtime routing/session failure",
+            "affected_tool": "system_health",
+            "service": "mcp_server"
+          }
+        }
+      ],
+      "recent_anomalies": [],
+      "notify_readiness": {
+        "state": "ready",
+        "health_state": "healthy",
+        "reason": null
+      },
+      "incident_backlog": {
+        "project_id": "mcp-infra-incidents",
+        "counts_by_state": {
+          "open": 50,
+          "investigating": 0,
+          "fixed": 2,
+          "verified": 0,
+          "closed": 0
+        },
+        "latest_open_incidents": [
+          {
+            "node_id": "node-68fb6368553a438c8f814b0863418180",
+            "project_id": "mcp-infra-incidents",
+            "branch_id": "branch-52fbeb31fd074ba39daf2ed99a72d977",
+            "node_type": "note",
+            "title": "backtests_runs: Broker argument validation failed: backtests_runs",
+            "summary": "Broker argument validation failed: backtests_runs",
+            "status": "active",
+            "content": {
+              "error": {
+                "message": "backtests_runs.starting_capital_usd: '1000' is not valid under any of the given schemas"
+              },
+              "events": [],
+              "log_excerpt": null
+            },
+            "metadata": {
+              "affected_tool": "backtests_runs",
+              "arguments": {
+                "action": "start",
+                "anchor_timeframe": "1h",
+                "end_at": "2026-01-07T00:00:00+00:00",
+                "execution_timeframe": "5m",
+                "snapshot_id": "active-signal-v1",
+                "start_at": "2026-01-01T00:00:00+00:00",
+                "starting_capital_usd": "1000",
+                "symbol": "BTCUSDT",
+                "version": 1,
+                "wait": "started"
+              },
+              "correlation_id": null,
+              "error_code": "unknown_error",
+              "evidence": {},
+              "first_seen_at": "2026-04-09T12:32:02.308928+00:00",
+              "input_schema": {
+                "properties": {
+                  "action": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": "inspect",
+                    "description": "Operation to run on this unified backtests tool.",
+                    "title": "Action"
+                  },
+                  "anchor_timeframe": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "description": "Feature anchor timeframe used by the strategy logic. Currently policy-locked to '1h' — do not use any other value.",
+                    "title": "Anchor Timeframe"
+                  },
+                  "auto_complete_work_items": {
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": false,
+                    "description": "Set true to auto-complete all open work items before the run starts (avoids workflow blocking errors for project-bound runs).",
+                    "title": "Auto Complete Work Items"
+                  },
+                  "base_run_id": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "description": "Alias for baseline_run_id retained for agent convenience on compare_summary read views.",
+                    "title": "Base Run Id"
+                  },
+                  "baseline_run_id": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "description": "Baseline saved run id used by compare_summary read views.",
+                    "title": "Baseline Run Id"
+                  },
+                  "before_started_at": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "description": "Only list runs started before this UTC timestamp.",
+                    "title": "Before Started At"
+                  },
+                  "branch_id": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "description": "Optional project branch id used for checkpointed writes.",
+                    "title": "Branch Id"
+                  },
+                  "context_path": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "description": "Optional context override path; usually leave unset unless a non-default context is required.",
+                    "title": "Context Path"
+                  },
+                  "debug_signal_enabled": {
+                    "default": false,
+                    "description": "Set true to capture extra signal-debug output for this run.",
+                    "title": "Debug Signal Enabled"
+                  },
+                  "dry_run": {
+                    "default": true,
+                    "description": "Set true to inspect lifecycle actions without applying destructive saved-run changes.",
+                    "title": "Dry Run"
+                  },
+                  "end_at": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "description": "Inclusive UTC end timestamp for the evaluation window.",
+                    "title": "End At"
+                  },
+                  "exact_candles": {
+                    "default": false,
+                    "description": "Set true to render charts with exact saved candles instead of compact defaults.",
+                    "title": "Exact Candles"
+                  },
+                  "execution_timeframe": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "description": "Execution timeframe used for entries, exits, and fills. Currently policy-locked to '5m' — do not use any other value.",
+                    "title": "Execution Timeframe"
+                  },
+                  "include": {
+                    "anyOf": [
+                      {
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "description": "Optional extra sections to include in the response.",
+                    "title": "Include"
+                  },
+                  "include_analysis": {
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": false,
+                    "description": "Set true to include cached analysis previews in run detail output.",
+                    "title": "Include Analysis"
+                  },
+                  "include_trades": {
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": false,
+                    "description": "Set true to include trade records in run detail output.",
+                    "title": "Include Trades"
+                  },
+                  "intent_summary": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "description": "Optional short note describing why this run is being launched.",
+                    "title": "Intent Summary"
+                  },
+                  "limit": {
+                    "anyOf": [
+                      {},
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "description": "Maximum number of matching records to return.",
+                    "title": "Limit"
+                  },
+                  "live_chart_enabled": {
+                    "default": true,
+                    "description": "Set true to keep live chart payloads updated while the run is active.",
+                    "title": "Live Chart Enabled"
+                  },
+                  "on_fail": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": "summary",
+                    "description": "Failure reporting mode to return when the async job does not complete cleanly.",
+                    "title": "On Fail"
+                  },
+                  "poll_interval_seconds": {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "description": "Seconds between status polls while waiting.",
+                    "title": "Poll Interval Seconds"
+                  },
+                  "project_id": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "description": "Optional research project id that should receive checkpoints or lineage.",
+                    "title": "Project Id"
+                  },
+                  "run_id": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "description": "Saved or active backtest run id from `backtests_runs(action='inspect')`.",
+                    "title": "Run Id"
+                  },
+                  "run_ids": {
+                    "anyOf": [
+                      {
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "description": "Optional run id list when inspecting several saved runs together.",
+                    "title": "Run Ids"
+                  },
+                  "scope": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": "all",
+                    "description": "Run inventory scope to inspect, such as active, saved, or all.",
+                    "title": "Scope"
+                  },
+                  "snapshot_id": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "description": "Snapshot line id from `backtests_strategy(action='inspect')`. Inspect-style reads also accept snapshot refs like `snapshot_id@version`.",
+                    "title": "Snapshot Id"
+                  },
+                  "snapshot_version": {
+                    "anyOf": [
+                      {},
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "description": "Deprecated version alias for agent compatibility; canonical callers should use `version`.",
+                    "title": "Snapshot Version"
+                  },
+                  "start_at": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "description": "Inclusive UTC start timestamp for the evaluation window.",
+                    "title": "Start At"
+                  },
+                  "starting_capital_usd": {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "description": "Optional starting capital in USD for the run or evaluation.",
+                    "title": "Starting Capital Usd"
+                  },
+                  "status": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "description": "Optional lifecycle status filter for listing jobs or runs.",
+                    "title": "Status"
+                  },
+                  "strategy_snapshot_id": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "description": "Optional snapshot line filter when listing saved or active runs.",
+                    "title": "Strategy Snapshot Id"
+                  },
+                  "strict_preflight": {
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": false,
+                    "description": "Set true to require strict preflight success before admitting the run.",
+                    "title": "Strict Preflight"
+                  },
+                  "symbol": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "description": "Market symbol to load data for, such as `BTCUSDT`.",
+                    "title": "Symbol"
+                  },
+                  "terminal_logging_enabled": {
+                    "default": true,
+                    "description": "Set true to emit operational run logs while the run executes.",
+                    "title": "Terminal Logging Enabled"
+                  },
+                  "timeout_seconds": {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "description": "Maximum seconds to wait before the call times out. Accepts integer or float values.",
+                    "title": "Timeout Seconds"
+                  },
+                  "trade_limit": {
+                    "anyOf": [
+                      {},
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "description": "Maximum number of trades to include when trade data is requested.",
+                    "title": "Trade Limit"
+                  },
+                  "ui_streaming_enabled": {
+                    "default": true,
+                    "description": "Set true to stream live progress updates to UI-oriented consumers.",
+                    "title": "Ui Streaming Enabled"
+                  },
+                  "version": {
+                    "anyOf": [
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": null,
+                    "description": "Immutable snapshot version number for the referenced snapshot line. Accepts integer values directly; numeric strings are normalized with warnings.",
+                    "title": "Version"
+                  },
+                  "view": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": "list",
+                    "description": "Response view to load for the selected run, snapshot, or job.",
+                    "title": "View"
+                  },
+                  "wait": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "default": "none",
+                    "description": "How long the tool should wait before returning control.",
+                    "title": "Wait"
+                  }
+                },
+                "title": "backtests_runsArguments",
+                "type": "object"
+              },
+              "kind": "infrastructure_incident",
+              "last_seen_at": "2026-04-09T12:32:02.308928+00:00",
+              "message": "Broker argument validation failed: backtests_runs",
+              "normalized_message": "broker argument validation failed: backtests_runs",
+              "occurrences": 1,
+              "request_id": null,
+              "server_session_id": null,
+              "service": "dev_space1",
+              "severity": "medium",
+              "state": "open"
+            },
+            "source_refs": [],
+            "external_ref": "incident:f139ea304fd9c2e871a66903",
+            "dedupe_key": "f139ea304fd9c2e871a66903",
+            "pinned": false,
+            "protection_reason": null,
+            "created_at": "2026-04-09T12:32:02.310040+00:00",
+            "updated_at": "2026-04-09T12:32:02.310043+00:00",
+            "incident_id": "incident:f139ea304fd9c2e871a66903"
+          },
+          {
+            "node_id": "node-341390cefc9d413cbc8f87fc26a6b463",
+            "project_id": "mcp-infra-incidents",
+            "branch_id": "branch-52fbeb31fd074ba39daf2ed99a72d977",
+            "node_type": "note",
+            "title": "backtests_plan: backtests_plan_warning",
+            "summary": "backtests_plan_warning",
+            "status": "active",
+            "content": {
+              "error": {
+                "message": "stale_snapshot_feature_refs: snapshot feature_source.fields contains names that are not currently resolved through the feature registry/window guard."
+              },
+              "events": [],
+              "log_excerpt": null
+            },
+            "metadata": {
+              "affected_tool": "backtests_plan",
+              "arguments": {
+                "anchor_timeframe": "1h",
+                "end_at": "2026-01-07T00:00:00+00:00",
+                "execution_timeframe": "5m",
+                "snapshot_id": "active-signal-v1",
+                "start_at": "2026-01-01T00:00:00+00:00",
+                "symbol": "BTCUSDT",
+                "version": 1
+              },
+              "correlation_id": null,
+              "error_code": "unknown_error",
+              "evidence": {},
+              "first_seen_at": "2026-04-09T12:32:00.921177+00:00",
+              "kind": "infrastructure_incident",
+              "last_seen_at": "2026-04-09T12:32:01.079895+00:00",
+              "message": "backtests_plan_warning",
+              "normalized_message": "backtests_plan_warning",
+              "occurrences": 2,
+              "request_id": null,
+              "result": {
+                "artifact_ids": [],
+                "call_id": "tool_ac10443b48dc",
+                "created_at": "2026-04-09T12:32:00.836168+00:00",
+                "duration_ms": 5017,
+                "error_class": "",
+                "key_facts": {
+                  "summary": "Planned backtest run window for active-signal-v1 on BTCUSDT@1h/5m."
+                },
+                "ok": true,
+                "operation_ref": "",
+                "plan_id": "cov",
+                "raw_result_ref": "plans/runs/probe_backtests/broker/raw/tool_ac10443b48dc.json",
+                "request_arguments": {
+                  "anchor_timeframe": "1h",
+                  "end_at": "2026-01-07T00:00:00+00:00",
+                  "execution_timeframe": "5m",
+                  "snapshot_id": "active-signal-v1",
+                  "start_at": "2026-01-01T00:00:00+00:00",
+                  "symbol": "BTCUSDT",
+                  "version": 1
+                },
+                "response_status": "",
+                "resume_arguments": {},
+                "resume_token": "",
+                "resume_tool": "backtests_plan",
+                "retryable": false,
+                "slice_id": "plan",
+                "summary": "Planned backtest run window for active-signal-v1 on BTCUSDT@1h/5m.",
+                "tool": "backtests_plan",
+                "tool_response_status": "ok",
+                "warnings": [
+                  "Snapshot logic depends on explicit anchor-context columns; keep using the computed causal lower bound.",
+                  "stale_snapshot_feature_refs: snapshot feature_source.fields contains names that are not currently resolved through the feature registry/window guard."
+                ]
+              },
+              "server_session_id": null,
+              "service": "dev_space1",
+              "severity": "medium",
+              "state": "open"
+            },
+            "source_refs": [],
+            "external_ref": "incident:f8e690a485647b6bffeb3f32",
+            "dedupe_key": "f8e690a485647b6bffeb3f32",
+            "pinned": false,
+            "protection_reason": null,
+            "created_at": "2026-04-09T12:32:00.922338+00:00",
+            "updated_at": "2026-04-09T12:32:01.083514+00:00",
+            "incident_id": "incident:f8e690a485647b6bffeb3f32"
+          },
+          {
+            "node_id": "node-88d9fe35286f4ee090347845bddf901e",
+            "project_id": "mcp-infra-incidents",
+            "branch_id": "branch-52fbeb31fd074ba39daf2ed99a72d977",
+            "node_type": "note",
+            "title": "models_dataset: models_dataset_warning",
+            "summary": "models_dataset_warning",
+            "status": "active",
+            "content": {
+              "error": {
+                "message": "broker_contract_trap:expensive_async_wait_completed_rewritten"
+              },
+              "events": [],
+              "log_excerpt": null
+            },
+            "metadata": {
+              "affected_tool": "models_dataset",
+              "arguments": {
+                "action": "preview",
+                "spec": {
+                  "anchor_timeframe": "1h",
+                  "description": "Small preview dataset for broker coverage",
+                  "end_at": "2024-01-15T23:00:00+00:00",
+                  "input_fields": [
+                    {
+                      "column": "open",
+                      "name": "open_now",
+                      "source_kind": "ohlcv",
+                      "timeframe": "1h",
+                      "transform": "current"
+                    },
+                    {
+                      "column": "close",
+                      "name": "close_now",
+                      "source_kind": "ohlcv",
+                      "timeframe": "1h",
+                      "transform": "current"
+                    },
+                    {
+                      "column": "rsi_1",
+                      "name": "rsi_now",
+                      "source_kind": "feature",
+                      "timeframe": "1h",
+                      "transform": "current"
+                    }
+                  ],
+                  "name": "Coverage Python Target Preview",
+                  "split": {
+                    "test_fraction": 0.2,
+                    "train_fraction": 0.6,
+                    "validation_fraction": 0.2
+                  },
+                  "start_at": "2024-01-01T00:00:00+00:00",
+                  "symbol": "BTCUSDT",
+                  "target": {
+                    "code": "def compute_target(step):\n    return 1 if step.current('close') > step.current('open') else 0\n",
+                    "kind": "python_target",
+                    "lookback_bars": 1,
+                    "required_columns": [
+                      "open",
+                      "close"
+                    ],
+                    "required_features": [
+                      "rsi_1"
+                    ],
+                    "required_timeframes": [
+                      "1h"
+                    ]
+                  }
+                },
+                "wait": "completed"
+              },
+              "correlation_id": null,
+              "error_code": "unknown_error",
+              "evidence": {},
+              "first_seen_at": "2026-04-09T12:26:57.279375+00:00",
+              "kind": "infrastructure_incident",
+              "last_seen_at": "2026-04-09T12:26:57.279375+00:00",
+              "message": "models_dataset_warning",
+              "normalized_message": "models_dataset_warning",
+              "occurrences": 1,
+              "request_id": null,
+              "result": {
+                "artifact_ids": [
+                  "models-dataset-bc6a34a27df472f8-60b0b027"
+                ],
+                "call_id": "tool_fc08727cd22f",
+                "created_at": "2026-04-09T12:26:56.950566+00:00",
+                "duration_ms": 611,
+                "error_class": "",
+                "key_facts": {
+                  "final_status": "running_compute",
+                  "operation.attempt_id": "models-dataset-bc6a34a27df472f8-60b0b027",
+                  "operation.operation_id": "models-dataset-bc6a34a27df472f8-60b0b027",
+                  "operation.status": "running_compute",
+                  "summary": "Dataset preparation is still running.",
+                  "wait_satisfied": true,
+                  "wait_timeout": false
+                },
+                "ok": true,
+                "operation_ref": "models-dataset-bc6a34a27df472f8-60b0b027",
+                "plan_id": "cov",
+                "raw_result_ref": "plans/runs/probe_models/broker/raw/tool_fc08727cd22f.json",
+                "request_arguments": {
+                  "action": "preview",
+                  "spec": {
+                    "anchor_timeframe": "1h",
+                    "description": "Small preview dataset for broker coverage",
+                    "end_at": "2024-01-15T23:00:00+00:00",
+                    "input_fields": [
+                      {
+                        "column": "open",
+                        "name": "open_now",
+                        "source_kind": "ohlcv",
+                        "timeframe": "1h",
+                        "transform": "current"
+                      },
+                      {
+                        "column": "close",
+                        "name": "close_now",
+                        "source_kind": "ohlcv",
+                        "timeframe": "1h",
+                        "transform": "current"
+                      },
+                      {
+                        "column": "rsi_1",
+                        "name": "rsi_now",
+                        "source_kind": "feature",
+                        "timeframe": "1h",
+                        "transform": "current"
+                      }
+                    ],
+                    "name": "Coverage Python Target Preview",
+                    "split": {
+                      "test_fraction": 0.2,
+                      "train_fraction": 0.6,
+                      "validation_fraction": 0.2
+                    },
+                    "start_at": "2024-01-01T00:00:00+00:00",
+                    "symbol": "BTCUSDT",
+                    "target": {
+                      "code": "def compute_target(step):\n    return 1 if step.current('close') > step.current('open') else 0\n",
+                      "kind": "python_target",
+                      "lookback_bars": 1,
+                      "required_columns": [
+                        "open",
+                        "close"
+                      ],
+                      "required_features": [
+                        "rsi_1"
+                      ],
+                      "required_timeframes": [
+                        "1h"
+                      ]
+                    }
+                  },
+                  "wait": "started"
+                },
+                "response_status": "running_compute",
+                "resume_arguments": {},
+                "resume_token": "",
+                "resume_tool": "models_dataset",
+                "retryable": false,
+                "slice_id": "preview",
+                "summary": "Dataset preparation is still running.",
+                "tool": "models_dataset",
+                "tool_response_status": "ok",
+                "warnings": [
+                  "broker_contract_trap:expensive_async_wait_completed_rewritten"
+                ]
+              },
+              "server_session_id": null,
+              "service": "dev_space1",
+              "severity": "medium",
+              "state": "open"
+            },
+            "source_refs": [],
+            "external_ref": "incident:78776d48cdb25c4c5e486917",
+            "dedupe_key": "78776d48cdb25c4c5e486917",
+            "pinned": false,
+            "protection_reason": null,
+            "created_at": "2026-04-09T12:26:57.281974+00:00",
+            "updated_at": "2026-04-09T12:26:57.281981+00:00",
+            "incident_id": "incident:78776d48cdb25c4c5e486917"
+          }
+        ],
+        "memory_persistence": {
+          "database_path": "/home/ubuntu/.foundation_state/research_memory/research_memory.sqlite3",
+          "artifacts_root": "/home/ubuntu/.foundation_state/research_memory",
+          "continuity_warning": null
+        }
+      },
+      "contract_risks": [
+        {
+          "risk_code": "recent_open_incident",
+          "severity": "medium",
+          "summary": "backtests_runs: Broker argument validation failed: backtests_runs"
+        },
+        {
+          "risk_code": "recent_open_incident",
+          "severity": "medium",
+          "summary": "backtests_plan: backtests_plan_warning"
+        },
+        {
+          "risk_code": "recent_open_incident",
+          "severity": "medium",
+          "summary": "models_dataset: models_dataset_warning"
+        },
+        {
+          "risk_code": "async_argument_schema_parity",
+          "severity": "medium",
+          "summary": "Public async tool metadata no longer exposes the canonical wait/status contract consistently."
+        }
+      ],
+      "workflow_risks": [
+        {
+          "risk_code": "recent_open_incident",
+          "severity": "medium",
+          "summary": "backtests_runs: Broker argument validation failed: backtests_runs"
+        },
+        {
+          "risk_code": "recent_open_incident",
+          "severity": "medium",
+          "summary": "backtests_plan: backtests_plan_warning"
+        },
+        {
+          "risk_code": "recent_open_incident",
+          "severity": "medium",
+          "summary": "models_dataset: models_dataset_warning"
+        },
+        {
+          "risk_code": "async_argument_schema_parity",
+          "severity": "medium",
+          "summary": "Public async tool metadata no longer exposes the canonical wait/status contract consistently."
+        }
+      ],
+      "known_worker_traps": [
+        {
+          "risk_code": "recent_open_incident",
+          "severity": "medium",
+          "summary": "backtests_runs: Broker argument validation failed: backtests_runs"
+        },
+        {
+          "risk_code": "recent_open_incident",
+          "severity": "medium",
+          "summary": "backtests_plan: backtests_plan_warning"
+        },
+        {
+          "risk_code": "recent_open_incident",
+          "severity": "medium",
+          "summary": "models_dataset: models_dataset_warning"
+        },
+        {
+          "risk_code": "async_argument_schema_parity",
+          "severity": "medium",
+          "summary": "Public async tool metadata no longer exposes the canonical wait/status contract consistently."
+        }
+      ],
+      "worker_traps": [
+        {
+          "risk_code": "recent_open_incident",
+          "severity": "medium",
+          "summary": "backtests_runs: Broker argument validation failed: backtests_runs"
+        },
+        {
+          "risk_code": "recent_open_incident",
+          "severity": "medium",
+          "summary": "backtests_plan: backtests_plan_warning"
+        },
+        {
+          "risk_code": "recent_open_incident",
+          "severity": "medium",
+          "summary": "models_dataset: models_dataset_warning"
+        },
+        {
+          "risk_code": "async_argument_schema_parity",
+          "severity": "medium",
+          "summary": "Public async tool metadata no longer exposes the canonical wait/status contract consistently."
+        }
+      ],
+      "runtime_rules_ref": "project://mcp/agent-operating-manual",
+      "operating_guidance": "Start new sessions with system_bootstrap. Use system_health(validate_tools=true) as the cheap runtime probe. For infrastructure failures follow system_health -> system_debug_validate_path -> system_logs -> incidents(action='capture').",
+      "important_warnings": [],
+      "next_recommended_actions": [
+        "Use system_queue(action='inspect') when queue health looks degraded. For runtime failures, follow system_health(validate_tools=true) -> system_debug_validate_path -> system_logs -> incidents(action='capture')."
+      ],
+      "recommended_follow_up_tool": null,
+      "state_summary": {},
+      "exact_next_call_examples": [
+        {
+          "tool": "system_health",
+          "arguments": {
+            "validate_tools": true,
+            "view": "summary"
+          }
+        },
+        {
+          "tool": "system_debug_validate_path",
+          "arguments": {
+            "raw_path": "/dev_space1/system_health"
+          }
+        },
+        {
+          "tool": "system_logs",
+          "arguments": {
+            "service": "mcp_server",
+            "lines": 50
+          }
+        },
+        {
+          "tool": "incidents",
+          "arguments": {
+            "action": "capture",
+            "summary": "MCP runtime routing/session failure",
+            "affected_tool": "system_health",
+            "service": "mcp_server"
+          }
+        }
+      ],
+      "raw_refs": [
+        "system_raw_call(tool_name='system_status_get')",
+        "system_raw_call(tool_name='system_debug_get_infrastructure')",
+        "system_raw_call(tool_name='system_debug_read_logs')"
+      ],
+      "raw_tool_hints": [
+        "system_raw_call(tool_name='system_status_get')",
+        "system_raw_call(tool_name='system_debug_get_infrastructure')",
+        "system_raw_call(tool_name='system_debug_read_logs')"
+      ],
+      "next_action": "Use system_queue(action='inspect') when queue health looks degraded. For runtime failures, follow system_health(validate_tools=true) -> system_debug_validate_path -> system_logs -> incidents(action='capture')."
+    },
+    "warnings": [],
+    "refs": [],
+    "error": null
+  },
+  "isError": false
+}

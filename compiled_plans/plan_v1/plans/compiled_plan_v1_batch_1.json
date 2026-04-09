@@ -1,0 +1,156 @@
+{
+  "plan_id": "compiled_plan_v1_batch_1",
+  "goal": "Find one or more new orthogonal signals that independently add informational value and improve the base system without cannibalizing it.",
+  "baseline_ref": {
+    "snapshot_id": "active-signal-v1",
+    "version": 1,
+    "symbol": "BTCUSDT",
+    "anchor_timeframe": "1h",
+    "execution_timeframe": "5m"
+  },
+  "global_constraints": [
+    "Base system active-signal-v1@1 is frozen — never modify its rules, thresholds, hours, days, or execution logic.",
+    "Only genuinely new signal classes are allowed — no retuning, permutation, or filter relaxation of existing base inputs.",
+    "Every hypothesis must pass the full funnel: standalone → stability → integration → cannibalization → final report.",
+    "No brute-force parameter search; use small logical grids only.",
+    "All negative, neutral, and positive results must be recorded in research memory.",
+    "Cannibalism must be explicitly measured before any promotion."
+  ],
+  "slices": [
+    {
+      "slice_id": "compiled_plan_v1_stage_1",
+      "title": "Запуск цикла и фиксация инвариантов",
+      "hypothesis": "Lock the cycle around the immutable base and open a dedicated research project with a hypothesis map and naming scheme.",
+      "objective": "Lock the cycle around the immutable base and open a dedicated research project with a hypothesis map and naming scheme.",
+      "success_criteria": [
+        "Open project exists, hypothesis map is initialized, cycle rules are recorded, baseline reference is saved."
+      ],
+      "allowed_tools": [
+        "research_project",
+        "research_map",
+        "research_record"
+      ],
+      "evidence_requirements": [
+        "Open project exists, hypothesis map is initialized, cycle rules are recorded, baseline reference is saved."
+      ],
+      "policy_tags": [
+        "setup"
+      ],
+      "max_turns": 4,
+      "max_tool_calls": 4,
+      "max_expensive_calls": 0,
+      "parallel_slot": 1,
+      "status": "pending",
+      "turn_count": 0,
+      "tool_call_count": 0,
+      "expensive_call_count": 0,
+      "assigned_worker_id": null,
+      "last_checkpoint_turn_id": "",
+      "last_checkpoint_summary": "",
+      "final_report_turn_id": "",
+      "last_error": "",
+      "last_summary": "",
+      "latest_tool_result_summary": "",
+      "active_operation_tool": "",
+      "active_operation_ref": "",
+      "active_operation_status": "",
+      "active_operation_arguments": {},
+      "active_resume_tool": "",
+      "active_resume_token": "",
+      "last_tool_response_status": "",
+      "artifacts": [],
+      "facts": {}
+    },
+    {
+      "slice_id": "compiled_plan_v1_stage_2",
+      "title": "Формирование пространства только новых гипотез",
+      "hypothesis": "Build a short-list of genuinely new signal families that are not permutations of the exhausted base input space.",
+      "objective": "Build a short-list of genuinely new signal families that are not permutations of the exhausted base input space.",
+      "success_criteria": [
+        "Wave-1 short-list exists with each hypothesis having a written justification of novelty relative to the base and prior history."
+      ],
+      "allowed_tools": [
+        "research_map",
+        "research_record",
+        "research_search"
+      ],
+      "evidence_requirements": [
+        "Wave-1 short-list exists with each hypothesis having a written justification of novelty relative to the base and prior history."
+      ],
+      "policy_tags": [
+        "setup",
+        "cheap_first"
+      ],
+      "max_turns": 4,
+      "max_tool_calls": 4,
+      "max_expensive_calls": 0,
+      "parallel_slot": 1,
+      "status": "pending",
+      "turn_count": 0,
+      "tool_call_count": 0,
+      "expensive_call_count": 0,
+      "assigned_worker_id": null,
+      "last_checkpoint_turn_id": "",
+      "last_checkpoint_summary": "",
+      "final_report_turn_id": "",
+      "last_error": "",
+      "last_summary": "",
+      "latest_tool_result_summary": "",
+      "active_operation_tool": "",
+      "active_operation_ref": "",
+      "active_operation_status": "",
+      "active_operation_arguments": {},
+      "active_resume_tool": "",
+      "active_resume_token": "",
+      "last_tool_response_status": "",
+      "artifacts": [],
+      "facts": {}
+    },
+    {
+      "slice_id": "compiled_plan_v1_stage_3",
+      "title": "Data contract и feature contract для каждой новой семьи",
+      "hypothesis": "For every wave-1 hypothesis fix a precise data and feature contract — inputs, alignment, lookback, leakage surface — before any testing.",
+      "objective": "For every wave-1 hypothesis fix a precise data and feature contract — inputs, alignment, lookback, leakage surface — before any testing.",
+      "success_criteria": [
+        "Each hypothesis has a clean data and feature contract with leakage risks explicitly addressed."
+      ],
+      "allowed_tools": [
+        "features_catalog"
+      ],
+      "evidence_requirements": [
+        "Each hypothesis has a clean data and feature contract with leakage risks explicitly addressed."
+      ],
+      "policy_tags": [
+        "data_readiness",
+        "feature_contract"
+      ],
+      "max_turns": 6,
+      "max_tool_calls": 5,
+      "max_expensive_calls": 1,
+      "parallel_slot": 3,
+      "status": "pending",
+      "turn_count": 0,
+      "tool_call_count": 0,
+      "expensive_call_count": 0,
+      "assigned_worker_id": null,
+      "last_checkpoint_turn_id": "",
+      "last_checkpoint_summary": "",
+      "final_report_turn_id": "",
+      "last_error": "",
+      "last_summary": "",
+      "latest_tool_result_summary": "",
+      "active_operation_tool": "",
+      "active_operation_ref": "",
+      "active_operation_status": "",
+      "active_operation_arguments": {},
+      "active_resume_tool": "",
+      "active_resume_token": "",
+      "last_tool_response_status": "",
+      "artifacts": [],
+      "facts": {}
+    }
+  ],
+  "status": "draft",
+  "created_at": "2026-04-09T14:16:11.875615+00:00",
+  "updated_at": "2026-04-09T14:16:11.875618+00:00"
+}

@@ -1,0 +1,90 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\n  \"status\": \"ok\",\n  \"message\": \"Event payload loaded.\",\n  \"tool_name\": \"events\",\n  \"request_id\": \"12\",\n  \"correlation_id\": \"12\",\n  \"server_session_id\": \"364b8f3a7df24b48bee3c8912a3bd3c7\",\n  \"response_generated_at\": \"2026-04-09T12:55:52.499353+00:00\",\n  \"data\": {\n    \"family\": \"funding\",\n    \"anchor_timeframe\": \"1h\",\n    \"preview\": {\n      \"key\": {\n        \"family\": \"funding\",\n        \"event_family\": \"funding_settlement\",\n        \"source_name\": \"binance\",\n        \"symbol_scope\": \"BTCUSDT\",\n        \"currency_scope\": \"BTC\"\n      },\n      \"anchor_timeframe\": \"1h\",\n      \"start_at\": \"2026-03-01T00:00:00+00:00\",\n      \"end_at\": \"2026-03-05T00:00:00+00:00\",\n      \"event_count_in_window\": 1,\n      \"context_event_count_in_preview\": 2,\n      \"sample_sufficiency\": \"sparse\",\n      \"anchor_window_empty_reason\": null,\n      \"warnings\": [],\n      \"preview_rows\": [\n        {\n          \"open_time\": 1772654400000,\n          \"is_funding_settlement\": 0.0,\n          \"bars_since_funding_settlement\": 4.0,\n          \"bars_until_funding_settlement\": 4.0\n        },\n        {\n          \"open_time\": 1772658000000,\n          \"is_funding_settlement\": 0.0,\n          \"bars_since_funding_settlement\": 5.0,\n          \"bars_until_funding_settlement\": 3.0\n        },\n        {\n          \"open_time\": 1772661600000,\n          \"is_funding_settlement\": 0.0,\n          \"bars_since_funding_settlement\": 6.0,\n          \"bars_until_funding_settlement\": 2.0\n        },\n        {\n          \"open_time\": 1772665200000,\n          \"is_funding_settlement\": 0.0,\n          \"bars_since_funding_settlement\": 7.0,\n          \"bars_until_funding_settlement\": 1.0\n        },\n        {\n          \"open_time\": 1772668800000,\n          \"is_funding_settlement\": 1.0,\n          \"bars_since_funding_settlement\": 0.0,\n          \"bars_until_funding_settlement\": 0.0\n        }\n      ]\n    },\n    \"important_warnings\": [],\n    \"next_recommended_actions\": [\n      \"Compare the previewed is_* and bars_* values against the managed feature dataset build for the same symbol and window.\"\n    ],\n    \"recommended_follow_up_tool\": null,\n    \"state_summary\": {},\n    \"exact_next_call_examples\": [],\n    \"raw_refs\": [],\n    \"raw_tool_hints\": [],\n    \"next_action\": \"Compare the previewed is_* and bars_* values against the managed feature dataset build for the same symbol and window.\"\n  },\n  \"warnings\": [],\n  \"refs\": [\n    {\n      \"kind\": \"event_family\",\n      \"id\": \"funding\",\n      \"path\": null\n    }\n  ],\n  \"error\": null\n}"
+    }
+  ],
+  "structuredContent": {
+    "status": "ok",
+    "message": "Event payload loaded.",
+    "tool_name": "events",
+    "request_id": "12",
+    "correlation_id": "12",
+    "server_session_id": "364b8f3a7df24b48bee3c8912a3bd3c7",
+    "response_generated_at": "2026-04-09T12:55:52.499353+00:00",
+    "data": {
+      "family": "funding",
+      "anchor_timeframe": "1h",
+      "preview": {
+        "key": {
+          "family": "funding",
+          "event_family": "funding_settlement",
+          "source_name": "binance",
+          "symbol_scope": "BTCUSDT",
+          "currency_scope": "BTC"
+        },
+        "anchor_timeframe": "1h",
+        "start_at": "2026-03-01T00:00:00+00:00",
+        "end_at": "2026-03-05T00:00:00+00:00",
+        "event_count_in_window": 1,
+        "context_event_count_in_preview": 2,
+        "sample_sufficiency": "sparse",
+        "anchor_window_empty_reason": null,
+        "warnings": [],
+        "preview_rows": [
+          {
+            "open_time": 1772654400000,
+            "is_funding_settlement": 0.0,
+            "bars_since_funding_settlement": 4.0,
+            "bars_until_funding_settlement": 4.0
+          },
+          {
+            "open_time": 1772658000000,
+            "is_funding_settlement": 0.0,
+            "bars_since_funding_settlement": 5.0,
+            "bars_until_funding_settlement": 3.0
+          },
+          {
+            "open_time": 1772661600000,
+            "is_funding_settlement": 0.0,
+            "bars_since_funding_settlement": 6.0,
+            "bars_until_funding_settlement": 2.0
+          },
+          {
+            "open_time": 1772665200000,
+            "is_funding_settlement": 0.0,
+            "bars_since_funding_settlement": 7.0,
+            "bars_until_funding_settlement": 1.0
+          },
+          {
+            "open_time": 1772668800000,
+            "is_funding_settlement": 1.0,
+            "bars_since_funding_settlement": 0.0,
+            "bars_until_funding_settlement": 0.0
+          }
+        ]
+      },
+      "important_warnings": [],
+      "next_recommended_actions": [
+        "Compare the previewed is_* and bars_* values against the managed feature dataset build for the same symbol and window."
+      ],
+      "recommended_follow_up_tool": null,
+      "state_summary": {},
+      "exact_next_call_examples": [],
+      "raw_refs": [],
+      "raw_tool_hints": [],
+      "next_action": "Compare the previewed is_* and bars_* values against the managed feature dataset build for the same symbol and window."
+    },
+    "warnings": [],
+    "refs": [
+      {
+        "kind": "event_family",
+        "id": "funding",
+        "path": null
+      }
+    ],
+    "error": null
+  },
+  "isError": false
+}

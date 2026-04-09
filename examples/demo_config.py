@@ -9,11 +9,20 @@ from app.models import WorkerConfig
 
 demo_config = OrchestratorConfig(
     goal="Build a REST API with user authentication using Flask",
-
-    planner_system_prompt=(
-        "You are the lead architect. Analyze the state and decide the next subtask. "
-        "Break work into small atomic steps. Return decisions as JSON."
+    operator_directives=(
+        "Highest priority: produce a concrete markdown plan immediately. "
+        "Do not use tools or inspect the workspace while planning."
     ),
+    planner_prompt_template="""You are writing a markdown execution plan.
+Use only the facts in this prompt.
+
+## Goal
+$goal
+
+## Output Format
+Write plain markdown starting with '# Plan v$plan_version' and then 3-5 sections named '## ETAP N: ...'.
+Each ETAP must contain numbered action steps, completion criteria, and a results table template.
+""",
 
     worker_system_prompt=(
         "You are a Python developer. Complete the assigned task precisely. "

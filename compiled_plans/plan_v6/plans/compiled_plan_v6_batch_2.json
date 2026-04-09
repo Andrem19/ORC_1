@@ -1,0 +1,183 @@
+{
+  "plan_id": "compiled_plan_v6_batch_2",
+  "goal": "Найти и валидировать новые cross-symbol directional features и CatBoost long/short классификаторы, сравнить их с immutable baseline active-signal-v1@1 через matched OOS.",
+  "baseline_ref": {
+    "snapshot_id": "active-signal-v1",
+    "version": 1,
+    "symbol": "BTCUSDT",
+    "anchor_timeframe": "1h",
+    "execution_timeframe": "5m"
+  },
+  "global_constraints": [
+    "active-signal-v1@1 — immutable reference; never modify base, its thresholds, hours, days, execution, or feature set",
+    "No feature/target/threshold/architecture selection based on lockbox window — lockbox only validates frozen choices",
+    "All improvements must pass matched OOS comparison with base on the same window",
+    "Classification only — no regression on raw future PnL",
+    "Separate long and short classifiers first; no multiclass or router model at start (router only if both M1 and M2 show meaningful OOS value)",
+    "Maximum 3-4 strong feature families; no wide feature inflation",
+    "Compact disciplined HPO grid only: depth {4,6,8}, lr {0.03,0.05}, moderate regularization, 2-3 seeds max",
+    "Allowed horizons: 12h, 18h only; allowed barrier schemes: balanced, conservative only",
+    "Purge gap between train and later windows: minimum 24h",
+    "Thresholds must be frozen on selection OOS before lockbox is opened",
+    "Train/selection/lockbox windows must be frozen before any model training begins"
+  ],
+  "slices": [
+    {
+      "slice_id": "compiled_plan_v6_stage_4",
+      "title": "Dataset contract and label design without leakage",
+      "hypothesis": "Freeze train/selection-OOS/lockbox-OOS windows and define barrier-based long/short labels before any model training.",
+      "objective": "Freeze train/selection-OOS/lockbox-OOS windows and define barrier-based long/short labels before any model training.",
+      "success_criteria": [
+        "Dataset splits and labels completely frozen and documented"
+      ],
+      "allowed_tools": [
+        "features_catalog",
+        "features_custom",
+        "features_dataset",
+        "features_analytics",
+        "datasets",
+        "datasets_sync",
+        "datasets_preview",
+        "events",
+        "events_sync"
+      ],
+      "evidence_requirements": [
+        "Dataset splits and labels completely frozen and documented"
+      ],
+      "policy_tags": [
+        "setup",
+        "cheap_first"
+      ],
+      "max_turns": 4,
+      "max_tool_calls": 4,
+      "max_expensive_calls": 0,
+      "parallel_slot": 1,
+      "status": "pending",
+      "turn_count": 0,
+      "tool_call_count": 0,
+      "expensive_call_count": 0,
+      "assigned_worker_id": null,
+      "last_checkpoint_turn_id": "",
+      "last_checkpoint_summary": "",
+      "final_report_turn_id": "",
+      "last_error": "",
+      "last_summary": "",
+      "latest_tool_result_summary": "",
+      "active_operation_tool": "",
+      "active_operation_ref": "",
+      "active_operation_status": "",
+      "active_operation_arguments": {},
+      "active_resume_tool": "",
+      "active_resume_token": "",
+      "last_tool_response_status": "",
+      "artifacts": [],
+      "facts": {}
+    },
+    {
+      "slice_id": "compiled_plan_v6_stage_5",
+      "title": "Fast plausibility check of feature packs",
+      "hypothesis": "Filter out unpromising feature packs with lightweight models before full training; keep max 2 pack setups per side.",
+      "objective": "Filter out unpromising feature packs with lightweight models before full training; keep max 2 pack setups per side.",
+      "success_criteria": [
+        "Shortlist of max 4 setups (2 long + 2 short) promoted to full training"
+      ],
+      "allowed_tools": [
+        "models_dataset",
+        "models_train",
+        "models_registry",
+        "models_compare",
+        "models_to_feature",
+        "backtests_analysis",
+        "backtests_conditions",
+        "experiments_run",
+        "experiments_inspect",
+        "experiments_read"
+      ],
+      "evidence_requirements": [
+        "Shortlist of max 4 setups (2 long + 2 short) promoted to full training"
+      ],
+      "policy_tags": [
+        "cheap_first"
+      ],
+      "max_turns": 4,
+      "max_tool_calls": 4,
+      "max_expensive_calls": 0,
+      "parallel_slot": 1,
+      "status": "pending",
+      "turn_count": 0,
+      "tool_call_count": 0,
+      "expensive_call_count": 0,
+      "assigned_worker_id": null,
+      "last_checkpoint_turn_id": "",
+      "last_checkpoint_summary": "",
+      "final_report_turn_id": "",
+      "last_error": "",
+      "last_summary": "",
+      "latest_tool_result_summary": "",
+      "active_operation_tool": "",
+      "active_operation_ref": "",
+      "active_operation_status": "",
+      "active_operation_arguments": {},
+      "active_resume_tool": "",
+      "active_resume_token": "",
+      "last_tool_response_status": "",
+      "artifacts": [],
+      "facts": {}
+    },
+    {
+      "slice_id": "compiled_plan_v6_stage_6",
+      "title": "Train CatBoost long/short classifiers",
+      "hypothesis": "Train disciplined candidate CatBoost classification models on the shortlisted setups with frozen hyperparameter grid.",
+      "objective": "Train disciplined candidate CatBoost classification models on the shortlisted setups with frozen hyperparameter grid.",
+      "success_criteria": [
+        "Frozen long and short model candidates with documented model cards ready for sleeve construction"
+      ],
+      "allowed_tools": [
+        "models_dataset",
+        "models_train",
+        "models_registry",
+        "models_compare",
+        "models_to_feature",
+        "backtests_analysis",
+        "backtests_conditions",
+        "experiments_run",
+        "experiments_inspect",
+        "experiments_read",
+        "experiments_registry_inspect"
+      ],
+      "evidence_requirements": [
+        "Frozen long and short model candidates with documented model cards ready for sleeve construction"
+      ],
+      "policy_tags": [
+        "setup"
+      ],
+      "max_turns": 4,
+      "max_tool_calls": 4,
+      "max_expensive_calls": 0,
+      "parallel_slot": 3,
+      "status": "pending",
+      "turn_count": 0,
+      "tool_call_count": 0,
+      "expensive_call_count": 0,
+      "assigned_worker_id": null,
+      "last_checkpoint_turn_id": "",
+      "last_checkpoint_summary": "",
+      "final_report_turn_id": "",
+      "last_error": "",
+      "last_summary": "",
+      "latest_tool_result_summary": "",
+      "active_operation_tool": "",
+      "active_operation_ref": "",
+      "active_operation_status": "",
+      "active_operation_arguments": {},
+      "active_resume_tool": "",
+      "active_resume_token": "",
+      "last_tool_response_status": "",
+      "artifacts": [],
+      "facts": {}
+    }
+  ],
+  "status": "draft",
+  "created_at": "2026-04-09T14:24:19.886148+00:00",
+  "updated_at": "2026-04-09T14:24:19.886149+00:00"
+}

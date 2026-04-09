@@ -1,0 +1,102 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\n  \"status\": \"ok\",\n  \"message\": \"Backtests analysis job admitted.\",\n  \"tool_name\": \"backtests_analysis\",\n  \"request_id\": \"106\",\n  \"correlation_id\": \"106\",\n  \"server_session_id\": \"364b8f3a7df24b48bee3c8912a3bd3c7\",\n  \"response_generated_at\": \"2026-04-09T12:57:46.356746+00:00\",\n  \"data\": {\n    \"wait\": \"started\",\n    \"wait_satisfied\": true,\n    \"wait_satisfied_by_status\": \"running_compute\",\n    \"wait_timeout\": false,\n    \"final_status\": \"running_compute\",\n    \"is_terminal\": false,\n    \"is_complete\": true,\n    \"resume_tool\": \"backtests_analysis\",\n    \"resume_arguments\": {\n      \"action\": \"status\",\n      \"job_id\": \"analysis-19b8e0f55330\"\n    },\n    \"job\": {\n      \"job_id\": \"analysis-19b8e0f55330\",\n      \"analysis\": \"diagnostics\",\n      \"fingerprint_hash\": \"c38e2b73ab7ab1ba83f07ab4626d1e839a5ff17d67b358f18a51b25fde7fc54d\",\n      \"idempotency_key\": null,\n      \"status\": \"queued\",\n      \"created_at\": \"2026-04-09T12:57:45.875085+00:00\",\n      \"started_at\": null,\n      \"finished_at\": null,\n      \"phase\": null,\n      \"phase_detail\": null,\n      \"warnings\": [],\n      \"error_message\": null,\n      \"workspace\": {\n        \"job_dir\": \"/home/ubuntu/FOUNDATION/artifacts/backtest_research/_analysis/analysis-19b8e0f55330\",\n        \"manifest_path\": \"/home/ubuntu/FOUNDATION/artifacts/backtest_research/_analysis/analysis-19b8e0f55330/manifest.json\",\n        \"result_path\": \"/home/ubuntu/FOUNDATION/artifacts/backtest_research/_analysis/analysis-19b8e0f55330/result.json\"\n      }\n    },\n    \"operation\": {\n      \"operation_id\": \"analysis-19b8e0f55330\",\n      \"operation_kind\": \"backtests_analysis\",\n      \"status\": \"running_compute\",\n      \"progress\": {\n        \"current\": null,\n        \"total\": null,\n        \"unit\": null,\n        \"message\": \"Loading persisted run artifacts for canonical analysis.\"\n      },\n      \"started_at\": \"2026-04-09T12:57:46.041710+00:00\",\n      \"finished_at\": null,\n      \"result_ref\": {\n        \"kind\": \"backtest_analysis_job\",\n        \"id\": \"analysis-19b8e0f55330\",\n        \"path\": \"/home/ubuntu/FOUNDATION/artifacts/backtest_research/_analysis/analysis-19b8e0f55330\"\n      },\n      \"error\": null,\n      \"queue_id\": \"81bc0f5c5f05\",\n      \"scheduler_state\": \"admitted\",\n      \"queue_position\": null,\n      \"queued_reason\": null,\n      \"blocking_operation_id\": null,\n      \"admitted_at\": \"2026-04-09T12:57:45.879086+00:00\",\n      \"health_state\": \"healthy\",\n      \"last_heartbeat_at\": \"2026-04-09T12:57:46.045893+00:00\",\n      \"last_progress_at\": \"2026-04-09T12:57:46.045893+00:00\",\n      \"progress_message\": \"Loading persisted run artifacts for canonical analysis.\",\n      \"action_required\": null,\n      \"stop_supported\": true\n    },\n    \"important_warnings\": [],\n    \"next_recommended_actions\": [\n      \"Use backtests_analysis(action='status') to continue polling.\",\n      \"Use backtests_analysis(action='result') after completion to load the canonical analysis payload.\"\n    ],\n    \"recommended_follow_up_tool\": null,\n    \"state_summary\": {},\n    \"exact_next_call_examples\": [],\n    \"raw_refs\": [],\n    \"raw_tool_hints\": [],\n    \"summary\": \"Backtests analysis job analysis-19b8e0f55330 is currently running_compute.\"\n  },\n  \"warnings\": [],\n  \"refs\": [\n    {\n      \"kind\": \"backtest_run\",\n      \"id\": \"20260409-125733-396729a4\",\n      \"path\": null\n    }\n  ],\n  \"error\": null\n}"
+    }
+  ],
+  "structuredContent": {
+    "status": "ok",
+    "message": "Backtests analysis job admitted.",
+    "tool_name": "backtests_analysis",
+    "request_id": "106",
+    "correlation_id": "106",
+    "server_session_id": "364b8f3a7df24b48bee3c8912a3bd3c7",
+    "response_generated_at": "2026-04-09T12:57:46.356746+00:00",
+    "data": {
+      "wait": "started",
+      "wait_satisfied": true,
+      "wait_satisfied_by_status": "running_compute",
+      "wait_timeout": false,
+      "final_status": "running_compute",
+      "is_terminal": false,
+      "is_complete": true,
+      "resume_tool": "backtests_analysis",
+      "resume_arguments": {
+        "action": "status",
+        "job_id": "analysis-19b8e0f55330"
+      },
+      "job": {
+        "job_id": "analysis-19b8e0f55330",
+        "analysis": "diagnostics",
+        "fingerprint_hash": "c38e2b73ab7ab1ba83f07ab4626d1e839a5ff17d67b358f18a51b25fde7fc54d",
+        "idempotency_key": null,
+        "status": "queued",
+        "created_at": "2026-04-09T12:57:45.875085+00:00",
+        "started_at": null,
+        "finished_at": null,
+        "phase": null,
+        "phase_detail": null,
+        "warnings": [],
+        "error_message": null,
+        "workspace": {
+          "job_dir": "/home/ubuntu/FOUNDATION/artifacts/backtest_research/_analysis/analysis-19b8e0f55330",
+          "manifest_path": "/home/ubuntu/FOUNDATION/artifacts/backtest_research/_analysis/analysis-19b8e0f55330/manifest.json",
+          "result_path": "/home/ubuntu/FOUNDATION/artifacts/backtest_research/_analysis/analysis-19b8e0f55330/result.json"
+        }
+      },
+      "operation": {
+        "operation_id": "analysis-19b8e0f55330",
+        "operation_kind": "backtests_analysis",
+        "status": "running_compute",
+        "progress": {
+          "current": null,
+          "total": null,
+          "unit": null,
+          "message": "Loading persisted run artifacts for canonical analysis."
+        },
+        "started_at": "2026-04-09T12:57:46.041710+00:00",
+        "finished_at": null,
+        "result_ref": {
+          "kind": "backtest_analysis_job",
+          "id": "analysis-19b8e0f55330",
+          "path": "/home/ubuntu/FOUNDATION/artifacts/backtest_research/_analysis/analysis-19b8e0f55330"
+        },
+        "error": null,
+        "queue_id": "81bc0f5c5f05",
+        "scheduler_state": "admitted",
+        "queue_position": null,
+        "queued_reason": null,
+        "blocking_operation_id": null,
+        "admitted_at": "2026-04-09T12:57:45.879086+00:00",
+        "health_state": "healthy",
+        "last_heartbeat_at": "2026-04-09T12:57:46.045893+00:00",
+        "last_progress_at": "2026-04-09T12:57:46.045893+00:00",
+        "progress_message": "Loading persisted run artifacts for canonical analysis.",
+        "action_required": null,
+        "stop_supported": true
+      },
+      "important_warnings": [],
+      "next_recommended_actions": [
+        "Use backtests_analysis(action='status') to continue polling.",
+        "Use backtests_analysis(action='result') after completion to load the canonical analysis payload."
+      ],
+      "recommended_follow_up_tool": null,
+      "state_summary": {},
+      "exact_next_call_examples": [],
+      "raw_refs": [],
+      "raw_tool_hints": [],
+      "summary": "Backtests analysis job analysis-19b8e0f55330 is currently running_compute."
+    },
+    "warnings": [],
+    "refs": [
+      {
+        "kind": "backtest_run",
+        "id": "20260409-125733-396729a4",
+        "path": null
+      }
+    ],
+    "error": null
+  },
+  "isError": false
+}

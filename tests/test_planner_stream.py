@@ -1,234 +1,155 @@
-"""Tests for clean planner stream rendering and structured extraction."""
+"""Tests for planner stream rendering and classification."""
 
 from __future__ import annotations
 
 import json
 
-from app.planner_stream import consume_stream_fragment
-from app.planner_structured_output import extract_planner_structured_output
+from app.planner_stream import (
+    consume_stream_fragment,
+    extract_markdown_from_thinking_transcript,
+    inspect_stream_transcript,
+)
 
 
-def test_consume_stream_fragment_ignores_thinking_and_metadata() -> None:
+def test_consume_stream_fragment_ignores_thinking_and_keeps_text() -> None:
     lines = [
         json.dumps({"type": "message_start", "message": {"id": "abc"}}),
-        json.dumps({"type": "content_block_delta", "delta": {"type": "thinking_delta", "text": "Let me think"}}),
-        json.dumps({"type": "content_block_delta", "delta": {"type": "text_delta", "text": '{"plan_action":"create"'}}),
+        json.dumps({"type": "content_block_delta", "delta": {"type": "thinking_delta", "thinking": "Let me think"}}),
+        json.dumps({"type": "content_block_delta", "delta": {"type": "text_delta", "text": "# Plan v1"}}),
         json.dumps({"type": "message_stop"}),
     ]
 
     rendered, buffer, event_count = consume_stream_fragment("\n".join(lines) + "\n", "")
 
-    assert rendered.startswith('{"plan_action":"create"')
-    assert "thinking" not in rendered
+    assert rendered == "# Plan v1"
     assert buffer == ""
     assert event_count == 4
 
 
-def test_consume_stream_fragment_keeps_final_plain_text_when_not_json() -> None:
-    rendered, buffer, event_count = consume_stream_fragment("final plain text\n", "")
+def test_consume_stream_fragment_extracts_stream_event_wrapper_text() -> None:
+    lines = [
+        json.dumps({
+            "type": "stream_event",
+            "event": {
+                "type": "content_block_start",
+                "content_block": {"type": "text", "text": "# Plan v1"},
+            },
+        }),
+        json.dumps({
+            "type": "stream_event",
+            "event": {
+                "type": "content_block_delta",
+                "delta": {"type": "text_delta", "text": "\n## ETAP 1"},
+            },
+        }),
+    ]
 
-    assert rendered == "final plain text"
+    rendered, buffer, event_count = consume_stream_fragment("\n".join(lines) + "\n", "")
+
+    assert rendered == "# Plan v1\n## ETAP 1"
     assert buffer == ""
-    assert event_count == 0
+    assert event_count == 2
 
 
-def test_extract_structured_output_from_tool_use_input() -> None:
-    payload = {
-        "schema_version": 3,
-        "plan_action": "create",
-        "plan_version": 1,
-        "tasks": [{"stage_number": 0, "stage_name": "Baseline"}],
-    }
-    transcript = "\n".join([
-        json.dumps({"type": "system", "tools": ["StructuredOutput"]}),
-        json.dumps({
-            "type": "assistant",
-            "message": {
-                "content": [
-                    {"type": "text", "text": "summary"},
-                    {"type": "tool_use", "name": "StructuredOutput", "input": payload},
-                ]
-            },
-        }),
-        json.dumps({
-            "type": "user",
-            "message": {"content": [{"type": "tool_result", "content": "Structured output provided successfully"}]},
-        }),
-    ])
-
-    extracted = extract_planner_structured_output(transcript, rendered_text="Structured output provided successfully")
-
-    assert extracted.structured_payload == payload
-    assert extracted.structured_payload_source == "tool_use_input"
-    assert extracted.saw_tool_result_success is True
-
-
-def test_extract_structured_output_from_input_json_delta() -> None:
+def test_inspect_stream_transcript_detects_tool_use_without_visible_text() -> None:
     transcript = "\n".join([
         json.dumps({
             "type": "stream_event",
             "event": {
                 "type": "content_block_start",
-                "content_block": {"type": "tool_use", "name": "StructuredOutput", "input": {}},
+                "content_block": {"type": "thinking", "thinking": ""},
+            },
+        }),
+        json.dumps({
+            "type": "stream_event",
+            "event": {
+                "type": "content_block_start",
+                "content_block": {"type": "tool_use", "name": "Agent", "input": {}},
+            },
+        }),
+    ])
+
+    state = inspect_stream_transcript(transcript)
+
+    assert state["tool_use_name"] == "Agent"
+    assert state["has_visible_text"] is False
+    assert state["thinking_only"] is True
+
+
+def test_inspect_stream_transcript_detects_visible_text() -> None:
+    transcript = "\n".join([
+        json.dumps({
+            "type": "stream_event",
+            "event": {
+                "type": "content_block_start",
+                "content_block": {"type": "thinking", "thinking": ""},
+            },
+        }),
+        json.dumps({
+            "type": "stream_event",
+            "event": {
+                "type": "content_block_start",
+                "content_block": {"type": "text", "text": "# Plan v1"},
+            },
+        }),
+    ])
+
+    state = inspect_stream_transcript(transcript)
+
+    assert state["has_visible_text"] is True
+    assert state["thinking_only"] is False
+
+
+def test_extract_markdown_from_thinking_transcript_recovers_plan_text() -> None:
+    transcript = "\n".join([
+        json.dumps({
+            "type": "stream_event",
+            "event": {
+                "type": "content_block_start",
+                "content_block": {"type": "thinking", "thinking": "# Plan v3\n\n## Status and Frame"},
             },
         }),
         json.dumps({
             "type": "stream_event",
             "event": {
                 "type": "content_block_delta",
-                "delta": {
-                    "type": "input_json_delta",
-                    "partial_json": "{\"schema_version\":3,\"plan_action\":\"create\",\"plan_version\":1,\"tasks\":[",
+                "delta": {"type": "thinking_delta", "thinking": "\n\n## ETAP 1: Test"},
+            },
+        }),
+    ])
+
+    recovered = extract_markdown_from_thinking_transcript(transcript)
+
+    assert recovered.startswith("# Plan v3")
+    assert "## ETAP 1: Test" in recovered
+
+
+def test_extract_markdown_from_thinking_transcript_trims_post_plan_reasoning() -> None:
+    transcript = "\n".join([
+        json.dumps({
+            "type": "stream_event",
+            "event": {
+                "type": "content_block_start",
+                "content_block": {
+                    "type": "thinking",
+                    "thinking": (
+                        "# Plan v1\n\n## Status and Frame\nBaseline.\n\n## Goal\nGoal.\n\n## Baseline\nBase.\n\n"
+                        "## Research Principles\n- One.\n\n## dev_space1 Capabilities\nWorkers.\n\n"
+                        "## ETAP 1: A\nGoal: one.\n1. Step.\n2. Step.\n3. Step.\n4. Step.\nCompletion criteria: ok.\n"
+                        "| a | b |\n| --- | --- |\n| x | y |\n\n"
+                        "## ETAP 2: B\nGoal: two.\n1. Step.\n2. Step.\n3. Step.\n4. Step.\nCompletion criteria: ok.\n"
+                        "| a | b |\n| --- | --- |\n| x | y |\n\n"
+                        "## ETAP 3: C\nGoal: three.\n1. Step.\n2. Step.\n3. Step.\n4. Step.\nCompletion criteria: ok.\n"
+                        "| a | b |\n| --- | --- |\n| x | y |\n\n"
+                        "Hmm, wait. I should reconsider the code parameter."
+                    ),
                 },
             },
         }),
-        json.dumps({
-            "type": "stream_event",
-            "event": {
-                "type": "content_block_delta",
-                "delta": {
-                    "type": "input_json_delta",
-                    "partial_json": "{\"stage_number\":0,\"stage_name\":\"Baseline\"}]}",
-                },
-            },
-        }),
     ])
 
-    extracted = extract_planner_structured_output(transcript, rendered_text="")
+    recovered = extract_markdown_from_thinking_transcript(transcript)
 
-    assert extracted.structured_payload is not None
-    assert extracted.structured_payload["plan_version"] == 1
-    assert extracted.structured_payload["tasks"][0]["stage_number"] == 0
-    assert extracted.structured_payload_source == "input_json_delta"
-
-
-def test_extract_structured_output_ignores_tool_result_without_payload() -> None:
-    transcript = "\n".join([
-        json.dumps({"type": "system", "tools": ["StructuredOutput"]}),
-        json.dumps({
-            "type": "user",
-            "message": {"content": [{"type": "tool_result", "content": "Structured output provided successfully"}]},
-        }),
-    ])
-
-    extracted = extract_planner_structured_output(
-        transcript,
-        rendered_text="Structured output provided successfully",
-    )
-
-    assert extracted.structured_payload is None
-    assert extracted.structured_payload_source == "none"
-    assert extracted.saw_tool_result_success is True
-
-
-def test_extract_structured_output_marks_transport_error_when_activity_has_no_payload() -> None:
-    transcript = "\n".join([
-        json.dumps({
-            "type": "stream_event",
-            "event": {
-                "type": "content_block_start",
-                "content_block": {"type": "tool_use", "name": "StructuredOutput", "input": {}},
-            },
-        }),
-        json.dumps({
-            "type": "stream_event",
-            "event": {
-                "type": "content_block_delta",
-                "delta": {"type": "input_json_delta", "partial_json": '{"schema_version":3'},
-            },
-        }),
-    ])
-
-    extracted = extract_planner_structured_output(transcript, rendered_text="")
-
-    assert extracted.structured_payload is None
-    assert extracted.structured_payload_source == "none"
-    assert extracted.structured_delta_bytes > 0
-    assert extracted.transport_errors
-    assert "StructuredOutput activity detected" in extracted.transport_errors[-1]
-
-
-def test_extract_structured_output_detects_truncated_mid_event() -> None:
-    transcript = (
-        '{"type":"stream_event","event":{"type":"content_block_delta","delta":{"type":"thinking_delta","thinking":"x"}}}\n'
-        '{"type":"stream_event","event":{"type":"content_block_delta","delta":{"type":"input_json_delta","partial_json":"{\\"schema_version\\":3"}'
-    )
-
-    extracted = extract_planner_structured_output(transcript, rendered_text="")
-
-    assert extracted.structured_payload is None
-    assert extracted.transcript_complete is False
-    assert extracted.truncation_detected is True
-    assert any(err.startswith("stdout_truncated_mid_event:") for err in extracted.transport_errors)
-    assert any(err.startswith("stdout_tail=") for err in extracted.transport_errors)
-
-
-def test_extract_structured_output_falls_back_to_rendered_text_json() -> None:
-    rendered_text = json.dumps({
-        "schema_version": 3,
-        "plan_action": "create",
-        "plan_version": 1,
-        "tasks": [{"stage_number": 0, "stage_name": "Baseline"}],
-    })
-
-    extracted = extract_planner_structured_output("", rendered_text=rendered_text)
-
-    assert extracted.structured_payload is not None
-    assert extracted.structured_payload_source == "rendered_text"
-
-
-def test_extract_structured_output_handles_real_regression_shape() -> None:
-    payload = {
-        "schema_version": 3,
-        "plan_action": "create",
-        "plan_version": 1,
-        "tasks": [{"stage_number": 0, "stage_name": "Baseline"}],
-    }
-    partial = json.dumps(payload, ensure_ascii=False)
-    transcript = "\n".join([
-        json.dumps({
-            "type": "system",
-            "subtype": "init",
-            "tools": ["StructuredOutput"],
-            "model": "glm-5.1",
-        }),
-        json.dumps({
-            "type": "stream_event",
-            "event": {
-                "type": "content_block_start",
-                "index": 1,
-                "content_block": {"type": "tool_use", "id": "call_1", "name": "StructuredOutput", "input": {}},
-            },
-        }),
-        json.dumps({
-            "type": "stream_event",
-            "event": {
-                "type": "content_block_delta",
-                "index": 1,
-                "delta": {"type": "input_json_delta", "partial_json": partial},
-            },
-        }),
-        json.dumps({
-            "type": "assistant",
-            "message": {
-                "id": "msg_1",
-                "content": [{"type": "tool_use", "id": "call_1", "name": "StructuredOutput", "input": payload}],
-            },
-        }),
-        json.dumps({
-            "type": "user",
-            "message": {
-                "content": [{"tool_use_id": "call_1", "type": "tool_result", "content": "Structured output provided successfully"}],
-            },
-            "tool_use_result": "Structured output provided successfully",
-        }),
-    ])
-
-    extracted = extract_planner_structured_output(
-        transcript,
-        rendered_text="Structured output provided successfully",
-    )
-
-    assert extracted.structured_payload == payload
-    assert extracted.structured_payload_source == "tool_use_input"
-    assert extracted.saw_tool_result_success is True
+    assert recovered.startswith("# Plan v1")
+    assert recovered.endswith("| x | y |")
+    assert "Hmm, wait." not in recovered

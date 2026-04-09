@@ -1,0 +1,229 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\n  \"status\": \"ok\",\n  \"message\": \"Backtests study facade action completed.\",\n  \"tool_name\": \"backtests_studies\",\n  \"request_id\": \"36\",\n  \"correlation_id\": \"36\",\n  \"server_session_id\": \"fbf2ef6510c34fd58f805b982a099afd\",\n  \"response_generated_at\": \"2026-04-09T13:49:25.691425+00:00\",\n  \"data\": {\n    \"action\": \"start\",\n    \"constraint_preview\": {\n      \"base_snapshot_id\": \"active-signal-v1\",\n      \"base_version\": 1,\n      \"symbol\": \"BTCUSDT\",\n      \"anchor_timeframe\": \"1h\",\n      \"execution_timeframe\": \"5m\",\n      \"context_path\": null,\n      \"variant_constraints\": [\n        {\n          \"variant_id\": \"baseline_copy_1\",\n          \"name\": \"Baseline copy\",\n          \"description\": null,\n          \"status\": \"ready\",\n          \"earliest_start_at\": \"2021-03-24T02:00:00+00:00\",\n          \"latest_end_at\": \"2026-04-05T00:00:00+00:00\",\n          \"warning\": null,\n          \"warning_details\": null\n        },\n        {\n          \"variant_id\": \"__control_base__\",\n          \"name\": \"Control (base unchanged)\",\n          \"description\": \"Identity variant running the base snapshot without changes on the same window.\",\n          \"status\": \"ready\",\n          \"earliest_start_at\": \"2021-03-24T02:00:00+00:00\",\n          \"latest_end_at\": \"2026-04-05T00:00:00+00:00\",\n          \"warning\": null,\n          \"warning_details\": null\n        }\n      ],\n      \"earliest_valid_start_at\": \"2021-03-24T02:00:00+00:00\",\n      \"latest_valid_end_at\": \"2026-04-05T00:00:00+00:00\"\n    },\n    \"window_guard\": {\n      \"guards\": {\n        \"baseline_copy_1\": {\n          \"feature_names\": [\n            \"dow\",\n            \"iv_est_1\",\n            \"iv_est\",\n            \"rsi_1\",\n            \"rsi\",\n            \"hour\",\n            \"cl_1h\",\n            \"cl_1d\",\n            \"cl_15m\"\n          ],\n          \"model_refs\": [],\n          \"model_windows\": [],\n          \"predictive_model_usage_present\": false,\n          \"predictive_model_refs\": [],\n          \"explicit_start_required\": false,\n          \"earliest_safe_oos_start_at\": null,\n          \"blocking_issues\": [],\n          \"warnings\": []\n        },\n        \"__control_base__\": {\n          \"feature_names\": [\n            \"dow\",\n            \"iv_est_1\",\n            \"iv_est\",\n            \"rsi_1\",\n            \"rsi\",\n            \"hour\",\n            \"cl_1h\",\n            \"cl_1d\",\n            \"cl_15m\"\n          ],\n          \"model_refs\": [],\n          \"model_windows\": [],\n          \"predictive_model_usage_present\": false,\n          \"predictive_model_refs\": [],\n          \"explicit_start_required\": false,\n          \"earliest_safe_oos_start_at\": null,\n          \"blocking_issues\": [],\n          \"warnings\": []\n        }\n      },\n      \"evaluations\": {\n        \"baseline_copy_1\": {\n          \"requested_start_at\": \"2026-01-01T00:00:00+00:00\",\n          \"requested_end_at\": \"2026-01-07T00:00:00+00:00\",\n          \"overlaps_consumed_model_window\": false,\n          \"earliest_safe_start_at\": null,\n          \"blocking_issue\": null,\n          \"warnings\": []\n        },\n        \"__control_base__\": {\n          \"requested_start_at\": \"2026-01-01T00:00:00+00:00\",\n          \"requested_end_at\": \"2026-01-07T00:00:00+00:00\",\n          \"overlaps_consumed_model_window\": false,\n          \"earliest_safe_start_at\": null,\n          \"blocking_issue\": null,\n          \"warnings\": []\n        }\n      },\n      \"earliest_safe_oos_start_at\": null,\n      \"warnings\": [],\n      \"blocking_issues\": []\n    },\n    \"wait\": \"started\",\n    \"wait_satisfied\": true,\n    \"wait_satisfied_by_status\": \"building_variants\",\n    \"wait_timeout\": false,\n    \"final_status\": \"building_variants\",\n    \"job\": {\n      \"job_id\": \"20260409-134925-cc25e9d2\",\n      \"spec_hash\": \"c2031904c27dc030ffc76fb5ab5672b78825f079c40eeef12fa5847039f27dbc\",\n      \"idempotency_key\": null,\n      \"status\": \"queued\",\n      \"created_at\": \"2026-04-09T13:49:25.256914+00:00\",\n      \"started_at\": null,\n      \"finished_at\": null,\n      \"total_variants\": 2,\n      \"completed_variants\": 0,\n      \"active_run_ids\": [],\n      \"last_progress_at\": \"2026-04-09T13:49:25.256919+00:00\",\n      \"phase_message\": \"Queued\",\n      \"blocked_on_transient_run\": false,\n      \"persistence_format_version\": \"research_job_v2\",\n      \"completed_variants_preview\": [],\n      \"comparison_preview\": [],\n      \"metric_leaders_preview\": [],\n      \"warnings\": [],\n      \"error_message\": null,\n      \"workspace\": {\n        \"job_dir\": \"/home/ubuntu/FOUNDATION/artifacts/backtest_research/20260409-134925-cc25e9d2\",\n        \"manifest_path\": \"/home/ubuntu/FOUNDATION/artifacts/backtest_research/20260409-134925-cc25e9d2/manifest.json\",\n        \"result_path\": \"/home/ubuntu/FOUNDATION/artifacts/backtest_research/20260409-134925-cc25e9d2/result.json\",\n        \"artifacts_dir\": \"/home/ubuntu/FOUNDATION/artifacts/backtest_research/20260409-134925-cc25e9d2/artifacts\",\n        \"variants_dir\": \"/home/ubuntu/FOUNDATION/artifacts/backtest_research/20260409-134925-cc25e9d2/variants\",\n        \"path_scope\": \"server_runtime\",\n        \"path_scope_note\": \"Filesystem paths refer to the MCP server runtime host, not a shared client workspace path.\",\n        \"recommended_delivery_tool\": \"notify_send\",\n        \"recommended_read_tool\": \"backtests_studies\"\n      },\n      \"preview_state\": \"no_finalized_variants_yet\",\n      \"legacy_format\": false,\n      \"backfill_available\": false\n    },\n    \"operation\": {\n      \"operation_id\": \"20260409-134925-cc25e9d2\",\n      \"operation_kind\": \"backtests_research_start\",\n      \"status\": \"building_variants\",\n      \"progress\": {\n        \"current\": 0.0,\n        \"total\": 2.0,\n        \"unit\": \"variants\",\n        \"message\": \"Building variant snapshots.\"\n      },\n      \"started_at\": \"2026-04-09T13:49:25.434098+00:00\",\n      \"finished_at\": null,\n      \"result_ref\": {\n        \"kind\": \"backtest_research_job\",\n        \"id\": \"20260409-134925-cc25e9d2\",\n        \"path\": \"/home/ubuntu/FOUNDATION/artifacts/backtest_research/20260409-134925-cc25e9d2\"\n      },\n      \"error\": null,\n      \"queue_id\": \"097a69c1ab56\",\n      \"scheduler_state\": \"admitted\",\n      \"queue_position\": null,\n      \"queued_reason\": null,\n      \"blocking_operation_id\": null,\n      \"admitted_at\": \"2026-04-09T13:49:25.257951+00:00\",\n      \"health_state\": \"healthy\",\n      \"last_heartbeat_at\": \"2026-04-09T13:49:25.435472+00:00\",\n      \"last_progress_at\": \"2026-04-09T13:49:25.435472+00:00\",\n      \"progress_message\": \"Building variant snapshots.\",\n      \"action_required\": null,\n      \"stop_supported\": true,\n      \"blocked_on_transient_run\": false,\n      \"active_run_ids\": []\n    },\n    \"causal_audit\": {\n      \"verdict\": \"warning\",\n      \"risk_score\": 36,\n      \"decision_time_basis\": \"backtest_entry_decision_timestamp_on_anchor_bar_open\",\n      \"earliest_usable_timestamp_rule\": \"Every consumed input must be causally available no later than the anchor bar open used for entry evaluation; execution-timeframe detail does not relax this entry decision boundary.\",\n      \"guard_status\": \"passed\"\n    },\n    \"feature_shift_audit\": {\n      \"status\": \"ok\",\n      \"policy\": \"warning_only\",\n      \"feature_count\": 0,\n      \"features\": [],\n      \"warnings\": []\n    },\n    \"important_warnings\": [],\n    \"next_recommended_actions\": [\n      \"Use backtests_studies(action='status') or action='result' for later inspection.\",\n      \"Use backtests_study_materialize after a completed result when you decide which variant to keep.\"\n    ],\n    \"recommended_follow_up_tool\": null,\n    \"state_summary\": {},\n    \"exact_next_call_examples\": [],\n    \"raw_refs\": [\n      \"project://mcp/backtests\"\n    ],\n    \"raw_tool_hints\": [],\n    \"summary\": \"Backtest study 20260409-134925-cc25e9d2 is currently building_variants.\"\n  },\n  \"warnings\": [],\n  \"refs\": [\n    {\n      \"kind\": \"snapshot\",\n      \"id\": \"active-signal-v1@1\",\n      \"path\": null\n    }\n  ],\n  \"error\": null\n}"
+    }
+  ],
+  "structuredContent": {
+    "status": "ok",
+    "message": "Backtests study facade action completed.",
+    "tool_name": "backtests_studies",
+    "request_id": "36",
+    "correlation_id": "36",
+    "server_session_id": "fbf2ef6510c34fd58f805b982a099afd",
+    "response_generated_at": "2026-04-09T13:49:25.691425+00:00",
+    "data": {
+      "action": "start",
+      "constraint_preview": {
+        "base_snapshot_id": "active-signal-v1",
+        "base_version": 1,
+        "symbol": "BTCUSDT",
+        "anchor_timeframe": "1h",
+        "execution_timeframe": "5m",
+        "context_path": null,
+        "variant_constraints": [
+          {
+            "variant_id": "baseline_copy_1",
+            "name": "Baseline copy",
+            "description": null,
+            "status": "ready",
+            "earliest_start_at": "2021-03-24T02:00:00+00:00",
+            "latest_end_at": "2026-04-05T00:00:00+00:00",
+            "warning": null,
+            "warning_details": null
+          },
+          {
+            "variant_id": "__control_base__",
+            "name": "Control (base unchanged)",
+            "description": "Identity variant running the base snapshot without changes on the same window.",
+            "status": "ready",
+            "earliest_start_at": "2021-03-24T02:00:00+00:00",
+            "latest_end_at": "2026-04-05T00:00:00+00:00",
+            "warning": null,
+            "warning_details": null
+          }
+        ],
+        "earliest_valid_start_at": "2021-03-24T02:00:00+00:00",
+        "latest_valid_end_at": "2026-04-05T00:00:00+00:00"
+      },
+      "window_guard": {
+        "guards": {
+          "baseline_copy_1": {
+            "feature_names": [
+              "dow",
+              "iv_est_1",
+              "iv_est",
+              "rsi_1",
+              "rsi",
+              "hour",
+              "cl_1h",
+              "cl_1d",
+              "cl_15m"
+            ],
+            "model_refs": [],
+            "model_windows": [],
+            "predictive_model_usage_present": false,
+            "predictive_model_refs": [],
+            "explicit_start_required": false,
+            "earliest_safe_oos_start_at": null,
+            "blocking_issues": [],
+            "warnings": []
+          },
+          "__control_base__": {
+            "feature_names": [
+              "dow",
+              "iv_est_1",
+              "iv_est",
+              "rsi_1",
+              "rsi",
+              "hour",
+              "cl_1h",
+              "cl_1d",
+              "cl_15m"
+            ],
+            "model_refs": [],
+            "model_windows": [],
+            "predictive_model_usage_present": false,
+            "predictive_model_refs": [],
+            "explicit_start_required": false,
+            "earliest_safe_oos_start_at": null,
+            "blocking_issues": [],
+            "warnings": []
+          }
+        },
+        "evaluations": {
+          "baseline_copy_1": {
+            "requested_start_at": "2026-01-01T00:00:00+00:00",
+            "requested_end_at": "2026-01-07T00:00:00+00:00",
+            "overlaps_consumed_model_window": false,
+            "earliest_safe_start_at": null,
+            "blocking_issue": null,
+            "warnings": []
+          },
+          "__control_base__": {
+            "requested_start_at": "2026-01-01T00:00:00+00:00",
+            "requested_end_at": "2026-01-07T00:00:00+00:00",
+            "overlaps_consumed_model_window": false,
+            "earliest_safe_start_at": null,
+            "blocking_issue": null,
+            "warnings": []
+          }
+        },
+        "earliest_safe_oos_start_at": null,
+        "warnings": [],
+        "blocking_issues": []
+      },
+      "wait": "started",
+      "wait_satisfied": true,
+      "wait_satisfied_by_status": "building_variants",
+      "wait_timeout": false,
+      "final_status": "building_variants",
+      "job": {
+        "job_id": "20260409-134925-cc25e9d2",
+        "spec_hash": "c2031904c27dc030ffc76fb5ab5672b78825f079c40eeef12fa5847039f27dbc",
+        "idempotency_key": null,
+        "status": "queued",
+        "created_at": "2026-04-09T13:49:25.256914+00:00",
+        "started_at": null,
+        "finished_at": null,
+        "total_variants": 2,
+        "completed_variants": 0,
+        "active_run_ids": [],
+        "last_progress_at": "2026-04-09T13:49:25.256919+00:00",
+        "phase_message": "Queued",
+        "blocked_on_transient_run": false,
+        "persistence_format_version": "research_job_v2",
+        "completed_variants_preview": [],
+        "comparison_preview": [],
+        "metric_leaders_preview": [],
+        "warnings": [],
+        "error_message": null,
+        "workspace": {
+          "job_dir": "/home/ubuntu/FOUNDATION/artifacts/backtest_research/20260409-134925-cc25e9d2",
+          "manifest_path": "/home/ubuntu/FOUNDATION/artifacts/backtest_research/20260409-134925-cc25e9d2/manifest.json",
+          "result_path": "/home/ubuntu/FOUNDATION/artifacts/backtest_research/20260409-134925-cc25e9d2/result.json",
+          "artifacts_dir": "/home/ubuntu/FOUNDATION/artifacts/backtest_research/20260409-134925-cc25e9d2/artifacts",
+          "variants_dir": "/home/ubuntu/FOUNDATION/artifacts/backtest_research/20260409-134925-cc25e9d2/variants",
+          "path_scope": "server_runtime",
+          "path_scope_note": "Filesystem paths refer to the MCP server runtime host, not a shared client workspace path.",
+          "recommended_delivery_tool": "notify_send",
+          "recommended_read_tool": "backtests_studies"
+        },
+        "preview_state": "no_finalized_variants_yet",
+        "legacy_format": false,
+        "backfill_available": false
+      },
+      "operation": {
+        "operation_id": "20260409-134925-cc25e9d2",
+        "operation_kind": "backtests_research_start",
+        "status": "building_variants",
+        "progress": {
+          "current": 0.0,
+          "total": 2.0,
+          "unit": "variants",
+          "message": "Building variant snapshots."
+        },
+        "started_at": "2026-04-09T13:49:25.434098+00:00",
+        "finished_at": null,
+        "result_ref": {
+          "kind": "backtest_research_job",
+          "id": "20260409-134925-cc25e9d2",
+          "path": "/home/ubuntu/FOUNDATION/artifacts/backtest_research/20260409-134925-cc25e9d2"
+        },
+        "error": null,
+        "queue_id": "097a69c1ab56",
+        "scheduler_state": "admitted",
+        "queue_position": null,
+        "queued_reason": null,
+        "blocking_operation_id": null,
+        "admitted_at": "2026-04-09T13:49:25.257951+00:00",
+        "health_state": "healthy",
+        "last_heartbeat_at": "2026-04-09T13:49:25.435472+00:00",
+        "last_progress_at": "2026-04-09T13:49:25.435472+00:00",
+        "progress_message": "Building variant snapshots.",
+        "action_required": null,
+        "stop_supported": true,
+        "blocked_on_transient_run": false,
+        "active_run_ids": []
+      },
+      "causal_audit": {
+        "verdict": "warning",
+        "risk_score": 36,
+        "decision_time_basis": "backtest_entry_decision_timestamp_on_anchor_bar_open",
+        "earliest_usable_timestamp_rule": "Every consumed input must be causally available no later than the anchor bar open used for entry evaluation; execution-timeframe detail does not relax this entry decision boundary.",
+        "guard_status": "passed"
+      },
+      "feature_shift_audit": {
+        "status": "ok",
+        "policy": "warning_only",
+        "feature_count": 0,
+        "features": [],
+        "warnings": []
+      },
+      "important_warnings": [],
+      "next_recommended_actions": [
+        "Use backtests_studies(action='status') or action='result' for later inspection.",
+        "Use backtests_study_materialize after a completed result when you decide which variant to keep."
+      ],
+      "recommended_follow_up_tool": null,
+      "state_summary": {},
+      "exact_next_call_examples": [],
+      "raw_refs": [
+        "project://mcp/backtests"
+      ],
+      "raw_tool_hints": [],
+      "summary": "Backtest study 20260409-134925-cc25e9d2 is currently building_variants."
+    },
+    "warnings": [],
+    "refs": [
+      {
+        "kind": "snapshot",
+        "id": "active-signal-v1@1",
+        "path": null
+      }
+    ],
+    "error": null
+  },
+  "isError": false
+}

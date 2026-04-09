@@ -15,11 +15,18 @@ import logging
 import shutil
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Protocol
 
-from app.plan_store import PlanStore
 from app.state_store import StateStore
 
 logger = logging.getLogger("orchestrator.reset")
+
+
+class _PlanStoreLike(Protocol):
+    plans_dir: Path
+
+    def clear_all(self) -> None:
+        ...
 
 
 class ResetManager:
@@ -27,7 +34,7 @@ class ResetManager:
         self,
         state_dir: str,
         state_store: StateStore,
-        plan_store: PlanStore | None = None,
+        plan_store: _PlanStoreLike | None = None,
     ) -> None:
         self.state_dir = Path(state_dir)
         self.state_store = state_store
@@ -74,10 +81,13 @@ class ResetManager:
             has_files = True
 
         # Archive plans
-        if self.plan_store:
-            count = self.plan_store.archive_to(archive_dir)
-            if count > 0:
-                has_files = True
+        if self.plan_store and getattr(self.plan_store, "plans_dir", None):
+            plans_dir = Path(self.plan_store.plans_dir)
+            if plans_dir.exists():
+                archive_plans_dir = archive_dir / "plans"
+                shutil.copytree(plans_dir, archive_plans_dir, dirs_exist_ok=True)
+                if any(archive_plans_dir.rglob("*")):
+                    has_files = True
 
         # Archive research context if it exists
         rc_path = self.state_dir / "research_context.json"

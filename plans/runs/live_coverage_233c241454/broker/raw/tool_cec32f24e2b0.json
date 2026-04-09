@@ -1,0 +1,108 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\n  \"status\": \"ok\",\n  \"message\": \"Research project payload loaded.\",\n  \"tool_name\": \"research_project\",\n  \"request_id\": \"22\",\n  \"correlation_id\": \"22\",\n  \"server_session_id\": \"ea6edc17d94a4f0daf97ea812d05abc2\",\n  \"response_generated_at\": \"2026-04-09T13:30:47.348680+00:00\",\n  \"data\": {\n    \"action\": \"create\",\n    \"project\": {\n      \"project_id\": \"coverage-project-live-coverage-233c241454-1-0d1388df\",\n      \"name\": \"coverage-project-live_coverage_233c241454-1\",\n      \"goal\": \"Broker live coverage validation\",\n      \"base_strategy\": null,\n      \"tags\": [],\n      \"metadata\": {\n        \"baseline_snapshot_id\": \"active-signal-v1\",\n        \"baseline_version\": 1\n      },\n      \"root_node_id\": \"project-node-14d6af76d69e48ad82c381456066a011\",\n      \"default_branch_id\": \"branch-0e6e8661320d45059271805e2a6bf5f7\",\n      \"baseline_node_id\": null,\n      \"baseline_metrics\": {\n        \"metrics\": {\n          \"average_loser\": 0.0,\n          \"average_trade\": 0.0,\n          \"average_winner\": 0.0,\n          \"long_count\": 0,\n          \"max_drawdown\": 0.0,\n          \"net_pnl\": 0.0,\n          \"profit_factor\": 0.0,\n          \"short_count\": 0,\n          \"top_3_positive_pnl_share\": 0.0,\n          \"total_trades\": 0,\n          \"win_rate\": 0.0\n        },\n        \"node_id\": null\n      },\n      \"selection_policy\": {\n        \"concentration_penalty_weight\": 100.0,\n        \"concentration_threshold\": 0.6,\n        \"max_drawdown_weight\": 1.0,\n        \"net_pnl_weight\": 1.0,\n        \"profit_factor_weight\": 0.5,\n        \"total_trades_weight\": 0.05,\n        \"win_rate_weight\": 0.25\n      },\n      \"idempotency_key\": null,\n      \"dimensions_defined\": false,\n      \"atlas_config\": {},\n      \"created_at\": \"2026-04-09T13:30:47.323958+00:00\",\n      \"updated_at\": \"2026-04-09T13:30:47.323958+00:00\"\n    },\n    \"state_summary\": {\n      \"project_id\": \"coverage-project-live-coverage-233c241454-1-0d1388df\",\n      \"atlas_defined\": false\n    },\n    \"important_warnings\": [],\n    \"next_recommended_actions\": [\n      \"Open the project immediately and inspect whether atlas dimensions still need to be defined.\",\n      \"Define the atlas before adding mapped hypotheses when this project should use structured coverage discipline.\"\n    ],\n    \"recommended_follow_up_tool\": \"research_project\",\n    \"exact_next_call_examples\": [\n      {\n        \"tool\": \"research_project\",\n        \"arguments\": {\n          \"action\": \"open\",\n          \"project_id\": \"coverage-project-live-coverage-233c241454-1-0d1388df\",\n          \"view\": \"summary\"\n        }\n      },\n      {\n        \"tool\": \"research_map\",\n        \"arguments\": {\n          \"action\": \"define\",\n          \"project_id\": \"coverage-project-live-coverage-233c241454-1-0d1388df\",\n          \"dimensions\": [\n            {\n              \"name\": \"market_regime\",\n              \"axis_type\": \"categorical\",\n              \"values\": [\n                \"trend\",\n                \"range\"\n              ]\n            }\n          ]\n        }\n      }\n    ],\n    \"raw_refs\": [],\n    \"raw_tool_hints\": [],\n    \"summary\": \"Completed research project action create.\"\n  },\n  \"warnings\": [],\n  \"refs\": [],\n  \"error\": null\n}"
+    }
+  ],
+  "structuredContent": {
+    "status": "ok",
+    "message": "Research project payload loaded.",
+    "tool_name": "research_project",
+    "request_id": "22",
+    "correlation_id": "22",
+    "server_session_id": "ea6edc17d94a4f0daf97ea812d05abc2",
+    "response_generated_at": "2026-04-09T13:30:47.348680+00:00",
+    "data": {
+      "action": "create",
+      "project": {
+        "project_id": "coverage-project-live-coverage-233c241454-1-0d1388df",
+        "name": "coverage-project-live_coverage_233c241454-1",
+        "goal": "Broker live coverage validation",
+        "base_strategy": null,
+        "tags": [],
+        "metadata": {
+          "baseline_snapshot_id": "active-signal-v1",
+          "baseline_version": 1
+        },
+        "root_node_id": "project-node-14d6af76d69e48ad82c381456066a011",
+        "default_branch_id": "branch-0e6e8661320d45059271805e2a6bf5f7",
+        "baseline_node_id": null,
+        "baseline_metrics": {
+          "metrics": {
+            "average_loser": 0.0,
+            "average_trade": 0.0,
+            "average_winner": 0.0,
+            "long_count": 0,
+            "max_drawdown": 0.0,
+            "net_pnl": 0.0,
+            "profit_factor": 0.0,
+            "short_count": 0,
+            "top_3_positive_pnl_share": 0.0,
+            "total_trades": 0,
+            "win_rate": 0.0
+          },
+          "node_id": null
+        },
+        "selection_policy": {
+          "concentration_penalty_weight": 100.0,
+          "concentration_threshold": 0.6,
+          "max_drawdown_weight": 1.0,
+          "net_pnl_weight": 1.0,
+          "profit_factor_weight": 0.5,
+          "total_trades_weight": 0.05,
+          "win_rate_weight": 0.25
+        },
+        "idempotency_key": null,
+        "dimensions_defined": false,
+        "atlas_config": {},
+        "created_at": "2026-04-09T13:30:47.323958+00:00",
+        "updated_at": "2026-04-09T13:30:47.323958+00:00"
+      },
+      "state_summary": {
+        "project_id": "coverage-project-live-coverage-233c241454-1-0d1388df",
+        "atlas_defined": false
+      },
+      "important_warnings": [],
+      "next_recommended_actions": [
+        "Open the project immediately and inspect whether atlas dimensions still need to be defined.",
+        "Define the atlas before adding mapped hypotheses when this project should use structured coverage discipline."
+      ],
+      "recommended_follow_up_tool": "research_project",
+      "exact_next_call_examples": [
+        {
+          "tool": "research_project",
+          "arguments": {
+            "action": "open",
+            "project_id": "coverage-project-live-coverage-233c241454-1-0d1388df",
+            "view": "summary"
+          }
+        },
+        {
+          "tool": "research_map",
+          "arguments": {
+            "action": "define",
+            "project_id": "coverage-project-live-coverage-233c241454-1-0d1388df",
+            "dimensions": [
+              {
+                "name": "market_regime",
+                "axis_type": "categorical",
+                "values": [
+                  "trend",
+                  "range"
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "raw_refs": [],
+      "raw_tool_hints": [],
+      "summary": "Completed research project action create."
+    },
+    "warnings": [],
+    "refs": [],
+    "error": null
+  },
+  "isError": false
+}

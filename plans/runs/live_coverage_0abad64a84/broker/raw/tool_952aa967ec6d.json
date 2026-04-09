@@ -1,0 +1,54 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\n  \"status\": \"ok\",\n  \"message\": \"Gold Collection inspection complete.\",\n  \"tool_name\": \"gold_collection\",\n  \"request_id\": \"146\",\n  \"correlation_id\": \"146\",\n  \"server_session_id\": \"c9c5bbe008194274aade6046b84bbd3a\",\n  \"response_generated_at\": \"2026-04-09T13:22:59.273191+00:00\",\n  \"data\": {\n    \"total_count\": 4,\n    \"counts_by_type\": {\n      \"feature\": 1,\n      \"snapshot\": 3\n    },\n    \"recent_additions\": [\n      {\n        \"entity_type\": \"feature\",\n        \"entity_id\": \"cf_vol_term_spread\",\n        \"reason\": \"Plan v1 winner: +14.3% PnL ($1496.34 vs $1308.65 baseline), Sharpe 1.456, 330 trades, PF 1.571, max DD ~1.68%. Vol regime transition signal (12/96 period rolling std ratio - 1). Run IDs: standalone 20260407-195135-a6102c78, integrated 20260407-195825-2d03834e.\",\n        \"added_at\": \"2026-04-07T20:13:56.307373+00:00\"\n      },\n      {\n        \"entity_type\": \"snapshot\",\n        \"entity_id\": \"candidate_orthogonal_combo_v1\",\n        \"reason\": \"Orthogonal combo: cf_vol_term_spread regime filter only (PROMOTED feature). Beats baseline Sharpe 1.46 vs 1.06 (+38%), PnL $1496 vs $1309 (+14.3%), trades 330 vs 498 (more selective), max DD 1.68% vs 2.44% (-31%). cf_funding_extreme and cf_return_skew were REJECT in individual tests. Signal ownership clean: long 50.5% PnL, short 49.5%. No cannibalization.\",\n        \"added_at\": \"2026-04-07T20:00:48.705521+00:00\"\n      },\n      {\n        \"entity_type\": \"snapshot\",\n        \"entity_id\": \"candidate_vol_term_spread_v1\",\n        \"reason\": \"ETAP 3: Vol term spread feature improves PnL +14.3% ($1496 vs $1309), Sharpe +38% (1.46 vs 1.06), drawdown -31% (1.68% vs 2.44%). Long PnL +84% improvement. Feature cf_vol_term_spread filters vol contraction regimes effectively.\",\n        \"added_at\": \"2026-04-07T19:52:25.597630+00:00\"\n      },\n      {\n        \"entity_type\": \"snapshot\",\n        \"entity_id\": \"active-signal-v1@1\",\n        \"reason\": \"Baseline v1: Sharpe 1.056, +13.1%, 498 trades, max DD 2.44%, PF 1.305. Full history 2021-03 to 2026-03.\",\n        \"added_at\": \"2026-04-07T19:45:57.080608+00:00\"\n      }\n    ]\n  },\n  \"warnings\": [],\n  \"refs\": [],\n  \"error\": null\n}"
+    }
+  ],
+  "structuredContent": {
+    "status": "ok",
+    "message": "Gold Collection inspection complete.",
+    "tool_name": "gold_collection",
+    "request_id": "146",
+    "correlation_id": "146",
+    "server_session_id": "c9c5bbe008194274aade6046b84bbd3a",
+    "response_generated_at": "2026-04-09T13:22:59.273191+00:00",
+    "data": {
+      "total_count": 4,
+      "counts_by_type": {
+        "feature": 1,
+        "snapshot": 3
+      },
+      "recent_additions": [
+        {
+          "entity_type": "feature",
+          "entity_id": "cf_vol_term_spread",
+          "reason": "Plan v1 winner: +14.3% PnL ($1496.34 vs $1308.65 baseline), Sharpe 1.456, 330 trades, PF 1.571, max DD ~1.68%. Vol regime transition signal (12/96 period rolling std ratio - 1). Run IDs: standalone 20260407-195135-a6102c78, integrated 20260407-195825-2d03834e.",
+          "added_at": "2026-04-07T20:13:56.307373+00:00"
+        },
+        {
+          "entity_type": "snapshot",
+          "entity_id": "candidate_orthogonal_combo_v1",
+          "reason": "Orthogonal combo: cf_vol_term_spread regime filter only (PROMOTED feature). Beats baseline Sharpe 1.46 vs 1.06 (+38%), PnL $1496 vs $1309 (+14.3%), trades 330 vs 498 (more selective), max DD 1.68% vs 2.44% (-31%). cf_funding_extreme and cf_return_skew were REJECT in individual tests. Signal ownership clean: long 50.5% PnL, short 49.5%. No cannibalization.",
+          "added_at": "2026-04-07T20:00:48.705521+00:00"
+        },
+        {
+          "entity_type": "snapshot",
+          "entity_id": "candidate_vol_term_spread_v1",
+          "reason": "ETAP 3: Vol term spread feature improves PnL +14.3% ($1496 vs $1309), Sharpe +38% (1.46 vs 1.06), drawdown -31% (1.68% vs 2.44%). Long PnL +84% improvement. Feature cf_vol_term_spread filters vol contraction regimes effectively.",
+          "added_at": "2026-04-07T19:52:25.597630+00:00"
+        },
+        {
+          "entity_type": "snapshot",
+          "entity_id": "active-signal-v1@1",
+          "reason": "Baseline v1: Sharpe 1.056, +13.1%, 498 trades, max DD 2.44%, PF 1.305. Full history 2021-03 to 2026-03.",
+          "added_at": "2026-04-07T19:45:57.080608+00:00"
+        }
+      ]
+    },
+    "warnings": [],
+    "refs": [],
+    "error": null
+  },
+  "isError": false
+}

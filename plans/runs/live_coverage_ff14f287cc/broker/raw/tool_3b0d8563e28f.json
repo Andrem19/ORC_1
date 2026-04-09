@@ -1,0 +1,147 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\n  \"status\": \"ok\",\n  \"message\": \"Dataset preview loaded.\",\n  \"tool_name\": \"datasets_preview\",\n  \"request_id\": \"10\",\n  \"correlation_id\": \"10\",\n  \"server_session_id\": \"93e816c4a9c94e6c81d1c952d314071a\",\n  \"response_generated_at\": \"2026-04-09T12:48:08.049009+00:00\",\n  \"data\": {\n    \"view\": \"rows\",\n    \"dataset_id\": \"binance/um/BTCUSDT/1h\",\n    \"metadata\": {\n      \"row_count\": 20,\n      \"start_at\": \"2026-04-04T04:00:00+00:00\",\n      \"end_at\": \"2026-04-04T23:00:00+00:00\",\n      \"preview\": true,\n      \"column_names\": [\n        \"open_time\",\n        \"open\",\n        \"high\",\n        \"low\",\n        \"close\",\n        \"volume\",\n        \"close_time\",\n        \"quote_asset_volume\",\n        \"number_of_trades\",\n        \"taker_buy_base_asset_volume\",\n        \"taker_buy_quote_asset_volume\",\n        \"ignore\",\n        \"timestamp_ms\",\n        \"timestamp_utc\"\n      ],\n      \"schema_name\": \"binance_um_klines_v1\",\n      \"has_header\": true\n    },\n    \"rows\": [\n      {\n        \"open_time\": 1775329200000,\n        \"open\": 67265.6,\n        \"high\": 67523.8,\n        \"low\": 67245.6,\n        \"close\": 67262.7,\n        \"volume\": 2205.233,\n        \"close_time\": 1775332799999.0,\n        \"quote_asset_volume\": 148562371.5097,\n        \"number_of_trades\": 55733.0,\n        \"taker_buy_base_asset_volume\": 1210.019,\n        \"taker_buy_quote_asset_volume\": 81529665.3128,\n        \"ignore\": 0.0,\n        \"timestamp_ms\": 1775329200000,\n        \"timestamp_utc\": \"2026-04-04T19:00:00+00:00\"\n      },\n      {\n        \"open_time\": 1775332800000,\n        \"open\": 67262.8,\n        \"high\": 67269.4,\n        \"low\": 67150.6,\n        \"close\": 67240.2,\n        \"volume\": 1456.19,\n        \"close_time\": 1775336399999.0,\n        \"quote_asset_volume\": 97873635.1219,\n        \"number_of_trades\": 29485.0,\n        \"taker_buy_base_asset_volume\": 696.536,\n        \"taker_buy_quote_asset_volume\": 46815816.9427,\n        \"ignore\": 0.0,\n        \"timestamp_ms\": 1775332800000,\n        \"timestamp_utc\": \"2026-04-04T20:00:00+00:00\"\n      },\n      {\n        \"open_time\": 1775336400000,\n        \"open\": 67240.2,\n        \"high\": 67452.7,\n        \"low\": 67180.9,\n        \"close\": 67325.0,\n        \"volume\": 1362.401,\n        \"close_time\": 1775339999999.0,\n        \"quote_asset_volume\": 91721232.2031,\n        \"number_of_trades\": 35591.0,\n        \"taker_buy_base_asset_volume\": 844.883,\n        \"taker_buy_quote_asset_volume\": 56881912.8687,\n        \"ignore\": 0.0,\n        \"timestamp_ms\": 1775336400000,\n        \"timestamp_utc\": \"2026-04-04T21:00:00+00:00\"\n      },\n      {\n        \"open_time\": 1775340000000,\n        \"open\": 67325.0,\n        \"high\": 67438.7,\n        \"low\": 67305.4,\n        \"close\": 67368.9,\n        \"volume\": 1151.5,\n        \"close_time\": 1775343599999.0,\n        \"quote_asset_volume\": 77571443.9127,\n        \"number_of_trades\": 34885.0,\n        \"taker_buy_base_asset_volume\": 589.6,\n        \"taker_buy_quote_asset_volume\": 39716650.7715,\n        \"ignore\": 0.0,\n        \"timestamp_ms\": 1775340000000,\n        \"timestamp_utc\": \"2026-04-04T22:00:00+00:00\"\n      },\n      {\n        \"open_time\": 1775343600000,\n        \"open\": 67368.9,\n        \"high\": 67371.4,\n        \"low\": 67214.2,\n        \"close\": 67271.0,\n        \"volume\": 1340.984,\n        \"close_time\": 1775347199999.0,\n        \"quote_asset_volume\": 90231851.0671,\n        \"number_of_trades\": 32038.0,\n        \"taker_buy_base_asset_volume\": 655.252,\n        \"taker_buy_quote_asset_volume\": 44088434.9833,\n        \"ignore\": 0.0,\n        \"timestamp_ms\": 1775343600000,\n        \"timestamp_utc\": \"2026-04-04T23:00:00+00:00\"\n      }\n    ],\n    \"important_warnings\": [],\n    \"next_recommended_actions\": [\n      \"Use datasets(view='summary' | 'validation') if you need richer dataset metadata next.\"\n    ],\n    \"recommended_follow_up_tool\": null,\n    \"state_summary\": {},\n    \"exact_next_call_examples\": [],\n    \"raw_refs\": [\n      \"system_raw_call(tool_name='datasets_datasets_preview_rows')\",\n      \"system_raw_call(tool_name='datasets_datasets_preview_chart')\"\n    ],\n    \"raw_tool_hints\": [\n      \"system_raw_call(tool_name='datasets_datasets_preview_rows')\",\n      \"system_raw_call(tool_name='datasets_datasets_preview_chart')\"\n    ],\n    \"next_action\": \"Use datasets(view='summary' | 'validation') if you need richer dataset metadata next.\"\n  },\n  \"warnings\": [],\n  \"refs\": [],\n  \"error\": null\n}"
+    }
+  ],
+  "structuredContent": {
+    "status": "ok",
+    "message": "Dataset preview loaded.",
+    "tool_name": "datasets_preview",
+    "request_id": "10",
+    "correlation_id": "10",
+    "server_session_id": "93e816c4a9c94e6c81d1c952d314071a",
+    "response_generated_at": "2026-04-09T12:48:08.049009+00:00",
+    "data": {
+      "view": "rows",
+      "dataset_id": "binance/um/BTCUSDT/1h",
+      "metadata": {
+        "row_count": 20,
+        "start_at": "2026-04-04T04:00:00+00:00",
+        "end_at": "2026-04-04T23:00:00+00:00",
+        "preview": true,
+        "column_names": [
+          "open_time",
+          "open",
+          "high",
+          "low",
+          "close",
+          "volume",
+          "close_time",
+          "quote_asset_volume",
+          "number_of_trades",
+          "taker_buy_base_asset_volume",
+          "taker_buy_quote_asset_volume",
+          "ignore",
+          "timestamp_ms",
+          "timestamp_utc"
+        ],
+        "schema_name": "binance_um_klines_v1",
+        "has_header": true
+      },
+      "rows": [
+        {
+          "open_time": 1775329200000,
+          "open": 67265.6,
+          "high": 67523.8,
+          "low": 67245.6,
+          "close": 67262.7,
+          "volume": 2205.233,
+          "close_time": 1775332799999.0,
+          "quote_asset_volume": 148562371.5097,
+          "number_of_trades": 55733.0,
+          "taker_buy_base_asset_volume": 1210.019,
+          "taker_buy_quote_asset_volume": 81529665.3128,
+          "ignore": 0.0,
+          "timestamp_ms": 1775329200000,
+          "timestamp_utc": "2026-04-04T19:00:00+00:00"
+        },
+        {
+          "open_time": 1775332800000,
+          "open": 67262.8,
+          "high": 67269.4,
+          "low": 67150.6,
+          "close": 67240.2,
+          "volume": 1456.19,
+          "close_time": 1775336399999.0,
+          "quote_asset_volume": 97873635.1219,
+          "number_of_trades": 29485.0,
+          "taker_buy_base_asset_volume": 696.536,
+          "taker_buy_quote_asset_volume": 46815816.9427,
+          "ignore": 0.0,
+          "timestamp_ms": 1775332800000,
+          "timestamp_utc": "2026-04-04T20:00:00+00:00"
+        },
+        {
+          "open_time": 1775336400000,
+          "open": 67240.2,
+          "high": 67452.7,
+          "low": 67180.9,
+          "close": 67325.0,
+          "volume": 1362.401,
+          "close_time": 1775339999999.0,
+          "quote_asset_volume": 91721232.2031,
+          "number_of_trades": 35591.0,
+          "taker_buy_base_asset_volume": 844.883,
+          "taker_buy_quote_asset_volume": 56881912.8687,
+          "ignore": 0.0,
+          "timestamp_ms": 1775336400000,
+          "timestamp_utc": "2026-04-04T21:00:00+00:00"
+        },
+        {
+          "open_time": 1775340000000,
+          "open": 67325.0,
+          "high": 67438.7,
+          "low": 67305.4,
+          "close": 67368.9,
+          "volume": 1151.5,
+          "close_time": 1775343599999.0,
+          "quote_asset_volume": 77571443.9127,
+          "number_of_trades": 34885.0,
+          "taker_buy_base_asset_volume": 589.6,
+          "taker_buy_quote_asset_volume": 39716650.7715,
+          "ignore": 0.0,
+          "timestamp_ms": 1775340000000,
+          "timestamp_utc": "2026-04-04T22:00:00+00:00"
+        },
+        {
+          "open_time": 1775343600000,
+          "open": 67368.9,
+          "high": 67371.4,
+          "low": 67214.2,
+          "close": 67271.0,
+          "volume": 1340.984,
+          "close_time": 1775347199999.0,
+          "quote_asset_volume": 90231851.0671,
+          "number_of_trades": 32038.0,
+          "taker_buy_base_asset_volume": 655.252,
+          "taker_buy_quote_asset_volume": 44088434.9833,
+          "ignore": 0.0,
+          "timestamp_ms": 1775343600000,
+          "timestamp_utc": "2026-04-04T23:00:00+00:00"
+        }
+      ],
+      "important_warnings": [],
+      "next_recommended_actions": [
+        "Use datasets(view='summary' | 'validation') if you need richer dataset metadata next."
+      ],
+      "recommended_follow_up_tool": null,
+      "state_summary": {},
+      "exact_next_call_examples": [],
+      "raw_refs": [
+        "system_raw_call(tool_name='datasets_datasets_preview_rows')",
+        "system_raw_call(tool_name='datasets_datasets_preview_chart')"
+      ],
+      "raw_tool_hints": [
+        "system_raw_call(tool_name='datasets_datasets_preview_rows')",
+        "system_raw_call(tool_name='datasets_datasets_preview_chart')"
+      ],
+      "next_action": "Use datasets(view='summary' | 'validation') if you need richer dataset metadata next."
+    },
+    "warnings": [],
+    "refs": [],
+    "error": null
+  },
+  "isError": false
+}

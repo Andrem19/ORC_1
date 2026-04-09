@@ -1,9 +1,4 @@
-"""
-Configuration for the orchestrator.
-
-All parameters are defined here or passed as function arguments.
-No argparse usage.
-"""
+"""Configuration for the broker-only orchestrator runtime."""
 
 from __future__ import annotations
 
@@ -11,7 +6,53 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from app.broker.transport import BrokerTransportConfig
 from app.models import WorkerConfig
+
+
+DEFAULT_PLANNER_PROMPT_TEMPLATE = """You are writing a markdown research plan, not executing research.
+Use only the facts in this prompt. Do not use tools, do not inspect the workspace, do not gather more context, and do not spawn subagents.
+Do not name MCP tools, facade names, actions, views, or exact API calls in the plan. Describe the work in plain operational language only.
+
+## Status and Frame
+Baseline is fixed: $baseline_snapshot_id@$baseline_version. Do not retune the baseline or recycle old tuned families.
+symbol: $symbol, anchor_timeframe: $anchor_timeframe, execution_timeframe: $execution_timeframe
+Wave context: $wave_context
+
+## Goal
+$goal
+
+## Baseline
+$baseline_snapshot_id@$baseline_version: Sharpe 1.06, +13% return, 498 trades, max DD 2.4%
+This baseline is the fixed reference system for integration checks, not an object for retuning.
+
+## Research Principles
+- Search for genuinely new signals or missing-regime layers, not cosmetic baseline variations.
+- Require standalone value, stability, integration quality, and cannibalization control.
+- Prefer ideas that add new trades, new regimes, or new information layers.
+- Do not spend the cycle retuning hours, days, thresholds, or execution details of the baseline.
+
+## dev_space1 Capabilities
+Workers available: $worker_count. Each markdown plan is executed by one worker, but the broader orchestration may run up to 3 plans in parallel.
+The worker has access to MCP and will choose the exact tools and call sequence. Your job is to define intent, order, constraints, success criteria, and what evidence must be collected.
+Constraints: timeframes stay locked to 1h/5m. Do not tell the worker to rediscover already-known basics like symbol or baseline ids unless that check is itself the purpose of the ETAP.
+
+$research_context_section$previous_wave_summary_section$previous_findings_section$anti_patterns_section$research_history_section$previous_plan_excerpt_section## Output Format
+Write a SINGLE research plan as plain markdown for Plan v$plan_version.
+Rules:
+1. Start with '# Plan v$plan_version'
+2. Include sections for Status and Frame, Goal, Baseline, Research Principles, and dev_space1 Capabilities before the ETAPs
+3. Write exactly 3 ETAP sections with '## ETAP N: Name' headers
+4. Each ETAP must have: one-sentence goal, 4-6 numbered action steps, completion criteria
+5. Action steps must be plain-language research instructions, not tool calls or API syntax
+6. NEVER use placeholders like <...> or '...' — use concrete values
+7. Assume symbol/timeframes are already known; do not spend steps rediscovering them
+8. End each ETAP with a compact markdown results table template
+9. Do NOT use code fences, pseudocode, or multi-line snippets anywhere
+10. Keep the entire plan short: target 1400-2400 characters total
+11. Do NOT embed raw Python, formulas, or API snippets in any step; describe custom feature logic in plain English
+12. Prefer cheap validation steps first; avoid multi-hour builds or heavy studies in the initial plan
+"""
 
 
 @dataclass
@@ -32,44 +73,18 @@ class AdapterConfig:
     name: str
     cli_path: str = ""
     extra_flags: list[str] = field(default_factory=list)
-    timeout_seconds: int = 1800
     model: str = ""
     mode: str = "default"
     use_bare: bool = False
     no_session_persistence: bool = False
-    soft_timeout_seconds: int = 3600
-    hard_timeout_seconds: int = 7200
-    no_first_byte_seconds: int = 900
     capture_stderr_live: bool = False
     # LM Studio / HTTP API settings
     base_url: str = ""
     api_key: str = ""
     temperature: float = 0.7
     max_tokens: int = 4096
-
-
-@dataclass
-class McpReviewConfig:
-    """Configuration for MCP problem review and tracking."""
-    enabled: bool = True
-    review_every_n_cycles: int = 10
-    review_after_n_errors: int = 3
-    fixes_dir: str = "fixes"
-    planner_timeout: int = 180
-    max_problems_in_context: int = 10
-
-
-@dataclass
-class ReportCompressorConfig:
-    """LM Studio config for LLM-based report compression.
-    base_url, model, reasoning_effort are injected from LMStudioConfig at load time.
-    """
-    enabled: bool = False
-    base_url: str = "http://localhost:1234"
-    model: str = ""  # injected from lmstudio shared
-    reasoning_effort: str = ""  # injected from lmstudio shared
-    max_tokens: int = 300
-    timeout_seconds: int = 30
+    effort: str = ""  # e.g. "low", "medium", "high" — passed as --effort to CLI
+    allow_tool_use: bool = False
 
 
 @dataclass
@@ -80,42 +95,12 @@ class LMStudioTranslationConfig:
 
 
 @dataclass
-class LMStudioAssistantConfig:
-    """LM Studio settings for log analysis & execution prediction."""
-    analysis_interval_cycles: int = 50
-    max_log_lines: int = 200
-    max_tokens: int = 4096  # thinking models: reasoning ~500 + JSON content ~1000
-    timeout_seconds: int = 120
-
-
-@dataclass
 class LMStudioConfig:
-    """LM Studio shared connection + feature-specific settings."""
-    enabled: bool = False
+    """LM Studio shared connection + translation settings."""
     base_url: str = "http://localhost:1234"
     model: str = ""  # empty = use currently loaded model
     reasoning_effort: str = "none"  # "none" = no thinking, "low"/"medium"/"high" = thinking
-    report_compressor: ReportCompressorConfig = field(default_factory=ReportCompressorConfig)
-    assistant: LMStudioAssistantConfig = field(default_factory=LMStudioAssistantConfig)
     translation: LMStudioTranslationConfig = field(default_factory=LMStudioTranslationConfig)
-
-    # Legacy aliases — keep max_log_lines / analysis_interval_cycles / max_tokens / timeout_seconds
-    # accessible directly for backward compatibility with code that reads config.lmstudio.*
-    @property
-    def analysis_interval_cycles(self) -> int:
-        return self.assistant.analysis_interval_cycles
-
-    @property
-    def max_log_lines(self) -> int:
-        return self.assistant.max_log_lines
-
-    @property
-    def max_tokens(self) -> int:
-        return self.assistant.max_tokens
-
-    @property
-    def timeout_seconds(self) -> int:
-        return self.assistant.timeout_seconds
 
 
 @dataclass
@@ -123,14 +108,10 @@ class OrchestratorConfig:
     # --- Goal ---
     goal: str = "No goal specified"
 
-    # --- System prompts ---
-    planner_system_prompt: str = (
-        "You are the planner. Analyze the current state and decide the next action. "
-        "Return your decision as a JSON object following the required schema."
-    )
     operator_directives: str = ""
     worker_system_prompt: str = (
-        "You are a worker agent. Complete the assigned task and return a structured JSON result."
+        "You are a worker decision model. Do not call tools directly. "
+        "Return one structured JSON action only."
     )
 
     # --- Workers ---
@@ -138,18 +119,10 @@ class OrchestratorConfig:
         WorkerConfig(worker_id="qwen-1", role="executor", system_prompt=""),
     ])
 
-    # --- Timing ---
+    # --- Timing / Limits ---
     poll_interval_seconds: int = 300  # 5 minutes default
-    planner_timeout_seconds: int = 1800
-    worker_timeout_seconds: int = 1800
-    worker_restart_delay_seconds: int = 10
-
-    # --- Limits ---
     max_errors_total: int = 20
     max_empty_cycles: int = 12
-    max_task_attempts: int = 3
-    max_worker_timeout_count: int = 3
-    drain_timeout_seconds: int = 600  # timeout for graceful drain mode
 
     # --- Adapters ---
     planner_adapter: AdapterConfig = field(default_factory=lambda: AdapterConfig(
@@ -159,9 +132,6 @@ class OrchestratorConfig:
         mode="batch_text",
         use_bare=True,
         no_session_persistence=True,
-        soft_timeout_seconds=3600,
-        hard_timeout_seconds=7200,
-        no_first_byte_seconds=900,
         capture_stderr_live=True,
     ))
     worker_adapter: AdapterConfig = field(default_factory=lambda: AdapterConfig(
@@ -172,52 +142,62 @@ class OrchestratorConfig:
     # --- State ---
     state_dir: str = "state"
     state_file: str = "orchestrator_state.json"
+    execution_state_file: str = "execution_state_v2.json"
     startup_mode: str = "resume"  # "resume" | "reset" | "reset_all"
+    current_run_id: str = ""
 
     # --- Logging ---
     log_level: str = "INFO"
     log_dir: str = "logs"
     log_file: str = "orchestrator.log"
 
+    # --- Plan source / raw-plan conversion ---
+    plan_source: str = "planner"  # planner | compiled_raw
+    raw_plan_dir: str = "raw_plans"
+    compiled_plan_dir: str = "compiled_plans"
+    compiled_queue_skip_failures: bool = True
+    converter_use_llm: bool = True
+
     # --- Console display ---
     rich_console: bool = True
+    console_log_level: str = "INFO"
     console_truncate_length: int = 300
 
-    # --- Feature flags ---
+    # --- Result handling ---
     detect_duplicate_results: bool = True
-    require_structured_output: bool = True
 
     # --- Research (MCP integration) ---
     research_config: dict[str, Any] = field(default_factory=dict)
+    broker: BrokerTransportConfig = field(default_factory=BrokerTransportConfig)
+    planner_decision_timeout_seconds: int = 180
+    planner_decision_retry_attempts: int = 3
+    worker_decision_timeout_seconds: int = 120
+    worker_decision_retry_attempts: int = 2
+    decision_retry_backoff_seconds: float = 0.25
+    decision_cycle_sleep_seconds: float = 1.0
+    broker_autopoll_budget_seconds: float = 8.0
+    broker_autopoll_interval_seconds: float = 1.0
 
     # --- Notifications ---
     notifications: NotificationConfig = field(default_factory=NotificationConfig)
 
-    # --- MCP problem review ---
-    mcp_review: McpReviewConfig = field(default_factory=McpReviewConfig)
-
-    # --- LM Studio (shared connection + report compressor + assistant + translation) ---
+    # --- LM Studio (shared connection + translation) ---
     lmstudio: LMStudioConfig = field(default_factory=LMStudioConfig)
 
-    # --- Plan mode ---
-    plan_mode: bool = False
     plan_dir: str = "plans"
-    max_concurrent_plan_tasks: int = 2
-    plan_task_timeout_seconds: int = 3600
-    max_mcp_failures: int = 5
-    mcp_health_check_interval_cycles: int = 5
-    silent_worker_warn_seconds: int = 900
-    max_plan_attempts: int = 3
-    plan_stages_guidance: str = "Create 5 to 7 research stages depending on complexity. If investigation can be parallelized across 2-3 workers, count those parallel branches as a single time-stage."
+    max_concurrent_plan_tasks: int = 3
+    max_plans_per_run: int = 1
+    max_consecutive_failed_plans: int = 1
+    max_broker_failures: int = 5
+    planner_prompt_template: str = DEFAULT_PLANNER_PROMPT_TEMPLATE
 
     @property
     def state_path(self) -> Path:
         return Path(self.state_dir) / self.state_file
 
     @property
-    def report_compressor(self) -> ReportCompressorConfig:
-        """Backward-compatible alias: config.report_compressor → config.lmstudio.report_compressor."""
-        return self.lmstudio.report_compressor
+    def execution_state_path(self) -> Path:
+        return Path(self.state_dir) / self.execution_state_file
 
     def to_dict(self) -> dict[str, Any]:
         import dataclasses
@@ -229,20 +209,24 @@ def load_config_from_dict(data: dict[str, Any]) -> OrchestratorConfig:
     cfg = OrchestratorConfig()
 
     simple_fields = {
-        "goal", "planner_system_prompt", "operator_directives", "worker_system_prompt",
-        "poll_interval_seconds", "planner_timeout_seconds",
-        "worker_timeout_seconds", "worker_restart_delay_seconds",
-        "max_errors_total", "max_empty_cycles", "max_task_attempts",
-        "max_worker_timeout_count", "state_dir", "state_file",
+        "goal", "operator_directives", "worker_system_prompt",
+        "poll_interval_seconds", "max_errors_total", "max_empty_cycles",
+        "state_dir", "state_file", "execution_state_file",
         "log_level", "log_dir", "log_file",
-        "rich_console", "console_truncate_length",
-        "detect_duplicate_results", "require_structured_output",
+        "plan_source", "raw_plan_dir", "compiled_plan_dir",
+        "compiled_queue_skip_failures", "converter_use_llm",
+        "rich_console", "console_log_level", "console_truncate_length",
+        "detect_duplicate_results",
         "research_config",
-        "plan_mode", "plan_dir", "max_concurrent_plan_tasks",
-        "plan_task_timeout_seconds", "max_mcp_failures",
-        "silent_worker_warn_seconds", "max_plan_attempts",
-        "plan_stages_guidance",
-        "startup_mode", "drain_timeout_seconds",
+        "planner_decision_timeout_seconds", "planner_decision_retry_attempts",
+        "worker_decision_timeout_seconds", "worker_decision_retry_attempts",
+        "decision_retry_backoff_seconds",
+        "decision_cycle_sleep_seconds", "broker_autopoll_budget_seconds",
+        "broker_autopoll_interval_seconds",
+        "plan_dir",
+        "max_concurrent_plan_tasks",
+        "max_plans_per_run", "max_consecutive_failed_plans", "max_broker_failures",
+        "planner_prompt_template", "startup_mode", "current_run_id",
     }
     for key in simple_fields:
         if key in data:
@@ -260,58 +244,29 @@ def load_config_from_dict(data: dict[str, Any]) -> OrchestratorConfig:
     if "notifications" in data:
         cfg.notifications = NotificationConfig(**data["notifications"])
 
-    if "mcp_review" in data:
-        cfg.mcp_review = McpReviewConfig(**data["mcp_review"])
+    if "broker" in data:
+        cfg.broker = BrokerTransportConfig(**data["broker"])
 
-    # LM Studio: parse nested structure, inject shared base_url/model into features
+    # LM Studio: parse nested structure for shared connection + translation
     if "lmstudio" in data:
         lm_data = dict(data["lmstudio"])  # shallow copy
-        # Extract sub-sections before passing to LMStudioConfig constructor
-        compressor_data = lm_data.pop("report_compressor", {})
-        assistant_data = lm_data.pop("assistant", {})
         translation_data = lm_data.pop("translation", {})
-
-        # Legacy: flat fields that now belong to assistant sub-config
-        for flat_key in ("analysis_interval_cycles", "max_log_lines",
-                         "max_tokens", "timeout_seconds"):
-            if flat_key in lm_data and flat_key not in assistant_data:
-                assistant_data[flat_key] = lm_data.pop(flat_key)
-
-        # Also handle legacy flat fields for report_compressor
-        if "max_tokens" in lm_data and "max_tokens" not in compressor_data:
-            compressor_data.setdefault("max_tokens", lm_data.get("max_tokens"))
 
         cfg.lmstudio = LMStudioConfig(
             **{k: v for k, v in lm_data.items()
-               if k in ("enabled", "base_url", "model", "reasoning_effort")},
-            report_compressor=ReportCompressorConfig(
-                **compressor_data,
-                base_url=lm_data.get("base_url", "http://localhost:1234"),
-                model=lm_data.get("model", ""),
-                reasoning_effort=lm_data.get("reasoning_effort", ""),
-            ),
-            assistant=LMStudioAssistantConfig(**assistant_data),
+               if k in ("base_url", "model", "reasoning_effort")},
             translation=LMStudioTranslationConfig(**translation_data),
         )
-
-    # Legacy: standalone [report_compressor] section (pre-reorganization)
-    if "report_compressor" in data:
-        rc = data["report_compressor"]
-        cfg.lmstudio.report_compressor = ReportCompressorConfig(
-            enabled=rc.get("enabled", cfg.lmstudio.report_compressor.enabled),
-            base_url=rc.get("base_url", cfg.lmstudio.base_url),
-            model=rc.get("model", cfg.lmstudio.model),
-            max_tokens=rc.get("max_tokens", cfg.lmstudio.report_compressor.max_tokens),
-            timeout_seconds=rc.get("timeout_seconds", cfg.lmstudio.report_compressor.timeout_seconds),
-        )
-        # If legacy report_compressor.enabled was True, enable lmstudio globally
-        if rc.get("enabled"):
-            cfg.lmstudio.enabled = True
 
     if cfg.startup_mode not in ("resume", "reset", "reset_all"):
         raise ValueError(
             f"Invalid startup_mode '{cfg.startup_mode}'. "
             f"Must be one of: 'resume', 'reset', 'reset_all'"
+        )
+    if cfg.plan_source not in {"planner", "compiled_raw"}:
+        raise ValueError(
+            f"Invalid plan_source '{cfg.plan_source}'. "
+            "Must be one of: 'planner', 'compiled_raw'"
         )
 
     return cfg

@@ -1,0 +1,42 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\n  \"status\": \"error\",\n  \"message\": \"[Errno 2] No such file or directory: '/home/ubuntu/MARKET_DATA/_crypto_data/models/registry/dummy/versions/1/manifest.json'\",\n  \"tool_name\": \"models_to_feature\",\n  \"request_id\": \"13\",\n  \"correlation_id\": \"13\",\n  \"server_session_id\": \"745bd6b3aaf042958914ade2c6967820\",\n  \"response_generated_at\": \"2026-04-09T12:24:58.313233+00:00\",\n  \"data\": null,\n  \"warnings\": [],\n  \"refs\": [],\n  \"error\": {\n    \"code\": \"resource_not_found\",\n    \"error_type\": \"not_found\",\n    \"message\": \"[Errno 2] No such file or directory: '/home/ubuntu/MARKET_DATA/_crypto_data/models/registry/dummy/versions/1/manifest.json'\",\n    \"retryable\": false,\n    \"remediation\": \"Check that the referenced path or artifact exists in the current runtime.\",\n    \"suggested_next_step\": \"Refresh discovery or verify the file identifier before retrying.\",\n    \"details\": {\n      \"tool\": \"models_to_feature\",\n      \"classification\": \"agent_contract_misuse\",\n      \"correlation_id\": \"13\",\n      \"request_id\": \"13\",\n      \"server_session_id\": \"745bd6b3aaf042958914ade2c6967820\",\n      \"debug_context_available\": true,\n      \"recommended_debug_tools\": [\n        \"system_debug_recent_events\",\n        \"system_logs\"\n      ],\n      \"log_service_hint\": \"mcp_server\"\n    }\n  }\n}"
+    }
+  ],
+  "structuredContent": {
+    "status": "error",
+    "message": "[Errno 2] No such file or directory: '/home/ubuntu/MARKET_DATA/_crypto_data/models/registry/dummy/versions/1/manifest.json'",
+    "tool_name": "models_to_feature",
+    "request_id": "13",
+    "correlation_id": "13",
+    "server_session_id": "745bd6b3aaf042958914ade2c6967820",
+    "response_generated_at": "2026-04-09T12:24:58.313233+00:00",
+    "data": null,
+    "warnings": [],
+    "refs": [],
+    "error": {
+      "code": "resource_not_found",
+      "error_type": "not_found",
+      "message": "[Errno 2] No such file or directory: '/home/ubuntu/MARKET_DATA/_crypto_data/models/registry/dummy/versions/1/manifest.json'",
+      "retryable": false,
+      "remediation": "Check that the referenced path or artifact exists in the current runtime.",
+      "suggested_next_step": "Refresh discovery or verify the file identifier before retrying.",
+      "details": {
+        "tool": "models_to_feature",
+        "classification": "agent_contract_misuse",
+        "correlation_id": "13",
+        "request_id": "13",
+        "server_session_id": "745bd6b3aaf042958914ade2c6967820",
+        "debug_context_available": true,
+        "recommended_debug_tools": [
+          "system_debug_recent_events",
+          "system_logs"
+        ],
+        "log_service_hint": "mcp_server"
+      }
+    }
+  },
+  "isError": false
+}

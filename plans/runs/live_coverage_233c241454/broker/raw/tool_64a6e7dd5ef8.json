@@ -1,0 +1,116 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\n  \"status\": \"ok\",\n  \"message\": \"Experiment inspection loaded.\",\n  \"tool_name\": \"experiments_inspect\",\n  \"request_id\": \"30\",\n  \"correlation_id\": \"30\",\n  \"server_session_id\": \"ea6edc17d94a4f0daf97ea812d05abc2\",\n  \"response_generated_at\": \"2026-04-09T13:30:52.130379+00:00\",\n  \"data\": {\n    \"view\": \"status\",\n    \"job\": {\n      \"job_id\": \"20260409-133051-d6357346\",\n      \"name\": \"coverage_experiment_live_coverage_233c241454_1\",\n      \"description\": null,\n      \"status\": \"running_compute\",\n      \"created_at\": \"2026-04-09T13:30:51.431176+00:00\",\n      \"started_at\": \"2026-04-09T13:30:51.679222+00:00\",\n      \"finished_at\": null,\n      \"timeout_seconds\": 120,\n      \"workspace\": {\n        \"job_dir\": \"/home/ubuntu/FOUNDATION/artifacts/experiments/20260409-133051-d6357346\",\n        \"manifest_path\": \"/home/ubuntu/FOUNDATION/artifacts/experiments/20260409-133051-d6357346/manifest.json\",\n        \"script_path\": \"/home/ubuntu/FOUNDATION/artifacts/experiments/20260409-133051-d6357346/script.py\",\n        \"stdout_path\": \"/home/ubuntu/FOUNDATION/artifacts/experiments/20260409-133051-d6357346/stdout.log\",\n        \"stderr_path\": \"/home/ubuntu/FOUNDATION/artifacts/experiments/20260409-133051-d6357346/stderr.log\",\n        \"result_path\": \"/home/ubuntu/FOUNDATION/artifacts/experiments/20260409-133051-d6357346/result.json\",\n        \"artifacts_dir\": \"/home/ubuntu/FOUNDATION/artifacts/experiments/20260409-133051-d6357346/artifacts\",\n        \"cwd\": \"/home/ubuntu/FOUNDATION/artifacts/experiments/20260409-133051-d6357346\",\n        \"path_scope\": \"server_runtime\",\n        \"path_scope_note\": \"Filesystem paths refer to the MCP server runtime host, not a shared client workspace path.\",\n        \"recommended_delivery_tool\": \"notify_send\",\n        \"recommended_read_tool\": \"experiments_read\"\n      },\n      \"exit_code\": null,\n      \"error_message\": null,\n      \"termination_reason\": null,\n      \"task_summary\": \"Live broker coverage experiment cycle 1\",\n      \"task_category\": \"validation\",\n      \"task_tags\": [],\n      \"task_project_id\": \"experiments-use-case-registry\",\n      \"required_project_paths\": [],\n      \"project_root\": \"/home/ubuntu/FOUNDATION\",\n      \"project_root_scope\": \"server_runtime\"\n    },\n    \"operation\": {\n      \"operation_id\": \"20260409-133051-d6357346\",\n      \"operation_kind\": \"experiments_jobs_start\",\n      \"status\": \"running_compute\",\n      \"progress\": null,\n      \"started_at\": \"2026-04-09T13:30:51.679222+00:00\",\n      \"finished_at\": null,\n      \"result_ref\": {\n        \"kind\": \"experiment_job\",\n        \"id\": \"20260409-133051-d6357346\",\n        \"path\": \"/home/ubuntu/FOUNDATION/artifacts/experiments/20260409-133051-d6357346\"\n      },\n      \"error\": null,\n      \"queue_id\": \"c55ad932d331\",\n      \"scheduler_state\": \"admitted\",\n      \"queue_position\": null,\n      \"queued_reason\": null,\n      \"blocking_operation_id\": null,\n      \"admitted_at\": \"2026-04-09T13:30:51.465189+00:00\",\n      \"health_state\": \"healthy\",\n      \"last_heartbeat_at\": \"2026-04-09T13:30:51.912054+00:00\",\n      \"last_progress_at\": \"2026-04-09T13:30:51.681646+00:00\",\n      \"progress_message\": \"Experiment subprocess is still running.\",\n      \"action_required\": null,\n      \"stop_supported\": true\n    },\n    \"important_warnings\": [],\n    \"next_recommended_actions\": [\n      \"Use experiments_inspect(view='logs') if the job failed or printed useful diagnostics.\",\n      \"Use experiments_inspect(view='result') after terminal completion.\"\n    ],\n    \"recommended_follow_up_tool\": null,\n    \"state_summary\": {},\n    \"exact_next_call_examples\": [\n      {\n        \"tool\": \"experiments_inspect\",\n        \"arguments\": {\n          \"view\": \"result\",\n          \"job_id\": \"20260409-133051-d6357346\"\n        }\n      },\n      {\n        \"tool\": \"experiments_inspect\",\n        \"arguments\": {\n          \"view\": \"logs\",\n          \"job_id\": \"20260409-133051-d6357346\",\n          \"streams\": [\n            \"stdout\",\n            \"stderr\"\n          ]\n        }\n      }\n    ],\n    \"raw_refs\": [\n      \"system_raw_call(tool_name='experiments_jobs_get_status')\"\n    ],\n    \"raw_tool_hints\": [],\n    \"summary\": \"Loaded lifecycle status for experiment job 20260409-133051-d6357346.\"\n  },\n  \"warnings\": [],\n  \"refs\": [],\n  \"error\": null\n}"
+    }
+  ],
+  "structuredContent": {
+    "status": "ok",
+    "message": "Experiment inspection loaded.",
+    "tool_name": "experiments_inspect",
+    "request_id": "30",
+    "correlation_id": "30",
+    "server_session_id": "ea6edc17d94a4f0daf97ea812d05abc2",
+    "response_generated_at": "2026-04-09T13:30:52.130379+00:00",
+    "data": {
+      "view": "status",
+      "job": {
+        "job_id": "20260409-133051-d6357346",
+        "name": "coverage_experiment_live_coverage_233c241454_1",
+        "description": null,
+        "status": "running_compute",
+        "created_at": "2026-04-09T13:30:51.431176+00:00",
+        "started_at": "2026-04-09T13:30:51.679222+00:00",
+        "finished_at": null,
+        "timeout_seconds": 120,
+        "workspace": {
+          "job_dir": "/home/ubuntu/FOUNDATION/artifacts/experiments/20260409-133051-d6357346",
+          "manifest_path": "/home/ubuntu/FOUNDATION/artifacts/experiments/20260409-133051-d6357346/manifest.json",
+          "script_path": "/home/ubuntu/FOUNDATION/artifacts/experiments/20260409-133051-d6357346/script.py",
+          "stdout_path": "/home/ubuntu/FOUNDATION/artifacts/experiments/20260409-133051-d6357346/stdout.log",
+          "stderr_path": "/home/ubuntu/FOUNDATION/artifacts/experiments/20260409-133051-d6357346/stderr.log",
+          "result_path": "/home/ubuntu/FOUNDATION/artifacts/experiments/20260409-133051-d6357346/result.json",
+          "artifacts_dir": "/home/ubuntu/FOUNDATION/artifacts/experiments/20260409-133051-d6357346/artifacts",
+          "cwd": "/home/ubuntu/FOUNDATION/artifacts/experiments/20260409-133051-d6357346",
+          "path_scope": "server_runtime",
+          "path_scope_note": "Filesystem paths refer to the MCP server runtime host, not a shared client workspace path.",
+          "recommended_delivery_tool": "notify_send",
+          "recommended_read_tool": "experiments_read"
+        },
+        "exit_code": null,
+        "error_message": null,
+        "termination_reason": null,
+        "task_summary": "Live broker coverage experiment cycle 1",
+        "task_category": "validation",
+        "task_tags": [],
+        "task_project_id": "experiments-use-case-registry",
+        "required_project_paths": [],
+        "project_root": "/home/ubuntu/FOUNDATION",
+        "project_root_scope": "server_runtime"
+      },
+      "operation": {
+        "operation_id": "20260409-133051-d6357346",
+        "operation_kind": "experiments_jobs_start",
+        "status": "running_compute",
+        "progress": null,
+        "started_at": "2026-04-09T13:30:51.679222+00:00",
+        "finished_at": null,
+        "result_ref": {
+          "kind": "experiment_job",
+          "id": "20260409-133051-d6357346",
+          "path": "/home/ubuntu/FOUNDATION/artifacts/experiments/20260409-133051-d6357346"
+        },
+        "error": null,
+        "queue_id": "c55ad932d331",
+        "scheduler_state": "admitted",
+        "queue_position": null,
+        "queued_reason": null,
+        "blocking_operation_id": null,
+        "admitted_at": "2026-04-09T13:30:51.465189+00:00",
+        "health_state": "healthy",
+        "last_heartbeat_at": "2026-04-09T13:30:51.912054+00:00",
+        "last_progress_at": "2026-04-09T13:30:51.681646+00:00",
+        "progress_message": "Experiment subprocess is still running.",
+        "action_required": null,
+        "stop_supported": true
+      },
+      "important_warnings": [],
+      "next_recommended_actions": [
+        "Use experiments_inspect(view='logs') if the job failed or printed useful diagnostics.",
+        "Use experiments_inspect(view='result') after terminal completion."
+      ],
+      "recommended_follow_up_tool": null,
+      "state_summary": {},
+      "exact_next_call_examples": [
+        {
+          "tool": "experiments_inspect",
+          "arguments": {
+            "view": "result",
+            "job_id": "20260409-133051-d6357346"
+          }
+        },
+        {
+          "tool": "experiments_inspect",
+          "arguments": {
+            "view": "logs",
+            "job_id": "20260409-133051-d6357346",
+            "streams": [
+              "stdout",
+              "stderr"
+            ]
+          }
+        }
+      ],
+      "raw_refs": [
+        "system_raw_call(tool_name='experiments_jobs_get_status')"
+      ],
+      "raw_tool_hints": [],
+      "summary": "Loaded lifecycle status for experiment job 20260409-133051-d6357346."
+    },
+    "warnings": [],
+    "refs": [],
+    "error": null
+  },
+  "isError": false
+}

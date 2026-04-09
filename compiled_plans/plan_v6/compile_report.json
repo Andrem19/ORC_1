@@ -1,0 +1,17 @@
+{
+  "source_file": "raw_plans/plan_v6.md",
+  "source_hash": "8b5e129c4e5aa98a65f5ad5ec0bd7c7510586b6b9e9f606f9a7a7baa30ff4de6",
+  "sequence_id": "compiled_plan_v6",
+  "compile_status": "compiled",
+  "parser_confidence": 0.95,
+  "semantic_method": "llm",
+  "stage_count": 10,
+  "compiled_plan_count": 4,
+  "warnings": [
+    "Plan is in Russian; stage titles and objectives translated to English for semantic consistency",
+    "M3/M4 weak-window models gated — only permitted if standard long/short classifiers show weak but recoverable pockets",
+    "Router model explicitly forbidden at v6 start; only unlocked by conditional gate after M1+M2 success"
+  ],
+  "errors": [],
+  "compiled_at": "2026-04-09T14:24:19.886200+00:00"
+}
