@@ -41,6 +41,7 @@ class PlanSlice:
     max_tool_calls: int
     max_expensive_calls: int
     parallel_slot: int
+    depends_on: list[str] = field(default_factory=list)
     status: str = "pending"  # pending | running | checkpointed | completed | failed | aborted
     turn_count: int = 0
     tool_call_count: int = 0

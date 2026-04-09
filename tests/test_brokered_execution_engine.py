@@ -1145,3 +1145,87 @@ def test_brokered_engine_compiled_raw_skips_failed_sequence_and_moves_to_next(tm
         "compiled_plan_v1_batch_1",
         "compiled_plan_v2_batch_1",
     ]
+
+
+def test_brokered_engine_infers_missing_project_id_from_previous_slice_facts(tmp_path) -> None:
+    _save_compiled_sequence(
+        tmp_path,
+        raw_name="plan_v1.md",
+        plan_specs=[
+            (
+                "compiled_plan_v1_batch_1",
+                [
+                    PlanSlice(
+                        slice_id="slice_setup",
+                        title="Setup",
+                        hypothesis="setup",
+                        objective="setup",
+                        success_criteria=["done"],
+                        allowed_tools=["research_project"],
+                        evidence_requirements=["done"],
+                        policy_tags=["setup"],
+                        max_turns=1,
+                        max_tool_calls=0,
+                        max_expensive_calls=0,
+                        parallel_slot=1,
+                    ),
+                    PlanSlice(
+                        slice_id="slice_dep",
+                        title="Dependent",
+                        hypothesis="dep",
+                        objective="dep",
+                        success_criteria=["done"],
+                        allowed_tools=["research_search"],
+                        evidence_requirements=["done"],
+                        policy_tags=["analysis"],
+                        max_turns=1,
+                        max_tool_calls=1,
+                        max_expensive_calls=0,
+                        parallel_slot=1,
+                        depends_on=["slice_setup"],
+                    ),
+                ],
+            ),
+        ],
+    )
+    worker = _StubWorker(
+        {
+            "slice_setup": [
+                {
+                    "type": "final_report",
+                    "summary": "setup done",
+                    "verdict": "WATCHLIST",
+                    "facts": {"project.project_id": "proj_123"},
+                }
+            ],
+            "slice_dep": [
+                {
+                    "type": "tool_call",
+                    "tool": "research_search",
+                    "arguments": {"query": "orthogonal funding"},
+                    "reason": "search project memory",
+                }
+            ],
+        }
+    )
+    broker = _StubBroker(
+        {
+            ("research_search", repr(sorted({"project_id": "proj_123", "query": "orthogonal funding"}.items()))): [
+                _make_tool_result(call_id="call_search", tool="research_search", summary="search ok")
+            ]
+        }
+    )
+    orch = _make_orchestrator(tmp_path, max_concurrent=2)
+    orch.config.plan_source = "compiled_raw"
+    orch.config.raw_plan_dir = str(tmp_path / "raw_plans")
+    orch.config.compiled_plan_dir = str(tmp_path / "compiled_plans")
+    engine = BrokeredExecutionService(orch, broker=broker, planner=_FailingPlanner(), worker=worker)
+
+    asyncio.run(engine._create_next_plan())
+    plan = engine.state.active_plan()
+    assert plan is not None
+    asyncio.run(engine._run_plan_round(plan))
+    asyncio.run(engine._run_plan_round(plan))
+
+    assert broker.calls[-1][0] == "research_search"
+    assert broker.calls[-1][1]["project_id"] == "proj_123"

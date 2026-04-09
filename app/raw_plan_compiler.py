@@ -165,6 +165,7 @@ def _compile_stage(*, sequence_id: str, stage: SemanticStage, slot_index: int) -
         max_tool_calls=max_tool_calls,
         max_expensive_calls=max_expensive_calls,
         parallel_slot=parallel_slot,
+        depends_on=[f"{sequence_id}_{dep}" for dep in stage.depends_on if dep],
     )
 
 

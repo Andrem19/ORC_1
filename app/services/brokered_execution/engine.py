@@ -180,7 +180,9 @@ class BrokeredExecutionService:
         candidate_slices = [
             slice_obj
             for slice_obj in sorted(plan.slices, key=lambda item: (item.parallel_slot, item.slice_id))
-            if not slice_obj.is_terminal and slice_obj.parallel_slot <= self.max_slots
+            if not slice_obj.is_terminal
+            and slice_obj.parallel_slot <= self.max_slots
+            and self._dependencies_satisfied(plan, slice_obj)
         ]
         if not candidate_slices:
             return False
@@ -237,7 +239,7 @@ class BrokeredExecutionService:
                 plan_id=plan.plan_id,
                 slice_obj=slice_obj,
                 baseline_bootstrap=self.config.research_config,
-                known_facts=slice_obj.facts,
+                known_facts=self._known_facts_for_slice(plan, slice_obj),
                 recent_turn_summaries=self._recent_turn_summaries(plan.plan_id, slice_obj.slice_id),
                 latest_tool_summary=slice_obj.latest_tool_result_summary or slice_obj.last_summary,
                 remaining_budget=self._remaining_budget(slice_obj),
@@ -575,6 +577,25 @@ class BrokeredExecutionService:
                 summaries.append(f"{turn.action.action_type}: {turn.action.summary}")
         return summaries[-6:]
 
+    @staticmethod
+    def _dependencies_satisfied(plan: ExecutionPlan, slice_obj: PlanSlice) -> bool:
+        if not slice_obj.depends_on:
+            return True
+        completed = {item.slice_id for item in plan.slices if item.status == "completed"}
+        return all(dep in completed for dep in slice_obj.depends_on)
+
+    def _known_facts_for_slice(self, plan: ExecutionPlan, slice_obj: PlanSlice) -> dict[str, Any]:
+        facts: dict[str, Any] = {}
+        for item in plan.slices:
+            if item.slice_id == slice_obj.slice_id:
+                continue
+            if item.status not in {"completed", "checkpointed"}:
+                continue
+            for key, value in item.facts.items():
+                facts.setdefault(key, value)
+        facts.update(slice_obj.facts)
+        return facts
+
     def _emit_slice_notification(self, plan: ExecutionPlan, slice_obj: PlanSlice, action: WorkerAction) -> None:
         summary = action.summary or slice_obj.last_summary or slice_obj.last_error
         result = TaskResult(
@@ -685,17 +706,53 @@ class BrokeredExecutionService:
         slot: int,
         phase: str,
     ) -> Any:
+        resolved_arguments = dict(arguments)
+        plan = self.state.find_plan(plan_id)
+        slice_obj = self.state.find_slice(plan_id, slice_id)
+        if plan is not None and slice_obj is not None:
+            resolved_arguments = self._inject_contextual_arguments(
+                tool_name=tool_name,
+                arguments=resolved_arguments,
+                plan=plan,
+                slice_obj=slice_obj,
+            )
         parameters = inspect.signature(self.broker.call_tool).parameters
         if {"plan_id", "slice_id", "slot", "phase"}.issubset(parameters):
             return await self.broker.call_tool(
                 tool_name=tool_name,
-                arguments=arguments,
+                arguments=resolved_arguments,
                 plan_id=plan_id,
                 slice_id=slice_id,
                 slot=slot,
                 phase=phase,
             )
-        return await self.broker.call_tool(tool_name=tool_name, arguments=arguments)
+        return await self.broker.call_tool(tool_name=tool_name, arguments=resolved_arguments)
+
+    def _inject_contextual_arguments(
+        self,
+        *,
+        tool_name: str,
+        arguments: dict[str, Any],
+        plan: ExecutionPlan,
+        slice_obj: PlanSlice,
+    ) -> dict[str, Any]:
+        resolved = dict(arguments)
+        if tool_name not in {"research_search", "research_map"}:
+            return resolved
+        if str(resolved.get("project_id", "") or "").strip():
+            return resolved
+        inferred_project_id = self._extract_latest_project_id(self._known_facts_for_slice(plan, slice_obj))
+        if inferred_project_id:
+            resolved["project_id"] = inferred_project_id
+        return resolved
+
+    @staticmethod
+    def _extract_latest_project_id(known_facts: dict[str, Any]) -> str:
+        for key in ("project.project_id", "state_summary.project_id", "project_id"):
+            value = str(known_facts.get(key, "") or "").strip()
+            if value:
+                return value
+        return ""
 
     def _sync_runtime_summary(self, turn: ExecutionTurn) -> None:
         self.orch.state.current_cycle += 1

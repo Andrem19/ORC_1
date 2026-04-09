@@ -268,16 +268,22 @@ def _extract_key_facts(data: dict[str, Any] | list[Any] | None) -> dict[str, Any
     if not isinstance(data, dict):
         return {}
     facts: dict[str, Any] = {}
-    for key, value in data.items():
-        if key.endswith("_id") or key in {"summary", "status", "final_status", "wait_timeout", "wait_satisfied", "count", "rows", "tool_count"}:
-            facts[key] = value
-    for nested_key in ("operation", "job", "run", "dataset", "result", "operation_result"):
-        nested = data.get(nested_key)
-        if isinstance(nested, dict):
-            for key, value in nested.items():
-                if key.endswith("_id") or key in {"status", "scheduler_state", "queue_id", "row_count"}:
-                    facts[f"{nested_key}.{key}"] = value
+    _collect_key_facts(data, facts)
     return facts
+
+
+def _collect_key_facts(value: Any, facts: dict[str, Any], *, prefix: str = "", depth: int = 0) -> None:
+    if depth > 4:
+        return
+    if isinstance(value, dict):
+        for key, nested in value.items():
+            path = f"{prefix}.{key}" if prefix else key
+            if key.endswith("_id") or key in {"summary", "status", "final_status", "wait_timeout", "wait_satisfied", "count", "rows", "tool_count", "row_count", "queue_id", "scheduler_state"}:
+                facts[path] = nested
+            _collect_key_facts(nested, facts, prefix=path, depth=depth + 1)
+    elif isinstance(value, list):
+        for item in value[:20]:
+            _collect_key_facts(item, facts, prefix=prefix, depth=depth + 1)
 
 
 def _extract_artifact_ids(data: dict[str, Any] | list[Any] | None) -> list[str]:

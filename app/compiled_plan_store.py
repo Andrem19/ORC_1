@@ -62,14 +62,17 @@ class CompiledPlanStore:
         manifest_dir = self.root_dir / Path(manifest.source_file).stem
         payload = json.loads((manifest_dir / plan_file).read_text(encoding="utf-8"))
         plan = _deserialize_plan(payload)
+        semantic_rel = manifest.semantic_path or "semantic.json"
+        compile_report_rel = manifest.compile_report_path or "compile_report.json"
         plan.plan_source_kind = "compiled_raw"
         plan.source_sequence_id = manifest.sequence_id
         plan.source_raw_plan = manifest.source_file
         plan.source_manifest_path = str((manifest_dir / "manifest.json"))
-        plan.source_semantic_path = str((manifest_dir / manifest.semantic_path)) if manifest.semantic_path else ""
-        plan.source_compile_report_path = str((manifest_dir / manifest.compile_report_path)) if manifest.compile_report_path else ""
+        plan.source_semantic_path = str((manifest_dir / semantic_rel)) if (manifest_dir / semantic_rel).exists() else ""
+        plan.source_compile_report_path = str((manifest_dir / compile_report_rel)) if (manifest_dir / compile_report_rel).exists() else ""
         if not plan.sequence_batch_index:
             plan.sequence_batch_index = _batch_index_for(plan.plan_id)
+        _backfill_slice_dependencies(plan, manifest_dir=manifest_dir, semantic_path=semantic_rel)
         return plan
 
 
@@ -118,3 +121,36 @@ def _batch_index_for(plan_id: str) -> int:
         return int(suffix[1])
     except ValueError:
         return 0
+
+
+def _backfill_slice_dependencies(plan: ExecutionPlan, *, manifest_dir: Path, semantic_path: str) -> None:
+    if not semantic_path:
+        return
+    semantic_file = manifest_dir / semantic_path
+    if not semantic_file.exists():
+        return
+    try:
+        payload = json.loads(semantic_file.read_text(encoding="utf-8"))
+    except Exception:
+        return
+    stages = payload.get("stages", []) if isinstance(payload, dict) else []
+    if not isinstance(stages, list):
+        return
+    dependency_map: dict[str, list[str]] = {}
+    for item in stages:
+        if not isinstance(item, dict):
+            continue
+        stage_id = str(item.get("stage_id", "") or "").strip()
+        depends_on = [str(dep).strip() for dep in item.get("depends_on", []) or [] if str(dep).strip()]
+        if stage_id:
+            dependency_map[stage_id] = depends_on
+    sequence_prefix = f"{plan.source_sequence_id}_"
+    for slice_obj in plan.slices:
+        if slice_obj.depends_on:
+            continue
+        if not slice_obj.slice_id.startswith(sequence_prefix):
+            continue
+        stage_id = slice_obj.slice_id[len(sequence_prefix):]
+        stage_dependencies = dependency_map.get(stage_id, [])
+        if stage_dependencies:
+            slice_obj.depends_on = [f"{plan.source_sequence_id}_{dep}" for dep in stage_dependencies]

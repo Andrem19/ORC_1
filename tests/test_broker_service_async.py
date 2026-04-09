@@ -181,6 +181,41 @@ def test_broker_extracts_nested_dataset_fact_ids(tmp_path) -> None:
     assert envelope.key_facts["operation.operation_id"] == "op_123"
 
 
+def test_broker_extracts_nested_project_fact_ids(tmp_path) -> None:
+    transport = _FakeTransport(
+        responses={
+            "system_bootstrap": [{"structuredContent": {"status": "ok", "message": "bootstrap ok"}}],
+            "system_health": [{"structuredContent": {"status": "ok", "message": "healthy"}}],
+            "research_project": [
+                {
+                    "structuredContent": {
+                        "status": "ok",
+                        "message": "created",
+                        "data": {
+                            "project": {"project_id": "proj_123", "root_node_id": "node_1"},
+                            "state_summary": {"project_id": "proj_123"},
+                            "summary": "Completed research project action create.",
+                        },
+                    }
+                }
+            ],
+        },
+        tools=[
+            {"name": "system_bootstrap", "description": "bootstrap", "inputSchema": {"type": "object"}},
+            {"name": "system_health", "description": "health", "inputSchema": {"type": "object"}},
+            {"name": "research_project", "description": "research project", "inputSchema": {"type": "object"}},
+        ],
+    )
+    service = _make_service(tmp_path, transport)
+
+    asyncio.run(service.bootstrap())
+    envelope = asyncio.run(service.call_tool(tool_name="research_project", arguments={"action": "create"}))
+
+    assert envelope.key_facts["project.project_id"] == "proj_123"
+    assert envelope.key_facts["project.root_node_id"] == "node_1"
+    assert envelope.key_facts["state_summary.project_id"] == "proj_123"
+
+
 def test_broker_coerces_numeric_strings_from_schema(tmp_path) -> None:
     transport = _FakeTransport(
         responses={
