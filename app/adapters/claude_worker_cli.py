@@ -61,11 +61,12 @@ class ClaudeWorkerCli(BaseAdapter):
         if self.model:
             cmd.extend(["--model", self.model])
         if self.allow_tool_use:
-            cmd.append("--yolo")
+            cmd.append("--dangerously-skip-permissions")
             runtime_exclude = _dedupe_preserve_order(kwargs.get("exclude_tools", []) or [])
             excluded = _dedupe_preserve_order([*self.exclude_tools, *runtime_exclude])
             if excluded:
-                cmd.extend(["--exclude-tools", ",".join(excluded)])
+                cmd.append("--disallowedTools")
+                cmd.extend(excluded)
         cmd.extend(["--output-format", "stream-json"])
         cmd.extend(["-p", prompt])
         cmd.extend(self.extra_flags)

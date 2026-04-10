@@ -74,36 +74,39 @@ def test_load_config_with_lmstudio():
         "lmstudio": {
             "base_url": "http://localhost:9999",
             "model": "qwen-test",
-            "translation": {
-                "max_tokens": 1536,
-                "timeout_seconds": 22,
-            },
+            "reasoning_effort": "low",
         },
     }
     cfg = load_config_from_dict(data)
     assert cfg.lmstudio.base_url == "http://localhost:9999"
     assert cfg.lmstudio.model == "qwen-test"
-    assert cfg.lmstudio.translation.max_tokens == 1536
-    assert cfg.lmstudio.translation.timeout_seconds == 22
+    assert cfg.lmstudio.reasoning_effort == "low"
 
 
 def test_lmstudio_defaults_when_not_in_config():
     cfg = load_config_from_dict({"goal": "test"})
     assert cfg.lmstudio.base_url == "http://localhost:1234"
-    assert cfg.lmstudio.translation.max_tokens == 2048
+    assert cfg.lmstudio.model == ""
+    assert cfg.lmstudio.reasoning_effort == "none"
 
 
-def test_lmstudio_nested_translation():
+def test_lmstudio_nested_translation_removed():
+    """Translation settings are now in [notifications], not [lmstudio.translation]."""
     data = {
         "lmstudio": {
             "base_url": "http://localhost:8080",
             "model": "test-model",
-            "translation": {"max_tokens": 2048, "timeout_seconds": 44},
+        },
+        "notifications": {
+            "translation_provider": "lmstudio",
+            "translation_fallback_1": "qwen_cli",
         },
     }
     cfg = load_config_from_dict(data)
-    assert cfg.lmstudio.translation.max_tokens == 2048
-    assert cfg.lmstudio.translation.timeout_seconds == 44
+    assert cfg.lmstudio.base_url == "http://localhost:8080"
+    assert cfg.lmstudio.model == "test-model"
+    assert cfg.notifications.translation_provider == "lmstudio"
+    assert cfg.notifications.translation_fallback_1 == "qwen_cli"
 
 
 def test_direct_execution_defaults_and_overrides():

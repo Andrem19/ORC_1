@@ -5,30 +5,30 @@ from types import SimpleNamespace
 from app.adapters.claude_worker_cli import ClaudeWorkerCli
 
 
-def test_claude_worker_build_command_yolo_when_tool_use_enabled(monkeypatch) -> None:
+def test_claude_worker_build_command_dangerously_skip_permissions(monkeypatch) -> None:
     adapter = ClaudeWorkerCli(cli_path="/bin/echo", allow_tool_use=True)
     monkeypatch.setattr(adapter, "_resolve_cli_path", lambda: "/bin/echo")
 
     command = adapter._build_command("prompt")
 
-    assert "--yolo" in command
+    assert "--dangerously-skip-permissions" in command
     assert "--output-format" in command
     assert "stream-json" in command
     assert "-p" in command
     assert "prompt" in command
 
 
-def test_claude_worker_build_command_no_yolo_when_tool_use_disabled(monkeypatch) -> None:
+def test_claude_worker_build_command_no_skip_permissions_when_disabled(monkeypatch) -> None:
     adapter = ClaudeWorkerCli(cli_path="/bin/echo", allow_tool_use=False)
     monkeypatch.setattr(adapter, "_resolve_cli_path", lambda: "/bin/echo")
 
     command = adapter._build_command("prompt")
 
-    assert "--yolo" not in command
+    assert "--dangerously-skip-permissions" not in command
     assert "--output-format" in command
 
 
-def test_claude_worker_build_command_exclude_tools(monkeypatch) -> None:
+def test_claude_worker_build_command_disallowed_tools(monkeypatch) -> None:
     adapter = ClaudeWorkerCli(
         cli_path="/bin/echo",
         allow_tool_use=True,
@@ -38,11 +38,12 @@ def test_claude_worker_build_command_exclude_tools(monkeypatch) -> None:
 
     command = adapter._build_command("prompt")
 
-    assert "--exclude-tools" in command
-    idx = command.index("--exclude-tools")
-    excluded = command[idx + 1]
-    assert "read_file" in excluded
-    assert "write_file" in excluded
+    assert "--disallowedTools" in command
+    idx = command.index("--disallowedTools")
+    # Space-separated tools after the flag
+    after_flag = command[idx + 1:]
+    assert "read_file" in after_flag
+    assert "write_file" in after_flag
 
 
 def test_claude_worker_build_command_runtime_exclude_tools(monkeypatch) -> None:
@@ -51,11 +52,11 @@ def test_claude_worker_build_command_runtime_exclude_tools(monkeypatch) -> None:
 
     command = adapter._build_command("prompt", exclude_tools=["research_project", "read_file"])
 
-    assert "--exclude-tools" in command
-    idx = command.index("--exclude-tools")
-    excluded = command[idx + 1]
-    assert "read_file" in excluded
-    assert "research_project" in excluded
+    assert "--disallowedTools" in command
+    idx = command.index("--disallowedTools")
+    after_flag = command[idx + 1:]
+    assert "read_file" in after_flag
+    assert "research_project" in after_flag
 
 
 def test_claude_worker_build_command_model_flag(monkeypatch) -> None:

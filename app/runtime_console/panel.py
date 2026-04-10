@@ -16,12 +16,14 @@ from app.runtime_console.models import ConsoleRuntimeState, TrailMap, TrailSlice
 
 def build_runtime_panel(state: ConsoleRuntimeState):
     summary = _build_runtime_summary(state)
-    planner = _build_planner_table(state)
-    sequence_progress = _build_sequence_progress_panel(state)
     slices = _build_slices_table(state)
+    columns = [summary]
+    if state.plan_source != "compiled_raw":
+        columns.append(_build_planner_table(state))
+    columns.append(slices)
     footer = _build_footer(state)
     return Panel(
-        Columns([summary, planner, sequence_progress, slices], expand=True, equal=False),
+        Columns(columns, expand=True, equal=False),
         title="Direct Runtime",
         subtitle=footer,
         border_style="cyan",
@@ -36,11 +38,13 @@ def _build_runtime_summary(state: ConsoleRuntimeState) -> Panel:
     sequence_label = progress.raw_plan_label or (_short(state.active_plan_id, 12) if state.active_plan_id else "-")
     table.add_row("sequence", Text(sequence_label, style="bold cyan"))
     table.add_row("progress", Text(_progress_label(state), style="white"))
-    table.add_row("current", Text(_short(progress.current_slice_title or progress.current_slice_id or "-", 24), style="white"))
     table.add_row("errors", Text(str(state.total_errors), style="yellow" if state.total_errors else "green"))
-    table.add_row("direct", Text(state.direct_status or "running", style="green" if state.runtime_status == "running" else "white"))
+    table.add_row("direct", Text(state.direct_status or state.runtime_status or "idle", style="green" if state.runtime_status == "running" else "white"))
     if state.started_at_monotonic:
-        table.add_row("uptime", Text(_elapsed(state.started_at_monotonic), style="cyan"))
+        uptime_text = _elapsed_hms(state.started_at_monotonic)
+        if state.current_wave_started_at:
+            uptime_text += f" ({_elapsed_hms(state.current_wave_started_at)})"
+        table.add_row("uptime", Text(uptime_text, style="cyan"))
     if state.trail_map.plans:
         table.add_row("trail", _build_trail_map_text(state.trail_map))
     return Panel(table, title="Runtime", border_style="blue")
@@ -54,7 +58,7 @@ def _build_planner_table(state: ConsoleRuntimeState) -> Panel:
     if planner.max_attempts:
         table.add_row("attempt", Text(f"{planner.attempt}/{planner.max_attempts}", style="white"))
     if planner.status == "running" and planner.started_at_monotonic:
-        table.add_row("elapsed", Text(_elapsed(planner.started_at_monotonic), style="cyan"))
+        table.add_row("elapsed", Text(_elapsed_hms(planner.started_at_monotonic), style="cyan"))
     elif planner.last_error:
         table.add_row("last", Text(_short(planner.last_error, 44), style="red"))
     else:
@@ -67,7 +71,7 @@ def _build_slices_table(state: ConsoleRuntimeState) -> Panel:
     for slot in sorted(state.slices):
         item = state.slices[slot]
         task_text = (item.title or item.slice_id or "-").replace("\n", " ").strip()
-        worker_label = (item.worker_id or "-")[:8]
+        worker_label = (item.worker_id or "-")[:12]
         budget = _budget_text(item.turns_used, item.turns_total, item.tool_calls_used, item.tool_calls_total)
         status = _slice_status_text(item.status, item.active_operation_ref, item.active_operation_status)
         table.add_row(
@@ -81,26 +85,6 @@ def _build_slices_table(state: ConsoleRuntimeState) -> Panel:
     if not state.slices:
         table.add_row("-", "-", "-", "-", Text("idle", style="dim"), "-")
     return Panel(table, title="Active Slices", border_style="green")
-
-
-def _build_sequence_progress_panel(state: ConsoleRuntimeState) -> Panel:
-    table = Table("batch", "status", "detail", expand=True, box=None, padding=(0, 1))
-    progress = state.sequence_progress
-    for item in progress.batch_statuses:
-        detail = f"{item.completed_slices}/{item.total_slices}" if item.total_slices else "-"
-        if item.status == "running" and item.current_slice_index:
-            detail = f"slice {item.current_slice_index}/{item.total_slices}"
-        table.add_row(
-            f"B{item.batch_index}",
-            _batch_status_text(item.status),
-            detail,
-        )
-        if item.batch_index == progress.current_batch_index:
-            for slice_status in item.slice_statuses:
-                table.add_row("", Text(slice_status, style="dim"), "")
-    if not progress.batch_statuses:
-        table.add_row("-", Text("idle", style="dim"), "-")
-    return Panel(table, title="Sequence Progress", border_style="cyan")
 
 
 def _build_footer(state: ConsoleRuntimeState) -> Text:
@@ -179,19 +163,15 @@ def _progress_label(state: ConsoleRuntimeState) -> str:
     return f"batch {progress.current_batch_index}/{total_batches} | slice {current_slice}/{total_slices}"
 
 
-def _batch_status_text(status: str) -> Text:
-    styles = {
-        "pending": "dim",
-        "running": "green",
-        "completed": "cyan",
-        "failed": "bold red",
-        "aborted": "yellow",
-    }
-    return Text(status or "pending", style=styles.get(status, "white"))
-
-
 def _elapsed(started_at_monotonic: float) -> str:
     return f"{max(0.0, time.monotonic() - started_at_monotonic):.1f}s"
+
+
+def _elapsed_hms(started_at_monotonic: float) -> str:
+    total = max(0, int(time.monotonic() - started_at_monotonic))
+    h, rem = divmod(total, 3600)
+    m, s = divmod(rem, 60)
+    return f"{h:02d}:{m:02d}:{s:02d}"
 
 
 def _short(text: str, limit: int) -> str:
@@ -206,6 +186,7 @@ def _short(text: str, limit: int) -> str:
 # ---------------------------------------------------------------------------
 
 _TRAIL_CHARS: dict[str, tuple[str, str]] = {
+    "running": ("R", "bold blue"),
     "completed": ("D", "green"),
     "failed": ("F", "bold red"),
     "aborted": ("A", "yellow"),
@@ -217,18 +198,24 @@ def _trail_slot_char(slot: TrailSliceSlot) -> tuple[str, str]:
     """Return (character, style) for one trail slot."""
     char_style = _TRAIL_CHARS.get(slot.status)
     if char_style:
-        return char_style
+        char, style = char_style
+        if slot.fallback_level > 0:
+            char = f"{char}{slot.fallback_level}"
+        return char, style
     return (".", "dim")
 
 
 def _build_trail_map_text(trail_map: TrailMap) -> Text:
-    """Render full trail map as pytest-style: v1|...|...|v2|D.F|...|
+    """Render full trail map as pytest-style: v1|R.R|DD1|...|
 
-    D (green)   = completed
-    F (red)     = failed
-    A (yellow)  = aborted
-    S (cyan)    = skipped
-    . (dim)     = pending
+    R  (green)   = running
+    D  (green)   = completed (primary)
+    D1 (green)   = completed via fallback_1
+    D2 (green)   = completed via fallback_2
+    F  (red)     = failed
+    A  (yellow)  = aborted
+    S  (cyan)    = skipped
+    .  (dim)     = pending
     """
     text = Text()
     stats: dict[str, int] = {}
@@ -250,10 +237,13 @@ def _build_trail_map_text(trail_map: TrailMap) -> Text:
     # Summary counters
     if total:
         passed = stats.get("completed", 0)
+        running = stats.get("running", 0)
         skipped = stats.get("skipped", 0)
         failed = stats.get("failed", 0)
         aborted = stats.get("aborted", 0)
         text.append(f"  {passed}/{total}", style="green")
+        if running:
+            text.append(f" {running}R", style="bold blue")
         if skipped:
             text.append(f" {skipped}S", style="cyan")
         if failed:

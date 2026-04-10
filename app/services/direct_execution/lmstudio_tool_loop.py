@@ -392,7 +392,7 @@ class LmStudioToolLoop:
                         }
                     )
                     if on_progress is not None:
-                        on_progress("tool_result", {"transcript_len": len(transcript), "tool_name": tool_name})
+                        on_progress("tool_result", {"transcript_len": len(transcript), "tool_name": tool_name, "tool_call_count": tool_call_count, "expensive_tool_call_count": expensive_count})
                     if not result_payload.get("error"):
                         update_handle_state(
                             tool_name=tool_name,
@@ -765,7 +765,7 @@ class LmStudioToolLoop:
         }
         if self.adapter.model:
             body["model"] = self.adapter.model
-        if self.adapter.reasoning_effort:
+        if self.adapter.reasoning_effort and self.adapter.reasoning_effort not in ("none", "off"):
             body["reasoning_effort"] = self.adapter.reasoning_effort
         if tools:
             body["tools"] = tools

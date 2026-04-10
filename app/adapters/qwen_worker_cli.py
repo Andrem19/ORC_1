@@ -48,7 +48,7 @@ class QwenWorkerCli(BaseAdapter):
 
     def __init__(
         self,
-        cli_path: str = "qwen-code",
+        cli_path: str = "qwen",
         extra_flags: list[str] | None = None,
         exclude_tools: list[str] | None = None,
         *,

@@ -336,7 +336,10 @@ def create_real_orchestrator(config: OrchestratorConfig) -> Orchestrator:
     logger.info("Direct execution provider: %s", config.direct_execution.provider)
 
     notification_service = NotificationService(
-        config.notifications, lmstudio_config=config.lmstudio,
+        config.notifications,
+        lmstudio_base_url=config.lmstudio.base_url,
+        lmstudio_model=config.lmstudio.model,
+        lmstudio_reasoning_effort=config.lmstudio.reasoning_effort,
     )
 
     console_controller = None

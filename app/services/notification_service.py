@@ -19,7 +19,7 @@ import time
 from dataclasses import dataclass
 from http.client import HTTPSConnection
 
-from app.config import LMStudioConfig, NotificationConfig
+from app.config import NotificationConfig
 from app.models import OrchestratorState, TaskResult
 from app.services.tg_html import truncate_html
 from app.services.tg_message_builder import (
@@ -116,7 +116,10 @@ class NotificationService:
     def __init__(
         self,
         config: NotificationConfig | None = None,
-        lmstudio_config: LMStudioConfig | None = None,
+        *,
+        lmstudio_base_url: str = "http://localhost:1234",
+        lmstudio_model: str = "",
+        lmstudio_reasoning_effort: str = "",
     ) -> None:
         self.config = config or NotificationConfig()
         self._bot_token: str = os.environ.get("ALGO_BOT", "")
@@ -127,18 +130,14 @@ class NotificationService:
             and bool(self._bot_token)
             and bool(self._chat_id)
         )
-        # Resolve LM Studio translation params from shared config
-        lm = lmstudio_config
         self._translator = TranslationService(
-            translate_to_russian=self.config.translate_to_russian,
-            model_dir=self.config.translation_model_dir,
-            model_name=self.config.translation_model_name,
-            backend=self.config.translation_backend,
-            lmstudio_base_url=lm.base_url if lm else "http://localhost:1234",
-            lmstudio_model=lm.model if lm else "",
-            lmstudio_max_tokens=lm.translation.max_tokens if lm else 1024,
-            lmstudio_timeout_seconds=lm.translation.timeout_seconds if lm else 30,
-            lmstudio_reasoning_effort=lm.reasoning_effort if lm else "",
+            translate=self.config.translate_to_russian,
+            provider=self.config.translation_provider,
+            fallback_1=self.config.translation_fallback_1,
+            fallback_2=self.config.translation_fallback_2,
+            lmstudio_base_url=lmstudio_base_url,
+            lmstudio_model=lmstudio_model,
+            lmstudio_reasoning_effort=lmstudio_reasoning_effort,
         )
         # Batch notification state
         self._batch_queue: list[_QueuedNotification] = []

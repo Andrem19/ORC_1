@@ -15,6 +15,7 @@ class SliceTrailEntry:
     execution_path: str = "direct"
     title: str = ""
     summary: str = ""
+    fallback_level: int = 0  # 0=primary, 1=fallback_1, 2=fallback_2
 
 
 @dataclass
@@ -24,6 +25,7 @@ class TrailSliceSlot:
     slice_id: str = ""
     status: str = "pending"  # pending | completed | failed | aborted | skipped
     execution_path: str = "direct"  # direct | model
+    fallback_level: int = 0  # 0=primary, 1=fallback_1, 2=fallback_2
 
 
 @dataclass
@@ -123,10 +125,11 @@ class DirectToolRuntimeView:
 class ConsoleRuntimeState:
     runtime_status: str = "idle"
     goal: str = ""
+    plan_source: str = ""
     active_plan_id: str = ""
     current_cycle: int = 0
     total_errors: int = 0
-    direct_status: str = "unknown"
+    direct_status: str = ""
     direct_summary: str = ""
     drain_mode: bool = False
     stop_reason: str = ""
@@ -135,6 +138,7 @@ class ConsoleRuntimeState:
     last_error: str = ""
     last_error_at: float = 0.0
     started_at_monotonic: float = 0.0
+    current_wave_started_at: float = 0.0
     planner: PlannerRuntimeView = field(default_factory=PlannerRuntimeView)
     sequence_progress: SequenceProgressView = field(default_factory=SequenceProgressView)
     slices: dict[int, SliceRuntimeView] = field(default_factory=dict)

@@ -125,6 +125,8 @@ class FallbackExecutor:
         required_output_facts: list[str],
         recent_turn_summaries: list[str],
         checkpoint_summary: str,
+        on_tool_progress: Any = None,
+        on_provider_switch: Any = None,
     ) -> tuple[DirectExecutionResult, list[FallbackAttempt]]:
         """Execute the slice on the primary provider, then fall back on failure."""
 
@@ -137,6 +139,7 @@ class FallbackExecutor:
             required_output_facts=required_output_facts,
             recent_turn_summaries=recent_turn_summaries,
             checkpoint_summary=checkpoint_summary,
+            on_tool_progress=on_tool_progress,
         )
 
         if self._is_success(primary_result) or not self.fallback_providers:
@@ -159,6 +162,12 @@ class FallbackExecutor:
                 idx, provider_name, slice_obj.slice_id,
             )
 
+            if on_provider_switch is not None:
+                try:
+                    on_provider_switch(provider_name)
+                except Exception:
+                    pass
+
             extra_section = self._build_fallback_prompt_section(
                 failed_provider=last_result.provider or "primary",
                 error=last_error,
@@ -178,6 +187,7 @@ class FallbackExecutor:
                     recent_turn_summaries=recent_turn_summaries,
                     checkpoint_summary=checkpoint_summary,
                     extra_prompt_section=extra_section,
+                    on_tool_progress=on_tool_progress,
                 )
             except Exception as exc:
                 logger.warning("Fallback executor exception for %r: %s", provider_name, exc)

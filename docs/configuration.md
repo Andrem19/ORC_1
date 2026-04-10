@@ -76,7 +76,7 @@ model = "qwen/qwen3.5-9b"
 
 Telegram notifications are optional observer behavior. They must not block startup.
 
-If `notifications.translation_backend = "lmstudio"`, the shared `[lmstudio]` connection and `[lmstudio.translation]` limits are used only for translation.
+Translation is configured under `[notifications]`: `translation_provider = "lmstudio"` (or `"qwen_cli"`, `"claude_cli"`, `"off"`), with optional `translation_fallback_1` and `translation_fallback_2` for chain fallback. LM Studio connection settings (base_url, model) come from the shared `[lmstudio]` section.
 
 ## Removed Legacy Fields
 

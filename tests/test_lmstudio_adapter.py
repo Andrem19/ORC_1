@@ -149,7 +149,7 @@ def test_invoke_sends_correct_payload():
     assert body["model"] == "qwen3-4b"
     assert body["temperature"] == 0.7
     assert body["max_tokens"] == 4096
-    assert body["reasoning_effort"] == "none"
+    assert "reasoning_effort" not in body  # "none" means: do not send the field
     assert len(body["messages"]) == 2
     assert body["messages"][0]["role"] == "system"
     assert body["messages"][0]["content"] == "Be helpful"

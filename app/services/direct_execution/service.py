@@ -140,7 +140,7 @@ class DirectExecutionService:
         self.orch.state.status = "running"
         self.state.status = "running"
         if self.console_controller is not None:
-            self.console_controller.on_runtime_started(goal=self.config.goal)
+            self.console_controller.on_runtime_started(goal=self.config.goal, plan_source=str(self.config.plan_source or ""))
         await self._save_state()
         try:
             while True:
@@ -263,13 +263,15 @@ class DirectExecutionService:
         worker_id = self.worker_ids[(slice_obj.parallel_slot - 1) % len(self.worker_ids)]
         slice_obj.assigned_worker_id = worker_id
         slice_obj.status = "running"
+        # Display the actual execution provider, not the legacy config worker_id
+        display_worker_id = str(getattr(self.config.direct_execution, "provider", "") or worker_id)
         if self.console_controller is not None:
             self.console_controller.on_slice_turn_started(
                 slot=slot_for_slice(slice_obj.parallel_slot),
                 plan_id=plan.plan_id,
                 slice_id=slice_obj.slice_id,
                 title=slice_obj.title,
-                worker_id=worker_id,
+                worker_id=display_worker_id,
                 turns_used=slice_obj.turn_count,
                 turns_total=slice_obj.max_turns,
                 tool_calls_used=slice_obj.tool_call_count,
@@ -281,6 +283,19 @@ class DirectExecutionService:
                 all_plans=self.state.plans,
             )
         self._persist_plan_snapshot(plan)
+        _slot = slot_for_slice(slice_obj.parallel_slot)
+        _max_tool_calls = slice_obj.max_tool_calls
+        _max_turns = slice_obj.max_turns
+
+        def _on_tool_progress(tool_call_count: int, expensive_call_count: int) -> None:
+            if self.console_controller is not None:
+                self.console_controller.update_budget(
+                    _slot,
+                    turns_used=slice_obj.turn_count + 1,
+                    tool_calls_used=tool_call_count,
+                    tool_calls_total=_max_tool_calls,
+                )
+
         execute_kwargs = dict(
             plan_id=plan.plan_id,
             slice_obj=slice_obj,
@@ -289,10 +304,21 @@ class DirectExecutionService:
             required_output_facts=required_output_facts_for_slice(plan, slice_obj),
             recent_turn_summaries=self._recent_turn_summaries(plan.plan_id, slice_obj.slice_id),
             checkpoint_summary=slice_obj.last_checkpoint_summary,
+            on_tool_progress=_on_tool_progress,
         )
         fallback_attempts_data: list[dict[str, Any]] = []
         if self.fallback_executor is not None:
-            result, fallback_attempts = await self.fallback_executor.execute_with_fallback(**execute_kwargs)
+            def _on_provider_switch(provider_name: str) -> None:
+                if self.console_controller is not None:
+                    self.console_controller.update_worker_id(
+                        _slot,
+                        worker_id=provider_name,
+                    )
+
+            result, fallback_attempts = await self.fallback_executor.execute_with_fallback(
+                **execute_kwargs,
+                on_provider_switch=_on_provider_switch,
+            )
             for attempt in fallback_attempts:
                 fallback_attempts_data.append({
                     "provider": attempt.provider,
@@ -314,6 +340,7 @@ class DirectExecutionService:
         action.facts.setdefault("direct.provider", result.provider)
         if result.fallback_provider_index > 0:
             action.facts.setdefault("direct.fallback_used", result.provider)
+        action.facts.setdefault("direct.fallback_provider_index", result.fallback_provider_index)
         turn = ExecutionTurn(
             turn_id=make_id("turn"),
             plan_id=plan.plan_id,
@@ -391,6 +418,7 @@ class DirectExecutionService:
                 reason_code="direct_slice_missing_prerequisite_facts",
             )
             return
+        fallback_level = int(action.facts.get("direct.fallback_provider_index", 0))
         slice_obj.status = "completed"
         slice_obj.final_report_turn_id = turn.turn_id
         slice_obj.last_summary = action.summary
@@ -400,13 +428,14 @@ class DirectExecutionService:
         slice_obj.artifacts.extend(item for item in action.artifacts if item not in slice_obj.artifacts)
         self.artifact_store.save_report(plan_id=plan.plan_id, slice_id=slice_obj.slice_id, turn_id=turn.turn_id, payload=asdict(action) | {"type": action.action_type})
         if self.console_controller is not None:
-            self.console_controller.on_slice_completed(slot=slot_for_slice(slice_obj.parallel_slot), summary=action.summary, via="direct")
+            self.console_controller.on_slice_completed(slot=slot_for_slice(slice_obj.parallel_slot), summary=action.summary, via="direct", fallback_level=fallback_level)
 
     def _apply_abort(self, plan: ExecutionPlan, slice_obj: PlanSlice, turn: ExecutionTurn) -> None:
         action = turn.action
         if action.reason_code in _SOFT_ABORT_REASON_CODES or action.retryable:
             self._checkpoint_blocked(plan, slice_obj, summary=action.summary, reason_code=action.reason_code or "direct_soft_blocker")
             return
+        fallback_level = int(action.facts.get("direct.fallback_provider_index", 0))
         slice_obj.status = "failed"
         slice_obj.last_error = action.reason_code or action.reason or "direct_abort"
         slice_obj.last_summary = action.summary
@@ -414,7 +443,7 @@ class DirectExecutionService:
         slice_obj.artifacts.extend(item for item in action.artifacts if item not in slice_obj.artifacts)
         self.artifact_store.save_report(plan_id=plan.plan_id, slice_id=slice_obj.slice_id, turn_id=turn.turn_id, payload=asdict(action) | {"type": action.action_type})
         if self.console_controller is not None:
-            self.console_controller.on_slice_failed(slot=slot_for_slice(slice_obj.parallel_slot), summary=action.summary)
+            self.console_controller.on_slice_failed(slot=slot_for_slice(slice_obj.parallel_slot), summary=action.summary, fallback_level=fallback_level)
 
     def _checkpoint_blocked(self, plan: ExecutionPlan, slice_obj: PlanSlice, *, summary: str, reason_code: str) -> None:
         slice_obj.status = "checkpointed"

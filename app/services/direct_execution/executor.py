@@ -67,6 +67,7 @@ class DirectSliceExecutor:
         recent_turn_summaries: list[str],
         checkpoint_summary: str,
         extra_prompt_section: str = "",
+        on_tool_progress: Any = None,
     ) -> DirectExecutionResult:
         allowed_tools = _allowed_tools(slice_obj.allowed_tools)
         attempt_id = f"direct_{slice_obj.slice_id}_{slice_obj.turn_count + 1}"
@@ -135,6 +136,14 @@ class DirectSliceExecutor:
                 progress["ts"] = time.monotonic()
                 progress["count"] = int(progress["count"]) + 1
                 progress["last_kind"] = kind
+                if kind == "tool_result" and on_tool_progress is not None:
+                    try:
+                        on_tool_progress(
+                            tool_call_count=payload.get("tool_call_count", 0),
+                            expensive_call_count=payload.get("expensive_tool_call_count", 0),
+                        )
+                    except Exception:
+                        pass
                 self.artifact_store.save_direct_attempt(
                     plan_id=plan_id,
                     slice_id=slice_obj.slice_id,

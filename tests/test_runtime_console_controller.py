@@ -100,6 +100,123 @@ def test_on_runtime_started_sets_started_at_monotonic() -> None:
     assert before <= controller.state.started_at_monotonic <= after
 
 
+def test_on_runtime_started_stores_plan_source() -> None:
+    controller = _make_controller()
+    controller.start()
+    try:
+        controller.on_runtime_started(goal="test", plan_source="compiled_raw")
+    finally:
+        controller.stop()
+
+    assert controller.state.plan_source == "compiled_raw"
+
+
+# ---------------------------------------------------------------------------
+# Wave uptime tracking
+# ---------------------------------------------------------------------------
+
+def test_wave_starts_on_first_slice_turn() -> None:
+    controller = _make_controller()
+    controller.start()
+    try:
+        controller.on_runtime_started(goal="test")
+        assert controller.state.current_wave_started_at == 0.0
+
+        before = time.monotonic()
+        controller.on_slice_turn_started(
+            slot=1, plan_id="p1", slice_id="s1", worker_id="qwen_cli",
+            turns_used=0, turns_total=4, tool_calls_used=0, tool_calls_total=2,
+        )
+        after = time.monotonic()
+        assert before <= controller.state.current_wave_started_at <= after
+    finally:
+        controller.stop()
+
+
+def test_wave_resets_when_all_slices_complete() -> None:
+    controller = _make_controller()
+    controller.start()
+    try:
+        controller.on_runtime_started(goal="test")
+        controller.on_slice_turn_started(
+            slot=1, plan_id="p1", slice_id="s1", worker_id="qwen_cli",
+            turns_used=0, turns_total=4, tool_calls_used=0, tool_calls_total=2,
+        )
+        assert controller.state.current_wave_started_at > 0.0
+
+        controller.on_slice_completed(slot=1, summary="done")
+        assert controller.state.current_wave_started_at == 0.0
+    finally:
+        controller.stop()
+
+
+def test_wave_stays_active_with_parallel_slices() -> None:
+    controller = _make_controller()
+    controller.start()
+    try:
+        controller.on_runtime_started(goal="test")
+        controller.on_slice_turn_started(
+            slot=1, plan_id="p1", slice_id="s1", worker_id="qwen_cli",
+            turns_used=0, turns_total=4, tool_calls_used=0, tool_calls_total=2,
+        )
+        controller.on_slice_turn_started(
+            slot=2, plan_id="p1", slice_id="s2", worker_id="qwen_cli",
+            turns_used=0, turns_total=4, tool_calls_used=0, tool_calls_total=2,
+        )
+        wave_start = controller.state.current_wave_started_at
+        assert wave_start > 0.0
+
+        # Complete only one slice — wave should still be active
+        controller.on_slice_completed(slot=1, summary="done")
+        assert controller.state.current_wave_started_at == wave_start
+
+        # Complete last slice — wave should reset
+        controller.on_slice_completed(slot=2, summary="done")
+        assert controller.state.current_wave_started_at == 0.0
+    finally:
+        controller.stop()
+
+
+def test_wave_resets_on_slice_failed() -> None:
+    controller = _make_controller()
+    controller.start()
+    try:
+        controller.on_runtime_started(goal="test")
+        controller.on_slice_turn_started(
+            slot=1, plan_id="p1", slice_id="s1", worker_id="qwen_cli",
+            turns_used=0, turns_total=4, tool_calls_used=0, tool_calls_total=2,
+        )
+        controller.on_slice_failed(slot=1, summary="error")
+        assert controller.state.current_wave_started_at == 0.0
+    finally:
+        controller.stop()
+
+
+def test_wave_starts_again_after_reset() -> None:
+    controller = _make_controller()
+    controller.start()
+    try:
+        controller.on_runtime_started(goal="test")
+        # First wave
+        controller.on_slice_turn_started(
+            slot=1, plan_id="p1", slice_id="s1", worker_id="qwen_cli",
+            turns_used=0, turns_total=4, tool_calls_used=0, tool_calls_total=2,
+        )
+        first_wave = controller.state.current_wave_started_at
+        controller.on_slice_completed(slot=1, summary="done")
+        assert controller.state.current_wave_started_at == 0.0
+
+        # Second wave — new timestamp
+        controller.on_slice_turn_started(
+            slot=1, plan_id="p1", slice_id="s2", worker_id="qwen_cli",
+            turns_used=0, turns_total=4, tool_calls_used=0, tool_calls_total=2,
+        )
+        second_wave = controller.state.current_wave_started_at
+        assert second_wave >= first_wave
+    finally:
+        controller.stop()
+
+
 # ---------------------------------------------------------------------------
 # Trail map building from plans
 # ---------------------------------------------------------------------------
@@ -274,3 +391,151 @@ def test_trail_map_mixed_sequence() -> None:
     assert batch.slices[0].status == "completed"
     assert batch.slices[1].status == "failed"
     assert batch.slices[2].status == "skipped"
+
+
+# ---------------------------------------------------------------------------
+# Fallback level propagation through trail
+# ---------------------------------------------------------------------------
+
+def test_trail_map_completed_with_fallback_level() -> None:
+    plan = _make_plan("p1", seq_id="seq_1", batch_index=1, slice_count=2)
+    controller = _make_controller()
+    controller.start()
+    try:
+        controller.on_plan_created(plan_id="p1", plan=plan, all_plans=[plan])
+        controller.on_slice_turn_started(
+            slot=1, plan_id="p1", slice_id="slice_0", worker_id="w1",
+            turns_used=0, turns_total=4, tool_calls_used=0, tool_calls_total=2,
+        )
+        controller.on_slice_completed(slot=1, summary="done via fallback", fallback_level=1)
+    finally:
+        controller.stop()
+
+    slot = controller.state.trail_map.plans[0].batches[0].slices[0]
+    assert slot.status == "completed"
+    assert slot.fallback_level == 1
+
+
+def test_trail_map_failed_with_fallback_level() -> None:
+    plan = _make_plan("p1", seq_id="seq_1", batch_index=1, slice_count=2)
+    controller = _make_controller()
+    controller.start()
+    try:
+        controller.on_plan_created(plan_id="p1", plan=plan, all_plans=[plan])
+        controller.on_slice_turn_started(
+            slot=1, plan_id="p1", slice_id="slice_0", worker_id="w1",
+            turns_used=0, turns_total=4, tool_calls_used=0, tool_calls_total=2,
+        )
+        controller.on_slice_failed(slot=1, summary="all fallbacks failed", fallback_level=2)
+    finally:
+        controller.stop()
+
+    slot = controller.state.trail_map.plans[0].batches[0].slices[0]
+    assert slot.status == "failed"
+    assert slot.fallback_level == 2
+
+
+def test_trail_map_aborted_with_fallback_level() -> None:
+    plan = _make_plan("p1", seq_id="seq_1", batch_index=1, slice_count=2)
+    controller = _make_controller()
+    controller.start()
+    try:
+        controller.on_plan_created(plan_id="p1", plan=plan, all_plans=[plan])
+        controller.on_slice_turn_started(
+            slot=1, plan_id="p1", slice_id="slice_0", worker_id="w1",
+            turns_used=0, turns_total=4, tool_calls_used=0, tool_calls_total=2,
+        )
+        controller.on_slice_aborted(slot=1, summary="aborted after fallback", fallback_level=1)
+    finally:
+        controller.stop()
+
+    slot = controller.state.trail_map.plans[0].batches[0].slices[0]
+    assert slot.status == "aborted"
+    assert slot.fallback_level == 1
+
+
+def test_trail_map_preserves_fallback_level_on_rebuild() -> None:
+    """Fallback level must survive a trail map rebuild."""
+    plan1 = _make_plan("p1", seq_id="seq_1", batch_index=1, slice_count=2)
+    plan2 = _make_plan("p2", seq_id="seq_1", batch_index=2, slice_count=2)
+    controller = _make_controller()
+    controller.start()
+    try:
+        controller.on_plan_created(plan_id="p1", plan=plan1, all_plans=[plan1])
+        controller.on_slice_turn_started(
+            slot=1, plan_id="p1", slice_id="slice_0", worker_id="w1",
+            turns_used=0, turns_total=4, tool_calls_used=0, tool_calls_total=2,
+        )
+        controller.on_slice_completed(slot=1, summary="done via fb2", fallback_level=2)
+
+        # Rebuild map — fallback_level must survive
+        controller.on_plan_created(plan_id="p2", plan=plan2, all_plans=[plan1, plan2])
+    finally:
+        controller.stop()
+
+    slot = controller.state.trail_map.plans[0].batches[0].slices[0]
+    assert slot.status == "completed"
+    assert slot.fallback_level == 2
+
+
+def test_trail_map_running_on_slice_turn_started() -> None:
+    """Trail slot should show 'running' when on_slice_turn_started fires."""
+    plan = _make_plan("p1", seq_id="seq_1", batch_index=1, slice_count=3)
+    controller = _make_controller()
+    controller.start()
+    try:
+        controller.on_plan_created(plan_id="p1", plan=plan, all_plans=[plan])
+        controller.on_slice_turn_started(
+            slot=1, plan_id="p1", slice_id="slice_0", worker_id="w1",
+            turns_used=0, turns_total=4, tool_calls_used=0, tool_calls_total=2,
+        )
+    finally:
+        controller.stop()
+
+    slot = controller.state.trail_map.plans[0].batches[0].slices[0]
+    assert slot.status == "running"
+    # Other slices still pending
+    assert controller.state.trail_map.plans[0].batches[0].slices[1].status == "pending"
+
+
+def test_trail_map_running_then_completed() -> None:
+    """Trail slot: pending -> running -> completed transition."""
+    plan = _make_plan("p1", seq_id="seq_1", batch_index=1, slice_count=2)
+    controller = _make_controller()
+    controller.start()
+    try:
+        controller.on_plan_created(plan_id="p1", plan=plan, all_plans=[plan])
+        controller.on_slice_turn_started(
+            slot=1, plan_id="p1", slice_id="slice_0", worker_id="w1",
+            turns_used=0, turns_total=4, tool_calls_used=0, tool_calls_total=2,
+        )
+        assert controller.state.trail_map.plans[0].batches[0].slices[0].status == "running"
+
+        controller.on_slice_completed(slot=1, summary="done", fallback_level=1)
+    finally:
+        controller.stop()
+
+    slot = controller.state.trail_map.plans[0].batches[0].slices[0]
+    assert slot.status == "completed"
+    assert slot.fallback_level == 1
+
+
+def test_trail_map_running_preserved_on_rebuild() -> None:
+    """Running status must survive a trail map rebuild."""
+    plan1 = _make_plan("p1", seq_id="seq_1", batch_index=1, slice_count=2)
+    plan2 = _make_plan("p2", seq_id="seq_1", batch_index=2, slice_count=2)
+    controller = _make_controller()
+    controller.start()
+    try:
+        controller.on_plan_created(plan_id="p1", plan=plan1, all_plans=[plan1])
+        controller.on_slice_turn_started(
+            slot=1, plan_id="p1", slice_id="slice_0", worker_id="w1",
+            turns_used=0, turns_total=4, tool_calls_used=0, tool_calls_total=2,
+        )
+        # Rebuild — running status must survive
+        controller.on_plan_created(plan_id="p2", plan=plan2, all_plans=[plan1, plan2])
+    finally:
+        controller.stop()
+
+    slot = controller.state.trail_map.plans[0].batches[0].slices[0]
+    assert slot.status == "running"

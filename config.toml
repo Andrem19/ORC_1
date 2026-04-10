@@ -172,20 +172,13 @@ execution_timeframe = "5m"
 enabled = true
 min_interval_seconds = 30
 translate_to_russian = true
-# Translation backend: "opus" (Helsinki-NLP MarianMT) or "lmstudio" (LM Studio API)
-translation_backend = "lmstudio"
-translation_model_name = "Helsinki-NLP/opus-mt-en-ru"
-translation_model_dir = "models/opus-mt-en-ru"
-# Translation LM Studio settings are in [lmstudio.translation] below
-# (base_url and model are inherited from [lmstudio] shared section)
+# Translation provider: "lmstudio" | "qwen_cli" | "claude_cli" | "off"
+translation_provider = "lmstudio"
+translation_fallback_1 = "qwen_cli"     # "" to disable
+translation_fallback_2 = "claude_cli"   # "" to disable
 
 # LM Studio — shared connection for worker API and optional translation
 [lmstudio]
 base_url = "http://localhost:1234"
-model = "qwen/qwen3.5-9b"  # must match model id from /v1/models; empty = use currently loaded
+model = "openai/gpt-oss-20b"  # must match model id from /v1/models; empty = use currently loaded
 reasoning_effort = "none"   # "none" disables thinking mode for fast responses; "low"/"medium"/"high" enables it
-
-# Translation — EN→RU when translation_backend = "lmstudio"
-[lmstudio.translation]
-max_tokens = 1024
-timeout_seconds = 30

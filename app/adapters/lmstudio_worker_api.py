@@ -86,7 +86,7 @@ class LmStudioWorkerApi(BaseAdapter):
         }
         if self.model:
             body["model"] = self.model
-        if self.reasoning_effort:
+        if self.reasoning_effort and self.reasoning_effort not in ("none", "off"):
             body["reasoning_effort"] = self.reasoning_effort
         body.update(self.extra_body)
 

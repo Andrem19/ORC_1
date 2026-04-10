@@ -74,6 +74,7 @@ def compile_semantic_raw_plan(
     semantic_plan: SemanticRawPlan,
     *,
     semantic_method: str,
+    plan_source_kind: str = "compiled_raw",
 ) -> CompiledPlanSequence:
     sequence_id = f"compiled_{Path(document.source_file).stem}"
     plans: list[ExecutionPlan] = []
@@ -95,7 +96,7 @@ def compile_semantic_raw_plan(
                 baseline_ref=semantic_plan.baseline_ref,
                 global_constraints=list(semantic_plan.global_constraints),
                 slices=slices,
-                plan_source_kind="compiled_raw",
+                plan_source_kind=plan_source_kind,
                 source_sequence_id=sequence_id,
                 source_raw_plan=document.source_file,
                 sequence_batch_index=len(plans) + 1,

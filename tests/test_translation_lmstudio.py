@@ -1,15 +1,14 @@
-"""Tests for LM Studio translation backend."""
+"""Tests for LM Studio translation backend and CliTranslator."""
 
 from __future__ import annotations
 
 import json
-import os
 from unittest.mock import MagicMock, patch
 
 import pytest
 
 from app.config import NotificationConfig, load_config_from_dict
-from app.services.translation_service import LMStudioTranslator, TranslationService
+from app.services.translation_service import CliTranslator, LMStudioTranslator, TranslationService
 
 
 # ---------------------------------------------------------------------------
@@ -17,45 +16,29 @@ from app.services.translation_service import LMStudioTranslator, TranslationServ
 # ---------------------------------------------------------------------------
 
 
-class TestLMStudioConfig:
-    def test_backend_defaults_to_opus(self):
+class TestTranslationProviderConfig:
+    def test_provider_defaults_to_lmstudio(self):
         cfg = NotificationConfig()
-        assert cfg.translation_backend == "opus"
+        assert cfg.translation_provider == "lmstudio"
 
-    def test_lmstudio_translation_via_shared_config(self):
-        """LM Studio translation params come from [lmstudio.translation] sub-config."""
+    def test_lmstudio_provider_from_dict(self):
         data = {
             "notifications": {
                 "enabled": True,
                 "translate_to_russian": True,
-                "translation_backend": "lmstudio",
+                "translation_provider": "lmstudio",
+                "translation_fallback_1": "qwen_cli",
             },
             "lmstudio": {
                 "base_url": "http://192.168.1.100:1234",
                 "model": "qwen/qwen3.5-9b",
-                "translation": {
-                    "max_tokens": 2048,
-                    "timeout_seconds": 60,
-                },
             },
         }
         cfg = load_config_from_dict(data)
-        assert cfg.notifications.translation_backend == "lmstudio"
+        assert cfg.notifications.translation_provider == "lmstudio"
+        assert cfg.notifications.translation_fallback_1 == "qwen_cli"
         assert cfg.lmstudio.base_url == "http://192.168.1.100:1234"
         assert cfg.lmstudio.model == "qwen/qwen3.5-9b"
-        assert cfg.lmstudio.translation.max_tokens == 2048
-        assert cfg.lmstudio.translation.timeout_seconds == 60
-
-    def test_from_dict_opus_backend(self):
-        data = {
-            "notifications": {
-                "enabled": True,
-                "translate_to_russian": True,
-                "translation_backend": "opus",
-            }
-        }
-        cfg = load_config_from_dict(data)
-        assert cfg.notifications.translation_backend == "opus"
 
 
 # ---------------------------------------------------------------------------
@@ -91,8 +74,6 @@ class TestLMStudioTranslator:
         mock_resp.read.return_value = json.dumps({
             "choices": [{"message": {"content": "Привет, мир!"}}],
         }).encode()
-        mock_resp.__enter__ = MagicMock(return_value=mock_resp)
-        mock_resp.__exit__ = MagicMock(return_value=False)
 
         with patch(
             "app.services.translation_service.HTTPConnection"
@@ -119,7 +100,6 @@ class TestLMStudioTranslator:
             mock_conn.getresponse.return_value = mock_resp
             t.translate("Test")
 
-        # Verify model was included in request body
         call_args = mock_conn.request.call_args
         body = json.loads(call_args[0][2])
         assert body["model"] == "qwen3.5-9b"
@@ -234,40 +214,85 @@ class TestLMStudioCheckAvailable:
 
 
 # ---------------------------------------------------------------------------
-# Tests: TranslationService with LMStudio backend
+# Tests: CliTranslator
 # ---------------------------------------------------------------------------
 
 
-class TestTranslationServiceLMStudio:
+class TestCliTranslator:
+    def test_check_available_with_mock(self):
+        with patch("shutil.which", return_value="/usr/bin/qwen"):
+            t = CliTranslator(cli_path="qwen")
+            assert t.check_available() is True
+
+    def test_check_available_missing(self):
+        with patch("shutil.which", return_value=None):
+            t = CliTranslator(cli_path="nonexistent-cli-xyz")
+            # Force re-resolve by not caching
+            t._resolved = None
+            assert t.check_available() is False
+
+    def test_translate_empty_returns_same(self):
+        t = CliTranslator(cli_path="qwen")
+        assert t.translate("") == ""
+        assert t.translate("   ") == "   "
+
+    def test_translate_subprocess_success(self):
+        t = CliTranslator(cli_path="qwen", timeout=10)
+        t._resolved = "/usr/bin/qwen"
+        with patch("subprocess.run") as mock_run:
+            mock_run.return_value = MagicMock(stdout="Привет мир", returncode=0)
+            result = t.translate("Hello world")
+        assert result == "Привет мир"
+
+    def test_translate_subprocess_timeout_returns_original(self):
+        import subprocess
+        t = CliTranslator(cli_path="qwen", timeout=1)
+        t._resolved = "/usr/bin/qwen"
+        with patch("subprocess.run", side_effect=subprocess.TimeoutExpired("qwen", 1)):
+            result = t.translate("Hello world")
+        assert result == "Hello world"
+
+    def test_translate_no_resolved_returns_original(self):
+        t = CliTranslator(cli_path="nonexistent-cli-xyz")
+        t._resolved = None
+        with patch("shutil.which", return_value=None):
+            result = t.translate("Hello world")
+        assert result == "Hello world"
+
+
+# ---------------------------------------------------------------------------
+# Tests: TranslationService with providers
+# ---------------------------------------------------------------------------
+
+
+class TestTranslationServiceProviders:
     def test_creates_lmstudio_translator(self):
         svc = TranslationService(
-            translate_to_russian=True,
-            backend="lmstudio",
+            translate=True,
+            provider="lmstudio",
             lmstudio_base_url="http://localhost:9999",
             lmstudio_model="qwen3.5-9b",
         )
-        assert svc._lmstudio_translator is not None
-        assert svc._lmstudio_translator._base_url == "http://localhost:9999"
-        assert svc._lmstudio_translator._model == "qwen3.5-9b"
+        assert "lmstudio" in svc._translators
 
-    def test_no_lmstudio_when_disabled(self):
+    def test_creates_cli_translators_for_fallbacks(self):
         svc = TranslationService(
-            translate_to_russian=False,
-            backend="lmstudio",
+            translate=True,
+            provider="lmstudio",
+            fallback_1="qwen_cli",
+            fallback_2="claude_cli",
         )
-        assert svc._lmstudio_translator is None
+        assert "qwen_cli" in svc._translators
+        assert "claude_cli" in svc._translators
 
-    def test_no_lmstudio_for_opus_backend(self):
-        svc = TranslationService(
-            translate_to_russian=True,
-            backend="opus",
-        )
-        assert svc._lmstudio_translator is None
+    def test_no_translators_when_disabled(self):
+        svc = TranslationService(translate=False)
+        assert len(svc._translators) == 0
 
     def test_load_model_lmstudio_checks_availability(self):
         svc = TranslationService(
-            translate_to_russian=True,
-            backend="lmstudio",
+            translate=True,
+            provider="lmstudio",
         )
         mock_resp = MagicMock()
         mock_resp.status = 200
@@ -283,36 +308,23 @@ class TestTranslationServiceLMStudio:
         assert svc._model_loaded is True
         assert svc.is_ready is True
 
-    def test_load_model_lmstudio_never_calls_opus_loader(self):
-        svc = TranslationService(
-            translate_to_russian=True,
-            backend="lmstudio",
-        )
-
-        with patch.object(svc, "_load_lmstudio") as mock_load_lmstudio:
-            with patch.object(svc, "_load_opus") as mock_load_opus:
-                svc.load_model()
-
-        mock_load_lmstudio.assert_called_once_with()
-        mock_load_opus.assert_not_called()
-
     def test_load_model_lmstudio_unavailable_raises(self):
         svc = TranslationService(
-            translate_to_russian=True,
-            backend="lmstudio",
+            translate=True,
+            provider="lmstudio",
         )
 
         with patch(
             "app.lmstudio_api.HTTPConnection"
         ) as mock_conn_cls:
             mock_conn_cls.return_value.request.side_effect = ConnectionError()
-            with pytest.raises(RuntimeError, match="not reachable"):
+            with pytest.raises(RuntimeError, match="not available"):
                 svc.load_model()
 
     def test_translate_uses_lmstudio(self):
         svc = TranslationService(
-            translate_to_russian=True,
-            backend="lmstudio",
+            translate=True,
+            provider="lmstudio",
         )
         svc._model_loaded = True
 
@@ -331,14 +343,13 @@ class TestTranslationServiceLMStudio:
 
         assert result == "Оркестратор запущен"
 
-    def test_translate_lmstudio_preserves_tech_terms(self):
+    def test_translate_preserves_tech_terms(self):
         svc = TranslationService(
-            translate_to_russian=True,
-            backend="lmstudio",
+            translate=True,
+            provider="lmstudio",
         )
         svc._model_loaded = True
 
-        # Simulate LM Studio returning text with preserved placeholders
         mock_resp = MagicMock()
         mock_resp.status = 200
         mock_resp.read.return_value = json.dumps({
@@ -355,10 +366,10 @@ class TestTranslationServiceLMStudio:
         assert "qwen-1" in result
         assert "BTCUSDT" in result
 
-    def test_translate_lmstudio_fallback_on_error(self):
+    def test_translate_fallback_on_error(self):
         svc = TranslationService(
-            translate_to_russian=True,
-            backend="lmstudio",
+            translate=True,
+            provider="lmstudio",
         )
         svc._model_loaded = True
 
@@ -370,51 +381,11 @@ class TestTranslationServiceLMStudio:
 
         assert result == "Hello world"
 
-    def test_is_ready_lmstudio(self):
+    def test_is_ready_after_load(self):
         svc = TranslationService(
-            translate_to_russian=True,
-            backend="lmstudio",
+            translate=True,
+            provider="lmstudio",
         )
         assert svc.is_ready is False
         svc._model_loaded = True
         assert svc.is_ready is True
-
-
-# ---------------------------------------------------------------------------
-# Tests: NotificationService integration with LMStudio config
-# ---------------------------------------------------------------------------
-
-
-class TestNotificationLMStudioIntegration:
-    def test_notification_service_passes_lmstudio_config(self):
-        from app.services.notification_service import NotificationService
-        from app.config import LMStudioConfig, LMStudioTranslationConfig
-
-        with patch.dict(os.environ, {"ALGO_BOT": "tok", "CHAT_ID": "1"}):
-            cfg = NotificationConfig(
-                enabled=True,
-                translate_to_russian=True,
-                translation_backend="lmstudio",
-            )
-            lm_cfg = LMStudioConfig(
-                base_url="http://localhost:9999",
-                model="qwen/qwen3.5-9b",
-            )
-            svc = NotificationService(cfg, lmstudio_config=lm_cfg)
-            assert svc._translator._backend == "lmstudio"
-            assert svc._translator._lmstudio_translator is not None
-            assert svc._translator._lmstudio_translator._base_url == "http://localhost:9999"
-            assert svc._translator._lmstudio_translator._model == "qwen/qwen3.5-9b"
-
-    def test_notification_service_opus_config(self):
-        from app.services.notification_service import NotificationService
-
-        with patch.dict(os.environ, {"ALGO_BOT": "tok", "CHAT_ID": "1"}):
-            cfg = NotificationConfig(
-                enabled=True,
-                translate_to_russian=True,
-                translation_backend="opus",
-            )
-            svc = NotificationService(cfg)
-            assert svc._translator._backend == "opus"
-            assert svc._translator._lmstudio_translator is None

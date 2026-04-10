@@ -1,5 +1,10 @@
 """
 Structured planner service for direct execution.
+
+Produces a SemanticRawPlan via LLM, then feeds it through the same
+deterministic compiler (compile_semantic_raw_plan) used by the converter
+pipeline — guaranteeing identical tool expansion, budget assignment,
+batching, and reconciliation.
 """
 
 from __future__ import annotations
@@ -10,9 +15,9 @@ from typing import Any
 from app.adapters.base import BaseAdapter
 from app.execution_artifacts import ExecutionArtifactStore
 from app.execution_models import ExecutionPlan
-from app.execution_parsing import StructuredOutputError, parse_execution_plan_output
-from app.plan_prompts import build_direct_plan_creation_prompt
-from app.services.direct_execution.budgeting import normalize_plan_budgets
+from app.planner_semantic_parsing import parse_planner_semantic_output
+from app.planner_semantic_prompts import build_planner_semantic_prompt
+from app.raw_plan_compiler import compile_semantic_raw_plan
 from app.services.direct_execution.invocation import AdapterInvocationCancelled, AdapterInvocationError, invoke_adapter_with_retries
 
 
@@ -45,6 +50,7 @@ class PlannerDecisionService:
         self.operator_directives = operator_directives
         self.observer = observer
         self.invoker = invoker
+        self._pending_plans: list[ExecutionPlan] = []
 
     async def create_plan(
         self,
@@ -57,7 +63,13 @@ class PlannerDecisionService:
         previous_state_summary: str,
         previous_blockers: list[str] | None = None,
     ) -> ExecutionPlan:
-        prompt = build_direct_plan_creation_prompt(
+        # Return a queued plan from a previous multi-batch compilation.
+        if self._pending_plans:
+            plan = self._pending_plans.pop(0)
+            self.artifact_store.save_plan(plan)
+            return plan
+
+        prompt = build_planner_semantic_prompt(
             goal=goal,
             operator_directives=self.operator_directives,
             baseline_bootstrap=baseline_bootstrap,
@@ -86,20 +98,25 @@ class PlannerDecisionService:
         if not response.success:
             raise PlannerDecisionError(response.error or "planner_invoke_failed")
         try:
-            plan = parse_execution_plan_output(response.raw_output)
-        except StructuredOutputError as exc:
+            document, semantic_plan = parse_planner_semantic_output(
+                response.raw_output,
+                goal=goal,
+                baseline_bootstrap=baseline_bootstrap,
+            )
+        except Exception as exc:
             raise PlannerDecisionError(str(exc)) from exc
-        plan = normalize_plan_budgets(plan)
-        unknown_tools = sorted(
-            {
-                tool_name
-                for slice_obj in plan.slices
-                for tool_name in slice_obj.allowed_tools
-                if tool_name not in set(available_tools)
-            }
+        sequence = compile_semantic_raw_plan(
+            document,
+            semantic_plan,
+            semantic_method="planner_llm",
+            plan_source_kind="planner",
         )
-        if unknown_tools:
-            raise PlannerDecisionError(f"planner_used_unknown_tools:{','.join(unknown_tools)}")
+        if not sequence.plans:
+            raise PlannerDecisionError("planner_compilation_produced_no_plans")
+        # Queue all plans beyond the first for subsequent calls.
+        for plan in sequence.plans[1:]:
+            self._pending_plans.append(plan)
+        plan = sequence.plans[0]
         self.artifact_store.save_plan(plan)
         return plan
 

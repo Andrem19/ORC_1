@@ -60,9 +60,9 @@ class NotificationConfig:
     enabled: bool = False
     min_interval_seconds: int = 30  # rate limit between messages
     translate_to_russian: bool = False
-    translation_backend: str = "opus"  # "opus" (Helsinki-NLP) or "lmstudio"
-    translation_model_dir: str = "models/opus-mt-en-ru"
-    translation_model_name: str = "Helsinki-NLP/opus-mt-en-ru"
+    translation_provider: str = "lmstudio"  # "lmstudio" | "qwen_cli" | "claude_cli" | "off"
+    translation_fallback_1: str = ""  # "qwen_cli" | "claude_cli" | "lmstudio" | ""
+    translation_fallback_2: str = ""  # "qwen_cli" | "claude_cli" | "lmstudio" | ""
     batch_enabled: bool = True  # batch worker-result notifications
     batch_debounce_seconds: float = 5.0  # wait before sending batch
 
@@ -88,27 +88,19 @@ class AdapterConfig:
 
 
 @dataclass
-class LMStudioTranslationConfig:
-    """LM Studio settings for EN→RU translation (per-feature overrides)."""
-    max_tokens: int = 2048
-    timeout_seconds: int = 60
-
-
-@dataclass
 class LMStudioConfig:
-    """LM Studio shared connection + translation settings."""
+    """LM Studio shared connection settings."""
     base_url: str = "http://localhost:1234"
     model: str = ""  # empty = use currently loaded model
     reasoning_effort: str = "none"  # "none" = no thinking, "low"/"medium"/"high" = thinking
-    translation: LMStudioTranslationConfig = field(default_factory=LMStudioTranslationConfig)
 
 
 @dataclass
 class DirectExecutionConfig:
     """Direct model execution settings."""
-    provider: str = "lmstudio"  # lmstudio | qwen_cli
-    fallback_1: str = ""  # "qwen_cli" | "claude_cli" | ""
-    fallback_2: str = ""  # "qwen_cli" | "claude_cli" | ""
+    provider: str = "lmstudio"  # lmstudio | qwen_cli | claude_cli
+    fallback_1: str = ""  # "qwen_cli" | "claude_cli" | "lmstudio" | "off" | ""
+    fallback_2: str = ""  # "qwen_cli" | "claude_cli" | "lmstudio" | "off" | ""
     timeout_seconds: int = 1200
     max_attempts_per_slice: int = 2
     max_tool_calls_per_slice: int = 24
@@ -168,7 +160,7 @@ class OrchestratorConfig:
     ))
     worker_adapter: AdapterConfig = field(default_factory=lambda: AdapterConfig(
         name="qwen_worker_cli",
-        cli_path="qwen-code",
+        cli_path="qwen",
     ))
     # --- State ---
     state_dir: str = "state"
@@ -283,15 +275,13 @@ def load_config_from_dict(data: dict[str, Any]) -> OrchestratorConfig:
     if "direct_execution" in data:
         cfg.direct_execution = DirectExecutionConfig(**_filter_dataclass_kwargs(DirectExecutionConfig, data["direct_execution"]))
 
-    # LM Studio: parse nested structure for shared connection + translation
+    # LM Studio: parse shared connection config
     if "lmstudio" in data:
-        lm_data = dict(data["lmstudio"])  # shallow copy
-        translation_data = lm_data.pop("translation", {})
+        lm_data = dict(data["lmstudio"])
 
         cfg.lmstudio = LMStudioConfig(
             **{k: v for k, v in lm_data.items()
                if k in ("base_url", "model", "reasoning_effort")},
-            translation=LMStudioTranslationConfig(**translation_data),
         )
 
     if cfg.startup_mode not in ("resume", "reset", "reset_all"):
