@@ -36,7 +36,7 @@ def _serialize_state(state: OrchestratorState) -> dict[str, Any]:
 
 
 def _deserialize_state(data: dict[str, Any]) -> OrchestratorState:
-    """Reconstruct the compact broker-only presentation state from a dict."""
+    """Reconstruct the compact direct presentation state from a dict."""
     from app.models import StopReason, TaskResult
     from app.plan_models import PlanReport
 

@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import json
 from textwrap import dedent
+from typing import Any
 
 from app.raw_plan_models import RawPlanDocument
 
@@ -41,7 +42,7 @@ SEMANTIC_RAW_PLAN_SCHEMA = """{
 }"""
 
 
-def build_raw_plan_semantic_prompt(document: RawPlanDocument) -> str:
+def build_raw_plan_semantic_prompt(document: RawPlanDocument, *, mcp_tool_catalog: list[dict[str, Any]] | None = None) -> str:
     stage_context = [
         {
             "stage_id": stage.stage_id,
@@ -67,6 +68,29 @@ def build_raw_plan_semantic_prompt(document: RawPlanDocument) -> str:
         "candidate_stages": stage_context,
         "full_text": document.normalized_text if not document.candidate_stages else "",
     }
+    catalog_section = ""
+    if mcp_tool_catalog:
+        catalog_entries = []
+        for tool in mcp_tool_catalog:
+            name = str(tool.get("name", "") or "").strip()
+            if not name:
+                continue
+            desc = str(tool.get("description", "") or tool.get("title", "") or "").strip()[:200]
+            catalog_entries.append({"name": name, "description": desc})
+        if catalog_entries:
+            catalog_section = dedent(
+                f"""
+
+                Available MCP tools (use EXACT names from this list for tool_hints):
+                ```json
+                {json.dumps(catalog_entries, ensure_ascii=False, indent=2)}
+                ```
+
+                IMPORTANT: When setting tool_hints for each stage, use ONLY names from the "Available MCP tools" list above.
+                Do NOT invent tool names, do NOT use action suffixes like _start, _run, _validate, _inspect.
+                Use the base tool name exactly as listed (e.g. "backtests_runs", not "backtests_run_start").
+                """
+            ).strip()
     return dedent(
         f"""
         You are converting a human-written research markdown plan into a strict semantic execution draft.
@@ -77,12 +101,13 @@ def build_raw_plan_semantic_prompt(document: RawPlanDocument) -> str:
 
         Rules:
         1. Preserve original stage order.
-        2. Do not invent arbitrary MCP tool names. `tool_hints` must be either exact public tool names already implied by the source text or broad semantic families like `research_memory`, `data_readiness`, `feature_contract`, `modeling`, `backtesting`, `analysis`, `events`, `experiments`, `finalization`.
-        3. Every stage must have a non-empty `objective`.
-        4. `depends_on` must reference only earlier stages.
-        5. Mark optional or gated branches with `required=false` and fill `gate_hint`.
-        6. If parser confidence is low, infer stages from the full text.
-        7. Keep `global_constraints` concise and focused on immutable rules.
+        2. Every stage must have a non-empty `objective`.
+        3. `depends_on` must reference only earlier stages.
+        4. Mark optional or gated branches with `required=false` and fill `gate_hint`.
+        5. If parser confidence is low, infer stages from the full text.
+        6. Keep `global_constraints` concise and focused on immutable rules.
+        7. `tool_hints` must use EXACT tool names from the Available MCP tools list below. If no MCP catalog is provided, use broad semantic families: `research_memory`, `data_readiness`, `feature_contract`, `modeling`, `backtesting`, `analysis`, `events`, `experiments`, `finalization`.
+        {catalog_section}
 
         Required output schema:
         ```json

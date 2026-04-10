@@ -15,14 +15,14 @@ _SUPPRESSED_EVENTS: set[OrchestratorEvent] = {
 
 _SUPPRESSED_LOGGER_PREFIXES: tuple[str, ...] = (
     "orchestrator.state",
-    "orchestrator.broker.transport",
+    "orchestrator.direct.mcp",
 )
 
 
 def should_suppress_console_record(record: logging.LogRecord) -> bool:
     event_kind = str(getattr(record, "event_kind", "") or "")
     if event_kind in {
-        "broker_tool_call",
+        "direct_tool_call",
         "adapter_invoke_started",
         "adapter_invoke_finished",
         "adapter_invoke_retry",

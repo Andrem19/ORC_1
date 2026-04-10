@@ -1,713 +1,658 @@
 {
   "tool_name": "all",
   "query": {
-    "start_at": "2026-04-02T12:41:16.298896+00:00",
-    "end_at": "2026-04-09T12:41:16.298896+00:00",
+    "start_at": "2026-04-02T20:06:18.825090+00:00",
+    "end_at": "2026-04-09T20:06:18.825090+00:00",
     "domain": null,
     "tool_search": null
   },
-  "total_rows": 14,
+  "total_rows": 12,
   "failed_reasons": [
     {
-      "event_at": "2026-04-09T12:38:36.031853+00:00",
-      "tool_name": "research_map",
-      "domain": "research_memory",
-      "error_code": "invalid_input",
-      "error_field": null,
-      "error_received_value": null,
-      "error_expected": null,
-      "error_message": "research_map requires project_id.",
-      "error_details": {
-        "candidate_projects": [
-          {
-            "name": "MCP Infrastructure Incidents",
-            "project_id": "mcp-infra-incidents"
-          },
-          {
-            "name": "coverage-project-live_coverage_d0b4bb7c66-1",
-            "project_id": "coverage-project-live-coverage-d0b4bb7c66-1-f34d3fe6"
-          },
-          {
-            "name": "coverage-project-live_coverage_9960ca0c94-1",
-            "project_id": "coverage-project-live-coverage-9960ca0c94-1-f9af4c8d"
-          },
-          {
-            "name": "coverage-project-live_coverage_6139b1d9e6-1",
-            "project_id": "coverage-project-live-coverage-6139b1d9e6-1-9a005a9b"
-          }
-        ],
-        "classification": "agent_contract_misuse",
-        "correlation_id": "28",
-        "debug_context_available": true,
-        "exact_next_call_examples": [
-          {
-            "arguments": {
-              "action": "list"
-            },
-            "tool": "research_project"
-          },
-          {
-            "arguments": {
-              "action": "open",
-              "project_id": "mcp-infra-incidents",
-              "view": "summary"
-            },
-            "tool": "research_project"
-          }
-        ],
-        "log_service_hint": "mcp_server",
-        "project_field_name": "project_id",
-        "reason": "missing_project_id",
-        "recommended_debug_tools": [
-          "system_debug_recent_events",
-          "system_logs"
-        ],
-        "recommended_verify_call": {
-          "arguments": {
-            "action": "list"
-          },
-          "tool": "research_project"
-        },
-        "request_id": "28",
-        "requested_project_id": null,
-        "server_session_id": "5a301846d4f14327904240c86c64426d",
-        "tool": "research_map"
-      }
-    },
-    {
-      "event_at": "2026-04-09T12:38:35.356670+00:00",
+      "event_at": "2026-04-09T19:49:27.971503+00:00",
       "tool_name": "research_search",
       "domain": "research_memory",
       "error_code": "invalid_input",
       "error_field": null,
       "error_received_value": null,
       "error_expected": null,
-      "error_message": "research_search requires project_id.",
+      "error_message": "research_search requires a non-empty query.",
       "error_details": {
-        "candidate_projects": [
-          {
-            "name": "MCP Infrastructure Incidents",
-            "project_id": "mcp-infra-incidents"
-          },
-          {
-            "name": "coverage-project-live_coverage_d0b4bb7c66-1",
-            "project_id": "coverage-project-live-coverage-d0b4bb7c66-1-f34d3fe6"
-          },
-          {
-            "name": "coverage-project-live_coverage_9960ca0c94-1",
-            "project_id": "coverage-project-live-coverage-9960ca0c94-1-f9af4c8d"
-          },
-          {
-            "name": "coverage-project-live_coverage_6139b1d9e6-1",
-            "project_id": "coverage-project-live-coverage-6139b1d9e6-1-9a005a9b"
-          }
-        ],
         "classification": "agent_contract_misuse",
-        "correlation_id": "24",
+        "correlation_id": "6",
         "debug_context_available": true,
-        "exact_next_call_examples": [
+        "field_errors": [
           {
-            "arguments": {
-              "action": "list"
-            },
-            "tool": "research_project"
-          },
-          {
-            "arguments": {
-              "action": "open",
-              "project_id": "mcp-infra-incidents",
-              "view": "summary"
-            },
-            "tool": "research_project"
+            "field": "query",
+            "message": "query must be a non-empty string."
           }
         ],
         "log_service_hint": "mcp_server",
-        "project_field_name": "project_id",
-        "reason": "missing_project_id",
         "recommended_debug_tools": [
           "system_debug_recent_events",
           "system_logs"
         ],
-        "recommended_verify_call": {
-          "arguments": {
-            "action": "list"
-          },
-          "tool": "research_project"
+        "repair_example_from_current_context": {
+          "project_id": "compiled-plan-v4-batch-1-3c2b3076",
+          "query": "rejected trend filter"
         },
-        "request_id": "24",
-        "requested_project_id": null,
-        "server_session_id": "5a301846d4f14327904240c86c64426d",
+        "request_id": "6",
+        "server_session_id": "23a7fe93e38041e4b44fe0150e56c515",
         "tool": "research_search"
       }
     },
     {
-      "event_at": "2026-04-09T12:38:34.373870+00:00",
-      "tool_name": "features_cleanup",
-      "domain": "features",
-      "error_code": "invalid_input",
-      "error_field": "scope",
-      "error_received_value": "registry",
-      "error_expected": null,
-      "error_message": "Unsupported features_cleanup scope: 'registry'. (field=scope; received=registry)",
-      "error_details": {
-        "classification": "agent_contract_misuse",
-        "correlation_id": "18",
-        "debug_context_available": true,
-        "field": "scope",
-        "log_service_hint": "mcp_server",
-        "received_type": "str",
-        "received_value": "registry",
-        "recommended_debug_tools": [
-          "system_debug_recent_events",
-          "system_logs"
-        ],
-        "request_id": "18",
-        "server_session_id": "5a301846d4f14327904240c86c64426d",
-        "supported_values": [
-          "features_only",
-          "features+snapshots+research"
-        ],
-        "tool": "features_cleanup"
-      }
-    },
-    {
-      "event_at": "2026-04-09T12:38:06.757476+00:00",
-      "tool_name": "research_map",
-      "domain": "research_memory",
-      "error_code": "invalid_input",
-      "error_field": null,
-      "error_received_value": null,
-      "error_expected": null,
-      "error_message": "research_map requires project_id.",
-      "error_details": {
-        "candidate_projects": [
-          {
-            "name": "MCP Infrastructure Incidents",
-            "project_id": "mcp-infra-incidents"
-          },
-          {
-            "name": "coverage-project-live_coverage_9960ca0c94-1",
-            "project_id": "coverage-project-live-coverage-9960ca0c94-1-f9af4c8d"
-          },
-          {
-            "name": "coverage-project-live_coverage_6139b1d9e6-1",
-            "project_id": "coverage-project-live-coverage-6139b1d9e6-1-9a005a9b"
-          }
-        ],
-        "classification": "agent_contract_misuse",
-        "correlation_id": "28",
-        "debug_context_available": true,
-        "exact_next_call_examples": [
-          {
-            "arguments": {
-              "action": "list"
-            },
-            "tool": "research_project"
-          },
-          {
-            "arguments": {
-              "action": "open",
-              "project_id": "mcp-infra-incidents",
-              "view": "summary"
-            },
-            "tool": "research_project"
-          }
-        ],
-        "log_service_hint": "mcp_server",
-        "project_field_name": "project_id",
-        "reason": "missing_project_id",
-        "recommended_debug_tools": [
-          "system_debug_recent_events",
-          "system_logs"
-        ],
-        "recommended_verify_call": {
-          "arguments": {
-            "action": "list"
-          },
-          "tool": "research_project"
-        },
-        "request_id": "28",
-        "requested_project_id": null,
-        "server_session_id": "eb6c81d3a2584a65bca1ba986dfd3222",
-        "tool": "research_map"
-      }
-    },
-    {
-      "event_at": "2026-04-09T12:38:06.043090+00:00",
-      "tool_name": "research_search",
-      "domain": "research_memory",
-      "error_code": "invalid_input",
-      "error_field": null,
-      "error_received_value": null,
-      "error_expected": null,
-      "error_message": "research_search requires project_id.",
-      "error_details": {
-        "candidate_projects": [
-          {
-            "name": "MCP Infrastructure Incidents",
-            "project_id": "mcp-infra-incidents"
-          },
-          {
-            "name": "coverage-project-live_coverage_9960ca0c94-1",
-            "project_id": "coverage-project-live-coverage-9960ca0c94-1-f9af4c8d"
-          },
-          {
-            "name": "coverage-project-live_coverage_6139b1d9e6-1",
-            "project_id": "coverage-project-live-coverage-6139b1d9e6-1-9a005a9b"
-          }
-        ],
-        "classification": "agent_contract_misuse",
-        "correlation_id": "24",
-        "debug_context_available": true,
-        "exact_next_call_examples": [
-          {
-            "arguments": {
-              "action": "list"
-            },
-            "tool": "research_project"
-          },
-          {
-            "arguments": {
-              "action": "open",
-              "project_id": "mcp-infra-incidents",
-              "view": "summary"
-            },
-            "tool": "research_project"
-          }
-        ],
-        "log_service_hint": "mcp_server",
-        "project_field_name": "project_id",
-        "reason": "missing_project_id",
-        "recommended_debug_tools": [
-          "system_debug_recent_events",
-          "system_logs"
-        ],
-        "recommended_verify_call": {
-          "arguments": {
-            "action": "list"
-          },
-          "tool": "research_project"
-        },
-        "request_id": "24",
-        "requested_project_id": null,
-        "server_session_id": "eb6c81d3a2584a65bca1ba986dfd3222",
-        "tool": "research_search"
-      }
-    },
-    {
-      "event_at": "2026-04-09T12:38:05.039279+00:00",
-      "tool_name": "features_cleanup",
-      "domain": "features",
-      "error_code": "invalid_input",
-      "error_field": "scope",
-      "error_received_value": "registry",
-      "error_expected": null,
-      "error_message": "Unsupported features_cleanup scope: 'registry'. (field=scope; received=registry)",
-      "error_details": {
-        "classification": "agent_contract_misuse",
-        "correlation_id": "18",
-        "debug_context_available": true,
-        "field": "scope",
-        "log_service_hint": "mcp_server",
-        "received_type": "str",
-        "received_value": "registry",
-        "recommended_debug_tools": [
-          "system_debug_recent_events",
-          "system_logs"
-        ],
-        "request_id": "18",
-        "server_session_id": "eb6c81d3a2584a65bca1ba986dfd3222",
-        "supported_values": [
-          "features_only",
-          "features+snapshots+research"
-        ],
-        "tool": "features_cleanup"
-      }
-    },
-    {
-      "event_at": "2026-04-09T12:37:20.359167+00:00",
-      "tool_name": "research_map",
-      "domain": "research_memory",
-      "error_code": "invalid_input",
-      "error_field": null,
-      "error_received_value": null,
-      "error_expected": null,
-      "error_message": "research_map requires project_id.",
-      "error_details": {
-        "candidate_projects": [
-          {
-            "name": "MCP Infrastructure Incidents",
-            "project_id": "mcp-infra-incidents"
-          },
-          {
-            "name": "coverage-project-live_coverage_6139b1d9e6-1",
-            "project_id": "coverage-project-live-coverage-6139b1d9e6-1-9a005a9b"
-          }
-        ],
-        "classification": "agent_contract_misuse",
-        "correlation_id": "28",
-        "debug_context_available": true,
-        "exact_next_call_examples": [
-          {
-            "arguments": {
-              "action": "list"
-            },
-            "tool": "research_project"
-          },
-          {
-            "arguments": {
-              "action": "open",
-              "project_id": "mcp-infra-incidents",
-              "view": "summary"
-            },
-            "tool": "research_project"
-          }
-        ],
-        "log_service_hint": "mcp_server",
-        "project_field_name": "project_id",
-        "reason": "missing_project_id",
-        "recommended_debug_tools": [
-          "system_debug_recent_events",
-          "system_logs"
-        ],
-        "recommended_verify_call": {
-          "arguments": {
-            "action": "list"
-          },
-          "tool": "research_project"
-        },
-        "request_id": "28",
-        "requested_project_id": null,
-        "server_session_id": "ef0c97ea826540ab94c9156391a00ced",
-        "tool": "research_map"
-      }
-    },
-    {
-      "event_at": "2026-04-09T12:37:19.635030+00:00",
-      "tool_name": "research_search",
-      "domain": "research_memory",
-      "error_code": "invalid_input",
-      "error_field": null,
-      "error_received_value": null,
-      "error_expected": null,
-      "error_message": "research_search requires project_id.",
-      "error_details": {
-        "candidate_projects": [
-          {
-            "name": "MCP Infrastructure Incidents",
-            "project_id": "mcp-infra-incidents"
-          },
-          {
-            "name": "coverage-project-live_coverage_6139b1d9e6-1",
-            "project_id": "coverage-project-live-coverage-6139b1d9e6-1-9a005a9b"
-          }
-        ],
-        "classification": "agent_contract_misuse",
-        "correlation_id": "24",
-        "debug_context_available": true,
-        "exact_next_call_examples": [
-          {
-            "arguments": {
-              "action": "list"
-            },
-            "tool": "research_project"
-          },
-          {
-            "arguments": {
-              "action": "open",
-              "project_id": "mcp-infra-incidents",
-              "view": "summary"
-            },
-            "tool": "research_project"
-          }
-        ],
-        "log_service_hint": "mcp_server",
-        "project_field_name": "project_id",
-        "reason": "missing_project_id",
-        "recommended_debug_tools": [
-          "system_debug_recent_events",
-          "system_logs"
-        ],
-        "recommended_verify_call": {
-          "arguments": {
-            "action": "list"
-          },
-          "tool": "research_project"
-        },
-        "request_id": "24",
-        "requested_project_id": null,
-        "server_session_id": "ef0c97ea826540ab94c9156391a00ced",
-        "tool": "research_search"
-      }
-    },
-    {
-      "event_at": "2026-04-09T12:37:18.463931+00:00",
-      "tool_name": "features_cleanup",
-      "domain": "features",
-      "error_code": "invalid_input",
-      "error_field": "scope",
-      "error_received_value": "registry",
-      "error_expected": null,
-      "error_message": "Unsupported features_cleanup scope: 'registry'. (field=scope; received=registry)",
-      "error_details": {
-        "classification": "agent_contract_misuse",
-        "correlation_id": "18",
-        "debug_context_available": true,
-        "field": "scope",
-        "log_service_hint": "mcp_server",
-        "received_type": "str",
-        "received_value": "registry",
-        "recommended_debug_tools": [
-          "system_debug_recent_events",
-          "system_logs"
-        ],
-        "request_id": "18",
-        "server_session_id": "ef0c97ea826540ab94c9156391a00ced",
-        "supported_values": [
-          "features_only",
-          "features+snapshots+research"
-        ],
-        "tool": "features_cleanup"
-      }
-    },
-    {
-      "event_at": "2026-04-09T12:24:58.313965+00:00",
-      "tool_name": "models_to_feature",
-      "domain": "models",
+      "event_at": "2026-04-09T19:41:19.422410+00:00",
+      "tool_name": "experiments_inspect",
+      "domain": "experiments",
       "error_code": "resource_not_found",
       "error_field": null,
       "error_received_value": null,
       "error_expected": null,
-      "error_message": "[Errno 2] No such file or directory: '/home/ubuntu/MARKET_DATA/_crypto_data/models/registry/dummy/versions/1/manifest.json'",
+      "error_message": "[Errno 2] No such file or directory: '/home/ubuntu/FOUNDATION/artifacts/experiments/d75a23b78bf9/manifest.json'",
       "error_details": {
         "classification": "agent_contract_misuse",
-        "correlation_id": "13",
+        "correlation_id": "12",
         "debug_context_available": true,
         "log_service_hint": "mcp_server",
         "recommended_debug_tools": [
           "system_debug_recent_events",
           "system_logs"
         ],
-        "request_id": "13",
-        "server_session_id": "745bd6b3aaf042958914ade2c6967820",
-        "tool": "models_to_feature"
+        "request_id": "12",
+        "server_session_id": "5ca9c42e5348476eb8f2559d70624888",
+        "tool": "experiments_inspect"
       }
     },
     {
-      "event_at": "2026-04-09T11:54:27.379007+00:00",
-      "tool_name": "events_sync",
-      "domain": "system",
-      "error_code": "missing_scope",
+      "event_at": "2026-04-09T19:39:08.160111+00:00",
+      "tool_name": "experiments_inspect",
+      "domain": "experiments",
+      "error_code": "resource_not_found",
       "error_field": null,
       "error_received_value": null,
       "error_expected": null,
-      "error_message": "events_sync for family='funding' requires symbol.",
+      "error_message": "[Errno 2] No such file or directory: '/home/ubuntu/FOUNDATION/artifacts/experiments/d75a23b78bf9/manifest.json'",
       "error_details": {
         "classification": "agent_contract_misuse",
         "correlation_id": "4",
         "debug_context_available": true,
-        "exact_next_call_examples": [
-          {
-            "arguments": {
-              "family": "funding",
-              "view": "catalog"
-            },
-            "tool": "events"
-          },
-          {
-            "arguments": {
-              "family": "funding",
-              "scope": "incremental",
-              "symbol": "BTCUSDT"
-            },
-            "tool": "events_sync"
-          }
-        ],
-        "first_safe_call": {
-          "arguments": {
-            "family": "funding",
-            "view": "catalog"
-          },
-          "tool": "events"
-        },
         "log_service_hint": "mcp_server",
-        "reason": "missing_funding_symbol",
         "recommended_debug_tools": [
           "system_debug_recent_events",
           "system_logs"
         ],
-        "recommended_flow": [
-          "Call events(view='catalog', family='funding') if scope is ambiguous.",
-          "Choose one concrete funding symbol.",
-          "Retry events_sync with family='funding', scope, and symbol."
-        ],
-        "recommended_follow_up_tool": "events_sync",
         "request_id": "4",
-        "server_session_id": "de22bcb338a34daa9311e5c39cd67f5d",
-        "tool": "events_sync"
+        "server_session_id": "ef23bced948049e1aa32d2572d459541",
+        "tool": "experiments_inspect"
       }
     },
     {
-      "event_at": "2026-04-09T11:49:19.058191+00:00",
-      "tool_name": "features_analytics",
-      "domain": "features",
-      "error_code": "operation_not_ready",
+      "event_at": "2026-04-09T19:34:12.336067+00:00",
+      "tool_name": "research_record",
+      "domain": "research_memory",
+      "error_code": "invalid_input",
       "error_field": null,
       "error_received_value": null,
       "error_expected": null,
-      "error_message": "Stored analytics are not ready for feature 'cf_vol_imbalance_12' on BTCUSDT 1h.",
+      "error_message": "branch_id is unknown.",
       "error_details": {
-        "anchor_timeframe": "1h",
-        "bootstrap_rule_ref": {
-          "resource": "project://mcp/agent-operating-manual",
-          "tool": "system_bootstrap"
-        },
-        "classification": "candidate_server_fault",
+        "available_branch_ids": [
+          "branch-269af855a4fd43b0ba75805c7a15f5b4"
+        ],
+        "branch_id": "compiled_plan_v1_stage_2",
+        "classification": "agent_contract_misuse",
+        "correlation_id": "8",
+        "debug_context_available": true,
+        "default_branch_id": "branch-269af855a4fd43b0ba75805c7a15f5b4",
+        "exact_next_call_examples": [
+          {
+            "arguments": {
+              "action": "open",
+              "project_id": "v5-model-research-c890eeaa",
+              "view": "summary"
+            },
+            "tool": "research_project"
+          },
+          {
+            "arguments": {
+              "action": "create",
+              "branch_id": "branch-269af855a4fd43b0ba75805c7a15f5b4",
+              "kind": "note",
+              "project_id": "v5-model-research-c890eeaa",
+              "record": {
+                "summary": "Recorded on the intended branch.",
+                "title": "Checkpoint note"
+              }
+            },
+            "tool": "research_record"
+          }
+        ],
+        "log_service_hint": "mcp_server",
+        "project_id": "v5-model-research-c890eeaa",
+        "recommended_debug_tools": [
+          "system_debug_recent_events",
+          "system_logs"
+        ],
+        "request_id": "8",
+        "server_session_id": "136fe8e5bb264784afbb751ef294579b",
+        "tool": "research_record"
+      }
+    },
+    {
+      "event_at": "2026-04-09T19:33:39.364314+00:00",
+      "tool_name": "research_record",
+      "domain": "research_memory",
+      "error_code": "invalid_input",
+      "error_field": null,
+      "error_received_value": null,
+      "error_expected": null,
+      "error_message": "Atlas-enabled projects require atlas={statement, expected_outcome, falsification_criteria, coordinates} when kind='hypothesis'.",
+      "error_details": {
+        "classification": "agent_contract_misuse",
         "correlation_id": "6",
         "debug_context_available": true,
-        "feature_name": "cf_vol_imbalance_12",
-        "incident_capture_required": true,
-        "incident_capture_template": {
-          "affected_tool": "features_analytics",
-          "error": {
-            "code": "operation_not_ready",
-            "details": {
-              "correlation_id": "6",
-              "log_service_hint": "mcp_server",
-              "request_id": "6",
-              "server_session_id": "575531fbc1d14c1ba26e45250ab035b2",
-              "tool": "features_analytics"
-            },
-            "message": "Stored analytics are not ready for feature 'cf_vol_imbalance_12' on BTCUSDT 1h."
-          },
-          "project_id": "mcp-infra-incidents",
-          "service": "mcp_server",
-          "summary": "Stored analytics are not ready for feature 'cf_vol_imbalance_12' on BTCUSDT 1h."
-        },
-        "incident_project_id": "mcp-infra-incidents",
-        "log_service_hint": "mcp_server",
-        "missing_parts": [
-          "profitability_heatmap",
-          "feature_portability"
-        ],
-        "recommended_debug_tools": [
-          "system_debug_recent_events",
-          "system_logs"
-        ],
-        "recommended_incident_tool": "incidents",
-        "recommended_pre_capture_steps": [
-          "system_debug_recent_events",
-          "system_logs"
-        ],
-        "request_id": "6",
-        "server_session_id": "575531fbc1d14c1ba26e45250ab035b2",
-        "symbol": "BTCUSDT",
-        "tool": "features_analytics"
-      }
-    },
-    {
-      "event_at": "2026-04-09T11:24:19.362039+00:00",
-      "tool_name": "events",
-      "domain": "system",
-      "error_code": "invalid_input",
-      "error_field": null,
-      "error_received_value": null,
-      "error_expected": null,
-      "error_message": "Funding event stores require symbol.",
-      "error_details": {
-        "classification": "agent_contract_misuse",
-        "correlation_id": "5",
-        "debug_context_available": true,
-        "log_service_hint": "mcp_server",
-        "recommended_debug_tools": [
-          "system_debug_recent_events",
-          "system_logs"
-        ],
-        "request_id": "5",
-        "server_session_id": "85cdc3d36f1b4fe79a32aed8c5a89c06",
-        "tool": "events"
-      }
-    },
-    {
-      "event_at": "2026-04-09T11:18:50.191118+00:00",
-      "tool_name": "features_analytics",
-      "domain": "features",
-      "error_code": "invalid_input",
-      "error_field": "feature_name",
-      "error_received_value": null,
-      "error_expected": null,
-      "error_message": "features_analytics(action='heatmap') requires feature_name. (field=feature_name)",
-      "error_details": {
-        "active_feature_count": 37,
-        "anchor_timeframe": "1h",
-        "candidate_feature_names": [
-          "atr_1",
-          "cl_15m",
-          "cl_1d",
-          "cl_1h",
-          "cl_4h",
-          "dow",
-          "hour",
-          "iv_est_1",
-          "rsi_1",
-          "iv_est",
-          "rsi",
-          "is_funding_settlement"
-        ],
-        "classification": "agent_contract_misuse",
-        "correlation_id": "12",
-        "debug_context_available": true,
         "exact_next_call_examples": [
           {
             "arguments": {
-              "action": "inspect",
-              "symbol": "BTCUSDT",
-              "timeframe": "1h",
-              "view": "columns"
+              "action": "open",
+              "project_id": "v5-model-research-c890eeaa",
+              "view": "summary"
             },
-            "tool": "features_dataset"
+            "tool": "research_project"
           },
           {
             "arguments": {
-              "action": "heatmap",
-              "anchor_timeframe": "1h",
-              "feature_name": "atr_1",
-              "symbol": "BTCUSDT"
+              "action": "create",
+              "atlas": {
+                "coordinates": {
+                  "data_source": "derivatives",
+                  "expected_edge_type": "liquidation_cascade",
+                  "signal_family": "funding_rate"
+                },
+                "expected_outcome": "Higher selection score with similar drawdown.",
+                "falsification_criteria": "No improvement across the targeted mapped cell.",
+                "statement": "Trend filter should improve result quality in the mapped cell."
+              },
+              "kind": "hypothesis",
+              "project_id": "v5-model-research-c890eeaa",
+              "record": {
+                "summary": "Atlas-backed hypothesis for the next disciplined test cell.",
+                "title": "Mapped hypothesis"
+              }
             },
-            "tool": "features_analytics"
+            "tool": "research_record"
           }
         ],
-        "field": "feature_name",
+        "field_errors": [
+          {
+            "field": "atlas.statement",
+            "message": "This field is required for atlas-enabled hypothesis creation."
+          },
+          {
+            "field": "atlas.expected_outcome",
+            "message": "This field is required for atlas-enabled hypothesis creation."
+          },
+          {
+            "field": "atlas.falsification_criteria",
+            "message": "This field is required for atlas-enabled hypothesis creation."
+          },
+          {
+            "field": "atlas.coordinates",
+            "message": "This field is required for atlas-enabled hypothesis creation."
+          }
+        ],
+        "kind_routing_table": [
+          {
+            "intent": "non-metric checkpoint",
+            "use_kind": "milestone"
+          },
+          {
+            "intent": "model metrics",
+            "use_kind": "training_result"
+          },
+          {
+            "intent": "ranked or trading outcome",
+            "use_kind": "result"
+          },
+          {
+            "intent": "free-form research observation",
+            "use_kind": "note"
+          },
+          {
+            "intent": "research-side incident observation",
+            "use_kind": "incident_note"
+          },
+          {
+            "intent": "infrastructure/runtime backlog",
+            "use_tool": "incidents"
+          }
+        ],
         "log_service_hint": "mcp_server",
+        "project_id": "v5-model-research-c890eeaa",
         "recommended_debug_tools": [
           "system_debug_recent_events",
           "system_logs"
         ],
         "recommended_first_call": {
           "arguments": {
-            "action": "inspect",
-            "symbol": "BTCUSDT",
-            "timeframe": "1h",
-            "view": "columns"
+            "action": "open",
+            "project_id": "v5-model-research-c890eeaa",
+            "view": "summary"
           },
-          "tool": "features_dataset"
+          "tool": "research_project"
         },
-        "recommended_flow": [
-          "Inspect the active managed dataset columns for this symbol/timeframe.",
-          "Choose one active feature_name from that dataset.",
-          "Retry features_analytics(action='heatmap', feature_name=...) with the selected active column."
+        "repair_example_from_current_context": {
+          "action": "create",
+          "atlas": {
+            "coordinates": {
+              "data_source": "derivatives",
+              "expected_edge_type": "liquidation_cascade",
+              "signal_family": "funding_rate"
+            },
+            "expected_outcome": "Higher selection score with similar drawdown.",
+            "falsification_criteria": "No improvement across the targeted mapped cell.",
+            "statement": "Trend filter should improve result quality in the mapped cell."
+          },
+          "kind": "hypothesis",
+          "project_id": "v5-model-research-c890eeaa",
+          "record": {
+            "summary": "Atlas-backed hypothesis for the next disciplined test cell.",
+            "title": "Mapped hypothesis"
+          }
+        },
+        "request_id": "6",
+        "server_session_id": "136fe8e5bb264784afbb751ef294579b",
+        "tool": "research_record",
+        "when_to_use_instead": [
+          {
+            "intent": "free-form observation without atlas discipline",
+            "use": "research_record(kind='note')"
+          },
+          {
+            "intent": "non-metric checkpoint",
+            "use": "research_record(kind='milestone')"
+          }
         ],
-        "request_id": "12",
-        "required_for_actions": [
-          "heatmap",
-          "render",
-          "portability",
-          "analytics"
+        "why_this_failed": "Atlas-enabled projects require disciplined hypothesis mapping data at create time."
+      }
+    },
+    {
+      "event_at": "2026-04-09T19:14:54.651429+00:00",
+      "tool_name": "research_project",
+      "domain": "research_memory",
+      "error_code": "invalid_input",
+      "error_field": null,
+      "error_received_value": null,
+      "error_expected": null,
+      "error_message": "Unsupported research_project action: context",
+      "error_details": {
+        "allowed_actions": [
+          "list",
+          "current",
+          "create",
+          "open",
+          "set_baseline",
+          "delete",
+          "cleanup_preview",
+          "cleanup_apply",
+          "integrity_check",
+          "repair_preview",
+          "repair_apply",
+          "reindex",
+          "reset_store"
         ],
-        "server_session_id": "fdb24abff4074125861c18095d075560",
-        "symbol": "BTCUSDT",
-        "tool": "features_analytics",
-        "why_feature_name_is_required": "Stored analytics are keyed by one active managed-dataset column. The server cannot infer which feature slice to read when several active columns exist."
+        "classification": "agent_contract_misuse",
+        "correlation_id": "9",
+        "debug_context_available": true,
+        "log_service_hint": "mcp_server",
+        "recommended_debug_tools": [
+          "system_debug_recent_events",
+          "system_logs"
+        ],
+        "repair_example_from_current_context": {
+          "action": "list"
+        },
+        "request_id": "9",
+        "server_session_id": "2afad9f427e543b7be7c5b8529bbd20f",
+        "tool": "research_project"
+      }
+    },
+    {
+      "event_at": "2026-04-09T19:14:40.351871+00:00",
+      "tool_name": "research_project",
+      "domain": "research_memory",
+      "error_code": "invalid_input",
+      "error_field": null,
+      "error_received_value": null,
+      "error_expected": null,
+      "error_message": "Unsupported research_project action: inspect",
+      "error_details": {
+        "allowed_actions": [
+          "list",
+          "current",
+          "create",
+          "open",
+          "set_baseline",
+          "delete",
+          "cleanup_preview",
+          "cleanup_apply",
+          "integrity_check",
+          "repair_preview",
+          "repair_apply",
+          "reindex",
+          "reset_store"
+        ],
+        "classification": "agent_contract_misuse",
+        "correlation_id": "7",
+        "debug_context_available": true,
+        "log_service_hint": "mcp_server",
+        "recommended_debug_tools": [
+          "system_debug_recent_events",
+          "system_logs"
+        ],
+        "repair_example_from_current_context": {
+          "action": "list"
+        },
+        "request_id": "7",
+        "server_session_id": "2afad9f427e543b7be7c5b8529bbd20f",
+        "tool": "research_project"
+      }
+    },
+    {
+      "event_at": "2026-04-09T18:51:41.589195+00:00",
+      "tool_name": "research_project",
+      "domain": "research_memory",
+      "error_code": "invalid_input",
+      "error_field": null,
+      "error_received_value": null,
+      "error_expected": null,
+      "error_message": "research_project(action='create') requires project={...}.",
+      "error_details": {
+        "allowed_actions": [
+          "list",
+          "current",
+          "create",
+          "open",
+          "set_baseline",
+          "delete",
+          "cleanup_preview",
+          "cleanup_apply",
+          "integrity_check",
+          "repair_preview",
+          "repair_apply",
+          "reindex",
+          "reset_store"
+        ],
+        "classification": "agent_contract_misuse",
+        "correlation_id": "18",
+        "debug_context_available": true,
+        "field_errors": [
+          {
+            "field": "project",
+            "message": "project must be an object."
+          }
+        ],
+        "log_service_hint": "mcp_server",
+        "recommended_debug_tools": [
+          "system_debug_recent_events",
+          "system_logs"
+        ],
+        "repair_example_from_current_context": {
+          "action": "create",
+          "project": {
+            "goal": "Describe the investigation goal.",
+            "name": "Research Project"
+          }
+        },
+        "request_id": "18",
+        "server_session_id": "044750a7534d4bf19a75d826f3648d87",
+        "tool": "research_project"
+      }
+    },
+    {
+      "event_at": "2026-04-09T18:51:24.067501+00:00",
+      "tool_name": "experiments_read",
+      "domain": "experiments",
+      "error_code": "invalid_input",
+      "error_field": null,
+      "error_received_value": null,
+      "error_expected": null,
+      "error_message": "experiments_read requires a non-empty job_id.",
+      "error_details": {
+        "classification": "agent_contract_misuse",
+        "correlation_id": "16",
+        "debug_context_available": true,
+        "log_service_hint": "mcp_server",
+        "recommended_debug_tools": [
+          "system_debug_recent_events",
+          "system_logs"
+        ],
+        "request_id": "16",
+        "server_session_id": "044750a7534d4bf19a75d826f3648d87",
+        "tool": "experiments_read"
+      }
+    },
+    {
+      "event_at": "2026-04-09T18:49:14.272325+00:00",
+      "tool_name": "research_record",
+      "domain": "research_memory",
+      "error_code": "invalid_input",
+      "error_field": null,
+      "error_received_value": null,
+      "error_expected": null,
+      "error_message": "Atlas-enabled projects require atlas={statement, expected_outcome, falsification_criteria, coordinates} when kind='hypothesis'.",
+      "error_details": {
+        "classification": "agent_contract_misuse",
+        "correlation_id": "8",
+        "debug_context_available": true,
+        "exact_next_call_examples": [
+          {
+            "arguments": {
+              "action": "open",
+              "project_id": "cycle-invariants-btcusdt-1h-be5e9f5a",
+              "view": "summary"
+            },
+            "tool": "research_project"
+          },
+          {
+            "arguments": {
+              "action": "create",
+              "atlas": {
+                "coordinates": {
+                  "market_regime": "trending_up",
+                  "risk_level": "conservative",
+                  "signal_type": "momentum",
+                  "timeframe_alignment": "1h_anchor_5m_exec"
+                },
+                "expected_outcome": "Higher selection score with similar drawdown.",
+                "falsification_criteria": "No improvement across the targeted mapped cell.",
+                "statement": "Trend filter should improve result quality in the mapped cell."
+              },
+              "kind": "hypothesis",
+              "project_id": "cycle-invariants-btcusdt-1h-be5e9f5a",
+              "record": {
+                "summary": "Atlas-backed hypothesis for the next disciplined test cell.",
+                "title": "Mapped hypothesis"
+              }
+            },
+            "tool": "research_record"
+          }
+        ],
+        "field_errors": [
+          {
+            "field": "atlas.statement",
+            "message": "This field is required for atlas-enabled hypothesis creation."
+          },
+          {
+            "field": "atlas.expected_outcome",
+            "message": "This field is required for atlas-enabled hypothesis creation."
+          },
+          {
+            "field": "atlas.falsification_criteria",
+            "message": "This field is required for atlas-enabled hypothesis creation."
+          },
+          {
+            "field": "atlas.coordinates",
+            "message": "This field is required for atlas-enabled hypothesis creation."
+          }
+        ],
+        "kind_routing_table": [
+          {
+            "intent": "non-metric checkpoint",
+            "use_kind": "milestone"
+          },
+          {
+            "intent": "model metrics",
+            "use_kind": "training_result"
+          },
+          {
+            "intent": "ranked or trading outcome",
+            "use_kind": "result"
+          },
+          {
+            "intent": "free-form research observation",
+            "use_kind": "note"
+          },
+          {
+            "intent": "research-side incident observation",
+            "use_kind": "incident_note"
+          },
+          {
+            "intent": "infrastructure/runtime backlog",
+            "use_tool": "incidents"
+          }
+        ],
+        "log_service_hint": "mcp_server",
+        "project_id": "cycle-invariants-btcusdt-1h-be5e9f5a",
+        "recommended_debug_tools": [
+          "system_debug_recent_events",
+          "system_logs"
+        ],
+        "recommended_first_call": {
+          "arguments": {
+            "action": "open",
+            "project_id": "cycle-invariants-btcusdt-1h-be5e9f5a",
+            "view": "summary"
+          },
+          "tool": "research_project"
+        },
+        "repair_example_from_current_context": {
+          "action": "create",
+          "atlas": {
+            "coordinates": {
+              "market_regime": "trending_up",
+              "risk_level": "conservative",
+              "signal_type": "momentum",
+              "timeframe_alignment": "1h_anchor_5m_exec"
+            },
+            "expected_outcome": "Higher selection score with similar drawdown.",
+            "falsification_criteria": "No improvement across the targeted mapped cell.",
+            "statement": "Trend filter should improve result quality in the mapped cell."
+          },
+          "kind": "hypothesis",
+          "project_id": "cycle-invariants-btcusdt-1h-be5e9f5a",
+          "record": {
+            "summary": "Atlas-backed hypothesis for the next disciplined test cell.",
+            "title": "Mapped hypothesis"
+          }
+        },
+        "request_id": "8",
+        "server_session_id": "1960edc3404c4bd5a5be2b2796309fcc",
+        "tool": "research_record",
+        "when_to_use_instead": [
+          {
+            "intent": "free-form observation without atlas discipline",
+            "use": "research_record(kind='note')"
+          },
+          {
+            "intent": "non-metric checkpoint",
+            "use": "research_record(kind='milestone')"
+          }
+        ],
+        "why_this_failed": "Atlas-enabled projects require disciplined hypothesis mapping data at create time."
+      }
+    },
+    {
+      "event_at": "2026-04-09T17:36:07.263780+00:00",
+      "tool_name": "research_project",
+      "domain": "research_memory",
+      "error_code": "invalid_input",
+      "error_field": null,
+      "error_received_value": null,
+      "error_expected": null,
+      "error_message": "Unsupported research_project action: inspect",
+      "error_details": {
+        "allowed_actions": [
+          "list",
+          "current",
+          "create",
+          "open",
+          "set_baseline",
+          "delete",
+          "cleanup_preview",
+          "cleanup_apply",
+          "integrity_check",
+          "repair_preview",
+          "repair_apply",
+          "reindex",
+          "reset_store"
+        ],
+        "classification": "agent_contract_misuse",
+        "correlation_id": "6",
+        "debug_context_available": true,
+        "log_service_hint": "mcp_server",
+        "recommended_debug_tools": [
+          "system_debug_recent_events",
+          "system_logs"
+        ],
+        "repair_example_from_current_context": {
+          "action": "list"
+        },
+        "request_id": "6",
+        "server_session_id": "3faf4911f9944d68aabd274cde7fdcd4",
+        "tool": "research_project"
+      }
+    },
+    {
+      "event_at": "2026-04-09T15:53:31.659095+00:00",
+      "tool_name": "research_project",
+      "domain": "research_memory",
+      "error_code": "invalid_input",
+      "error_field": null,
+      "error_received_value": null,
+      "error_expected": null,
+      "error_message": "Unsupported research_project action: inspect",
+      "error_details": {
+        "allowed_actions": [
+          "list",
+          "current",
+          "create",
+          "open",
+          "set_baseline",
+          "delete",
+          "cleanup_preview",
+          "cleanup_apply",
+          "integrity_check",
+          "repair_preview",
+          "repair_apply",
+          "reindex",
+          "reset_store"
+        ],
+        "classification": "agent_contract_misuse",
+        "correlation_id": "4",
+        "debug_context_available": true,
+        "log_service_hint": "mcp_server",
+        "recommended_debug_tools": [
+          "system_debug_recent_events",
+          "system_logs"
+        ],
+        "repair_example_from_current_context": {
+          "action": "list"
+        },
+        "request_id": "4",
+        "server_session_id": "b28dc72587ba43238d361592bb519e4b",
+        "tool": "research_project"
       }
     }
   ]

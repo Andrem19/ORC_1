@@ -8,9 +8,13 @@
   "stage_count": 10,
   "compiled_plan_count": 4,
   "warnings": [
-    "Stage ordering implies strict sequential gating: veto → early-cut → extension — parallel execution of these three routes is forbidden by design",
-    "Stages 8 and 9 are conditionally opened; if veto route fails, early-cut and extension are skipped entirely"
+    "Plan is in Russian; stage titles and objectives preserved in original language for traceability.",
+    "Feature families A–D reference custom features that must be authored and published before materialization.",
+    "Auto-added research_record for stage_4: every non-trivial stage needs documentation capability.",
+    "Auto-added research_record for stage_6: every non-trivial stage needs documentation capability.",
+    "Auto-added research_record for stage_8: every non-trivial stage needs documentation capability.",
+    "Auto-added research_record for stage_9: every non-trivial stage needs documentation capability."
   ],
   "errors": [],
-  "compiled_at": "2026-04-09T14:28:47.759042+00:00"
+  "compiled_at": "2026-04-10T17:05:54.562568+00:00"
 }

@@ -1,6 +1,6 @@
 {
   "plan_id": "compiled_plan_v11_batch_4",
-  "goal": "Conduct a strict forensic audit of v10 microstructure overlay results to confirm or reject their validity before any further research.",
+  "goal": "Forensic audit of v10 microstructure overlay: verify reproducibility, detect leakage, confirm same-window improvement, and deliver a final CONFIRMED / DOWNGRADED / REJECTED verdict.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -9,47 +9,44 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "Immutable reference: active-signal-v1@1 only; never modify baseline parameters, thresholds, features, or execution logic.",
-    "No new features, new directional scouts, early-cuts, or label changes are permitted in v11.",
-    "All comparisons must use identical train / selection-OOS / lockbox windows (same-window truth only).",
-    "Lockbox must never be used to choose thresholds, labels, or model hyper-parameters.",
-    "Short-only, long-only, and combined veto must be tested in separate runs; identical deltas across all three must be explained, not accepted.",
-    "Rule-based overlay must be tested before model-backed overlay.",
-    "PROMOTE status is only valid if v10 survives the entire forensic cycle."
+    "Immutable reference is active-signal-v1@1 — never modify or re-tune the base.",
+    "No new features, no new directional scouts, no early-cut, no label changes allowed.",
+    "All comparisons must use identical train / selection-OOS / lockbox windows.",
+    "Short-only, long-only, and combined veto must be tested in separate independent runs — never aggregated.",
+    "Rule-based (threshold / bucket) overlay must be validated before any model-backed overlay.",
+    "PROMOTE verdict only after every forensic block passes; any confirmed leakage triggers REJECTED.",
+    "No mixing of reproduction checks, leakage checks, and new ideas in the same run."
   ],
   "slices": [
     {
       "slice_id": "compiled_plan_v11_stage_10",
       "title": "Negative controls and robustness",
-      "hypothesis": "Stress-test the result with placebo thresholds, perturbations, time-slice splits, and cross-side application to rule out artefactual fitting.",
-      "objective": "Stress-test the result with placebo thresholds, perturbations, time-slice splits, and cross-side application to rule out artefactual fitting.",
+      "hypothesis": "Stress-test the overlay result with placebo thresholds, perturbations, and time-slice splits to rule out accidental fit.",
+      "objective": "Stress-test the overlay result with placebo thresholds, perturbations, and time-slice splits to rule out accidental fit.",
       "success_criteria": [
-        "Robustness verdict per test: result is stable, fragile, or collapses under perturbation."
+        "Robustness verdict per test: result is stable, fragile, or artifact-driven."
       ],
       "allowed_tools": [
-        "experiments_run",
-        "experiments_inspect",
-        "experiments_read",
-        "experiments_registry_inspect",
-        "backtests_plan",
         "backtests_runs",
         "backtests_studies",
-        "backtests_walkforward",
-        "backtests_conditions",
-        "backtests_analysis"
+        "backtests_strategy",
+        "research_record"
       ],
       "evidence_requirements": [
-        "Robustness verdict per test: result is stable, fragile, or collapses under perturbation."
+        "Robustness verdict per test: result is stable, fragile, or artifact-driven."
       ],
       "policy_tags": [
-        "audit",
         "robustness",
-        "negative_controls"
+        "expensive"
       ],
-      "max_turns": 8,
-      "max_tool_calls": 6,
-      "max_expensive_calls": 2,
+      "max_turns": 48,
+      "max_tool_calls": 36,
+      "max_expensive_calls": 12,
       "parallel_slot": 1,
+      "budget_scale_applied": 6,
+      "depends_on": [
+        "compiled_plan_v11_stage_8"
+      ],
       "status": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
@@ -57,47 +54,45 @@
       "assigned_worker_id": null,
       "last_checkpoint_turn_id": "",
       "last_checkpoint_summary": "",
+      "last_checkpoint_status": "",
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
-      "latest_tool_result_summary": "",
-      "active_operation_tool": "",
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
-      "active_resume_tool": "",
-      "active_resume_token": "",
-      "last_tool_response_status": "",
       "artifacts": [],
       "facts": {}
     },
     {
       "slice_id": "compiled_plan_v11_stage_11",
-      "title": "Final v11 verdict",
-      "hypothesis": "Render the definitive forensic verdict on whether v10 microstructure overlay results are confirmed, downgraded, or rejected.",
-      "objective": "Render the definitive forensic verdict on whether v10 microstructure overlay results are confirmed, downgraded, or rejected.",
+      "title": "Финальный вердикт по v11",
+      "hypothesis": "Synthesize all audit findings into a single forensic verdict on the v10 microstructure overlay.",
+      "objective": "Synthesize all audit findings into a single forensic verdict on the v10 microstructure overlay.",
       "success_criteria": [
-        "Final forensic verdict recorded with clear justification: CONFIRMED, DOWNGRADED TO WATCHLIST, or REJECTED."
+        "Final forensic verdict recorded: CONFIRMED, DOWNGRADED TO WATCHLIST, or REJECTED with full justification."
       ],
       "allowed_tools": [
         "research_record",
-        "backtests_analysis",
-        "notify_send",
-        "research_project",
         "research_map",
-        "research_search"
+        "notify_send"
       ],
       "evidence_requirements": [
-        "Final forensic verdict recorded with clear justification: CONFIRMED, DOWNGRADED TO WATCHLIST, or REJECTED."
+        "Final forensic verdict recorded: CONFIRMED, DOWNGRADED TO WATCHLIST, or REJECTED with full justification."
       ],
       "policy_tags": [
-        "finalization",
-        "verdict"
+        "finalization"
       ],
-      "max_turns": 4,
-      "max_tool_calls": 3,
-      "max_expensive_calls": 0,
+      "max_turns": 24,
+      "max_tool_calls": 24,
+      "max_expensive_calls": 2,
       "parallel_slot": 1,
+      "budget_scale_applied": 6,
+      "depends_on": [
+        "compiled_plan_v11_stage_6",
+        "compiled_plan_v11_stage_9",
+        "compiled_plan_v11_stage_10"
+      ],
       "status": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
@@ -105,22 +100,25 @@
       "assigned_worker_id": null,
       "last_checkpoint_turn_id": "",
       "last_checkpoint_summary": "",
+      "last_checkpoint_status": "",
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
-      "latest_tool_result_summary": "",
-      "active_operation_tool": "",
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
-      "active_resume_tool": "",
-      "active_resume_token": "",
-      "last_tool_response_status": "",
       "artifacts": [],
       "facts": {}
     }
   ],
+  "plan_source_kind": "compiled_raw",
+  "source_sequence_id": "compiled_plan_v11",
+  "source_raw_plan": "raw_plans/plan_v11.md",
+  "source_manifest_path": "",
+  "source_semantic_path": "",
+  "source_compile_report_path": "",
+  "sequence_batch_index": 4,
   "status": "draft",
-  "created_at": "2026-04-09T14:34:40.635912+00:00",
-  "updated_at": "2026-04-09T14:34:40.635913+00:00"
+  "created_at": "2026-04-10T17:12:37.124172+00:00",
+  "updated_at": "2026-04-10T17:12:37.124173+00:00"
 }

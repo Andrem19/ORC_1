@@ -11,7 +11,7 @@ from app.adapters.base import BaseAdapter
 from app.execution_parsing import StructuredOutputError, extract_json_object
 from app.reporting.models import NarrativeSectionsRu
 from app.reporting.prompts import build_narrative_prompt
-from app.services.brokered_execution.invocation import AdapterInvocationError, invoke_adapter_with_retries
+from app.services.direct_execution.invocation import AdapterInvocationError, invoke_adapter_with_retries
 
 
 class NarrativeGenerationError(RuntimeError):

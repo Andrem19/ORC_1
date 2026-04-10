@@ -27,6 +27,38 @@ def _load_config() -> OrchestratorConfig:
     return load_config_from_dict(payload)
 
 
+async def _fetch_mcp_tool_catalog(config: OrchestratorConfig) -> list:
+    from app.services.direct_execution.mcp_client import DirectMcpClient, DirectMcpConfig
+
+    direct = getattr(config, "direct_execution", None)
+    if not direct:
+        return []
+    endpoint = str(getattr(direct, "mcp_endpoint_url", "") or "").strip()
+    if not endpoint:
+        return []
+    mcp_config = DirectMcpConfig(
+        endpoint_url=endpoint,
+        auth_mode=str(getattr(direct, "mcp_auth_mode", "none") or "none"),
+        token_env_var=str(getattr(direct, "mcp_token_env_var", "DEV_SPACE1_MCP_BEARER_TOKEN") or ""),
+        connect_timeout_seconds=float(getattr(direct, "connect_timeout_seconds", 10) or 10),
+        read_timeout_seconds=float(getattr(direct, "read_timeout_seconds", 60) or 60),
+        retry_budget=int(getattr(direct, "retry_budget", 1) or 1),
+    )
+    client = DirectMcpClient(mcp_config)
+    try:
+        tools = await client.list_tools()
+        await client.close()
+        print(f"MCP tool catalog fetched: {len(tools)} tools from {endpoint}")
+        return tools
+    except Exception as exc:
+        print(f"Warning: could not fetch MCP tool catalog: {exc}", file=sys.stderr)
+        try:
+            await client.close()
+        except Exception:
+            pass
+        return []
+
+
 async def _run() -> int:
     config = _load_config()
     raw_dir = Path(config.raw_plan_dir)
@@ -53,9 +85,12 @@ async def _run() -> int:
             retry_backoff_seconds=config.decision_retry_backoff_seconds,
         )
 
+    mcp_tool_catalog = await _fetch_mcp_tool_catalog(config)
+
     converter = RawPlanConverterService(
         semantic_service=semantic_service,
         use_llm=bool(config.converter_use_llm),
+        mcp_tool_catalog=mcp_tool_catalog,
     )
     compiled = 0
     failed = 0

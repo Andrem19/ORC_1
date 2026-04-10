@@ -263,10 +263,15 @@ class NotificationService:
         reject = sum(1 for i in items if i.result.verdict in ("REJECT", "FAILED"))
 
         builder = TelegramMessageBuilder()
+        # Header: "📋 Cycle #5 | v4 B2 | 3 workers completed: 2 OK, 1 failed"
+        seq_label = items[0].result.sequence_label
+        header_parts = [f"Cycle #{cycle}"]
+        if seq_label:
+            header_parts.append(seq_label)
+        header_parts.append(f"{len(items)} workers: {success_count} OK, {fail_count} fail")
         builder.add_header(
             "\U0001f4cb",
-            f"Cycle #{cycle} | {len(items)} workers completed: "
-            f"{success_count} OK, {fail_count} failed",
+            " | ".join(header_parts),
         )
         builder.add_separator()
 
@@ -315,7 +320,12 @@ class NotificationService:
 
         task_label = _short_task_label(result)
         verdict_badge = _verdict_icon(result.verdict) if result.verdict else ""
-        header = f"Cycle #{cycle} | {task_label}"
+        # Header: "Cycle #5 | v4 B2 | Validate OHLCV 🏆"
+        parts = [f"Cycle #{cycle}"]
+        if result.sequence_label:
+            parts.append(result.sequence_label)
+        parts.append(task_label)
+        header = " | ".join(parts)
         if verdict_badge:
             header += f" {verdict_badge}"
 
@@ -364,9 +374,9 @@ class NotificationService:
         executive_summary = str(getattr(report, "executive_summary_ru", "") or "")
         narrative = getattr(report, "narrative_sections_ru", None)
         next_actions: list[str] = list(getattr(narrative, "recommended_next_actions_ru", []) or []) if narrative else []
-        tool_rollup = getattr(report, "tool_usage_rollup", None)
-        tool_calls = int(getattr(tool_rollup, "total_calls", 0) or 0) if tool_rollup else 0
-        tool_failed = int(getattr(tool_rollup, "failed_calls", 0) or 0) if tool_rollup else 0
+        direct_metrics = getattr(report, "direct_metrics", None)
+        tool_calls = int(getattr(direct_metrics, "direct_tool_calls_observed", 0) or 0) if direct_metrics else 0
+        tool_failed = int(getattr(direct_metrics, "direct_failed", 0) or 0) if direct_metrics else 0
 
         icon = _stop_icon(stop_reason)
         builder = TelegramMessageBuilder()
@@ -410,7 +420,7 @@ class NotificationService:
         if tool_calls > 0:
             fail_pct = f"{tool_failed / tool_calls * 100:.1f}%" if tool_calls else "0%"
             builder.add_separator()
-            tool_line = f"\U0001f527 Tool usage: {tool_calls} calls, {tool_failed} failed ({fail_pct})"
+            tool_line = f"\U0001f527 Direct tool usage: {tool_calls} calls, {tool_failed} failed ({fail_pct})"
             builder.add_body(tool_line)
 
         return self._send_structured(builder.build())

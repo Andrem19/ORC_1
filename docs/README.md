@@ -1,5 +1,13 @@
 # CLI Agent Orchestrator
 
+## Environment
+
+This repository is pinned to `conda env6`.
+
+- Open the project terminal only with `conda env6`.
+- Do not create or use `.venv` or any other local virtualenv in this repository.
+- Run commands as `conda run -n env6 ...` or from an already activated `env6` shell.
+
 This project runs one canonical research loop:
 
 - Claude Code CLI acts as the planner and returns one markdown plan.
@@ -11,13 +19,13 @@ This project runs one canonical research loop:
 Run the real runtime:
 
 ```bash
-python main.py
+conda run -n env6 python main.py
 ```
 
 Run the fake demo:
 
 ```bash
-python -m examples.demo_run
+conda run -n env6 python -m examples.demo_run
 ```
 
 ## Main Packages

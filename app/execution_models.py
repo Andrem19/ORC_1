@@ -1,5 +1,5 @@
 """
-Structured models for brokered planner/worker execution.
+Structured models for direct planner/worker execution.
 """
 
 from __future__ import annotations
@@ -41,6 +41,7 @@ class PlanSlice:
     max_tool_calls: int
     max_expensive_calls: int
     parallel_slot: int
+    budget_scale_applied: int = 1
     depends_on: list[str] = field(default_factory=list)
     status: str = "pending"  # pending | running | checkpointed | completed | failed | aborted
     turn_count: int = 0
@@ -49,17 +50,13 @@ class PlanSlice:
     assigned_worker_id: str | None = None
     last_checkpoint_turn_id: str = ""
     last_checkpoint_summary: str = ""
+    last_checkpoint_status: str = ""
     final_report_turn_id: str = ""
     last_error: str = ""
     last_summary: str = ""
-    latest_tool_result_summary: str = ""
-    active_operation_tool: str = ""
     active_operation_ref: str = ""
     active_operation_status: str = ""
     active_operation_arguments: dict[str, Any] = field(default_factory=dict)
-    active_resume_tool: str = ""
-    active_resume_token: str = ""
-    last_tool_response_status: str = ""
     artifacts: list[str] = field(default_factory=list)
     facts: dict[str, Any] = field(default_factory=dict)
 
@@ -82,7 +79,7 @@ class ExecutionPlan:
     source_semantic_path: str = ""
     source_compile_report_path: str = ""
     sequence_batch_index: int = 0
-    status: str = "draft"  # draft | running | completed | failed
+    status: str = "draft"  # draft | running | completed | failed | stopped
     created_at: str = field(default_factory=utc_now_iso)
     updated_at: str = field(default_factory=utc_now_iso)
 
@@ -91,7 +88,7 @@ class ExecutionPlan:
 
     @property
     def is_terminal(self) -> bool:
-        return self.status in {"completed", "failed"}
+        return self.status in {"completed", "failed", "stopped"}
 
     def active_slices(self) -> list[PlanSlice]:
         return [item for item in self.slices if not item.is_terminal]
@@ -109,7 +106,7 @@ class WorkerReportableIssue:
 @dataclass
 class WorkerAction:
     action_id: str
-    action_type: str  # tool_call | checkpoint | final_report | abort
+    action_type: str  # checkpoint | final_report | abort
     tool: str = ""
     arguments: dict[str, Any] = field(default_factory=dict)
     reason: str = ""
@@ -133,49 +130,15 @@ class WorkerAction:
 
 
 @dataclass
-class ToolPolicy:
-    tool_name: str
-    expensive: bool = False
-    async_resumable: bool = False
-    mutating: bool = False
-    autopoll_enabled: bool = False
-    allowed_wait_modes: list[str] = field(default_factory=list)
-    default_wait_mode: str = ""
-
-
-@dataclass
-class ToolDefinition:
-    tool_name: str
-    description: str
-    title: str = ""
-    input_schema: dict[str, Any] = field(default_factory=dict)
-    output_schema: dict[str, Any] = field(default_factory=dict)
-    policy: ToolPolicy = field(default_factory=lambda: ToolPolicy(tool_name=""))
-
-
-@dataclass
-class ToolResultEnvelope:
-    call_id: str
-    tool: str
-    ok: bool
-    retryable: bool
-    duration_ms: int
-    summary: str
-    key_facts: dict[str, Any] = field(default_factory=dict)
-    artifact_ids: list[str] = field(default_factory=list)
-    warnings: list[str] = field(default_factory=list)
-    error_class: str = ""
-    raw_result_ref: str = ""
-    request_arguments: dict[str, Any] = field(default_factory=dict)
-    response_status: str = ""
-    tool_response_status: str = ""
-    operation_ref: str = ""
-    resume_tool: str = ""
-    resume_token: str = ""
-    resume_arguments: dict[str, Any] = field(default_factory=dict)
-    plan_id: str = ""
-    slice_id: str = ""
-    created_at: str = field(default_factory=utc_now_iso)
+class DirectAttemptMetadata:
+    provider: str = ""
+    artifact_path: str = ""
+    duration_ms: int = 0
+    error: str = ""
+    tool_call_count: int = 0
+    expensive_tool_call_count: int = 0
+    parse_retry_count: int = 0
+    fallback_attempts: list[dict[str, Any]] = field(default_factory=list)
 
 
 @dataclass
@@ -186,20 +149,8 @@ class ExecutionTurn:
     worker_id: str
     turn_index: int
     action: WorkerAction
-    tool_result: ToolResultEnvelope | None = None
+    direct_attempt: DirectAttemptMetadata = field(default_factory=DirectAttemptMetadata)
     created_at: str = field(default_factory=utc_now_iso)
-
-
-@dataclass
-class BrokerHealth:
-    endpoint_url: str = ""
-    bootstrapped_at: str = ""
-    session_id: str = ""
-    tool_count: int = 0
-    status: str = "unknown"
-    summary: str = ""
-    notes: list[str] = field(default_factory=list)
-    warnings: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -208,14 +159,11 @@ class ExecutionStateV2:
     status: str = "idle"  # idle | running | finished | error
     plans: list[ExecutionPlan] = field(default_factory=list)
     turn_history: list[ExecutionTurn] = field(default_factory=list)
-    tool_call_ledger: list[ToolResultEnvelope] = field(default_factory=list)
-    broker_health: BrokerHealth = field(default_factory=BrokerHealth)
     stop_reason: str = ""
     current_plan_id: str = ""
     completed_plan_count: int = 0
     consecutive_failed_plans: int = 0
     no_progress_cycles: int = 0
-    broker_failure_count: int = 0
     created_at: str = field(default_factory=utc_now_iso)
     updated_at: str = field(default_factory=utc_now_iso)
 

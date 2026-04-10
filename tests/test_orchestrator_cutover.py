@@ -25,7 +25,7 @@ def test_orchestrator_load_state_archives_legacy_runtime(tmp_path) -> None:
     loaded = orch.load_state()
 
     assert loaded is False
-    archive_root = state_dir / "archive" / "broker_cutover"
+    archive_root = state_dir / "archive" / "direct_cutover"
     archives = list(archive_root.iterdir())
     assert archives
     assert (archives[0] / "orchestrator_state.json").exists()

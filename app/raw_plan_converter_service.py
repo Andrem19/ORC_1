@@ -5,13 +5,17 @@ Offline conversion pipeline for raw markdown plans.
 from __future__ import annotations
 
 import asyncio
+import logging
 from pathlib import Path
+from typing import Any
 
 from app.raw_plan_compiler import build_failed_sequence, compile_semantic_raw_plan
 from app.raw_plan_models import CompiledPlanSequence, RawPlanDocument, RawPlanStageFragment, SemanticRawPlan, SemanticStage
 from app.raw_plan_parser import parse_raw_plan_file
 from app.raw_plan_semantic_service import RawPlanSemanticError, RawPlanSemanticService
 from app.execution_models import BaselineRef
+
+logger = logging.getLogger("orchestrator.converter")
 
 
 class RawPlanConverterService:
@@ -20,9 +24,11 @@ class RawPlanConverterService:
         *,
         semantic_service: RawPlanSemanticService | None,
         use_llm: bool,
+        mcp_tool_catalog: list[dict[str, Any]] | None = None,
     ) -> None:
         self.semantic_service = semantic_service
         self.use_llm = use_llm
+        self._mcp_tool_catalog = mcp_tool_catalog or []
 
     async def convert_path(self, path: str | Path) -> CompiledPlanSequence:
         document = parse_raw_plan_file(path)
@@ -35,7 +41,7 @@ class RawPlanConverterService:
 
     async def _semantic_plan(self, document: RawPlanDocument) -> SemanticRawPlan:
         if self.use_llm and self.semantic_service is not None:
-            return await self.semantic_service.extract(document)
+            return await self.semantic_service.extract(document, mcp_tool_catalog=self._mcp_tool_catalog)
         return _fallback_semantic_plan(document)
 
 

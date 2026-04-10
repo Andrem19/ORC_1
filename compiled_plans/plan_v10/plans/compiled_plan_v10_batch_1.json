@@ -1,6 +1,6 @@
 {
   "plan_id": "compiled_plan_v10_batch_1",
-  "goal": "Доказать или опровергнуть, что microstructure feature family (прежде всего cf_micro_imbalance_1h) даёт реальный overlay alpha поверх immutable base через veto, и вынести terminal verdict: PROMOTE / WATCHLIST / REJECT.",
+  "goal": "Validate whether the microstructure feature family (primarily cf_micro_imbalance_1h) provides a real overlay alpha on top of the immutable base via honest lockbox comparison.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -9,40 +9,47 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "База active-signal-v1@1 immutable: запрещено менять базу, подбирать часы/дни/пороги/исполнение, retune label scheme или architecture.",
-    "Активна только одна feature family: microstructure_proxies. Все остальные locked.",
-    "Overlay veto обязателен первым; early-cut и directional scout разрешены только после проходного veto-lockbox.",
-    "Единственный критерий истины — matched lockbox OOS comparison (base vs base+overlay) на том же окне.",
-    "Simple baselines (bucket/threshold/logistic) обязательны до CatBoost; если простой rule не хуже модели — сложность не нужна.",
-    "Short side приоритет (short-first) во всех veto экспериментах.",
-    "Запрещено: net_pnl>0 как единственный veto label; reopening закрытых avenues (leadership, path-asymmetry, regime-disagreement, event-only overlays, derivatives positioning без реальных данных).",
-    "Feature set ограничен micro-core (7 признаков) + минимальный context-support; запрещено подмешивать старые feature packs."
+    "Base active-signal-v1@1 is immutable — never modify snapshot, thresholds, hours, days, execution, or feature set",
+    "Only microstructure_proxies family is active in v10; all other families are locked",
+    "Lockbox overlay comparison (base vs base+overlay on the same window) is the sole valid truth test",
+    "Overlay-first: prove veto-overlay before attempting early-cut or directional scout",
+    "Simpler before smarter: single-feature bucket/threshold rules before logistic before CatBoost",
+    "Short-first priority: short veto models before long veto models",
+    "Label quality over model sophistication — noisy labels kill any model",
+    "Forbidden: net_pnl>0 as sole veto label; re-opening closed directions (leadership, breadth, path-asymmetry, regime-disagreement, event-only overlays, trade-quality without new information layer, derivatives without real OI/liquidation/basis data)",
+    "Nothing is declared an improvement unless it passes matched OOS comparison against the base on the same lockbox window"
   ],
   "slices": [
     {
       "slice_id": "compiled_plan_v10_stage_1",
       "title": "Closure-audit v9 и статус-коррекция",
-      "hypothesis": "Формально закрыть v9 со статусом 'signal discovered, route unproven', зафиксировать immutable reference и завести research map для v10.",
-      "objective": "Формально закрыть v9 со статусом 'signal discovered, route unproven', зафиксировать immutable reference и завести research map для v10.",
+      "hypothesis": "Формально закрыть v9 без завышенных формулировок, завести v10 project, зафиксировать immutable reference и карту осей.",
+      "objective": "Формально закрыть v9 без завышенных формулировок, завести v10 project, зафиксировать immutable reference и карту осей.",
       "success_criteria": [
-        "Существует clean project v10 с corrected v9 status и полным open-items register."
+        "Clean project v10 exists with corrected v9 status",
+        "Immutable reference frozen",
+        "Research map axes and open-items register populated"
       ],
       "allowed_tools": [
         "research_project",
-        "research_map",
         "research_record",
-        "research_search"
+        "research_map"
       ],
       "evidence_requirements": [
-        "Существует clean project v10 с corrected v9 status и полным open-items register."
+        "Clean project v10 exists with corrected v9 status",
+        "Immutable reference frozen",
+        "Research map axes and open-items register populated"
       ],
       "policy_tags": [
-        "setup"
+        "setup",
+        "cheap_first"
       ],
-      "max_turns": 4,
-      "max_tool_calls": 4,
-      "max_expensive_calls": 0,
+      "max_turns": 24,
+      "max_tool_calls": 24,
+      "max_expensive_calls": 2,
       "parallel_slot": 1,
+      "budget_scale_applied": 6,
+      "depends_on": [],
       "status": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
@@ -50,52 +57,49 @@
       "assigned_worker_id": null,
       "last_checkpoint_turn_id": "",
       "last_checkpoint_summary": "",
+      "last_checkpoint_status": "",
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
-      "latest_tool_result_summary": "",
-      "active_operation_tool": "",
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
-      "active_resume_tool": "",
-      "active_resume_token": "",
-      "last_tool_response_status": "",
       "artifacts": [],
       "facts": {}
     },
     {
       "slice_id": "compiled_plan_v10_stage_2",
       "title": "Завершить materialization и dataset hardening для micro-core",
-      "hypothesis": "Убрать технический долг: убедиться, что все 7 microstructure features стабильно materialized, без leakage, с правильным alignment.",
-      "objective": "Убрать технический долг: убедиться, что все 7 microstructure features стабильно materialized, без leakage, с правильным alignment.",
+      "hypothesis": "Убрать технический долг вокруг 7 microstructure features 5m→1h: убедиться в стабильной materialization, корректном alignment, отсутствии leakage.",
+      "objective": "Убрать технический долг вокруг 7 microstructure features 5m→1h: убедиться в стабильной materialization, корректном alignment, отсутствии leakage.",
       "success_criteria": [
-        "Все 7 features проходят warmup_ok, null_rate_ok, alignment_ok, leakage_ok.",
-        "Dataset version зафиксирован и воспроизводим."
+        "Все 7 micro-core features materialized с приемлемым warmup и null-rate",
+        "Alignment 5m→1h проверен, future leakage отсутствует",
+        "Dataset version зафиксирован"
       ],
       "allowed_tools": [
-        "datasets",
-        "datasets_sync",
-        "datasets_preview",
-        "events",
-        "events_sync",
-        "features_catalog",
-        "features_dataset",
         "features_custom",
-        "features_analytics"
+        "features_dataset",
+        "features_catalog",
+        "research_record"
       ],
       "evidence_requirements": [
-        "Все 7 features проходят warmup_ok, null_rate_ok, alignment_ok, leakage_ok.",
-        "Dataset version зафиксирован и воспроизводим."
+        "Все 7 micro-core features materialized с приемлемым warmup и null-rate",
+        "Alignment 5m→1h проверен, future leakage отсутствует",
+        "Dataset version зафиксирован"
       ],
       "policy_tags": [
-        "setup",
+        "data_readiness",
         "cheap_first"
       ],
-      "max_turns": 4,
-      "max_tool_calls": 4,
-      "max_expensive_calls": 0,
+      "max_turns": 36,
+      "max_tool_calls": 30,
+      "max_expensive_calls": 6,
       "parallel_slot": 1,
+      "budget_scale_applied": 6,
+      "depends_on": [
+        "compiled_plan_v10_stage_1"
+      ],
       "status": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
@@ -103,52 +107,50 @@
       "assigned_worker_id": null,
       "last_checkpoint_turn_id": "",
       "last_checkpoint_summary": "",
+      "last_checkpoint_status": "",
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
-      "latest_tool_result_summary": "",
-      "active_operation_tool": "",
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
-      "active_resume_tool": "",
-      "active_resume_token": "",
-      "last_tool_response_status": "",
       "artifacts": [],
       "facts": {}
     },
     {
       "slice_id": "compiled_plan_v10_stage_3",
       "title": "Augmented trade atlas with micro-core",
-      "hypothesis": "Обогатить trade atlas базы micro-features и понять, где microstructure сигнал strongest, проверить monotonicity и side asymmetry.",
-      "objective": "Обогатить trade atlas базы micro-features и понять, где microstructure сигнал strongest, проверить monotonicity и side asymmetry.",
+      "hypothesis": "Обогатить trade atlas базы micro-features и понять, где именно microstructure сигнал strongest и как его правильно использовать.",
+      "objective": "Обогатить trade atlas базы micro-features и понять, где именно microstructure сигнал strongest и как его правильно использовать.",
       "success_criteria": [
-        "Augmented atlas построен; monotonicity cf_micro_imbalance_1h оценена; side asymmetry задокументирована; 3–5 strongest patterns зафиксированы."
+        "Trade atlas обогащён micro-features",
+        "Разрезы построены для всех ключевых сегментов",
+        "Monotonicity и side asymmetry проверены",
+        "3–5 strongest patterns задокументированы"
       ],
       "allowed_tools": [
-        "backtests_analysis",
-        "backtests_conditions",
-        "experiments_run",
-        "experiments_inspect",
-        "experiments_read",
-        "datasets",
-        "datasets_sync",
-        "datasets_preview",
-        "events",
-        "events_sync",
-        "features_catalog",
-        "features_dataset"
+        "features_dataset",
+        "features_analytics",
+        "research_record"
       ],
       "evidence_requirements": [
-        "Augmented atlas построен; monotonicity cf_micro_imbalance_1h оценена; side asymmetry задокументирована; 3–5 strongest patterns зафиксированы."
+        "Trade atlas обогащён micro-features",
+        "Разрезы построены для всех ключевых сегментов",
+        "Monotonicity и side asymmetry проверены",
+        "3–5 strongest patterns задокументированы"
       ],
       "policy_tags": [
+        "analysis",
         "cheap_first"
       ],
-      "max_turns": 6,
-      "max_tool_calls": 5,
-      "max_expensive_calls": 1,
+      "max_turns": 24,
+      "max_tool_calls": 24,
+      "max_expensive_calls": 2,
       "parallel_slot": 1,
+      "budget_scale_applied": 6,
+      "depends_on": [
+        "compiled_plan_v10_stage_2"
+      ],
       "status": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
@@ -156,22 +158,25 @@
       "assigned_worker_id": null,
       "last_checkpoint_turn_id": "",
       "last_checkpoint_summary": "",
+      "last_checkpoint_status": "",
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
-      "latest_tool_result_summary": "",
-      "active_operation_tool": "",
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
-      "active_resume_tool": "",
-      "active_resume_token": "",
-      "last_tool_response_status": "",
       "artifacts": [],
       "facts": {}
     }
   ],
+  "plan_source_kind": "compiled_raw",
+  "source_sequence_id": "compiled_plan_v10",
+  "source_raw_plan": "raw_plans/plan_v10.md",
+  "source_manifest_path": "",
+  "source_semantic_path": "",
+  "source_compile_report_path": "",
+  "sequence_batch_index": 1,
   "status": "draft",
-  "created_at": "2026-04-09T14:32:33.478091+00:00",
-  "updated_at": "2026-04-09T14:32:33.478094+00:00"
+  "created_at": "2026-04-10T17:10:16.031574+00:00",
+  "updated_at": "2026-04-10T17:10:16.031579+00:00"
 }

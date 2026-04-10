@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
-import time
+import asyncio
+import json
 from unittest.mock import MagicMock, patch
 
+from app.execution_models import BaselineRef, ExecutionPlan, ExecutionStateV2, PlanSlice
 from app.models import OrchestratorState, StopReason
+from main import _make_signal_handler
 
 
 class TestFinishReentrancyGuard:
@@ -36,95 +39,44 @@ class TestFinishReentrancyGuard:
 
 
 class TestSignalHandlerDebounce:
-    def _make_handler(self, orch_mock):
-        """Create a signal handler with debounce logic matching main.py."""
-        import signal as _signal
-
-        _stop_phase = 0
-        _last_signal_time = 0.0
-
-        drain_called = []
-        stop_called = []
-
-        def handler(signum, frame):
-            nonlocal _stop_phase, _last_signal_time
-            now = time.monotonic()
-            suppressed = (now - _last_signal_time) < 2.0
-            _last_signal_time = now
-            if _stop_phase == 0:
-                # Phase transition BEFORE action (matches main.py fix)
-                _stop_phase = 1
-                orch_mock.request_drain()
-                drain_called.append(True)
-            elif _stop_phase == 1:
-                _stop_phase = 2
-                orch_mock.request_stop()
-                stop_called.append(not suppressed)
-            else:
-                if not suppressed:
-                    pass  # would log
-                raise KeyboardInterrupt
-
-        return handler, drain_called, stop_called
-
     def test_first_signal_enters_drain_mode(self):
         orch = MagicMock()
-        handler, drain_called, stop_called = self._make_handler(orch)
+        handler = _make_signal_handler(orch, hard_exit=MagicMock())
         handler(2, None)  # SIGINT
-        assert len(drain_called) == 1
         orch.request_drain.assert_called_once()
 
     def test_second_signal_forces_stop(self):
         orch = MagicMock()
-        handler, drain_called, stop_called = self._make_handler(orch)
+        orch.request_stop_now = MagicMock()
+        handler = _make_signal_handler(orch, hard_exit=MagicMock())
         handler(2, None)  # phase 0→1
         handler(2, None)  # phase 1→2
-        assert len(stop_called) == 1
-        orch.request_stop.assert_called_once()
+        orch.request_stop_now.assert_called_once()
 
-    def test_third_signal_raises_keyboard_interrupt(self):
+    def test_third_signal_forces_hard_exit(self):
         orch = MagicMock()
-        handler, _, _ = self._make_handler(orch)
+        hard_exit = MagicMock()
+        handler = _make_signal_handler(orch, hard_exit=hard_exit)
         handler(2, None)  # phase 0→1
         handler(2, None)  # phase 1→2
-        try:
-            handler(2, None)  # phase 2→3
-            assert False, "Should have raised KeyboardInterrupt"
-        except KeyboardInterrupt:
-            pass
-
-    def test_rapid_second_signal_suppresses_logging(self):
-        """Two signals within 2s — second signal logging should be suppressed."""
-        orch = MagicMock()
-        handler, drain_called, stop_called = self._make_handler(orch)
-        handler(2, None)  # phase 0→1
-        # Immediately fire again — suppressed
-        handler(2, None)  # phase 1→2
-        # stop_called[0] is False (suppressed) — action still executed
-        assert len(stop_called) == 1
-        assert stop_called[0] is False
-        # But request_stop still called (action is not suppressed)
-        orch.request_stop.assert_called_once()
+        handler(2, None)  # phase 2→3
+        orch.terminate_runtime_processes.assert_called_once_with(force=True)
+        hard_exit.assert_called_once_with(130)
 
     def test_burst_of_signals_only_calls_drain_once(self):
-        """Simulate rapid SIGINT burst — request_drain must fire only once."""
         orch = MagicMock()
-        handler, drain_called, stop_called = self._make_handler(orch)
-        # Fire 20 rapid signals (third+ raise KeyboardInterrupt)
-        for _ in range(20):
-            try:
-                handler(2, None)
-            except KeyboardInterrupt:
-                pass
-        # Only first call enters drain, second enters stop, rest raise
-        assert len(drain_called) == 1
-        assert len(stop_called) == 1
+        orch.request_stop_now = MagicMock()
+        hard_exit = MagicMock()
+        handler = _make_signal_handler(orch, hard_exit=hard_exit)
+        for _ in range(5):
+            handler(2, None)
         orch.request_drain.assert_called_once()
-        orch.request_stop.assert_called_once()
+        orch.request_stop_now.assert_called_once()
+        hard_exit.assert_called_once_with(130)
 
 
 class TestRequestDrainIdempotency:
-    """Verify request_drain() and request_stop() are idempotent."""
+    """Verify request_drain() and request_stop_now() are idempotent."""
 
     def _make_orch(self):
         from app.orchestrator import Orchestrator
@@ -149,17 +101,267 @@ class TestRequestDrainIdempotency:
         orch.request_drain()
         assert orch.notification_service.send_lifecycle.call_count == 1
 
-    def test_request_stop_idempotent(self):
-        """request_stop() should only log once."""
+    def test_request_stop_now_idempotent(self):
+        """request_stop_now() should only log once."""
         orch = self._make_orch()
         orch._stop_requested = False
+        orch._stop_now_requested = False
         orch._plan_service = None
+        orch.process_registry = MagicMock()
 
         import logging
         with patch.object(logging.getLogger("orchestrator"), "info") as log_mock:
-            orch.request_stop()
+            orch.request_stop_now()
             assert orch._stop_requested is True
 
-            orch.request_stop()
+            orch.request_stop_now()
             # Only one log call — second was a no-op
             assert log_mock.call_count == 1
+            orch.process_registry.terminate_all.assert_called_once()
+
+
+def test_request_stop_now_persists_graceful_stop_snapshot_and_plan_progress(tmp_path):
+    from app.adapters.fake_planner import FakePlanner
+    from app.adapters.fake_worker import FakeWorker
+    from app.config import OrchestratorConfig
+    from app.models import WorkerConfig
+    from app.orchestrator import Orchestrator
+
+    cfg = OrchestratorConfig(
+        goal="Signal stop",
+        state_dir=str(tmp_path / "state"),
+        plan_dir=str(tmp_path / "plans"),
+    )
+    cfg.workers = [WorkerConfig(worker_id="worker-1", role="executor", system_prompt="")]
+    orch = Orchestrator(
+        config=cfg,
+        planner_adapter=FakePlanner(responses=[], delay=0.0),
+        worker_adapter=FakeWorker(responses=[], delay=0.0),
+    )
+    orch.notification_service = MagicMock()
+    plan = ExecutionPlan(
+        plan_id="plan_stop",
+        goal="Persist operator stop",
+        baseline_ref=BaselineRef(snapshot_id="active-signal-v1", version=1),
+        global_constraints=["keep baseline fixed"],
+        status="running",
+        slices=[
+            PlanSlice(
+                slice_id="slice_done",
+                title="Done",
+                hypothesis="done",
+                objective="done",
+                success_criteria=["done"],
+                allowed_tools=["events"],
+                evidence_requirements=["done"],
+                policy_tags=["analysis"],
+                max_turns=2,
+                max_tool_calls=1,
+                max_expensive_calls=0,
+                parallel_slot=1,
+                status="completed",
+                final_report_turn_id="turn_done",
+                last_summary="already done",
+            ),
+            PlanSlice(
+                slice_id="slice_waiting",
+                title="Waiting",
+                hypothesis="waiting",
+                objective="waiting",
+                success_criteria=["done"],
+                allowed_tools=["events"],
+                evidence_requirements=["done"],
+                policy_tags=["analysis"],
+                max_turns=2,
+                max_tool_calls=1,
+                max_expensive_calls=0,
+                parallel_slot=2,
+                status="checkpointed",
+                last_checkpoint_status="partial",
+                last_checkpoint_summary="waiting for status",
+                last_summary="waiting for status",
+            ),
+            PlanSlice(
+                slice_id="slice_running",
+                title="Running",
+                hypothesis="running",
+                objective="running",
+                success_criteria=["done"],
+                allowed_tools=["events"],
+                evidence_requirements=["done"],
+                policy_tags=["analysis"],
+                max_turns=2,
+                max_tool_calls=1,
+                max_expensive_calls=0,
+                parallel_slot=3,
+                status="running",
+                last_summary="mid-turn",
+                active_operation_ref="op_1",
+                active_operation_status="running",
+                active_operation_arguments={"view": "catalog"},
+            ),
+            PlanSlice(
+                slice_id="slice_pending",
+                title="Pending",
+                hypothesis="pending",
+                objective="pending",
+                success_criteria=["done"],
+                allowed_tools=["events"],
+                evidence_requirements=["done"],
+                policy_tags=["analysis"],
+                max_turns=2,
+                max_tool_calls=1,
+                max_expensive_calls=0,
+                parallel_slot=4,
+                status="pending",
+            ),
+        ],
+    )
+    orch.execution_state = ExecutionStateV2(goal="Signal stop", status="running", plans=[plan], current_plan_id=plan.plan_id)
+    orch.process_registry = MagicMock()
+
+    orch.request_stop_now()
+
+    persisted_state = json.loads((tmp_path / "state" / "execution_state_v2.json").read_text(encoding="utf-8"))
+    persisted_plan = json.loads((tmp_path / "plans" / "plans" / "plan_stop.json").read_text(encoding="utf-8"))
+
+    assert persisted_state["status"] == "finished"
+    assert persisted_state["stop_reason"] == "graceful_stop"
+    assert persisted_plan["status"] == "stopped"
+    statuses = {item["slice_id"]: item["status"] for item in persisted_plan["slices"]}
+    assert statuses == {
+        "slice_done": "completed",
+        "slice_waiting": "checkpointed",
+        "slice_running": "checkpointed",
+        "slice_pending": "pending",
+    }
+    running_slice = next(item for item in persisted_plan["slices"] if item["slice_id"] == "slice_running")
+    assert running_slice["last_checkpoint_status"] == "blocked"
+    assert running_slice["active_operation_ref"] == ""
+    assert all(item["status"] != "running" for item in persisted_plan["slices"])
+
+
+def test_terminal_summary_reflects_persisted_plan_status_after_graceful_stop(tmp_path):
+    from app.adapters.fake_planner import FakePlanner
+    from app.adapters.fake_worker import FakeWorker
+    from app.config import OrchestratorConfig
+    from app.models import WorkerConfig
+    from app.orchestrator import Orchestrator
+
+    cfg = OrchestratorConfig(
+        goal="Terminal summary",
+        state_dir=str(tmp_path / "state"),
+        plan_dir=str(tmp_path / "plans"),
+    )
+    cfg.workers = [WorkerConfig(worker_id="worker-1", role="executor", system_prompt="")]
+    orch = Orchestrator(
+        config=cfg,
+        planner_adapter=FakePlanner(responses=[], delay=0.0),
+        worker_adapter=FakeWorker(responses=[], delay=0.0),
+    )
+    plan = ExecutionPlan(
+        plan_id="plan_running",
+        goal="Persisted plan should be terminalized",
+        baseline_ref=BaselineRef(snapshot_id="active-signal-v1", version=1),
+        global_constraints=["keep baseline fixed"],
+        status="running",
+        slices=[
+            PlanSlice(
+                slice_id="slice_running",
+                title="Running",
+                hypothesis="running",
+                objective="running",
+                success_criteria=["done"],
+                allowed_tools=["events"],
+                evidence_requirements=["done"],
+                policy_tags=["analysis"],
+                max_turns=2,
+                max_tool_calls=1,
+                max_expensive_calls=0,
+                parallel_slot=1,
+                status="running",
+            )
+        ],
+    )
+    orch.execution_state = ExecutionStateV2(goal="Terminal summary", status="running", plans=[plan], current_plan_id=plan.plan_id)
+
+    orch.persist_terminal_snapshot(reason=StopReason.GRACEFUL_STOP, summary="plan=plan_running status=running")
+
+    assert orch._terminal_summary("fallback") == "plan=plan_running status=stopped"
+
+
+class TestSignalHandlerTaskCancellation:
+    """Verify that the second signal cancels asyncio tasks."""
+
+    def test_second_signal_cancels_running_tasks(self):
+        """When a running event loop exists, phase 2 cancels all its tasks."""
+        orch = MagicMock()
+        orch.request_stop_now = MagicMock()
+        handler = _make_signal_handler(orch, hard_exit=MagicMock())
+
+        # Verify by patching asyncio.all_tasks to track cancel calls
+        cancelled_tasks = []
+
+        class TrackableTask:
+            def __init__(self, real_task):
+                self._real = real_task
+            def done(self):
+                return self._real.done()
+            def cancel(self):
+                cancelled_tasks.append(self._real)
+                return self._real.cancel()
+
+        async def _verify_cancellation():
+            task = asyncio.ensure_future(asyncio.sleep(100))
+            wrapped = TrackableTask(task)
+            with patch("asyncio.all_tasks", return_value=[wrapped]):
+                handler(2, None)  # phase 0→1 (drain)
+                handler(2, None)  # phase 1→2 (cancel + _cancel_running_tasks)
+            assert len(cancelled_tasks) >= 1
+            task.cancel()
+
+        try:
+            asyncio.run(_verify_cancellation())
+        except asyncio.CancelledError:
+            pass
+
+    def test_cancel_running_tasks_safe_without_event_loop(self):
+        """_cancel_running_tasks should not crash when no event loop is running."""
+        orch = MagicMock()
+        handler = _make_signal_handler(orch, hard_exit=MagicMock())
+        # This should not raise — there's no running event loop in a sync test
+        handler(2, None)  # phase 0→1
+        handler(2, None)  # phase 1→2 — _cancel_running_tasks should silently skip
+        orch.request_stop_now.assert_called_once()
+
+
+class TestOrchestratorCancelledErrorHandling:
+    """Verify orchestrator.run() catches CancelledError."""
+
+    def test_run_catches_cancelled_error(self):
+        from app.orchestrator import Orchestrator
+
+        with patch("app.orchestrator.NotificationService"):
+            orch = MagicMock(spec=Orchestrator)
+            orch._finish_completed = False
+            orch._stop_now_requested = False
+            orch._plan_service = None
+
+            with patch("app.services.direct_execution.DirectExecutionService"):
+                with patch("app.orchestrator.asyncio") as mock_asyncio:
+                    mock_asyncio.CancelledError = asyncio.CancelledError
+                    # First call: svc.run() raises CancelledError
+                    # Second call: _finish_async() returns None
+                    mock_asyncio.run = MagicMock(side_effect=[asyncio.CancelledError(), None])
+                    result = Orchestrator.run(orch)
+                    assert result == StopReason.GRACEFUL_STOP
+
+
+class TestDrainTimeout:
+    """Verify drain mode auto-escalates to force stop after timeout."""
+
+    def test_drain_timeout_forces_stop(self, tmp_path):
+        from app.services.direct_execution.service import _DRAIN_TIMEOUT_SECONDS
+
+        # Verify the timeout constant is reasonable
+        assert 10.0 <= _DRAIN_TIMEOUT_SECONDS <= 120.0

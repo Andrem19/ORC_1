@@ -38,9 +38,8 @@ _TAG_TO_EVENT: dict[str, OrchestratorEvent] = {e.value: e for e in OrchestratorE
 
 _LOGGER_GROUP: list[tuple[str, str, Style]] = [
     # (prefix_match, display_tag, style)  — first match wins
-    ("orchestrator.brokered",            "SLICE",    Style(color="green")),
-    ("orchestrator.broker.transport",    "BROKER",   Style(color="yellow", dim=True)),
-    ("orchestrator.broker",              "TOOL",     Style(color="yellow")),
+    ("orchestrator.direct.mcp",          "MCP",      Style(color="yellow", dim=True)),
+    ("orchestrator.direct",              "DIRECT",   Style(color="green")),
     ("orchestrator.plan",                "PLAN",     Style(color="magenta")),
     ("orchestrator.adapter.claude",      "CLAUDE",   Style(color="yellow")),
     ("orchestrator.adapter.qwen",        "QWEN",     Style(color="blue")),

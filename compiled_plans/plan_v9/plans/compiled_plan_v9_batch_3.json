@@ -1,6 +1,6 @@
 {
   "plan_id": "compiled_plan_v9_batch_3",
-  "goal": "Определить, содержит ли доступный новый data universe реальный информационный сигнал сверх текущего OHLCV+IV+classifier+breadth+event space, и может ли он стать основой для overlay или directional model route.",
+  "goal": "Определить, содержит ли новый data universe (derivatives positioning / pressure) реальный информационный сигнал сверх текущего OHLCV+IV+classifier+breadth+event space, и может ли он стать основой overlay-route для active-signal-v1.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -9,44 +9,51 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "База active-signal-v1@1 — immutable reference: запрещено менять базу, подбирать ей параметры, заново открывать closed routes на старом data universe.",
-    "Новый data universe обязан быть новым по сути, а не другой упаковкой уже использованной информации (OHLCV, IV, classifier transitions, breadth, events).",
-    "Одна primary data family за раз; fallback — строго по очереди, не паралельно.",
-    "Overlay-first: новая family сначала проверяется на veto/overlay surface базы, directional scout разрешён только после overlay evidence.",
-    "Никакого feature selection, label scheme, threshold, horizon или архитектуры по lockbox-окну.",
+    "Immutable reference base active-signal-v1@1 — запрещено менять базу, подбирать ей часы/дни/пороги/исполнение.",
+    "Нельзя открывать full-surface directional classification или trade-quality overlays на старом data universe.",
+    "Запрещён regression на future PnL, selection по lockbox-окну, перестановка старых features.",
     "Любое улучшение обязано пройти matched OOS comparison против базы на том же окне.",
-    "Purge gap минимум 24h для trade/holding tasks; больше если новая family требует lookback.",
-    "Первая волна features — не более 12 на family.",
-    "Direction labels запрещено открывать раньше overlay evidence.",
-    "Family choice freeze перед modeling; feature set freeze перед training; threshold freeze перед lockbox."
+    "Primary family: derivatives positioning/pressure; fallback: cross-exchange pressure; reserve: microstructure proxies.",
+    "Overlay-first: новый universe сначала проверяется на veto/overlay surface; direction — только при strong overlay evidence.",
+    "Максимум 12 features в первой волне для primary family.",
+    "Максимум одна дополнительная ветка (early-cut ИЛИ extension) сверх veto.",
+    "Direction labels запрещены до overlay evidence.",
+    "Purge gap ≥24h; freeze rules: family before modeling, feature set before training, threshold before lockbox."
   ],
   "slices": [
     {
       "slice_id": "compiled_plan_v9_stage_7",
       "title": "Lockbox test for veto route",
-      "hypothesis": "Сравнить immutable base против base+veto overlay на lockbox OOS и измерить реальное улучшение.",
-      "objective": "Сравнить immutable base против base+veto overlay на lockbox OOS и измерить реальное улучшение.",
+      "hypothesis": "Провести immutable lockbox OOS comparison: base vs base+veto overlay на одном и том же окне.",
+      "objective": "Провести immutable lockbox OOS comparison: base vs base+veto overlay на одном и том же окне.",
       "success_criteria": [
-        "Заполнена lockbox-таблица: overlay_id, side, lockbox_delta_pnl/pf/dd, removed_trades, ownership_positive, final_decision"
+        "Lockbox delta PnL ≥ 0, delta PF ≥ 0, delta DD ≤ 0.",
+        "PnL removed trades отрицательный (убраны убыточные).",
+        "Ownership positive."
       ],
       "allowed_tools": [
-        "backtests_plan",
         "backtests_runs",
-        "backtests_studies",
-        "backtests_walkforward",
-        "backtests_conditions",
-        "backtests_analysis"
+        "backtests_analysis",
+        "models_compare",
+        "research_record"
       ],
       "evidence_requirements": [
-        "Заполнена lockbox-таблица: overlay_id, side, lockbox_delta_pnl/pf/dd, removed_trades, ownership_positive, final_decision"
+        "Lockbox delta PnL ≥ 0, delta PF ≥ 0, delta DD ≤ 0.",
+        "PnL removed trades отрицательный (убраны убыточные).",
+        "Ownership positive."
       ],
       "policy_tags": [
-        "lockbox"
+        "lockbox",
+        "oos_validation"
       ],
-      "max_turns": 8,
-      "max_tool_calls": 6,
-      "max_expensive_calls": 2,
+      "max_turns": 24,
+      "max_tool_calls": 24,
+      "max_expensive_calls": 3,
       "parallel_slot": 1,
+      "budget_scale_applied": 6,
+      "depends_on": [
+        "compiled_plan_v9_stage_6"
+      ],
       "status": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
@@ -54,46 +61,43 @@
       "assigned_worker_id": null,
       "last_checkpoint_turn_id": "",
       "last_checkpoint_summary": "",
+      "last_checkpoint_status": "",
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
-      "latest_tool_result_summary": "",
-      "active_operation_tool": "",
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
-      "active_resume_tool": "",
-      "active_resume_token": "",
-      "last_tool_response_status": "",
       "artifacts": [],
       "facts": {}
     },
     {
       "slice_id": "compiled_plan_v9_stage_8",
-      "title": "Early-cut и extension decision gate",
-      "hypothesis": "На основе lockbox-результатов veto route решить, есть ли evidence для открытия ровно одной дополнительной ветки (early-cut или extension).",
-      "objective": "На основе lockbox-результатов veto route решить, есть ли evidence для открытия ровно одной дополнительной ветки (early-cut или extension).",
+      "title": "Early-cut / extension decision gate",
+      "hypothesis": "Если veto route прошёл lockbox — решить, есть ли evidence для одной дополнительной ветки (early-cut ИЛИ extension).",
+      "objective": "Если veto route прошёл lockbox — решить, есть ли evidence для одной дополнительной ветки (early-cut ИЛИ extension).",
       "success_criteria": [
-        "Принято формальное решение: какая дополнительная route открыта или все locked"
+        "Принято формальное решение: open early-cut, open extension, или neither."
       ],
       "allowed_tools": [
-        "backtests_analysis",
-        "backtests_conditions",
-        "experiments_run",
-        "experiments_inspect",
-        "experiments_read"
+        "research_record",
+        "research_map"
       ],
       "evidence_requirements": [
-        "Принято формальное решение: какая дополнительная route открыта или все locked"
+        "Принято формальное решение: open early-cut, open extension, или neither."
       ],
       "policy_tags": [
         "decision_gate",
         "optional_candidate"
       ],
-      "max_turns": 8,
-      "max_tool_calls": 6,
+      "max_turns": 24,
+      "max_tool_calls": 24,
       "max_expensive_calls": 2,
       "parallel_slot": 1,
+      "budget_scale_applied": 6,
+      "depends_on": [
+        "compiled_plan_v9_stage_7"
+      ],
       "status": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
@@ -101,52 +105,49 @@
       "assigned_worker_id": null,
       "last_checkpoint_turn_id": "",
       "last_checkpoint_summary": "",
+      "last_checkpoint_status": "",
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
-      "latest_tool_result_summary": "",
-      "active_operation_tool": "",
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
-      "active_resume_tool": "",
-      "active_resume_token": "",
-      "last_tool_response_status": "",
       "artifacts": [],
       "facts": {}
     },
     {
       "slice_id": "compiled_plan_v9_stage_9",
       "title": "Optional route execution (early-cut или extension)",
-      "hypothesis": "Выполнить обучение и lockbox-тест для единственной дополнительной route, заслужившей открытие.",
-      "objective": "Выполнить обучение и lockbox-тест для единственной дополнительной route, заслужившей открытие.",
+      "hypothesis": "Выполнить единственную дополнительно открытую ветку: обучить модель, проверить на selection OOS и lockbox.",
+      "objective": "Выполнить единственную дополнительно открытую ветку: обучить модель, проверить на selection OOS и lockbox.",
       "success_criteria": [
-        "Заполнена таблица: route, selection_quality_ok, lockbox_quality_ok, delta_vs_base_meaningful, final_decision"
+        "Selection quality OK, lockbox quality OK.",
+        "Delta vs base meaningful и положительный, либо route формально закрыта."
       ],
       "allowed_tools": [
-        "models_dataset",
         "models_train",
-        "models_registry",
-        "models_compare",
-        "models_to_feature",
-        "backtests_plan",
+        "models_dataset",
         "backtests_runs",
-        "backtests_studies",
-        "backtests_walkforward",
-        "backtests_conditions",
-        "backtests_analysis"
+        "models_compare",
+        "research_record"
       ],
       "evidence_requirements": [
-        "Заполнена таблица: route, selection_quality_ok, lockbox_quality_ok, delta_vs_base_meaningful, final_decision"
+        "Selection quality OK, lockbox quality OK.",
+        "Delta vs base meaningful и положительный, либо route формально закрыта."
       ],
       "policy_tags": [
-        "conditional",
+        "modeling",
+        "gated",
         "optional_candidate"
       ],
-      "max_turns": 6,
-      "max_tool_calls": 5,
-      "max_expensive_calls": 2,
+      "max_turns": 24,
+      "max_tool_calls": 24,
+      "max_expensive_calls": 3,
       "parallel_slot": 1,
+      "budget_scale_applied": 6,
+      "depends_on": [
+        "compiled_plan_v9_stage_8"
+      ],
       "status": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
@@ -154,22 +155,25 @@
       "assigned_worker_id": null,
       "last_checkpoint_turn_id": "",
       "last_checkpoint_summary": "",
+      "last_checkpoint_status": "",
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
-      "latest_tool_result_summary": "",
-      "active_operation_tool": "",
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
-      "active_resume_tool": "",
-      "active_resume_token": "",
-      "last_tool_response_status": "",
       "artifacts": [],
       "facts": {}
     }
   ],
+  "plan_source_kind": "compiled_raw",
+  "source_sequence_id": "compiled_plan_v9",
+  "source_raw_plan": "raw_plans/plan_v9.md",
+  "source_manifest_path": "",
+  "source_semantic_path": "",
+  "source_compile_report_path": "",
+  "sequence_batch_index": 3,
   "status": "draft",
-  "created_at": "2026-04-09T14:30:46.474454+00:00",
-  "updated_at": "2026-04-09T14:30:46.474455+00:00"
+  "created_at": "2026-04-10T17:07:43.039485+00:00",
+  "updated_at": "2026-04-10T17:07:43.039486+00:00"
 }

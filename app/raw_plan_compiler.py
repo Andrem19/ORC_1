@@ -8,6 +8,7 @@ from pathlib import Path
 
 from app.execution_models import ExecutionPlan, PlanSlice
 from app.raw_plan_models import CompileReport, CompiledPlanSequence, RawPlanDocument, SemanticRawPlan, SemanticStage
+from app.services.direct_execution.budgeting import normalize_plan_budgets
 
 _PUBLIC_TOOL_NAMES = {
     "research_project",
@@ -81,17 +82,24 @@ def compile_semantic_raw_plan(
     for batch_index in range(0, len(stages), 3):
         batch = stages[batch_index: batch_index + 3]
         plan_id = f"{sequence_id}_batch_{len(plans) + 1}"
+        slices: list[PlanSlice] = []
+        for index, stage in enumerate(batch):
+            slice_obj, slice_warnings = _compile_stage(sequence_id=sequence_id, stage=stage, slot_index=index + 1)
+            slices.append(slice_obj)
+            warnings.extend(slice_warnings)
         plans.append(
-            ExecutionPlan(
+            normalize_plan_budgets(
+                ExecutionPlan(
                 plan_id=plan_id,
                 goal=semantic_plan.goal,
                 baseline_ref=semantic_plan.baseline_ref,
                 global_constraints=list(semantic_plan.global_constraints),
-                slices=[_compile_stage(sequence_id=sequence_id, stage=stage, slot_index=index + 1) for index, stage in enumerate(batch)],
+                slices=slices,
                 plan_source_kind="compiled_raw",
                 source_sequence_id=sequence_id,
                 source_raw_plan=document.source_file,
                 sequence_batch_index=len(plans) + 1,
+                )
             )
         )
     report = CompileReport(
@@ -144,10 +152,11 @@ def build_failed_sequence(
     )
 
 
-def _compile_stage(*, sequence_id: str, stage: SemanticStage, slot_index: int) -> PlanSlice:
+def _compile_stage(*, sequence_id: str, stage: SemanticStage, slot_index: int) -> tuple[PlanSlice, list[str]]:
     budget_class = _stage_budget_class(stage)
     max_turns, max_tool_calls, max_expensive_calls = _BUDGET_PRESETS[budget_class]
     allowed_tools = _infer_allowed_tools(stage)
+    allowed_tools, warnings = _reconcile_stage_allowed_tools(stage=stage, allowed_tools=allowed_tools)
     policy_tags = list(stage.policy_tags)
     if not stage.required and "optional_candidate" not in policy_tags:
         policy_tags.append("optional_candidate")
@@ -166,7 +175,7 @@ def _compile_stage(*, sequence_id: str, stage: SemanticStage, slot_index: int) -
         max_expensive_calls=max_expensive_calls,
         parallel_slot=parallel_slot,
         depends_on=[f"{sequence_id}_{dep}" for dep in stage.depends_on if dep],
-    )
+    ), warnings
 
 
 def _infer_allowed_tools(stage: SemanticStage) -> list[str]:
@@ -197,3 +206,41 @@ def _stage_budget_class(stage: SemanticStage) -> str:
     if any(token in title for token in ("analysis", "ownership", "cannibalization", "verdict", "final")):
         return "finalization" if any(token in title for token in ("verdict", "final")) else "analysis"
     return "default"
+
+
+def _reconcile_stage_allowed_tools(*, stage: SemanticStage, allowed_tools: list[str]) -> tuple[list[str], list[str]]:
+    normalized = list(allowed_tools)
+    warnings: list[str] = []
+    if "research_record" in normalized:
+        return normalized, warnings
+    if not normalized:
+        return normalized, warnings
+    normalized.append("research_record")
+    warnings.append(
+        f"Auto-added research_record for {stage.stage_id}: every non-trivial stage needs documentation capability."
+    )
+    return normalized, warnings
+
+
+def _stage_requires_research_record(stage: SemanticStage) -> bool:
+    haystack = " ".join(
+        part.strip().lower()
+        for part in (
+            stage.title,
+            stage.objective,
+            *list(stage.actions or []),
+            *list(stage.success_criteria or []),
+        )
+        if str(part).strip()
+    )
+    markers = (
+        "record",
+        "document",
+        "postmortem",
+        "rules",
+        "methodology",
+        "journal",
+        "milestone",
+        "freeze rationale",
+    )
+    return any(marker in haystack for marker in markers)

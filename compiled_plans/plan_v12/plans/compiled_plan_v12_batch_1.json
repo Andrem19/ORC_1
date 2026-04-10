@@ -1,6 +1,6 @@
 {
   "plan_id": "compiled_plan_v12_batch_1",
-  "goal": "Квалифицировать microstructure-route в один из трёх честных статусов: confirmed true overlay, confirmed replacement layer, или watchlist/reject.",
+  "goal": "Final qualification of the microstructure route into one of three honest statuses: confirmed true overlay, confirmed replacement layer, or watchlist/reject against immutable base active-signal-v1@1.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -9,43 +9,44 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "База active-signal-v1@1 — immutable reference; запрещено менять базу или подбирать ей параметры.",
-    "Все ключевые reruns обязаны использовать @1 как единственную базу принятия решений; @3 только вспомогательный исторический reference.",
-    "Overlay и replacement — разные продукты; запрещено смешивать их в одном рассказе или эксперименте.",
-    "Каждый threshold должен иметь documented provenance: quantile rule или selection-OOS search with frozen lockbox.",
-    "Запрещено открывать новые data universe, model families или macro-маршруты до завершения microstructure qualification.",
-    "Сравнение только same-window: base @1, overlay/replacement, combined — на одном и том же окне.",
-    "Simple rules first: bucket → threshold → quantile → logistic → small CatBoost.",
-    "Short-first, but not short-only: v12 обязан честно закрыть short-only, long-only и combined."
+    "Never modify the immutable base snapshot active-signal-v1@1.",
+    "All key comparisons must use active-signal-v1@1 as the sole decision reference; @3 is auxiliary only.",
+    "Overlay and replacement tracks must never be mixed in the same narrative or run.",
+    "Every threshold must have documented provenance: quantile rule or selection-OOS search with frozen lockbox. No hand-tuned magic numbers.",
+    "All comparisons must be same-window: base @1, variant, and combined run on identical time windows.",
+    "Simple rules (bucket, threshold, quantile) must be evaluated before any model-based approach.",
+    "Short-only, long-only, and combined side splits must all be evaluated independently.",
+    "Old routes (IV, breadth, path-asymmetry, regime-disagreement, directional classification on old universe) are closed and must not be reopened.",
+    "No new data families or macro universe until microstructure qualification is complete."
   ],
   "slices": [
     {
       "slice_id": "compiled_plan_v12_stage_1",
-      "title": "Freeze терминологии и correction log",
-      "hypothesis": "Исправить язык и рамку, зафиксировать v11 downgrade, создать clean project v12 с corrected terminology и open-items register.",
-      "objective": "Исправить язык и рамку, зафиксировать v11 downgrade, создать clean project v12 с corrected terminology и open-items register.",
+      "title": "Freeze terminology and correction log",
+      "hypothesis": "Establish a clean v12 research project with corrected terminology, immutable reference lock, and structured open-items register so that overlay and replacement are never confused again.",
+      "objective": "Establish a clean v12 research project with corrected terminology, immutable reference lock, and structured open-items register so that overlay and replacement are never confused again.",
       "success_criteria": [
-        "Есть clean project v12 и corrected terminology.",
-        "Open-items register создан со всеми eight items."
+        "Clean v12 project exists with corrected terminology and locked baseline reference.",
+        "Research map axes created and open-items register populated."
       ],
       "allowed_tools": [
         "research_project",
-        "research_map",
         "research_record",
-        "research_search"
+        "research_map"
       ],
       "evidence_requirements": [
-        "Есть clean project v12 и corrected terminology.",
-        "Open-items register создан со всеми eight items."
+        "Clean v12 project exists with corrected terminology and locked baseline reference.",
+        "Research map axes created and open-items register populated."
       ],
       "policy_tags": [
-        "setup",
-        "cheap_first"
+        "setup"
       ],
-      "max_turns": 4,
-      "max_tool_calls": 4,
-      "max_expensive_calls": 0,
+      "max_turns": 24,
+      "max_tool_calls": 24,
+      "max_expensive_calls": 2,
       "parallel_slot": 1,
+      "budget_scale_applied": 6,
+      "depends_on": [],
       "status": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
@@ -53,46 +54,44 @@
       "assigned_worker_id": null,
       "last_checkpoint_turn_id": "",
       "last_checkpoint_summary": "",
+      "last_checkpoint_status": "",
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
-      "latest_tool_result_summary": "",
-      "active_operation_tool": "",
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
-      "active_resume_tool": "",
-      "active_resume_token": "",
-      "last_tool_response_status": "",
       "artifacts": [],
       "facts": {}
     },
     {
       "slice_id": "compiled_plan_v12_stage_2",
       "title": "Rebuild exact base @1 comparison frame",
-      "hypothesis": "Получить единственный canonical reference-run для base @1 на lockbox окне с полной декомпозицией метрик.",
-      "objective": "Получить единственный canonical reference-run для base @1 на lockbox окне с полной декомпозицией метрик.",
+      "hypothesis": "Produce one canonical lockbox reference run of the immutable base snapshot @1 with full trade-level detail, serving as the sole comparison baseline for all v12 work.",
+      "objective": "Produce one canonical lockbox reference run of the immutable base snapshot @1 with full trade-level detail, serving as the sole comparison baseline for all v12 work.",
       "success_criteria": [
-        "Есть один canonical base_ref1_lockbox_run с полной метрикой."
+        "One canonical base_ref1_lockbox_run exists with complete trade-level metrics."
       ],
       "allowed_tools": [
+        "backtests_strategy",
         "backtests_plan",
         "backtests_runs",
-        "backtests_studies",
-        "backtests_walkforward",
-        "backtests_conditions",
-        "backtests_analysis"
+        "research_record"
       ],
       "evidence_requirements": [
-        "Есть один canonical base_ref1_lockbox_run с полной метрикой."
+        "One canonical base_ref1_lockbox_run exists with complete trade-level metrics."
       ],
       "policy_tags": [
-        "setup"
+        "baseline"
       ],
-      "max_turns": 4,
-      "max_tool_calls": 4,
-      "max_expensive_calls": 0,
+      "max_turns": 48,
+      "max_tool_calls": 36,
+      "max_expensive_calls": 12,
       "parallel_slot": 1,
+      "budget_scale_applied": 6,
+      "depends_on": [
+        "compiled_plan_v12_stage_1"
+      ],
       "status": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
@@ -100,44 +99,46 @@
       "assigned_worker_id": null,
       "last_checkpoint_turn_id": "",
       "last_checkpoint_summary": "",
+      "last_checkpoint_status": "",
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
-      "latest_tool_result_summary": "",
-      "active_operation_tool": "",
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
-      "active_resume_tool": "",
-      "active_resume_token": "",
-      "last_tool_response_status": "",
       "artifacts": [],
       "facts": {}
     },
     {
       "slice_id": "compiled_plan_v12_stage_3",
       "title": "Threshold provenance and selection discipline",
-      "hypothesis": "Перевести hand-tuned thresholds в честную процедуру выбора с documented provenance и freeze до lockbox.",
-      "objective": "Перевести hand-tuned thresholds в честную процедуру выбора с documented provenance и freeze до lockbox.",
+      "hypothesis": "Replace hand-tuned thresholds with a principled selection procedure, producing up to 3 frozen threshold sets with documented provenance before any lockbox rerun.",
+      "objective": "Replace hand-tuned thresholds with a principled selection procedure, producing up to 3 frozen threshold sets with documented provenance before any lockbox rerun.",
       "success_criteria": [
-        "Есть frozen threshold sets с documented provenance для каждого cutoff."
+        "Frozen threshold sets with documented provenance exist.",
+        "No threshold lacks an explainable origin."
       ],
       "allowed_tools": [
-        "features_catalog",
         "features_custom",
-        "features_dataset",
-        "features_analytics"
+        "features_analytics",
+        "research_record"
       ],
       "evidence_requirements": [
-        "Есть frozen threshold sets с documented provenance для каждого cutoff."
+        "Frozen threshold sets with documented provenance exist.",
+        "No threshold lacks an explainable origin."
       ],
       "policy_tags": [
+        "setup",
         "cheap_first"
       ],
-      "max_turns": 4,
-      "max_tool_calls": 4,
-      "max_expensive_calls": 0,
-      "parallel_slot": 1,
+      "max_turns": 24,
+      "max_tool_calls": 24,
+      "max_expensive_calls": 2,
+      "parallel_slot": 3,
+      "budget_scale_applied": 6,
+      "depends_on": [
+        "compiled_plan_v12_stage_1"
+      ],
       "status": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
@@ -145,22 +146,25 @@
       "assigned_worker_id": null,
       "last_checkpoint_turn_id": "",
       "last_checkpoint_summary": "",
+      "last_checkpoint_status": "",
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
-      "latest_tool_result_summary": "",
-      "active_operation_tool": "",
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
-      "active_resume_tool": "",
-      "active_resume_token": "",
-      "last_tool_response_status": "",
       "artifacts": [],
       "facts": {}
     }
   ],
+  "plan_source_kind": "compiled_raw",
+  "source_sequence_id": "compiled_plan_v12",
+  "source_raw_plan": "raw_plans/plan_v12.md",
+  "source_manifest_path": "",
+  "source_semantic_path": "",
+  "source_compile_report_path": "",
+  "sequence_batch_index": 1,
   "status": "draft",
-  "created_at": "2026-04-09T14:39:54.144567+00:00",
-  "updated_at": "2026-04-09T14:39:54.144572+00:00"
+  "created_at": "2026-04-10T17:14:26.697467+00:00",
+  "updated_at": "2026-04-10T17:14:26.697486+00:00"
 }

@@ -1,6 +1,6 @@
 {
   "plan_id": "compiled_plan_v3_batch_2",
-  "goal": "Close the unfinished A1 branch from v2 to a definitive PROMOTE/REJECT decision, then open exactly one next low-friction branch only if A1 fails promotion.",
+  "goal": "Завершить незакрытую ветку A1 через полный acceptance chain, затем при необходимости исследовать ровно одну следующую low-friction ветку, не допуская преждевременного расширения поиска.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -9,43 +9,44 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "active-signal-v1@1 is immutable — never modify base hours, days, thresholds, or execution logic",
-    "Nothing counts as improvement unless it passes strict additive integration, permissive integration, ownership, and cannibalization proof",
-    "Only one candidate branch open at a time; no parallel wide search",
-    "Medium-friction wave B is forbidden until A1 is closed and one low-friction branch (A2 or A3) is fully closed with no promoted candidate"
+    "active-signal-v1@1 — immutable reference; запрещено менять базу, подбирать ей часы/дни/пороги/исполнение.",
+    "Любое улучшение обязано пройти через strict additive integration, permissive integration, ownership и cannibalization proof.",
+    "Одновременно открыта максимум одна low-friction ветка (A1 → затем A2 или A3, но не обе).",
+    "Wave B (medium-friction) запрещена, пока обе low-friction ветки не закрыты без promoted candidate.",
+    "Если candidate перестаёт быть положительным после удаления одного сильного куска истории — это не mainline-quality add-on.",
+    "Финальное решение по каждой ветке: PROMOTE / WATCHLIST / REJECT — без исключений."
   ],
   "slices": [
     {
       "slice_id": "compiled_plan_v3_stage_4",
       "title": "Обязательная интеграция A1 в двух режимах",
-      "hypothesis": "Close the main gap from v2: prove whether A1 is truly additive to the base by running both strict-additive and permissive integration modes.",
-      "objective": "Close the main gap from v2: prove whether A1 is truly additive to the base by running both strict-additive and permissive integration modes.",
+      "hypothesis": "Доказать или опровергнуть, что A1 является настоящим additive layer поверх неизменной базы, через strict additive и permissive integration.",
+      "objective": "Доказать или опровергнуть, что A1 является настоящим additive layer поверх неизменной базы, через strict additive и permissive integration.",
       "success_criteria": [
-        "Complete integration picture for A1 exists with delta PnL, trades, profit factor, and drawdown vs base"
+        "Есть полная интеграционная картина A1: strict_additive и permissive режимы с delta метриками."
       ],
       "allowed_tools": [
-        "models_dataset",
-        "models_train",
-        "models_registry",
-        "models_compare",
-        "models_to_feature",
-        "backtests_plan",
+        "backtests_strategy",
         "backtests_runs",
-        "backtests_studies",
-        "backtests_walkforward",
-        "backtests_conditions",
-        "backtests_analysis"
+        "backtests_analysis",
+        "research_record"
       ],
       "evidence_requirements": [
-        "Complete integration picture for A1 exists with delta PnL, trades, profit factor, and drawdown vs base"
+        "Есть полная интеграционная картина A1: strict_additive и permissive режимы с delta метриками."
       ],
       "policy_tags": [
-        "modeling"
+        "analysis",
+        "validation",
+        "critical"
       ],
-      "max_turns": 6,
-      "max_tool_calls": 5,
-      "max_expensive_calls": 2,
+      "max_turns": 24,
+      "max_tool_calls": 24,
+      "max_expensive_calls": 3,
       "parallel_slot": 1,
+      "budget_scale_applied": 6,
+      "depends_on": [
+        "compiled_plan_v3_stage_3"
+      ],
       "status": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
@@ -53,49 +54,47 @@
       "assigned_worker_id": null,
       "last_checkpoint_turn_id": "",
       "last_checkpoint_summary": "",
+      "last_checkpoint_status": "",
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
-      "latest_tool_result_summary": "",
-      "active_operation_tool": "",
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
-      "active_resume_tool": "",
-      "active_resume_token": "",
-      "last_tool_response_status": "",
       "artifacts": [],
       "facts": {}
     },
     {
       "slice_id": "compiled_plan_v3_stage_5",
       "title": "Ownership, cannibalization и proof of new entries для A1",
-      "hypothesis": "Prove the nature of A1's delta: quantify overlap with base, truly new trades, replaced base trades, and coverage expansion.",
-      "objective": "Prove the nature of A1's delta: quantify overlap with base, truly new trades, replaced base trades, and coverage expansion.",
+      "hypothesis": "Доказать природу delta A1: расширяет ли A1 покрытие системы, или cannibalizes базу без реального улучшения.",
+      "objective": "Доказать природу delta A1: расширяет ли A1 покрытие системы, или cannibalizes базу без реального улучшения.",
       "success_criteria": [
-        "Enough evidence to make a final PROMOTE / WATCHLIST / REJECT decision on A1"
+        "Полная ownership картина: overlap, new trades, replaced trades, coverage expansion.",
+        "Достаточно данных для окончательного решения по A1."
       ],
       "allowed_tools": [
-        "features_catalog",
-        "features_custom",
-        "features_dataset",
-        "features_analytics",
         "backtests_analysis",
-        "backtests_conditions",
-        "experiments_run",
-        "experiments_inspect",
-        "experiments_read"
+        "backtests_runs",
+        "research_record"
       ],
       "evidence_requirements": [
-        "Enough evidence to make a final PROMOTE / WATCHLIST / REJECT decision on A1"
+        "Полная ownership картина: overlap, new trades, replaced trades, coverage expansion.",
+        "Достаточно данных для окончательного решения по A1."
       ],
       "policy_tags": [
-        "feature_contract"
+        "analysis",
+        "validation",
+        "critical"
       ],
-      "max_turns": 6,
-      "max_tool_calls": 5,
-      "max_expensive_calls": 1,
+      "max_turns": 24,
+      "max_tool_calls": 24,
+      "max_expensive_calls": 3,
       "parallel_slot": 1,
+      "budget_scale_applied": 6,
+      "depends_on": [
+        "compiled_plan_v3_stage_4"
+      ],
       "status": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
@@ -103,43 +102,45 @@
       "assigned_worker_id": null,
       "last_checkpoint_turn_id": "",
       "last_checkpoint_summary": "",
+      "last_checkpoint_status": "",
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
-      "latest_tool_result_summary": "",
-      "active_operation_tool": "",
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
-      "active_resume_tool": "",
-      "active_resume_token": "",
-      "last_tool_response_status": "",
       "artifacts": [],
       "facts": {}
     },
     {
       "slice_id": "compiled_plan_v3_stage_6",
-      "title": "Финальное решение по A1",
-      "hypothesis": "Render a definitive verdict on A1: PROMOTE, WATCHLIST, or REJECT — no leaving the branch in limbo.",
-      "objective": "Render a definitive verdict on A1: PROMOTE, WATCHLIST, or REJECT — no leaving the branch in limbo.",
+      "title": "Финальное решение по A1: PROMOTE / WATCHLIST / REJECT",
+      "hypothesis": "Принять окончательное решение по A1 на основе всех накопленных доказательств, не оставляя ветку в подвешенном состоянии.",
+      "objective": "Принять окончательное решение по A1 на основе всех накопленных доказательств, не оставляя ветку в подвешенном состоянии.",
       "success_criteria": [
-        "A1 is closed with a final irreversible decision"
+        "A1 закрыт окончательно с однозначным решением PROMOTE/WATCHLIST/REJECT.",
+        "Решение записано с обоснованием в research memory."
       ],
       "allowed_tools": [
         "research_record",
-        "backtests_analysis",
-        "notify_send"
+        "research_map"
       ],
       "evidence_requirements": [
-        "A1 is closed with a final irreversible decision"
+        "A1 закрыт окончательно с однозначным решением PROMOTE/WATCHLIST/REJECT.",
+        "Решение записано с обоснованием в research memory."
       ],
       "policy_tags": [
-        "finalization"
+        "decision",
+        "critical"
       ],
-      "max_turns": 4,
-      "max_tool_calls": 3,
-      "max_expensive_calls": 0,
+      "max_turns": 24,
+      "max_tool_calls": 24,
+      "max_expensive_calls": 2,
       "parallel_slot": 1,
+      "budget_scale_applied": 6,
+      "depends_on": [
+        "compiled_plan_v3_stage_5"
+      ],
       "status": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
@@ -147,22 +148,25 @@
       "assigned_worker_id": null,
       "last_checkpoint_turn_id": "",
       "last_checkpoint_summary": "",
+      "last_checkpoint_status": "",
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
-      "latest_tool_result_summary": "",
-      "active_operation_tool": "",
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
-      "active_resume_tool": "",
-      "active_resume_token": "",
-      "last_tool_response_status": "",
       "artifacts": [],
       "facts": {}
     }
   ],
+  "plan_source_kind": "compiled_raw",
+  "source_sequence_id": "compiled_plan_v3",
+  "source_raw_plan": "raw_plans/plan_v3.md",
+  "source_manifest_path": "",
+  "source_semantic_path": "",
+  "source_compile_report_path": "",
+  "sequence_batch_index": 2,
   "status": "draft",
-  "created_at": "2026-04-09T14:19:48.837179+00:00",
-  "updated_at": "2026-04-09T14:19:48.837180+00:00"
+  "created_at": "2026-04-10T16:56:15.057251+00:00",
+  "updated_at": "2026-04-10T16:56:15.057252+00:00"
 }

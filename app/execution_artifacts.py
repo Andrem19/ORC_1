@@ -1,5 +1,5 @@
 """
-Artifact helpers for brokered execution.
+Artifact helpers for direct execution.
 """
 
 from __future__ import annotations
@@ -8,7 +8,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from app.execution_models import ExecutionPlan, ToolResultEnvelope, WorkerAction
+from app.execution_models import ExecutionPlan, WorkerAction
 from app.run_context import ensure_current_run, read_current_run_id
 
 
@@ -34,11 +34,6 @@ class ExecutionArtifactStore:
         self._write_json(path, payload)
         return path
 
-    def save_tool_result(self, envelope: ToolResultEnvelope, raw_payload: dict[str, Any]) -> Path:
-        raw_path = self.active_root / "broker" / "raw" / f"{envelope.call_id}.json"
-        self._write_json(raw_path, raw_payload)
-        return raw_path
-
     def save_report(self, *, plan_id: str, slice_id: str, turn_id: str, payload: dict[str, Any]) -> Path:
         path = self.active_root / "reports" / plan_id / slice_id / f"{turn_id}.json"
         self._write_json(path, payload)
@@ -54,6 +49,20 @@ class ExecutionArtifactStore:
         path = self.active_root / "worker_failures" / plan_id / slice_id / f"{payload.get('failure_id', 'parse_failure')}.json"
         self._write_json(path, payload)
         return path
+
+    def save_direct_attempt(
+        self,
+        *,
+        plan_id: str,
+        slice_id: str,
+        payload: dict[str, Any],
+    ) -> Path:
+        path = self.active_root / "direct_attempts" / plan_id / slice_id / f"{payload.get('attempt_id', 'attempt')}.json"
+        self._write_json(path, payload)
+        return path
+
+    def save_direct_fallback_attempt(self, *, plan_id: str, slice_id: str, payload: dict[str, Any]) -> Path:
+        return self.save_direct_attempt(plan_id=plan_id, slice_id=slice_id, payload=payload)
 
     def _write_json(self, path: Path, payload: Any) -> None:
         path.parent.mkdir(parents=True, exist_ok=True)

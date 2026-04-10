@@ -533,6 +533,37 @@ class TestEnrichedWorkerResult:
         assert any(s.kind == "header" for s in sections)
         assert any(s.kind == "separator" for s in sections)
 
+    def test_sequence_label_in_header(self):
+        svc = _make_svc_no_batch()
+        result = TaskResult(
+            task_id="plan_abc:slice_xyz",
+            worker_id="qwen-1",
+            status="success",
+            title="Validate data",
+            sequence_label="v4 B2",
+        )
+        with patch.object(svc, "_send_structured", return_value=True) as mock:
+            svc.send_worker_result(result, cycle=5)
+        sections = mock.call_args[0][0]
+        header_text = " ".join(s.value for s in sections if s.kind == "header")
+        assert "v4 B2" in header_text
+        assert "Cycle #5" in header_text
+        assert "Validate data" in header_text
+
+    def test_sequence_label_absent_when_empty(self):
+        svc = _make_svc_no_batch()
+        result = TaskResult(
+            task_id="t1", worker_id="w1", status="success", title="Test",
+        )
+        with patch.object(svc, "_send_structured", return_value=True) as mock:
+            svc.send_worker_result(result, cycle=3)
+        sections = mock.call_args[0][0]
+        header_text = " ".join(s.value for s in sections if s.kind == "header")
+        assert "Cycle #3" in header_text
+        assert "Test" in header_text
+        # No extra pipe separator when no sequence label
+        assert header_text.count("|") == 1  # Cycle | Test
+
 
 # ---------------------------------------------------------------------------
 # Tests: enriched batch summary with verdict distribution
@@ -540,6 +571,22 @@ class TestEnrichedWorkerResult:
 
 
 class TestEnrichedBatchSummary:
+    def test_sequence_label_in_batch_header(self):
+        svc = _make_batch_svc()
+        r1 = TaskResult(task_id="t1", worker_id="w1", status="success",
+                        title="Slice A", sequence_label="v4 B2")
+        r2 = TaskResult(task_id="t2", worker_id="w2", status="success",
+                        title="Slice B", sequence_label="v4 B2")
+        with patch.object(svc, "_send_structured", return_value=True) as mock:
+            svc._send_batch_summary([
+                _QueuedNotification(r1, 5, 0.0),
+                _QueuedNotification(r2, 5, 0.0),
+            ])
+        sections = mock.call_args[0][0]
+        header_text = " ".join(s.value for s in sections if s.kind == "header")
+        assert "v4 B2" in header_text
+        assert "Cycle #5" in header_text
+
     def test_verdict_distribution_line_present(self):
         svc = _make_batch_svc()
         r1 = TaskResult(task_id="t1", worker_id="w1", status="success",
@@ -648,7 +695,7 @@ class TestVerdictIcon:
 class TestSendRunComplete:
     def _make_report(self, **overrides):
         from types import SimpleNamespace
-        from app.reporting.models import NarrativeSectionsRu, ToolUsageSummary
+        from app.reporting.models import DirectExecutionMetrics, NarrativeSectionsRu
         narrative = NarrativeSectionsRu(
             executive_summary_ru="Исследование завершено успешно.",
             recommended_next_actions_ru=["Расширить бэктест", "Протестировать на ETH"],
@@ -664,7 +711,7 @@ class TestSendRunComplete:
             unresolved_blockers=["MCP dataset sync timeout"],
             executive_summary_ru="Исследование завершено успешно.",
             narrative_sections_ru=narrative,
-            tool_usage_rollup=ToolUsageSummary(total_calls=142, failed_calls=3),
+            direct_metrics=DirectExecutionMetrics(direct_tool_calls_observed=142, direct_failed=3),
         )
         defaults.update(overrides)
         return SimpleNamespace(**defaults)

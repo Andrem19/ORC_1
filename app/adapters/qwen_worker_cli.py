@@ -18,6 +18,7 @@ import time
 from typing import Any
 
 from app.adapters.base import AdapterResponse, BaseAdapter, ProcessHandle
+from app.adapters.subprocess_groups import configure_popen_kwargs, terminate_process_handle
 from app.planner_stream import consume_stream_fragment
 from app.qwen_stream import render_qwen_stream_output
 from app.subprocess_io import drain_pipe_text, read_available_text
@@ -28,6 +29,18 @@ _RAW_STDOUT_LIMIT = 600_000
 _RAW_STDERR_LIMIT = 200_000
 _PARTIAL_OUTPUT_LIMIT = 300_000
 _LOG_PROMPT_EXCERPT = 240
+_BROKER_SAFE_EXCLUDED_TOOLS = (
+    "run_shell_command",
+    "read_file",
+    "edit",
+    "write_file",
+    "grep_search",
+    "glob",
+    "list_directory",
+    "web_fetch",
+    "task",
+    "skill",
+)
 
 
 class QwenWorkerCli(BaseAdapter):
@@ -37,12 +50,14 @@ class QwenWorkerCli(BaseAdapter):
         self,
         cli_path: str = "qwen-code",
         extra_flags: list[str] | None = None,
+        exclude_tools: list[str] | None = None,
         *,
         use_stream_json: bool = True,
         allow_tool_use: bool = False,
     ) -> None:
         self.cli_path = cli_path
         self.extra_flags = extra_flags or []
+        self.exclude_tools = _dedupe_preserve_order(exclude_tools or [])
         self.use_stream_json = use_stream_json
         self.allow_tool_use = allow_tool_use
         self._resolved_cli_path: str | None = None
@@ -54,12 +69,19 @@ class QwenWorkerCli(BaseAdapter):
     def is_available(self) -> bool:
         return bool(self._resolve_cli_path())
 
-    def _build_command(self, prompt: str) -> list[str]:
+    def _build_command(self, prompt: str, **kwargs: Any) -> list[str]:
         cmd = [self._resolve_cli_path() or self.cli_path]
+        runtime_exclude = _dedupe_preserve_order(kwargs.get("exclude_tools", []) or [])
+        excluded_tools = _dedupe_preserve_order([*_BROKER_SAFE_EXCLUDED_TOOLS, *self.exclude_tools, *runtime_exclude])
         if self.allow_tool_use:
             cmd.append("--yolo")
+            if excluded_tools:
+                cmd.extend(["--exclude-tools", ",".join(excluded_tools)])
         else:
-            cmd.extend(["--approval-mode", "plan"])
+            # Non-tool worker turns must return one JSON action on stdout.
+            # Disable local tools/extensions so the CLI cannot drift into
+            # workspace side effects like file writes or shell execution.
+            cmd.extend(["--exclude-tools", ",".join(excluded_tools), "-e", "none"])
         if self.use_stream_json:
             cmd.extend(["-o", "stream-json"])
         cmd.extend(["-p", prompt])
@@ -68,7 +90,7 @@ class QwenWorkerCli(BaseAdapter):
 
     def invoke(self, prompt: str, timeout: int = 300, **kwargs: Any) -> AdapterResponse:
         """Call Qwen Code CLI with a prompt and return the output (blocking)."""
-        cmd = self._build_command(prompt)
+        cmd = self._build_command(prompt, **kwargs)
 
         logger.info("Calling Qwen CLI (timeout=%ds)", timeout)
         logger.debug(
@@ -100,6 +122,12 @@ class QwenWorkerCli(BaseAdapter):
                     exit_code=result.returncode,
                     error=stderr[:500],
                     duration_seconds=duration,
+                    finish_reason="process_error",
+                    metadata={
+                        "output_mode": "stream-json" if self.use_stream_json else "text",
+                        "raw_stdout_present": bool(result.stdout),
+                        "raw_stderr_present": bool(result.stderr),
+                    },
                 )
 
             logger.info("Qwen CLI completed in %.1fs, output length: %d", duration, len(output))
@@ -108,6 +136,12 @@ class QwenWorkerCli(BaseAdapter):
                 raw_output=output,
                 exit_code=0,
                 duration_seconds=duration,
+                finish_reason="completed",
+                metadata={
+                    "output_mode": "stream-json" if self.use_stream_json else "text",
+                    "raw_stdout_present": bool(result.stdout),
+                    "raw_stderr_present": bool(result.stderr),
+                },
             )
 
         except subprocess.TimeoutExpired:
@@ -120,6 +154,8 @@ class QwenWorkerCli(BaseAdapter):
                 error=f"Timed out after {timeout}s",
                 timed_out=True,
                 duration_seconds=duration,
+                finish_reason="timeout",
+                metadata={"output_mode": "stream-json" if self.use_stream_json else "text"},
             )
 
         except FileNotFoundError:
@@ -129,6 +165,7 @@ class QwenWorkerCli(BaseAdapter):
                 raw_output="",
                 exit_code=-1,
                 error=f"CLI not found: {self.cli_path}",
+                finish_reason="adapter_missing",
             )
 
         except Exception as exc:
@@ -140,6 +177,7 @@ class QwenWorkerCli(BaseAdapter):
                 exit_code=-1,
                 error=str(exc),
                 duration_seconds=duration,
+                finish_reason="adapter_exception",
             )
 
     # ---------------------------------------------------------------
@@ -148,7 +186,7 @@ class QwenWorkerCli(BaseAdapter):
 
     def start(self, prompt: str, **kwargs: Any) -> ProcessHandle:
         """Launch Qwen CLI as a background process. Returns immediately."""
-        cmd = self._build_command(prompt)
+        cmd = self._build_command(prompt, **kwargs)
         output_mode = "stream-json" if self.use_stream_json else "text"
 
         logger.info("Starting Qwen CLI (mode=%s) as background process", output_mode)
@@ -167,6 +205,7 @@ class QwenWorkerCli(BaseAdapter):
             text=False,
             bufsize=0,
             env=self._build_env(),
+            **configure_popen_kwargs(),
         )
 
         self._set_nonblocking(process.stdout)
@@ -184,8 +223,12 @@ class QwenWorkerCli(BaseAdapter):
                 "output_mode": output_mode,
                 "stream_buffer": "",
                 "stream_event_count": 0,
+                "pgid": process.pid,
             },
         )
+
+    def terminate(self, handle: ProcessHandle, *, force: bool = False) -> None:
+        terminate_process_handle(handle, force=force)
 
     def check(self, handle: ProcessHandle) -> tuple[str, bool]:
         """Non-blocking check on a running worker."""
@@ -319,6 +362,18 @@ class QwenWorkerCli(BaseAdapter):
             return raw
         rendered = render_qwen_stream_output(raw)
         return rendered or raw
+
+
+def _dedupe_preserve_order(values: list[str] | tuple[str, ...]) -> list[str]:
+    seen: set[str] = set()
+    ordered: list[str] = []
+    for value in values:
+        normalized = str(value or "").strip()
+        if not normalized or normalized in seen:
+            continue
+        seen.add(normalized)
+        ordered.append(normalized)
+    return ordered
 
 
 def _append_limited(existing: str, fragment: str, limit: int) -> str:

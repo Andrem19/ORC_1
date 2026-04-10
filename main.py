@@ -8,6 +8,8 @@ Usage:
 
 from __future__ import annotations
 
+import atexit
+import asyncio
 import logging
 import os
 import signal
@@ -34,7 +36,10 @@ from app.logging_setup import setup_logging
 from app.logging_runtime import clear_log_root
 from app.models import StopReason
 from app.orchestrator import Orchestrator
-from app.runtime_factory import create_planner_adapter, create_worker_adapter
+from app.runtime_factory import (
+    create_planner_adapter,
+    create_worker_adapter,
+)
 from app.run_context import ensure_current_run, generate_run_id, read_current_run_id
 from app.services.notification_service import NotificationService
 
@@ -231,6 +236,59 @@ def _log_plan_source_startup(config: OrchestratorConfig) -> None:
             )
 
 
+def _make_signal_handler(orch: Orchestrator, *, hard_exit: Any = os._exit):
+    import signal as _signal
+    import time as _time
+
+    stop_phase = 0
+    last_signal_time = 0.0
+
+    def _cancel_running_tasks() -> None:
+        """Cancel all running asyncio tasks to break out of blocked awaits."""
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            return
+        for task in asyncio.all_tasks(loop):
+            if not task.done():
+                task.cancel()
+
+    def _signal_handler(signum: int, _frame: Any) -> None:
+        nonlocal stop_phase, last_signal_time
+        sig_name = _signal.Signals(signum).name
+        now = _time.monotonic()
+        suppressed = (now - last_signal_time) < 2.0
+        last_signal_time = now
+        if stop_phase == 0:
+            stop_phase = 1
+            logger.warning(
+                "Received %s, entering drain mode (waiting for running tasks to finish)...",
+                sig_name,
+            )
+            logger.warning("Press Ctrl+C again to force immediate stop.")
+            orch.request_drain()
+            return
+        if stop_phase == 1:
+            stop_phase = 2
+            if not suppressed:
+                logger.warning("Received second %s, forcing immediate shutdown!", sig_name)
+            orch.request_stop_now()
+            _cancel_running_tasks()
+            return
+        if stop_phase >= 3:
+            return
+        stop_phase = 3
+        if not suppressed:
+            logger.warning("Received third %s, forcing hard exit!", sig_name)
+        try:
+            orch.terminate_runtime_processes(force=True)
+        finally:
+            logging.shutdown()
+            hard_exit(130)
+
+    return _signal_handler
+
+
 def create_real_orchestrator(config: OrchestratorConfig) -> Orchestrator:
     """Create an orchestrator with real CLI adapters."""
     planner_adapter = create_planner_adapter(config)
@@ -275,6 +333,7 @@ def create_real_orchestrator(config: OrchestratorConfig) -> Orchestrator:
         )
     else:
         logger.info("Worker adapter '%s' available (cli_path='%s')", worker_adapter.name(), config.worker_adapter.cli_path or config.worker_adapter.base_url)
+    logger.info("Direct execution provider: %s", config.direct_execution.provider)
 
     notification_service = NotificationService(
         config.notifications, lmstudio_config=config.lmstudio,
@@ -454,6 +513,18 @@ def main() -> None:
         logger.critical("Aborting: another orchestrator instance holds the lock")
         sys.exit(1)
 
+    orch: Orchestrator | None = None
+
+    def _atexit_force_cleanup() -> None:
+        """Safety net: force-kill any remaining subprocesses on interpreter exit."""
+        if orch is not None:
+            try:
+                orch.terminate_runtime_processes(force=True)
+            except Exception:
+                pass
+
+    atexit.register(_atexit_force_cleanup)
+
     try:
         # Handle startup_mode: reset state before creating orchestrator
         if config.startup_mode in ("reset", "reset_all"):
@@ -492,60 +563,28 @@ def main() -> None:
         if config.research_config:
             orch.load_research_context()
 
-        # Graceful shutdown on SIGTERM / SIGINT (3 phases)
+        # Graceful shutdown on SIGTERM / SIGINT / SIGHUP
         import signal as _signal
-        import time as _time
-
-        _stop_phase = 0  # 0=running, 1=drain, 2=immediate stop, 3+=KeyboardInterrupt
-        _last_signal_time = 0.0  # debounce: suppress logs if < 2s apart
-
-        def _signal_handler(signum: int, _frame: Any) -> None:
-            nonlocal _stop_phase, _last_signal_time
-            sig_name = _signal.Signals(signum).name
-            now = _time.monotonic()
-            suppressed = (now - _last_signal_time) < 2.0
-            _last_signal_time = now
-            if _stop_phase == 0:
-                # First press — enter drain mode (let running tasks finish)
-                # Transition phase BEFORE calling into orchestrator to prevent
-                # re-entry from queued signals during network I/O.
-                _stop_phase = 1
-                logger.warning(
-                    "Received %s, entering drain mode (waiting for running tasks to finish)...",
-                    sig_name,
-                )
-                logger.warning("Press Ctrl+C again to force immediate stop.")
-                orch.request_drain()
-            elif _stop_phase == 1:
-                # Second press — force immediate stop
-                _stop_phase = 2
-                if not suppressed:
-                    logger.warning(
-                        "Received second %s, forcing immediate shutdown!", sig_name,
-                    )
-                orch.request_stop()
-            else:
-                # Third+ press — hard interrupt
-                if not suppressed:
-                    logger.warning(
-                        "Received third %s, raising KeyboardInterrupt!", sig_name,
-                    )
-                raise KeyboardInterrupt
-
+        _signal_handler = _make_signal_handler(orch)
         _signal.signal(_signal.SIGTERM, _signal_handler)
-        # SIGINT: first press = graceful, second press = hard stop
         _signal.signal(_signal.SIGINT, _signal_handler)
+        if hasattr(_signal, "SIGHUP"):
+            _signal.signal(_signal.SIGHUP, _signal_handler)
 
         _finish_called = False
         try:
             reason = orch.run()
             logger.info("Orchestrator stopped: %s", reason.value)
-        except KeyboardInterrupt:
+        except (KeyboardInterrupt, asyncio.CancelledError):
             if not _finish_called:
                 _finish_called = True
                 logger.warning("Interrupted by user — shutting down immediately")
-                orch._finish(StopReason.NO_PROGRESS, "Interrupted by user (Ctrl+C)")
+                orch.request_stop_now()
+                orch._finish(StopReason.GRACEFUL_STOP, "Interrupted by user (Ctrl+C)")
     finally:
+        atexit.unregister(_atexit_force_cleanup)
+        if orch is not None:
+            orch.terminate_runtime_processes(force=True)
         # Stop Rich progress display
         if config.rich_console:
             from app.rich_handler import ProgressManager

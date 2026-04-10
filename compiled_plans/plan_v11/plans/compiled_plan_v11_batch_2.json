@@ -1,6 +1,6 @@
 {
   "plan_id": "compiled_plan_v11_batch_2",
-  "goal": "Conduct a strict forensic audit of v10 microstructure overlay results to confirm or reject their validity before any further research.",
+  "goal": "Forensic audit of v10 microstructure overlay: verify reproducibility, detect leakage, confirm same-window improvement, and deliver a final CONFIRMED / DOWNGRADED / REJECTED verdict.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -9,48 +9,43 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "Immutable reference: active-signal-v1@1 only; never modify baseline parameters, thresholds, features, or execution logic.",
-    "No new features, new directional scouts, early-cuts, or label changes are permitted in v11.",
-    "All comparisons must use identical train / selection-OOS / lockbox windows (same-window truth only).",
-    "Lockbox must never be used to choose thresholds, labels, or model hyper-parameters.",
-    "Short-only, long-only, and combined veto must be tested in separate runs; identical deltas across all three must be explained, not accepted.",
-    "Rule-based overlay must be tested before model-backed overlay.",
-    "PROMOTE status is only valid if v10 survives the entire forensic cycle."
+    "Immutable reference is active-signal-v1@1 — never modify or re-tune the base.",
+    "No new features, no new directional scouts, no early-cut, no label changes allowed.",
+    "All comparisons must use identical train / selection-OOS / lockbox windows.",
+    "Short-only, long-only, and combined veto must be tested in separate independent runs — never aggregated.",
+    "Rule-based (threshold / bucket) overlay must be validated before any model-backed overlay.",
+    "PROMOTE verdict only after every forensic block passes; any confirmed leakage triggers REJECTED.",
+    "No mixing of reproduction checks, leakage checks, and new ideas in the same run."
   ],
   "slices": [
     {
       "slice_id": "compiled_plan_v11_stage_4",
       "title": "Window integrity audit",
-      "hypothesis": "Verify that all v10 comparisons were made on identical windows with no look-ahead or data leakage through threshold selection.",
-      "objective": "Verify that all v10 comparisons were made on identical windows with no look-ahead or data leakage through threshold selection.",
+      "hypothesis": "Verify that all v10 runs used identical train / selection-OOS / lockbox windows with no look-ahead.",
+      "objective": "Verify that all v10 runs used identical train / selection-OOS / lockbox windows with no look-ahead.",
       "success_criteria": [
-        "Window discipline verdict: valid or invalid, with boundary timestamps documented."
+        "Verdict recorded: window discipline valid or invalid with specific violations."
       ],
       "allowed_tools": [
-        "datasets",
-        "datasets_sync",
-        "datasets_preview",
-        "events",
-        "events_sync",
-        "features_catalog",
-        "features_dataset",
-        "backtests_analysis",
-        "backtests_conditions",
-        "experiments_run",
-        "experiments_inspect",
-        "experiments_read"
+        "backtests_plan",
+        "backtests_runs",
+        "research_record"
       ],
       "evidence_requirements": [
-        "Window discipline verdict: valid or invalid, with boundary timestamps documented."
+        "Verdict recorded: window discipline valid or invalid with specific violations."
       ],
       "policy_tags": [
         "audit",
-        "window_integrity"
+        "cheap_first"
       ],
-      "max_turns": 6,
-      "max_tool_calls": 5,
-      "max_expensive_calls": 1,
+      "max_turns": 36,
+      "max_tool_calls": 30,
+      "max_expensive_calls": 12,
       "parallel_slot": 1,
+      "budget_scale_applied": 6,
+      "depends_on": [
+        "compiled_plan_v11_stage_2"
+      ],
       "status": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
@@ -58,52 +53,46 @@
       "assigned_worker_id": null,
       "last_checkpoint_turn_id": "",
       "last_checkpoint_summary": "",
+      "last_checkpoint_status": "",
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
-      "latest_tool_result_summary": "",
-      "active_operation_tool": "",
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
-      "active_resume_tool": "",
-      "active_resume_token": "",
-      "last_tool_response_status": "",
       "artifacts": [],
       "facts": {}
     },
     {
       "slice_id": "compiled_plan_v11_stage_5",
       "title": "Feature leakage audit",
-      "hypothesis": "Verify that every micro-structure feature is causally clean with no future information leaking into decisions.",
-      "objective": "Verify that every micro-structure feature is causally clean with no future information leaking into decisions.",
+      "hypothesis": "Confirm every micro-feature is causally clean — no future information leaks into decision time.",
+      "objective": "Confirm every micro-feature is causally clean — no future information leaks into decision time.",
       "success_criteria": [
-        "Per-feature leakage verdict: leakage absent, suspicious, or confirmed leakage."
+        "Per-feature verdict: leakage absent, suspicious, or confirmed leakage."
       ],
       "allowed_tools": [
-        "features_catalog",
-        "features_custom",
         "features_dataset",
+        "features_custom",
         "features_analytics",
-        "backtests_analysis",
-        "backtests_conditions",
         "experiments_run",
-        "experiments_inspect",
-        "experiments_read",
-        "experiments_registry_inspect"
+        "research_record"
       ],
       "evidence_requirements": [
-        "Per-feature leakage verdict: leakage absent, suspicious, or confirmed leakage."
+        "Per-feature verdict: leakage absent, suspicious, or confirmed leakage."
       ],
       "policy_tags": [
         "audit",
-        "leakage",
-        "features"
+        "deep_analysis"
       ],
-      "max_turns": 6,
-      "max_tool_calls": 5,
-      "max_expensive_calls": 1,
+      "max_turns": 36,
+      "max_tool_calls": 30,
+      "max_expensive_calls": 6,
       "parallel_slot": 2,
+      "budget_scale_applied": 6,
+      "depends_on": [
+        "compiled_plan_v11_stage_2"
+      ],
       "status": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
@@ -111,52 +100,47 @@
       "assigned_worker_id": null,
       "last_checkpoint_turn_id": "",
       "last_checkpoint_summary": "",
+      "last_checkpoint_status": "",
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
-      "latest_tool_result_summary": "",
-      "active_operation_tool": "",
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
-      "active_resume_tool": "",
-      "active_resume_token": "",
-      "last_tool_response_status": "",
       "artifacts": [],
       "facts": {}
     },
     {
       "slice_id": "compiled_plan_v11_stage_6",
       "title": "Label leakage and shortcut audit",
-      "hypothesis": "Determine whether the suspiciously high veto model AUC (~0.95) is caused by label construction nearly overlapping with the dominant feature.",
-      "objective": "Determine whether the suspiciously high veto model AUC (~0.95) is caused by label construction nearly overlapping with the dominant feature.",
+      "hypothesis": "Determine whether veto labels are near-identical to features, making model success tautological.",
+      "objective": "Determine whether veto labels are near-identical to features, making model success tautological.",
       "success_criteria": [
-        "Label verdict: labels valid, labels too shortcut-prone, or labels invalid."
+        "Verdict recorded: labels valid, labels too shortcut-prone, or labels invalid."
       ],
       "allowed_tools": [
-        "features_catalog",
-        "features_custom",
-        "features_dataset",
+        "models_dataset",
+        "models_train",
+        "models_compare",
         "features_analytics",
-        "backtests_analysis",
-        "backtests_conditions",
         "experiments_run",
-        "experiments_inspect",
-        "experiments_read",
-        "experiments_registry_inspect"
+        "research_record"
       ],
       "evidence_requirements": [
-        "Label verdict: labels valid, labels too shortcut-prone, or labels invalid."
+        "Verdict recorded: labels valid, labels too shortcut-prone, or labels invalid."
       ],
       "policy_tags": [
         "audit",
-        "leakage",
-        "labels"
+        "deep_analysis"
       ],
-      "max_turns": 6,
-      "max_tool_calls": 5,
-      "max_expensive_calls": 1,
-      "parallel_slot": 1,
+      "max_turns": 36,
+      "max_tool_calls": 30,
+      "max_expensive_calls": 6,
+      "parallel_slot": 3,
+      "budget_scale_applied": 6,
+      "depends_on": [
+        "compiled_plan_v11_stage_5"
+      ],
       "status": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
@@ -164,22 +148,25 @@
       "assigned_worker_id": null,
       "last_checkpoint_turn_id": "",
       "last_checkpoint_summary": "",
+      "last_checkpoint_status": "",
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
-      "latest_tool_result_summary": "",
-      "active_operation_tool": "",
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
-      "active_resume_tool": "",
-      "active_resume_token": "",
-      "last_tool_response_status": "",
       "artifacts": [],
       "facts": {}
     }
   ],
+  "plan_source_kind": "compiled_raw",
+  "source_sequence_id": "compiled_plan_v11",
+  "source_raw_plan": "raw_plans/plan_v11.md",
+  "source_manifest_path": "",
+  "source_semantic_path": "",
+  "source_compile_report_path": "",
+  "sequence_batch_index": 2,
   "status": "draft",
-  "created_at": "2026-04-09T14:34:40.635869+00:00",
-  "updated_at": "2026-04-09T14:34:40.635870+00:00"
+  "created_at": "2026-04-10T17:12:37.124120+00:00",
+  "updated_at": "2026-04-10T17:12:37.124121+00:00"
 }

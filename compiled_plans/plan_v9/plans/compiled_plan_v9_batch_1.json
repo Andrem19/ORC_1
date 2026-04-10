@@ -1,6 +1,6 @@
 {
   "plan_id": "compiled_plan_v9_batch_1",
-  "goal": "Определить, содержит ли доступный новый data universe реальный информационный сигнал сверх текущего OHLCV+IV+classifier+breadth+event space, и может ли он стать основой для overlay или directional model route.",
+  "goal": "Определить, содержит ли новый data universe (derivatives positioning / pressure) реальный информационный сигнал сверх текущего OHLCV+IV+classifier+breadth+event space, и может ли он стать основой overlay-route для active-signal-v1.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -9,42 +9,46 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "База active-signal-v1@1 — immutable reference: запрещено менять базу, подбирать ей параметры, заново открывать closed routes на старом data universe.",
-    "Новый data universe обязан быть новым по сути, а не другой упаковкой уже использованной информации (OHLCV, IV, classifier transitions, breadth, events).",
-    "Одна primary data family за раз; fallback — строго по очереди, не паралельно.",
-    "Overlay-first: новая family сначала проверяется на veto/overlay surface базы, directional scout разрешён только после overlay evidence.",
-    "Никакого feature selection, label scheme, threshold, horizon или архитектуры по lockbox-окну.",
+    "Immutable reference base active-signal-v1@1 — запрещено менять базу, подбирать ей часы/дни/пороги/исполнение.",
+    "Нельзя открывать full-surface directional classification или trade-quality overlays на старом data universe.",
+    "Запрещён regression на future PnL, selection по lockbox-окну, перестановка старых features.",
     "Любое улучшение обязано пройти matched OOS comparison против базы на том же окне.",
-    "Purge gap минимум 24h для trade/holding tasks; больше если новая family требует lookback.",
-    "Первая волна features — не более 12 на family.",
-    "Direction labels запрещено открывать раньше overlay evidence.",
-    "Family choice freeze перед modeling; feature set freeze перед training; threshold freeze перед lockbox."
+    "Primary family: derivatives positioning/pressure; fallback: cross-exchange pressure; reserve: microstructure proxies.",
+    "Overlay-first: новый universe сначала проверяется на veto/overlay surface; direction — только при strong overlay evidence.",
+    "Максимум 12 features в первой волне для primary family.",
+    "Максимум одна дополнительная ветка (early-cut ИЛИ extension) сверх veto.",
+    "Direction labels запрещены до overlay evidence.",
+    "Purge gap ≥24h; freeze rules: family before modeling, feature set before training, threshold before lockbox."
   ],
   "slices": [
     {
       "slice_id": "compiled_plan_v9_stage_1",
       "title": "Closure-audit v8 и фиксация pivot v9",
-      "hypothesis": "Формально закрыть текущий data universe как исчерпанный для old routes и завести clean research project v9.",
-      "objective": "Формально закрыть текущий data universe как исчерпанный для old routes и завести clean research project v9.",
+      "hypothesis": "Формально закрыть текущий data universe как исчерпанный для старых маршрутов и завести чистый исследовательский проект v9.",
+      "objective": "Формально закрыть текущий data universe как исчерпанный для старых маршрутов и завести чистый исследовательский проект v9.",
       "success_criteria": [
-        "Clean project v9 создан с корректной терминологией и полным open-items register"
+        "Clean project v9 создан с исправной терминологией и полным open-items register.",
+        "Immutable reference зафиксирован."
       ],
       "allowed_tools": [
         "research_project",
-        "research_map",
         "research_record",
-        "research_search"
+        "research_map"
       ],
       "evidence_requirements": [
-        "Clean project v9 создан с корректной терминологией и полным open-items register"
+        "Clean project v9 создан с исправной терминологией и полным open-items register.",
+        "Immutable reference зафиксирован."
       ],
       "policy_tags": [
-        "setup"
+        "setup",
+        "cheap_first"
       ],
-      "max_turns": 4,
-      "max_tool_calls": 4,
-      "max_expensive_calls": 0,
+      "max_turns": 24,
+      "max_tool_calls": 24,
+      "max_expensive_calls": 2,
       "parallel_slot": 1,
+      "budget_scale_applied": 6,
+      "depends_on": [],
       "status": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
@@ -52,48 +56,46 @@
       "assigned_worker_id": null,
       "last_checkpoint_turn_id": "",
       "last_checkpoint_summary": "",
+      "last_checkpoint_status": "",
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
-      "latest_tool_result_summary": "",
-      "active_operation_tool": "",
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
-      "active_resume_tool": "",
-      "active_resume_token": "",
-      "last_tool_response_status": "",
       "artifacts": [],
       "facts": {}
     },
     {
       "slice_id": "compiled_plan_v9_stage_2",
       "title": "Audit нового data universe",
-      "hypothesis": "Проверить availability, quality, causality и novelty четырёх candidate data families: derivatives positioning, cross-exchange pressure, microstructure proxies, options structure.",
-      "objective": "Проверить availability, quality, causality и novelty четырёх candidate data families: derivatives positioning, cross-exchange pressure, microstructure proxies, options structure.",
+      "hypothesis": "Проверить availability, quality, causal usability и novelty всех candidate data families (derivatives positioning, cross-exchange, microstructure, options).",
+      "objective": "Проверить availability, quality, causal usability и novelty всех candidate data families (derivatives positioning, cross-exchange, microstructure, options).",
       "success_criteria": [
-        "Заполненная таблица audit по всем четырём families с полями: data_family, available, common_window_ok, gaps_ok, causality_ok, novelty_ok, usable_now, notes"
+        "Заполнена таблица audit для всех четырёх candidate families с verdict usable_now."
       ],
       "allowed_tools": [
         "datasets",
-        "datasets_sync",
         "datasets_preview",
         "events",
-        "events_sync",
         "features_catalog",
-        "features_dataset"
+        "research_record"
       ],
       "evidence_requirements": [
-        "Заполненная таблица audit по всем четырём families с полями: data_family, available, common_window_ok, gaps_ok, causality_ok, novelty_ok, usable_now, notes"
+        "Заполнена таблица audit для всех четырёх candidate families с verdict usable_now."
       ],
       "policy_tags": [
-        "cheap_first",
-        "data_readiness"
+        "triage",
+        "cheap_first"
       ],
-      "max_turns": 6,
-      "max_tool_calls": 5,
-      "max_expensive_calls": 1,
+      "max_turns": 24,
+      "max_tool_calls": 24,
+      "max_expensive_calls": 2,
       "parallel_slot": 1,
+      "budget_scale_applied": 6,
+      "depends_on": [
+        "compiled_plan_v9_stage_1"
+      ],
       "status": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
@@ -101,49 +103,45 @@
       "assigned_worker_id": null,
       "last_checkpoint_turn_id": "",
       "last_checkpoint_summary": "",
+      "last_checkpoint_status": "",
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
-      "latest_tool_result_summary": "",
-      "active_operation_tool": "",
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
-      "active_resume_tool": "",
-      "active_resume_token": "",
-      "last_tool_response_status": "",
       "artifacts": [],
       "facts": {}
     },
     {
       "slice_id": "compiled_plan_v9_stage_3",
       "title": "Выбор primary family и fallback family",
-      "hypothesis": "Выбрать ровно одну primary и одну fallback data family по пяти критериям (availability, novelty, causal usability, interpretability, overlay relevance); остальные locked.",
-      "objective": "Выбрать ровно одну primary и одну fallback data family по пяти критериям (availability, novelty, causal usability, interpretability, overlay relevance); остальные locked.",
+      "hypothesis": "Выбрать одну главную data family и одну fallback, формально lock остальные.",
+      "objective": "Выбрать одну главную data family и одну fallback, формально lock остальные.",
       "success_criteria": [
-        "Зафиксированы primary_family и fallback_family; остальные помечены locked"
+        "Primary и fallback family выбраны и зафиксированы.",
+        "Невыбранные families формально locked."
       ],
       "allowed_tools": [
-        "research_project",
-        "research_map",
         "research_record",
-        "research_search",
-        "backtests_analysis",
-        "backtests_conditions",
-        "experiments_run",
-        "experiments_inspect",
-        "experiments_read"
+        "research_map"
       ],
       "evidence_requirements": [
-        "Зафиксированы primary_family и fallback_family; остальные помечены locked"
+        "Primary и fallback family выбраны и зафиксированы.",
+        "Невыбранные families формально locked."
       ],
       "policy_tags": [
-        "decision_gate"
+        "decision_gate",
+        "cheap_first"
       ],
-      "max_turns": 6,
-      "max_tool_calls": 5,
-      "max_expensive_calls": 1,
+      "max_turns": 24,
+      "max_tool_calls": 24,
+      "max_expensive_calls": 2,
       "parallel_slot": 1,
+      "budget_scale_applied": 6,
+      "depends_on": [
+        "compiled_plan_v9_stage_2"
+      ],
       "status": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
@@ -151,22 +149,25 @@
       "assigned_worker_id": null,
       "last_checkpoint_turn_id": "",
       "last_checkpoint_summary": "",
+      "last_checkpoint_status": "",
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
-      "latest_tool_result_summary": "",
-      "active_operation_tool": "",
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
-      "active_resume_tool": "",
-      "active_resume_token": "",
-      "last_tool_response_status": "",
       "artifacts": [],
       "facts": {}
     }
   ],
+  "plan_source_kind": "compiled_raw",
+  "source_sequence_id": "compiled_plan_v9",
+  "source_raw_plan": "raw_plans/plan_v9.md",
+  "source_manifest_path": "",
+  "source_semantic_path": "",
+  "source_compile_report_path": "",
+  "sequence_batch_index": 1,
   "status": "draft",
-  "created_at": "2026-04-09T14:30:46.474409+00:00",
-  "updated_at": "2026-04-09T14:30:46.474413+00:00"
+  "created_at": "2026-04-10T17:07:43.039400+00:00",
+  "updated_at": "2026-04-10T17:07:43.039408+00:00"
 }

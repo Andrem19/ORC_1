@@ -1,6 +1,6 @@
 {
   "plan_id": "compiled_plan_v7_batch_2",
-  "goal": "Довести до честного решения, может ли новый directional feature layer + CatBoost classification дать additive long/short sleeve поверх active-signal-v1@1 при правильных labels, полных sides/horizons и не обрезанном feature layer.",
+  "goal": "Довести до честного решения: может ли новый directional feature layer + CatBoost classification дать additive long и/или short sleeve поверх active-signal-v1@1 при корректных labels, полных sides/horizons и не обрезанном feature layer.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -9,49 +9,50 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "active-signal-v1@1 — immutable reference; запрещено менять базу, подбирать ей часы/дни/пороги/исполнение",
-    "запрещено выбирать feature set, label scheme, horizon, threshold или архитектуру по lockbox-окну",
-    "улучшением считается только matched OOS comparison с базой на том же окне",
+    "active-signal-v1@1 — immutable reference; запрещено менять базу, подбирать ей часы/дни/пороги/исолнение",
+    "запрещено объявлять улучшением всё, что не прошло matched OOS comparison с базой на том же окне",
     "запрещено возвращаться к regression-предсказанию future PnL",
     "запрещено возвращаться к IV-family как самостоятельному directional layer",
-    "label scheme frozen до training; net_pnl>0 больше не используется как primary label",
-    "short-first приоритет: short 18h → short 12h → потом long tests",
-    "сначала tail-value (top-decile lift, precision в top bucket), потом общий AUC",
-    "не обучать multiclass model; не строить router пока хотя бы один sleeve не прошёл OOS"
+    "net_pnl>0 больше не используется как primary label scheme",
+    "labels frozen после stage_2 до конца selection-stage; дрейф запрещён",
+    "short-first приоритет: сначала short 18h и short 12h, потом new long",
+    "только компактные feature packs — критический directional core, не весь зоопарк",
+    "lockbox untouched до финальной оценки; selection OOS для всех промежуточных решений",
+    "не обучать multiclass model; не строить router до первого standalone sleeve прошедшего OOS"
   ],
   "slices": [
     {
       "slice_id": "compiled_plan_v7_stage_4",
       "title": "Dataset split и modeling surfaces",
-      "hypothesis": "Окончательно freeze modeling surfaces после завершения core-features: train/selection-OOS/lockbox окна и подготовить dataset surface-ы.",
-      "objective": "Окончательно freeze modeling surfaces после завершения core-features: train/selection-OOS/lockbox окна и подготовить dataset surface-ы.",
+      "hypothesis": "Окончательно freeze modeling surfaces: подтвердить train/selection-OOS/lockbox-OOS окна и подготовить dataset surfaces для обучения.",
+      "objective": "Окончательно freeze modeling surfaces: подтвердить train/selection-OOS/lockbox-OOS окна и подготовить dataset surfaces для обучения.",
       "success_criteria": [
-        "frozen_windows подтверждены и записаны",
-        "full_surface и base_absent_surface собраны",
-        "selection_rule формально зафиксирована (selection OOS для pack/threshold, lockbox untouched)"
+        "Frozen windows подтверждены и задокументированы",
+        "full_surface и base_absent_surface подготовлены",
+        "selection rules зафиксированы: pack и threshold — по selection OOS только"
       ],
       "allowed_tools": [
-        "datasets",
-        "datasets_sync",
-        "datasets_preview",
-        "events",
-        "events_sync",
-        "features_catalog",
-        "features_dataset"
+        "models_dataset",
+        "features_dataset",
+        "research_record"
       ],
       "evidence_requirements": [
-        "frozen_windows подтверждены и записаны",
-        "full_surface и base_absent_surface собраны",
-        "selection_rule формально зафиксирована (selection OOS для pack/threshold, lockbox untouched)"
+        "Frozen windows подтверждены и задокументированы",
+        "full_surface и base_absent_surface подготовлены",
+        "selection rules зафиксированы: pack и threshold — по selection OOS только"
       ],
       "policy_tags": [
-        "setup",
-        "contract_freeze"
+        "data_freeze",
+        "leakage_guard"
       ],
-      "max_turns": 4,
-      "max_tool_calls": 4,
-      "max_expensive_calls": 0,
+      "max_turns": 24,
+      "max_tool_calls": 24,
+      "max_expensive_calls": 2,
       "parallel_slot": 1,
+      "budget_scale_applied": 6,
+      "depends_on": [
+        "compiled_plan_v7_stage_3"
+      ],
       "status": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
@@ -59,54 +60,53 @@
       "assigned_worker_id": null,
       "last_checkpoint_turn_id": "",
       "last_checkpoint_summary": "",
+      "last_checkpoint_status": "",
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
-      "latest_tool_result_summary": "",
-      "active_operation_tool": "",
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
-      "active_resume_tool": "",
-      "active_resume_token": "",
-      "last_tool_response_status": "",
       "artifacts": [],
       "facts": {}
     },
     {
       "slice_id": "compiled_plan_v7_stage_5",
       "title": "Short-first plausibility stage",
-      "hypothesis": "Проверить short-side models M1_short_12h и M2_short_18h на plausibility по model-quality и economic-sanity критериям на selection OOS.",
-      "objective": "Проверить short-side models M1_short_12h и M2_short_18h на plausibility по model-quality и economic-sanity критериям на selection OOS.",
+      "hypothesis": "Обучить и проверить short-side модели M1_short_12h и M2_short_18h на plausibility: ROC AUC, PR AUC, top-decile precision, economic sanity — всё на selection OOS.",
+      "objective": "Обучить и проверить short-side модели M1_short_12h и M2_short_18h на plausibility: ROC AUC, PR AUC, top-decile precision, economic sanity — всё на selection OOS.",
       "success_criteria": [
-        "M1_short_12h: auc_ok, pr_ok, top_decile_ok, economic_plausibility_ok оценены",
-        "M2_short_18h: auc_ok, pr_ok, top_decile_ok, economic_plausibility_ok оценены",
-        "Решение о promotion_to_full_training принято для каждого setup"
+        "M1_short_12h обучена и оценена на selection OOS по всем metric dimensions",
+        "M2_short_18h обучена и оценена на selection OOS по всем metric dimensions",
+        "Economic plausibility проверена: нет edge только в случайном хвосте на микросэмпле",
+        "Решение о promotion в full training задокументировано для каждого setup"
       ],
       "allowed_tools": [
-        "models_dataset",
         "models_train",
-        "models_registry",
+        "models_dataset",
         "models_compare",
-        "models_to_feature",
-        "backtests_analysis",
-        "backtests_conditions",
-        "experiments_run",
-        "experiments_inspect",
-        "experiments_read"
+        "models_registry",
+        "research_record"
       ],
       "evidence_requirements": [
-        "M1_short_12h: auc_ok, pr_ok, top_decile_ok, economic_plausibility_ok оценены",
-        "M2_short_18h: auc_ok, pr_ok, top_decile_ok, economic_plausibility_ok оценены",
-        "Решение о promotion_to_full_training принято для каждого setup"
+        "M1_short_12h обучена и оценена на selection OOS по всем metric dimensions",
+        "M2_short_18h обучена и оценена на selection OOS по всем metric dimensions",
+        "Economic plausibility проверена: нет edge только в случайном хвосте на микросэмпле",
+        "Решение о promotion в full training задокументировано для каждого setup"
       ],
       "policy_tags": [
-        "short_first"
+        "short_first",
+        "plausibility_check",
+        "selection_oos_only"
       ],
-      "max_turns": 6,
-      "max_tool_calls": 5,
-      "max_expensive_calls": 2,
-      "parallel_slot": 2,
+      "max_turns": 36,
+      "max_tool_calls": 30,
+      "max_expensive_calls": 6,
+      "parallel_slot": 1,
+      "budget_scale_applied": 6,
+      "depends_on": [
+        "compiled_plan_v7_stage_4"
+      ],
       "status": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
@@ -114,52 +114,51 @@
       "assigned_worker_id": null,
       "last_checkpoint_turn_id": "",
       "last_checkpoint_summary": "",
+      "last_checkpoint_status": "",
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
-      "latest_tool_result_summary": "",
-      "active_operation_tool": "",
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
-      "active_resume_tool": "",
-      "active_resume_token": "",
-      "last_tool_response_status": "",
       "artifacts": [],
       "facts": {}
     },
     {
       "slice_id": "compiled_plan_v7_stage_6",
       "title": "Long 18h plausibility stage",
-      "hypothesis": "Проверить long 18h side (M3_long_cls_18h) с balanced_barrier и conservative_barrier после завершения short-first анализа.",
-      "objective": "Проверить long 18h side (M3_long_cls_18h) с balanced_barrier и conservative_barrier после завершения short-first анализа.",
+      "hypothesis": "Проверить long side только на 18h horizon с balanced_barrier и conservative_barrier, используя Leadership-Breadth, Path-Asymmetry и Long-Recovery-Core packs.",
+      "objective": "Проверить long side только на 18h horizon с balanced_barrier и conservative_barrier, используя Leadership-Breadth, Path-Asymmetry и Long-Recovery-Core packs.",
       "success_criteria": [
-        "M3_long_cls_18h: auc_ok, pr_ok, top_decile_ok, economic_plausibility_ok оценены для обоих label schemes",
-        "Решение о promotion_to_full_training принято"
+        "M3_long_18h обучена и оценена на selection OOS для обоих label schemes",
+        "Economic plausibility проверена",
+        "Решение о promotion задокументировано"
       ],
       "allowed_tools": [
-        "models_dataset",
         "models_train",
-        "models_registry",
+        "models_dataset",
         "models_compare",
-        "models_to_feature",
-        "backtests_analysis",
-        "backtests_conditions",
-        "experiments_run",
-        "experiments_inspect",
-        "experiments_read"
+        "models_registry",
+        "research_record"
       ],
       "evidence_requirements": [
-        "M3_long_cls_18h: auc_ok, pr_ok, top_decile_ok, economic_plausibility_ok оценены для обоих label schemes",
-        "Решение о promotion_to_full_training принято"
+        "M3_long_18h обучена и оценена на selection OOS для обоих label schemes",
+        "Economic plausibility проверена",
+        "Решение о promotion задокументировано"
       ],
       "policy_tags": [
-        "modeling"
+        "long_side",
+        "plausibility_check",
+        "selection_oos_only"
       ],
-      "max_turns": 6,
-      "max_tool_calls": 5,
-      "max_expensive_calls": 2,
-      "parallel_slot": 3,
+      "max_turns": 36,
+      "max_tool_calls": 30,
+      "max_expensive_calls": 6,
+      "parallel_slot": 1,
+      "budget_scale_applied": 6,
+      "depends_on": [
+        "compiled_plan_v7_stage_5"
+      ],
       "status": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
@@ -167,22 +166,25 @@
       "assigned_worker_id": null,
       "last_checkpoint_turn_id": "",
       "last_checkpoint_summary": "",
+      "last_checkpoint_status": "",
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
-      "latest_tool_result_summary": "",
-      "active_operation_tool": "",
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
-      "active_resume_tool": "",
-      "active_resume_token": "",
-      "last_tool_response_status": "",
       "artifacts": [],
       "facts": {}
     }
   ],
+  "plan_source_kind": "compiled_raw",
+  "source_sequence_id": "compiled_plan_v7",
+  "source_raw_plan": "raw_plans/plan_v7.md",
+  "source_manifest_path": "",
+  "source_semantic_path": "",
+  "source_compile_report_path": "",
+  "sequence_batch_index": 2,
   "status": "draft",
-  "created_at": "2026-04-09T14:26:06.296777+00:00",
-  "updated_at": "2026-04-09T14:26:06.296780+00:00"
+  "created_at": "2026-04-10T17:04:14.014075+00:00",
+  "updated_at": "2026-04-10T17:04:14.014076+00:00"
 }

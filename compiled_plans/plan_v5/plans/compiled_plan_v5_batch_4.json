@@ -1,6 +1,6 @@
 {
   "plan_id": "compiled_plan_v5_batch_4",
-  "goal": "Построить custom features, обучить CatBoost long/short модели, прогнать OOS backtests и доказать additive value над базой active-signal-v1.",
+  "goal": "Построить и валидировать новые custom features, обучить CatBoost long/short модели, и доказать через matched OOS что модельный маршрут даёт новый additive layer поверх active-signal-v1@1.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -9,47 +9,51 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "baseline active-signal-v1@1 is immutable and must never be modified",
-    "all features must be causally clean — no future leakage at any stage",
-    "train / selection OOS / lockbox split must be frozen before any model training begins",
-    "purge gap of 24h between consecutive windows is mandatory",
-    "long and short models must be trained independently",
-    "thresholds must be selected and frozen before lockbox is opened",
-    "every model sleeve must receive a terminal decision: PROMOTE, WATCHLIST, or REJECT",
-    "no black-box acceptance — feature importance and SHAP must be recorded for every trained model"
+    "База active-signal-v1@1 — immutable reference, не меняется ни при каких условиях.",
+    "Train / selection OOS / lockbox OOS окна замораживаются до начала model training.",
+    "Purge gap минимум 24h между train и OOS, и между selection OOS и lockbox OOS.",
+    "Long и short модели обучаются раздельно, никакой shared target.",
+    "Threshold калибруется на selection OOS и фиксируется до открытия lockbox.",
+    "Обязателен strict additive backtest comparison с базой на lockbox OOS.",
+    "Каждый model sleeve получает terminal decision: PROMOTE / WATCHLIST / REJECT.",
+    "Модель не имеет права быть чёрным ящиком — feature importance и SHAP обязательны."
   ],
   "slices": [
     {
       "slice_id": "compiled_plan_v5_stage_10",
       "title": "Финальный вердикт по model route",
-      "hypothesis": "Принять единый итоговый вердикт по всему v5: model route success / partial / failed.",
-      "objective": "Принять единый итоговый вердикт по всему v5: model route success / partial / failed.",
+      "hypothesis": "Принять единое итоговое решение по всему v5 циклу: Model route success (A), Model route partial (B), или Model route failed (C), и написать финальный отчёт с рекомендациями для v6.",
+      "objective": "Принять единое итоговое решение по всему v5 циклу: Model route success (A), Model route partial (B), или Model route failed (C), и написать финальный отчёт с рекомендациями для v6.",
       "success_criteria": [
-        "есть единый итог по всему v5",
-        "финальный отчет написан с 4 секциями: цель, сделано, вывод, v6 план",
-        "все operational checklist пункты подтверждены"
+        "Есть единый вердикт по model route: A, B или C.",
+        "Финальный отчёт v5 записан.",
+        "Рекомендации для v6 сформулированы.",
+        "Все research артефакты зафиксированы."
       ],
       "allowed_tools": [
         "research_record",
-        "backtests_analysis",
-        "notify_send",
-        "research_project",
         "research_map",
-        "research_search"
+        "research_search",
+        "notify_send"
       ],
       "evidence_requirements": [
-        "есть единый итог по всему v5",
-        "финальный отчет написан с 4 секциями: цель, сделано, вывод, v6 план",
-        "все operational checklist пункты подтверждены"
+        "Есть единый вердикт по model route: A, B или C.",
+        "Финальный отчёт v5 записан.",
+        "Рекомендации для v6 сформулированы.",
+        "Все research артефакты зафиксированы."
       ],
       "policy_tags": [
-        "decision_point",
-        "terminal"
+        "finalization",
+        "decision_point"
       ],
-      "max_turns": 6,
-      "max_tool_calls": 5,
+      "max_turns": 24,
+      "max_tool_calls": 24,
       "max_expensive_calls": 2,
       "parallel_slot": 1,
+      "budget_scale_applied": 6,
+      "depends_on": [
+        "compiled_plan_v5_stage_9"
+      ],
       "status": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
@@ -57,22 +61,25 @@
       "assigned_worker_id": null,
       "last_checkpoint_turn_id": "",
       "last_checkpoint_summary": "",
+      "last_checkpoint_status": "",
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
-      "latest_tool_result_summary": "",
-      "active_operation_tool": "",
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
-      "active_resume_tool": "",
-      "active_resume_token": "",
-      "last_tool_response_status": "",
       "artifacts": [],
       "facts": {}
     }
   ],
+  "plan_source_kind": "compiled_raw",
+  "source_sequence_id": "compiled_plan_v5",
+  "source_raw_plan": "raw_plans/plan_v5.md",
+  "source_manifest_path": "",
+  "source_semantic_path": "",
+  "source_compile_report_path": "",
+  "sequence_batch_index": 4,
   "status": "draft",
-  "created_at": "2026-04-09T14:22:54.023198+00:00",
-  "updated_at": "2026-04-09T14:22:54.023199+00:00"
+  "created_at": "2026-04-10T17:00:11.747053+00:00",
+  "updated_at": "2026-04-10T17:00:11.747054+00:00"
 }

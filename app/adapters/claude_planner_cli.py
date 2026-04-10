@@ -18,6 +18,7 @@ import time
 from typing import Any
 
 from app.adapters.base import AdapterResponse, BaseAdapter, ProcessHandle
+from app.adapters.subprocess_groups import configure_popen_kwargs, terminate_process_handle
 from app.planner_stream import consume_stream_fragment
 from app.subprocess_io import drain_pipe_text, read_available_text
 
@@ -187,6 +188,7 @@ class ClaudePlannerCli(BaseAdapter):
             stderr=subprocess.PIPE,
             text=False,
             bufsize=0,
+            **configure_popen_kwargs(),
         )
 
         self._set_nonblocking(process.stdout)
@@ -205,8 +207,12 @@ class ClaudePlannerCli(BaseAdapter):
                 "raw_stdout": "",
                 "raw_stderr": "",
                 "command": cmd,
+                "pgid": process.pid,
             },
         )
+
+    def terminate(self, handle: ProcessHandle, *, force: bool = False) -> None:
+        terminate_process_handle(handle, force=force)
 
     def check(self, handle: ProcessHandle) -> tuple[str, bool]:
         """Non-blocking check on a running planner process."""

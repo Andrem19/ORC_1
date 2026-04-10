@@ -1,14 +1,22 @@
 {
   "source_file": "raw_plans/plan_v12.md",
   "source_hash": "530689a3be45494539fade665e51f6e03e4c9d75b79f43e541e3059184176e85",
-  "compiled_at": "2026-04-09T14:39:54.144774+00:00",
+  "compiled_at": "2026-04-10T17:14:26.697622+00:00",
   "sequence_id": "compiled_plan_v12",
   "compile_status": "compiled",
   "warnings": [
-    "parse_confidence=0.95: plan is well-structured but contains Russian-language stage descriptions; objective translations are condensed.",
-    "stage_7 (replacement track) is formally required in the execution draft but conceptually conditional on overlay track weakness; gate_hint notes this."
+    "v11 result was downgraded to watchlist; v10 result was mischaracterized as model-based veto overlay but was actually a rule-based microstructure replacement candidate.",
+    "Thresholds -0.155 and 0.164 from v11 appear hand-tuned without documented provenance.",
+    "Auto-added research_record for stage_2: every non-trivial stage needs documentation capability.",
+    "Auto-added research_record for stage_4: every non-trivial stage needs documentation capability.",
+    "Auto-added research_record for stage_5: every non-trivial stage needs documentation capability.",
+    "Auto-added research_record for stage_6: every non-trivial stage needs documentation capability.",
+    "Auto-added research_record for stage_7: every non-trivial stage needs documentation capability.",
+    "Auto-added research_record for stage_9: every non-trivial stage needs documentation capability."
   ],
   "semantic_method": "llm",
+  "semantic_path": "semantic.json",
+  "compile_report_path": "compile_report.json",
   "plan_files": [
     "plans/compiled_plan_v12_batch_1.json",
     "plans/compiled_plan_v12_batch_2.json",

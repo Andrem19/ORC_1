@@ -8,6 +8,8 @@ from string import Template
 from textwrap import dedent
 from typing import Any
 
+from app.confirmed_handles import format_confirmed_handles
+
 
 WORKER_REPORT_SCHEMA = """{
   "status": "success|error|partial",
@@ -286,7 +288,7 @@ def build_findings_summary(reports: list[dict[str, Any]], max_entries: int = 10)
     return "\n".join(lines)
 
 
-def build_brokered_plan_creation_prompt(
+def build_direct_plan_creation_prompt(
     *,
     goal: str,
     operator_directives: str = "",
@@ -310,9 +312,9 @@ def build_brokered_plan_creation_prompt(
         execution = baseline_bootstrap.get("execution_timeframe", execution)
     tools = ", ".join(sorted(available_tools or []))
     parts = [
-        "You are a planner that writes a structured JSON execution plan for a brokered runtime.",
+        "You are a planner that writes a structured JSON execution plan for a direct model runtime.",
         "Do not call tools. Do not inspect files. Do not gather extra context.",
-        "The worker model will not own tools. The broker owns tool execution.",
+        "The worker model owns approved direct dev_space1 tool execution.",
         "",
         f"Plan version: {plan_version}",
         f"Goal: {goal}",
@@ -324,7 +326,7 @@ def build_brokered_plan_creation_prompt(
         "- Return JSON only. No markdown, no commentary, no code fences.",
         "- Produce 1 to 3 slices.",
         "- Each slice must be independently executable and bounded.",
-        "- Do not embed concrete tool call arguments beyond allowed tool names.",
+        "- Keep slices bounded; allowed_tools declares the direct dev_space1 tools the model may use.",
         "- Favor cheap validation before expensive studies or backtests.",
         "- Keep the baseline fixed. New work must seek orthogonal evidence, new trades, or missing regimes.",
         f"- Allowed tool names for slices: {tools}",
@@ -355,242 +357,3 @@ def build_brokered_plan_creation_prompt(
     return "\n".join(parts).strip() + "\n"
 
 
-def build_brokered_worker_prompt(
-    *,
-    plan_id: str,
-    slice_payload: dict[str, Any],
-    worker_system_prompt: str = "",
-    baseline_bootstrap: dict[str, Any] | None = None,
-    known_facts: dict[str, Any] | None = None,
-    recent_turn_summaries: list[str] | None = None,
-    latest_tool_summary: str = "",
-    remaining_budget: dict[str, int] | None = None,
-    checkpoint_summary: str = "",
-    active_operation: dict[str, Any] | None = None,
-) -> str:
-    baseline_bootstrap = baseline_bootstrap or {}
-    known_facts = known_facts or {}
-    recent_turn_summaries = recent_turn_summaries or []
-    remaining_budget = remaining_budget or {}
-    active_operation = active_operation or {}
-    parts: list[str] = []
-    if worker_system_prompt.strip():
-        parts.append(worker_system_prompt.strip())
-        parts.append("")
-    parts.extend(
-        [
-            "You are a worker decision model in a brokered execution runtime.",
-            "Do not call tools directly. Choose only the next best action.",
-            "Return JSON only. Exactly one action object. No markdown, no commentary, no code fences.",
-            "",
-            f"Plan: {plan_id}",
-            f"Slice: {slice_payload.get('slice_id', '')} | {_compact_text(slice_payload.get('title', ''), 120)}",
-            f"Hypothesis: {_compact_text(slice_payload.get('hypothesis', ''), 320)}",
-            f"Objective: {_compact_text(slice_payload.get('objective', ''), 320)}",
-            f"Success criteria: {', '.join(_compact_list(slice_payload.get('success_criteria', []) or [], item_limit=3, char_limit=160))}",
-            f"Allowed tools: {', '.join(slice_payload.get('allowed_tools', []) or [])}",
-            "Tool naming examples:",
-            "- valid: features_catalog",
-            "- valid: events",
-            "- valid: research_record",
-            "- invalid: mcp__dev_space1__features_catalog",
-            (
-                "Budgets: "
-                f"turns={slice_payload.get('max_turns')} "
-                f"tool_calls={slice_payload.get('max_tool_calls')} "
-                f"expensive_calls={slice_payload.get('max_expensive_calls')}"
-            ),
-            (
-                "Remaining budget: "
-                f"turns_used={remaining_budget.get('turns_used', 0)} "
-                f"turns_remaining={remaining_budget.get('turns_remaining', slice_payload.get('max_turns', 0))} "
-                f"tool_calls_used={remaining_budget.get('tool_calls_used', 0)} "
-                f"tool_calls_remaining={remaining_budget.get('tool_calls_remaining', slice_payload.get('max_tool_calls', 0))} "
-                f"expensive_calls_used={remaining_budget.get('expensive_calls_used', 0)} "
-                f"expensive_calls_remaining={remaining_budget.get('expensive_calls_remaining', slice_payload.get('max_expensive_calls', 0))}"
-            ),
-            "",
-            "Context:",
-            (
-                "Baseline: "
-                f"{baseline_bootstrap.get('baseline_snapshot_id', 'active-signal-v1')}@"
-                f"{baseline_bootstrap.get('baseline_version', 1)} "
-                f"symbol={baseline_bootstrap.get('symbol', 'BTCUSDT')} "
-                f"anchor={baseline_bootstrap.get('anchor_timeframe', '1h')} "
-                f"execution={baseline_bootstrap.get('execution_timeframe', '5m')}"
-            ),
-            f"Known facts: {_compact_mapping(known_facts)}",
-        ]
-    )
-    if recent_turn_summaries:
-        parts.append("Recent turn summaries:")
-        parts.extend(f"- {_compact_text(item, 180)}" for item in recent_turn_summaries[-4:])
-    if checkpoint_summary.strip():
-        parts.extend(["Last checkpoint summary:", _compact_text(checkpoint_summary.strip(), 220)])
-    if latest_tool_summary.strip():
-        parts.extend(["Latest broker tool result:", _compact_text(latest_tool_summary.strip(), 220)])
-    if active_operation.get("ref"):
-        parts.extend(
-            [
-                "Active broker-owned operation:",
-                f"- tool={active_operation.get('tool', '')}",
-                f"- ref={active_operation.get('ref', '')}",
-                f"- status={active_operation.get('status', '')}",
-            ]
-        )
-    constraints = _broker_enforced_constraints(slice_payload.get("allowed_tools", []) or [])
-    if constraints:
-        parts.extend(["Broker-enforced tool constraints:"])
-        parts.extend(f"- {item}" for item in constraints)
-    parts.extend(
-        [
-            "",
-            "Allowed action types:",
-            "- `tool_call`: choose exactly one next tool and arguments.",
-            "- `checkpoint`: summarize progress when enough evidence was gathered for a checkpoint.",
-            "- `final_report`: finish the slice with a verdict.",
-            "- `abort`: stop when the slice is blocked or the budget is exhausted.",
-            "",
-            "Output schema:",
-            WORKER_ACTION_SCHEMA,
-            "",
-            "Important rules:",
-            "- Never emit more than one tool call.",
-            "- Do not repeat a completed tool call without a clear reason.",
-            "- If an active broker operation is still running, prefer waiting for its status rather than starting duplicate work.",
-            "- Report contract/runtime issues in `reportable_issues` when needed.",
-            "- Use `checkpoint` or `final_report` as soon as the current objective is satisfied.",
-            "- Use only the exact literal tool names shown in `Allowed tools`.",
-            "- Never add MCP namespace, provider prefix, or decoration to a tool name.",
-            "- Do not treat the worker CLI session's own tool registry as relevant. The broker executes the `Allowed tools` externally even if your local session shows no MCP tools.",
-            "- If you are unsure which exact literal tool name to use, return `abort` with `reason_code=\"tool_name_ambiguous\"`.",
-        ]
-    )
-    return "\n".join(parts).strip() + "\n"
-
-
-def _broker_enforced_constraints(allowed_tools: list[str]) -> list[str]:
-    allowed = set(str(item) for item in allowed_tools if str(item).strip())
-    constraints: list[str] = []
-    if "research_search" in allowed:
-        constraints.append("For `research_search`, use `level=\"normal\"`. Do not use `compact`.")
-        constraints.append("For `research_search`, do not use the baseline snapshot id as `project_id`.")
-        constraints.append("For `research_search`, omit `project_id` unless a real research project id was explicitly confirmed by earlier tool results or known facts.")
-    if {"events_sync", "datasets_sync"} & allowed:
-        constraints.append("For expensive async sync tools, never use `wait=\"completed\"`; use `wait=\"started\"` or omit `wait`.")
-    if "events_sync" in allowed:
-        constraints.append("For `events_sync`, always include both `family` and `scope` in the arguments.")
-        constraints.append("For `events_sync`, use `family` from the public contract such as `funding`, `expiry`, or `all`, and `scope` such as `incremental` or `backfill`.")
-        constraints.append("If the broker already reports an active `events_sync` operation as running, do not start another `events_sync` call with the same intent; wait for resume/status or choose another cheap discovery step.")
-    if "features_catalog" in allowed:
-        constraints.append("For `features_catalog`, prefer `scope=\"available\"`; do not use deprecated alias values like `all` unless a prior tool result explicitly requires it.")
-    if "features_custom" in allowed:
-        constraints.append("For `features_custom`, never use `action=\"create\"`. Valid public actions are inspect, status, validate, publish, and delete.")
-        constraints.append("Before proposing a new custom feature, prefer `features_custom(action=\"inspect\", view=\"contract\")` to confirm the exact public authoring contract.")
-    if "features_analytics" in allowed:
-        constraints.append("For `features_analytics`, always specify one concrete feature via `feature_name`, `feature`, `column_name`, or `column`.")
-        constraints.append("Do not call `features_analytics(action=\"heatmap\"|\"analytics\"|\"render\"|\"portability\")` without a specific feature selector.")
-        constraints.append("If a prior broker result says analytics are not ready for a feature, do not immediately retry the same `features_analytics` call; switch to discovery, checkpoint, or abort.")
-    if "datasets_preview" in allowed:
-        constraints.append("For `datasets_preview`, always include both `dataset_id` and `view`.")
-        constraints.append("For `datasets_preview`, `view` must be `rows` or `chart`.")
-        constraints.append("Do not pass `symbol` or `timeframes` directly to `datasets_preview`; first discover a canonical dataset id using `datasets`.")
-    return constraints
-
-
-def _compact_text(value: Any, char_limit: int) -> str:
-    text = str(value or "").strip()
-    if len(text) <= char_limit:
-        return text
-    return text[: max(0, char_limit - 3)].rstrip() + "..."
-
-
-def _compact_list(values: list[Any], *, item_limit: int, char_limit: int) -> list[str]:
-    result: list[str] = []
-    for item in list(values)[:item_limit]:
-        text = _compact_text(item, char_limit)
-        if text:
-            result.append(text)
-    return result
-
-
-def _compact_mapping(mapping: dict[str, Any], *, item_limit: int = 8, value_limit: int = 120) -> dict[str, Any]:
-    compact: dict[str, Any] = {}
-    for index, (key, value) in enumerate((mapping or {}).items()):
-        if index >= item_limit:
-            compact["..."] = f"+{len(mapping) - item_limit} more"
-            break
-        if isinstance(value, dict):
-            compact[str(key)] = _compact_mapping(value, item_limit=4, value_limit=value_limit)
-        elif isinstance(value, list):
-            compact[str(key)] = [_compact_text(item, value_limit) for item in value[:4]]
-            if len(value) > 4:
-                compact[str(key)].append(f"+{len(value) - 4} more")
-        else:
-            compact[str(key)] = _compact_text(value, value_limit)
-    return compact
-
-
-def build_brokered_worker_correction_prompt(
-    *,
-    previous_prompt: str,
-    raw_output: str,
-    allowed_tools: list[str],
-    parse_error: str,
-) -> str:
-    return (
-        f"{previous_prompt.rstrip()}\n\n"
-        "## Correction Required\n"
-        "Your previous response violated the worker tool-name contract.\n"
-        f"Parse error: {parse_error}\n"
-        f"Allowed literal tool names: {', '.join(allowed_tools)}\n"
-        f"Previous invalid raw output:\n{raw_output}\n\n"
-        "Rewrite the response now.\n"
-        "Return JSON only.\n"
-        "If the issue concerns `features_custom`, do not invent legacy actions like `create`; use only the public contract.\n"
-        "If you choose `tool_call`, the `tool` field must be one exact literal name from Allowed tools.\n"
-        "Do not use MCP-prefixed names like `mcp__dev_space1__...`.\n"
-        "Do not claim that the allowed tools are unavailable just because your local CLI session has no MCP tools; the broker executes Allowed tools outside your session.\n"
-        "If you are unsure, return `abort` with `reason_code=\"tool_name_ambiguous\"`.\n"
-    )
-
-
-def build_wave_summary(*, wave_id: int, reports: list[dict[str, Any]], target_size: int, slots: list[dict[str, Any]] | None = None) -> str:
-    slot_items = slots or []
-    if not slot_items:
-        slot_items = [
-            {
-                "slot": report.get("wave_position", "?"),
-                "kind": "terminal_report",
-                "status": report.get("status", "?"),
-                "verdict": report.get("verdict", "PENDING"),
-                "plan_version": report.get("plan_version", "?"),
-                "what_was_done": report.get("what_was_done", ""),
-                "key_metrics": report.get("key_metrics", {}),
-            }
-            for report in reports
-        ]
-    if not slot_items:
-        return f"Wave {wave_id}: no slot outcomes."
-    promoted = sum(1 for item in slot_items if str(item.get("verdict", "PENDING")) == "PROMOTE")
-    rejected = sum(1 for item in slot_items if str(item.get("verdict", "PENDING")) == "REJECT")
-    planner_failures = sum(1 for item in slot_items if str(item.get("kind", "")) == "planner_failure")
-    launch_failures = sum(1 for item in slot_items if str(item.get("kind", "")) == "launch_failure")
-    open_slots = sum(1 for item in slot_items if str(item.get("kind", "")) == "open_slot")
-    lines = [f"Wave {wave_id} summary ({len(slot_items)}/{target_size} slots accounted):"]
-    for item in sorted(slot_items, key=lambda entry: int(entry.get("slot", 0) or 0)):
-        metrics = item.get("key_metrics", {}) or {}
-        metric_parts = [f"{k}={v}" for k, v in list(metrics.items())[:4]]
-        line = f"- Slot {item.get('slot', '?')}: {item.get('kind', 'terminal_report')} | {item.get('status', '?')} -> {item.get('verdict', 'PENDING')}"
-        if item.get("plan_version"):
-            line += f" | plan_v{item.get('plan_version')}"
-        if metric_parts:
-            line += f" | {', '.join(metric_parts)}"
-        done = str(item.get("what_was_done", "") or item.get("failure_detail", "") or "")[:140]
-        if done:
-            line += f" | {done}"
-        lines.append(line)
-    lines.append(
-        f"Outcome: promoted={promoted}, rejected={rejected}, planner_failures={planner_failures}, launch_failures={launch_failures}, open_slots={open_slots}."
-    )
-    return "\n".join(lines)

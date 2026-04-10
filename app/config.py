@@ -1,12 +1,11 @@
-"""Configuration for the broker-only orchestrator runtime."""
+"""Configuration for the direct orchestrator runtime."""
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, fields
 from pathlib import Path
 from typing import Any
 
-from app.broker.transport import BrokerTransportConfig
 from app.models import WorkerConfig
 
 
@@ -73,6 +72,7 @@ class AdapterConfig:
     name: str
     cli_path: str = ""
     extra_flags: list[str] = field(default_factory=list)
+    exclude_tools: list[str] = field(default_factory=list)
     model: str = ""
     mode: str = "default"
     use_bare: bool = False
@@ -104,14 +104,46 @@ class LMStudioConfig:
 
 
 @dataclass
+class DirectExecutionConfig:
+    """Direct model execution settings."""
+    provider: str = "lmstudio"  # lmstudio | qwen_cli
+    fallback_1: str = ""  # "qwen_cli" | "claude_cli" | ""
+    fallback_2: str = ""  # "qwen_cli" | "claude_cli" | ""
+    timeout_seconds: int = 1200
+    max_attempts_per_slice: int = 2
+    max_tool_calls_per_slice: int = 24
+    max_expensive_tool_calls_per_slice: int = 6
+    mcp_endpoint_url: str = "http://127.0.0.1:8766/mcp"
+    mcp_auth_mode: str = "none"  # none | bearer
+    mcp_token_env_var: str = "DEV_SPACE1_MCP_BEARER_TOKEN"
+    connect_timeout_seconds: float = 10.0
+    read_timeout_seconds: float = 60.0
+    first_action_timeout_seconds: int = 45
+    stalled_action_timeout_seconds: int = 60
+    retry_budget: int = 1
+    incident_on_unclear_contract: bool = True
+    safe_exclude_tools: list[str] = field(default_factory=lambda: [
+        "run_shell_command",
+        "read_file",
+        "write_file",
+        "edit",
+        "grep_search",
+        "glob",
+        "list_directory",
+        "web_fetch",
+        "system_reset_space",
+    ])
+
+
+@dataclass
 class OrchestratorConfig:
     # --- Goal ---
     goal: str = "No goal specified"
 
     operator_directives: str = ""
     worker_system_prompt: str = (
-        "You are a worker decision model. Do not call tools directly. "
-        "Return one structured JSON action only."
+        "You are a direct execution model with access to approved dev_space1 tools. "
+        "Complete the assigned slice and return one terminal structured JSON result only."
     )
 
     # --- Workers ---
@@ -138,7 +170,6 @@ class OrchestratorConfig:
         name="qwen_worker_cli",
         cli_path="qwen-code",
     ))
-
     # --- State ---
     state_dir: str = "state"
     state_file: str = "orchestrator_state.json"
@@ -168,27 +199,28 @@ class OrchestratorConfig:
 
     # --- Research (MCP integration) ---
     research_config: dict[str, Any] = field(default_factory=dict)
-    broker: BrokerTransportConfig = field(default_factory=BrokerTransportConfig)
     planner_decision_timeout_seconds: int = 180
     planner_decision_retry_attempts: int = 3
     worker_decision_timeout_seconds: int = 120
     worker_decision_retry_attempts: int = 2
+    worker_timeout_policy_by_tag: dict[str, int] = field(default_factory=lambda: {
+        "feature_contract": 180,
+        "postmortem": 180,
+    })
     decision_retry_backoff_seconds: float = 0.25
     decision_cycle_sleep_seconds: float = 1.0
-    broker_autopoll_budget_seconds: float = 8.0
-    broker_autopoll_interval_seconds: float = 1.0
 
     # --- Notifications ---
     notifications: NotificationConfig = field(default_factory=NotificationConfig)
 
     # --- LM Studio (shared connection + translation) ---
     lmstudio: LMStudioConfig = field(default_factory=LMStudioConfig)
+    direct_execution: DirectExecutionConfig = field(default_factory=DirectExecutionConfig)
 
     plan_dir: str = "plans"
     max_concurrent_plan_tasks: int = 3
     max_plans_per_run: int = 1
     max_consecutive_failed_plans: int = 1
-    max_broker_failures: int = 5
     planner_prompt_template: str = DEFAULT_PLANNER_PROMPT_TEMPLATE
 
     @property
@@ -220,12 +252,12 @@ def load_config_from_dict(data: dict[str, Any]) -> OrchestratorConfig:
         "research_config",
         "planner_decision_timeout_seconds", "planner_decision_retry_attempts",
         "worker_decision_timeout_seconds", "worker_decision_retry_attempts",
+        "worker_timeout_policy_by_tag",
         "decision_retry_backoff_seconds",
-        "decision_cycle_sleep_seconds", "broker_autopoll_budget_seconds",
-        "broker_autopoll_interval_seconds",
+        "decision_cycle_sleep_seconds",
         "plan_dir",
         "max_concurrent_plan_tasks",
-        "max_plans_per_run", "max_consecutive_failed_plans", "max_broker_failures",
+        "max_plans_per_run", "max_consecutive_failed_plans",
         "planner_prompt_template", "startup_mode", "current_run_id",
     }
     for key in simple_fields:
@@ -235,17 +267,21 @@ def load_config_from_dict(data: dict[str, Any]) -> OrchestratorConfig:
     if "workers" in data:
         cfg.workers = [WorkerConfig(**w) for w in data["workers"]]
 
+    def _filter_dataclass_kwargs(cls: type[Any], payload: dict[str, Any]) -> dict[str, Any]:
+        allowed = {item.name for item in fields(cls)}
+        return {key: value for key, value in dict(payload).items() if key in allowed}
+
     if "planner_adapter" in data:
-        cfg.planner_adapter = AdapterConfig(**data["planner_adapter"])
+        cfg.planner_adapter = AdapterConfig(**_filter_dataclass_kwargs(AdapterConfig, data["planner_adapter"]))
 
     if "worker_adapter" in data:
-        cfg.worker_adapter = AdapterConfig(**data["worker_adapter"])
+        cfg.worker_adapter = AdapterConfig(**_filter_dataclass_kwargs(AdapterConfig, data["worker_adapter"]))
 
     if "notifications" in data:
-        cfg.notifications = NotificationConfig(**data["notifications"])
+        cfg.notifications = NotificationConfig(**_filter_dataclass_kwargs(NotificationConfig, data["notifications"]))
 
-    if "broker" in data:
-        cfg.broker = BrokerTransportConfig(**data["broker"])
+    if "direct_execution" in data:
+        cfg.direct_execution = DirectExecutionConfig(**_filter_dataclass_kwargs(DirectExecutionConfig, data["direct_execution"]))
 
     # LM Studio: parse nested structure for shared connection + translation
     if "lmstudio" in data:

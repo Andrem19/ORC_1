@@ -1,6 +1,6 @@
 {
   "plan_id": "compiled_plan_v8_batch_3",
-  "goal": "Построить и проверить base-conditional overlay модели (veto / early-cut / hold-extension) на trade surface immutable базы active-signal-v1@1, чтобы улучшить качество уже существующих сделок без изменения базовой логики.",
+  "goal": "Pivot from full-surface directional prediction to base-conditional overlays (veto, early-cut, hold-extension) that improve the quality of already-selected base trades on BTCUSDT.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -9,55 +9,49 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "active-signal-v1@1 is immutable: never retune, reselect, or modify base signals, thresholds, hours, days, or execution logic",
-    "full-surface directional classification on leadership/breadth/path-asymmetry/regime features is permanently closed (v4–v7 terminal verdict)",
-    "CatBoost regression on future PnL is permanently closed",
-    "classifier-transition as standalone directional layer is permanently closed",
-    "all labels must be frozen before any model training begins",
-    "no threshold or feature selection on lockbox window — selection OOS only",
-    "all comparisons are matched: same trade window, same notionals, strict overlay evaluation against immutable base",
-    "veto route must show signal before opening early-cut; early-cut must show signal before opening hold-extension",
-    "all datasets are trade-level (entry-timestamp keyed), not anchor-level"
+    "Base snapshot active-signal-v1@1 is immutable — never retune its logic, thresholds, hours, days, or execution parameters.",
+    "Full-surface directional classification on leadership/breadth/path-asymmetry/regime features is terminally closed (v4–v7 verdict).",
+    "No regression on future PnL. No classifier-transition standalone layer. No raw event / static IV directional ideas.",
+    "No feature/label/threshold/architecture selection on lockbox — selection OOS only.",
+    "Overlay models train only on trade-level datasets; never on anchor-level surfaces.",
+    "All comparisons vs base must be matched: same trade windows, same notionals, strict overlay evaluation.",
+    "Labels frozen before training. Thresholds not tuned on lockbox. Purge gap ≥ 24h between windows.",
+    "One route at a time: veto first, early-cut only if veto shows signal, extension only if underheld winners found.",
+    "Any improvement claim requires matched lockbox OOS comparison vs immutable base."
   ],
   "slices": [
     {
       "slice_id": "compiled_plan_v8_stage_7",
       "title": "Lockbox test for veto overlays",
-      "hypothesis": "Apply the best veto models with frozen thresholds to the lockbox OOS window and compare overlay-augmented base vs immutable base to determine whether veto improvement is real.",
-      "objective": "Apply the best veto models with frozen thresholds to the lockbox OOS window and compare overlay-augmented base vs immutable base to determine whether veto improvement is real.",
+      "hypothesis": "Run the strict matched lockbox OOS comparison — immutable base vs base+veto overlay — to confirm whether veto overlays materially improve the base on unseen data.",
+      "objective": "Run the strict matched lockbox OOS comparison — immutable base vs base+veto overlay — to confirm whether veto overlays materially improve the base on unseen data.",
       "success_criteria": [
-        "matched lockbox comparison completed: same trades, same notionals",
-        "delta PnL, delta PF, delta DD computed",
-        "removed trades and their PnL contribution analyzed",
-        "weak-window repair effect quantified",
-        "promoted_to_lockbox flag and final decision recorded for each model"
+        "Matched comparison completed on lockbox with same trade windows and notionals.",
+        "Verdict recorded: material improvement confirmed, partial, or failed."
       ],
       "allowed_tools": [
-        "backtests_plan",
         "backtests_runs",
-        "backtests_studies",
-        "backtests_walkforward",
-        "backtests_conditions",
         "backtests_analysis",
-        "experiments_run",
-        "experiments_inspect",
-        "experiments_read"
+        "models_compare",
+        "research_record"
       ],
       "evidence_requirements": [
-        "matched lockbox comparison completed: same trades, same notionals",
-        "delta PnL, delta PF, delta DD computed",
-        "removed trades and their PnL contribution analyzed",
-        "weak-window repair effect quantified",
-        "promoted_to_lockbox flag and final decision recorded for each model"
+        "Matched comparison completed on lockbox with same trade windows and notionals.",
+        "Verdict recorded: material improvement confirmed, partial, or failed."
       ],
       "policy_tags": [
-        "oos_integrity",
-        "matched_comparison"
+        "lockbox_test",
+        "matched_comparison",
+        "final_truth"
       ],
-      "max_turns": 6,
-      "max_tool_calls": 5,
-      "max_expensive_calls": 2,
+      "max_turns": 24,
+      "max_tool_calls": 24,
+      "max_expensive_calls": 3,
       "parallel_slot": 1,
+      "budget_scale_applied": 6,
+      "depends_on": [
+        "compiled_plan_v8_stage_6"
+      ],
       "status": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
@@ -65,63 +59,50 @@
       "assigned_worker_id": null,
       "last_checkpoint_turn_id": "",
       "last_checkpoint_summary": "",
+      "last_checkpoint_status": "",
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
-      "latest_tool_result_summary": "",
-      "active_operation_tool": "",
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
-      "active_resume_tool": "",
-      "active_resume_token": "",
-      "last_tool_response_status": "",
       "artifacts": [],
       "facts": {}
     },
     {
       "slice_id": "compiled_plan_v8_stage_8",
-      "title": "Early-cut route (conditional)",
-      "hypothesis": "Train and evaluate CatBoost early-cut classifiers on selection OOS, but only if veto models demonstrated at least weak meaningful signal and post-entry failure signatures are distinguishable.",
-      "objective": "Train and evaluate CatBoost early-cut classifiers on selection OOS, but only if veto models demonstrated at least weak meaningful signal and post-entry failure signatures are distinguishable.",
+      "title": "Только если veto route показывает signal — открыть early-cut route",
+      "hypothesis": "Investigate post-entry early-cut overlays only if veto models demonstrated at least weak meaningful signal and bad trades are recognizable in post-entry phase.",
+      "objective": "Investigate post-entry early-cut overlays only if veto models demonstrated at least weak meaningful signal and bad trades are recognizable in post-entry phase.",
       "success_criteria": [
-        "condition met: veto route showed at least weak meaningful signal",
-        "early-cut models trained for both sides with frozen labels",
-        "selection OOS metrics: cut quality positive, economic effect positive after fees",
-        "clear pass/fail for lockbox promotion"
+        "Gate condition verified before any early-cut training.",
+        "Selection OOS metrics show early-cut improves over baseline exit on same trades."
       ],
       "allowed_tools": [
-        "models_dataset",
         "models_train",
         "models_registry",
         "models_compare",
-        "models_to_feature",
-        "backtests_plan",
         "backtests_runs",
-        "backtests_studies",
-        "backtests_walkforward",
-        "backtests_conditions",
-        "backtests_analysis",
-        "experiments_run",
-        "experiments_inspect",
-        "experiments_read",
-        "experiments_registry_inspect"
+        "research_record"
       ],
       "evidence_requirements": [
-        "condition met: veto route showed at least weak meaningful signal",
-        "early-cut models trained for both sides with frozen labels",
-        "selection OOS metrics: cut quality positive, economic effect positive after fees",
-        "clear pass/fail for lockbox promotion"
+        "Gate condition verified before any early-cut training.",
+        "Selection OOS metrics show early-cut improves over baseline exit on same trades."
       ],
       "policy_tags": [
-        "oos_integrity",
-        "gated",
+        "modeling",
+        "early_cut",
+        "gated_route",
         "optional_candidate"
       ],
-      "max_turns": 6,
-      "max_tool_calls": 5,
-      "max_expensive_calls": 2,
+      "max_turns": 36,
+      "max_tool_calls": 30,
+      "max_expensive_calls": 12,
       "parallel_slot": 1,
+      "budget_scale_applied": 6,
+      "depends_on": [
+        "compiled_plan_v8_stage_7"
+      ],
       "status": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
@@ -129,63 +110,50 @@
       "assigned_worker_id": null,
       "last_checkpoint_turn_id": "",
       "last_checkpoint_summary": "",
+      "last_checkpoint_status": "",
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
-      "latest_tool_result_summary": "",
-      "active_operation_tool": "",
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
-      "active_resume_tool": "",
-      "active_resume_token": "",
-      "last_tool_response_status": "",
       "artifacts": [],
       "facts": {}
     },
     {
       "slice_id": "compiled_plan_v8_stage_9",
-      "title": "Hold-extension route (conditional)",
-      "hypothesis": "Train and evaluate CatBoost extension classifiers on selection OOS, but only if the trade-surface atlas revealed an underheld winner cluster and selection diagnostics suggest extension has a chance.",
-      "objective": "Train and evaluate CatBoost extension classifiers on selection OOS, but only if the trade-surface atlas revealed an underheld winner cluster and selection diagnostics suggest extension has a chance.",
+      "title": "Только если есть evidence of underheld winners — открыть hold-extension route",
+      "hypothesis": "Investigate hold-extension overlays only if the trade-surface atlas revealed an underheld winner cluster and selection diagnostics suggest extension has a chance.",
+      "objective": "Investigate hold-extension overlays only if the trade-surface atlas revealed an underheld winner cluster and selection diagnostics suggest extension has a chance.",
       "success_criteria": [
-        "condition met: trade-surface atlas showed underheld winner cluster and extension diagnostics are favorable",
-        "extension models trained for both sides with frozen labels",
-        "selection OOS metrics: incremental PnL positive, hit rate positive, no material DD worsening",
-        "clear pass/fail for lockbox promotion"
+        "Gate condition verified: atlas shows underheld winner cluster.",
+        "Selection OOS shows positive incremental PnL without material DD worsening."
       ],
       "allowed_tools": [
-        "models_dataset",
         "models_train",
         "models_registry",
         "models_compare",
-        "models_to_feature",
-        "backtests_plan",
         "backtests_runs",
-        "backtests_studies",
-        "backtests_walkforward",
-        "backtests_conditions",
-        "backtests_analysis",
-        "experiments_run",
-        "experiments_inspect",
-        "experiments_read",
-        "experiments_registry_inspect"
+        "research_record"
       ],
       "evidence_requirements": [
-        "condition met: trade-surface atlas showed underheld winner cluster and extension diagnostics are favorable",
-        "extension models trained for both sides with frozen labels",
-        "selection OOS metrics: incremental PnL positive, hit rate positive, no material DD worsening",
-        "clear pass/fail for lockbox promotion"
+        "Gate condition verified: atlas shows underheld winner cluster.",
+        "Selection OOS shows positive incremental PnL without material DD worsening."
       ],
       "policy_tags": [
-        "oos_integrity",
-        "gated",
+        "modeling",
+        "hold_extension",
+        "gated_route",
         "optional_candidate"
       ],
-      "max_turns": 6,
-      "max_tool_calls": 5,
-      "max_expensive_calls": 2,
-      "parallel_slot": 1,
+      "max_turns": 36,
+      "max_tool_calls": 30,
+      "max_expensive_calls": 12,
+      "parallel_slot": 3,
+      "budget_scale_applied": 6,
+      "depends_on": [
+        "compiled_plan_v8_stage_7"
+      ],
       "status": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
@@ -193,22 +161,25 @@
       "assigned_worker_id": null,
       "last_checkpoint_turn_id": "",
       "last_checkpoint_summary": "",
+      "last_checkpoint_status": "",
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
-      "latest_tool_result_summary": "",
-      "active_operation_tool": "",
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
-      "active_resume_tool": "",
-      "active_resume_token": "",
-      "last_tool_response_status": "",
       "artifacts": [],
       "facts": {}
     }
   ],
+  "plan_source_kind": "compiled_raw",
+  "source_sequence_id": "compiled_plan_v8",
+  "source_raw_plan": "raw_plans/plan_v8.md",
+  "source_manifest_path": "",
+  "source_semantic_path": "",
+  "source_compile_report_path": "",
+  "sequence_batch_index": 3,
   "status": "draft",
-  "created_at": "2026-04-09T14:28:47.759023+00:00",
-  "updated_at": "2026-04-09T14:28:47.759024+00:00"
+  "created_at": "2026-04-10T17:05:54.562545+00:00",
+  "updated_at": "2026-04-10T17:05:54.562547+00:00"
 }

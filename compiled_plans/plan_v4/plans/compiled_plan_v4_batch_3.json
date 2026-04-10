@@ -1,6 +1,6 @@
 {
   "plan_id": "compiled_plan_v4_batch_3",
-  "goal": "Close all outstanding v3 research branches, run a weak-window repair specialist program on the immutable base, and produce a final v4 verdict before any medium-friction work is unlocked.",
+  "goal": "Close all outstanding branches from v3, complete the low-friction wave with a final verdict, then conditionally explore weak-window repair and medium-friction branches under strict gate discipline.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -9,44 +9,47 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "active-signal-v1@1 is immutable — never modify the baseline snapshot.",
-    "Every research branch must reach a terminal decision (promoted or rejected); no half-open branches allowed.",
-    "Previously rejected branches (H1_post_funding_long, H2_expiry_lead_lag, A1_high_iv_long_v1, A1b_high_iv_momentum, A4_wed_afternoon) must not be revived.",
-    "Medium-friction wave (B1, B2) is locked unless all five unlock conditions are simultaneously satisfied.",
-    "Maximum 2 weak pockets may be selected for specialist repair in a single research cycle."
+    "active-signal-v1@1 is immutable — never modify the base snapshot.",
+    "Rejected branches must not be reopened: H1_post_funding_long, H2_expiry_lead_lag, A1_high_iv_long_v1, A1b_high_iv_momentum, A4_wed_afternoon.",
+    "Static high-IV regime is a volatility regime descriptor, not a directional signal.",
+    "Every branch must reach a terminal decision (promoted / rejected / formally-skipped) before any downstream gate unlocks.",
+    "Do not confuse a data task with a research result — feature materialization ≠ hypothesis validation.",
+    "Medium-friction wave is locked until every low-friction branch is closed and weak-window repair is completed."
   ],
   "slices": [
     {
       "slice_id": "compiled_plan_v4_stage_7",
-      "title": "Решение по medium-friction wave (unlock gate)",
-      "hypothesis": "Decide whether to unlock the medium-friction wave (B1 cross-symbol leadership, B2 model-backed IV-routing) or keep it locked.",
-      "objective": "Decide whether to unlock the medium-friction wave (B1 cross-symbol leadership, B2 model-backed IV-routing) or keep it locked.",
+      "title": "Только после этого — решение по medium-friction wave",
+      "hypothesis": "Decide whether to unlock medium-friction branches (B1 cross-symbol leadership, B2 model-backed IV routing) — only after all prior work is conclusively finished.",
+      "objective": "Decide whether to unlock medium-friction branches (B1 cross-symbol leadership, B2 model-backed IV routing) — only after all prior work is conclusively finished.",
       "success_criteria": [
-        "A clear lock/unlock decision is recorded. If unlocked, B1 and B2 each have an initial assessment."
+        "A clear lock or unlock decision is recorded for the medium-friction wave."
       ],
       "allowed_tools": [
-        "backtests_analysis",
-        "backtests_conditions",
-        "experiments_run",
-        "experiments_inspect",
-        "experiments_read",
-        "research_project",
-        "research_map",
-        "research_record",
-        "research_search"
+        "datasets",
+        "models_dataset",
+        "models_train",
+        "models_to_feature",
+        "backtests_runs",
+        "research_record"
       ],
       "evidence_requirements": [
-        "A clear lock/unlock decision is recorded. If unlocked, B1 and B2 each have an initial assessment."
+        "A clear lock or unlock decision is recorded for the medium-friction wave."
       ],
       "policy_tags": [
-        "decision_gate",
-        "conditional_branch",
+        "medium_friction",
+        "conditional",
+        "high_effort",
         "optional_candidate"
       ],
-      "max_turns": 6,
-      "max_tool_calls": 5,
-      "max_expensive_calls": 2,
+      "max_turns": 24,
+      "max_tool_calls": 24,
+      "max_expensive_calls": 3,
       "parallel_slot": 1,
+      "budget_scale_applied": 6,
+      "depends_on": [
+        "compiled_plan_v4_stage_6"
+      ],
       "status": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
@@ -54,46 +57,46 @@
       "assigned_worker_id": null,
       "last_checkpoint_turn_id": "",
       "last_checkpoint_summary": "",
+      "last_checkpoint_status": "",
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
-      "latest_tool_result_summary": "",
-      "active_operation_tool": "",
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
-      "active_resume_tool": "",
-      "active_resume_token": "",
-      "last_tool_response_status": "",
       "artifacts": [],
       "facts": {}
     },
     {
       "slice_id": "compiled_plan_v4_stage_8",
       "title": "Финальный отчет по v4",
-      "hypothesis": "Produce a comprehensive final report summarizing all v4 research outcomes, terminal decisions, and recommendations for next steps.",
-      "objective": "Produce a comprehensive final report summarizing all v4 research outcomes, terminal decisions, and recommendations for next steps.",
+      "hypothesis": "Produce a comprehensive final report summarizing all v4 research outcomes, decisions, and recommendations for the next cycle.",
+      "objective": "Produce a comprehensive final report summarizing all v4 research outcomes, decisions, and recommendations for the next cycle.",
       "success_criteria": [
-        "A standalone v4 final report exists with all stage outcomes, terminal decisions, and next-step recommendations."
+        "v4_final_report is recorded with all branch verdicts, the low-friction verdict, repair verdict, and medium-friction decision.",
+        "No open branches remain without terminal status."
       ],
       "allowed_tools": [
-        "research_project",
-        "research_map",
         "research_record",
-        "research_search",
-        "backtests_analysis",
+        "research_map",
         "notify_send"
       ],
       "evidence_requirements": [
-        "A standalone v4 final report exists with all stage outcomes, terminal decisions, and next-step recommendations."
+        "v4_final_report is recorded with all branch verdicts, the low-friction verdict, repair verdict, and medium-friction decision.",
+        "No open branches remain without terminal status."
       ],
       "policy_tags": [
-        "reporting"
+        "finalization"
       ],
-      "max_turns": 4,
-      "max_tool_calls": 3,
-      "max_expensive_calls": 0,
+      "max_turns": 24,
+      "max_tool_calls": 24,
+      "max_expensive_calls": 2,
       "parallel_slot": 1,
+      "budget_scale_applied": 6,
+      "depends_on": [
+        "compiled_plan_v4_stage_6",
+        "compiled_plan_v4_stage_7"
+      ],
       "status": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
@@ -101,22 +104,25 @@
       "assigned_worker_id": null,
       "last_checkpoint_turn_id": "",
       "last_checkpoint_summary": "",
+      "last_checkpoint_status": "",
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
-      "latest_tool_result_summary": "",
-      "active_operation_tool": "",
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
-      "active_resume_tool": "",
-      "active_resume_token": "",
-      "last_tool_response_status": "",
       "artifacts": [],
       "facts": {}
     }
   ],
+  "plan_source_kind": "compiled_raw",
+  "source_sequence_id": "compiled_plan_v4",
+  "source_raw_plan": "raw_plans/plan_v4.md",
+  "source_manifest_path": "",
+  "source_semantic_path": "",
+  "source_compile_report_path": "",
+  "sequence_batch_index": 3,
   "status": "draft",
-  "created_at": "2026-04-09T14:21:37.708589+00:00",
-  "updated_at": "2026-04-09T14:21:37.708591+00:00"
+  "created_at": "2026-04-10T16:57:59.712530+00:00",
+  "updated_at": "2026-04-10T16:57:59.712531+00:00"
 }

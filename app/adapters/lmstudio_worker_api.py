@@ -244,8 +244,9 @@ class LmStudioWorkerApi(BaseAdapter):
         handle.partial_error_output += response.error
         return response.raw_output or "", True
 
-    def terminate(self, handle: ProcessHandle) -> None:
+    def terminate(self, handle: ProcessHandle, *, force: bool = False) -> None:
         """Mark the async request as cancelled. HTTP request itself is not abortable."""
+        del force
         handle.metadata["cancelled"] = True
 
     @staticmethod

@@ -1,5 +1,5 @@
 """
-Persistence for brokered execution state with hard cutover from the legacy runtime.
+Persistence for direct execution state.
 """
 
 from __future__ import annotations
@@ -13,20 +13,17 @@ from typing import Any
 
 from app.execution_models import (
     BaselineRef,
-    BrokerHealth,
+    DirectAttemptMetadata,
     ExecutionPlan,
     ExecutionStateV2,
     ExecutionTurn,
     PlanSlice,
-    ToolPolicy,
-    ToolResultEnvelope,
     WorkerAction,
     WorkerReportableIssue,
 )
 from app.run_context import build_state_pointer, ensure_current_run, extract_pointed_path, read_current_run_id, resolve_run_dir
 
 _COMPLETED_TURN_HISTORY_LIMIT = 50
-_COMPLETED_LEDGER_LIMIT = 100
 
 
 class ExecutionStateStore:
@@ -46,7 +43,6 @@ class ExecutionStateStore:
         state.touch()
         payload_dict = asdict(state)
         payload_dict["turn_history"] = [asdict(item) for item in _trim_turn_history(state)]
-        payload_dict["tool_call_ledger"] = [asdict(item) for item in _trim_tool_call_ledger(state)]
         payload = json.dumps(payload_dict, ensure_ascii=False, indent=2)
         current_state_path = self.current_state_path
         current_state_path.parent.mkdir(parents=True, exist_ok=True)
@@ -84,7 +80,7 @@ class ExecutionStateStore:
         legacy_plan_root = Path(legacy_plan_dir)
         if not legacy_state.exists() and not legacy_plan_root.exists():
             return None
-        archive_root = self.state_path.parent / "archive" / "broker_cutover"
+        archive_root = self.state_path.parent / "archive" / "direct_cutover"
         archive_root.mkdir(parents=True, exist_ok=True)
         target = archive_root / self._archive_stamp()
         target.mkdir(parents=True, exist_ok=True)
@@ -134,21 +130,16 @@ class ExecutionStateStore:
 def _deserialize_state(payload: dict[str, Any]) -> ExecutionStateV2:
     plans = [_deserialize_plan(item) for item in payload.get("plans", []) if isinstance(item, dict)]
     turns = [_deserialize_turn(item) for item in payload.get("turn_history", []) if isinstance(item, dict)]
-    ledger = [_build_dataclass(ToolResultEnvelope, item) for item in payload.get("tool_call_ledger", []) if isinstance(item, dict)]
-    broker_health = _build_dataclass(BrokerHealth, payload.get("broker_health", {}))
     state = ExecutionStateV2(
         goal=str(payload.get("goal", "") or ""),
         status=str(payload.get("status", "idle") or "idle"),
         plans=plans,
         turn_history=turns,
-        tool_call_ledger=ledger,
-        broker_health=broker_health,
         stop_reason=str(payload.get("stop_reason", "") or ""),
         current_plan_id=str(payload.get("current_plan_id", "") or ""),
         completed_plan_count=int(payload.get("completed_plan_count", 0) or 0),
         consecutive_failed_plans=int(payload.get("consecutive_failed_plans", 0) or 0),
         no_progress_cycles=int(payload.get("no_progress_cycles", 0) or 0),
-        broker_failure_count=int(payload.get("broker_failure_count", 0) or 0),
         created_at=str(payload.get("created_at", "") or ""),
         updated_at=str(payload.get("updated_at", "") or ""),
     )
@@ -204,9 +195,7 @@ def _deserialize_turn(payload: dict[str, Any]) -> ExecutionTurn:
         reason_code=str(action_payload.get("reason_code", "") or ""),
         retryable=bool(action_payload.get("retryable", False)),
     )
-    tool_result = None
-    if isinstance(payload.get("tool_result"), dict):
-        tool_result = _build_dataclass(ToolResultEnvelope, payload["tool_result"])
+    direct_attempt = _build_dataclass(DirectAttemptMetadata, payload.get("direct_attempt", {}))
     return ExecutionTurn(
         turn_id=str(payload.get("turn_id", "") or ""),
         plan_id=str(payload.get("plan_id", "") or ""),
@@ -214,7 +203,7 @@ def _deserialize_turn(payload: dict[str, Any]) -> ExecutionTurn:
         worker_id=str(payload.get("worker_id", "") or ""),
         turn_index=int(payload.get("turn_index", 0) or 0),
         action=action,
-        tool_result=tool_result,
+        direct_attempt=direct_attempt,
         created_at=str(payload.get("created_at", "") or ""),
     )
 
@@ -245,15 +234,3 @@ def _trim_turn_history(state: ExecutionStateV2) -> list[ExecutionTurn]:
     ][-_COMPLETED_TURN_HISTORY_LIMIT:]
     keep_turn_ids.update(completed_turn_ids)
     return [turn for turn in state.turn_history if turn.turn_id in keep_turn_ids]
-
-
-def _trim_tool_call_ledger(state: ExecutionStateV2) -> list[ToolResultEnvelope]:
-    active_plan_id = state.current_plan_id
-    keep_call_ids = {item.call_id for item in state.tool_call_ledger if item.plan_id == active_plan_id}
-    completed_call_ids = [
-        item.call_id
-        for item in state.tool_call_ledger
-        if item.plan_id != active_plan_id
-    ][-_COMPLETED_LEDGER_LIMIT:]
-    keep_call_ids.update(completed_call_ids)
-    return [item for item in state.tool_call_ledger if item.call_id in keep_call_ids]

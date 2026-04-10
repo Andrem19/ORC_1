@@ -8,10 +8,19 @@
   "stage_count": 11,
   "compiled_plan_count": 4,
   "warnings": [
-    "v10 lockbox comparison used @3 as baseline instead of the declared @1 — this mismatch must be resolved first.",
-    "v10 veto models report AUC/PR ~0.95, which is suspiciously high and could indicate label leakage or threshold shortcut.",
-    "short_veto, long_veto, and combined_veto in v10 lockbox table report identical deltas — requires explanation."
+    "v10 lockbox table referenced baseline as @3 instead of declared @1 — must be resolved in Stage 3.",
+    "v10 veto models report AUC ~0.95 which is unusually high and a shortcut/leakage risk.",
+    "v10 short/long/combined veto showed identical delta in lockbox — requires explicit explanation.",
+    "Auto-added research_record for stage_2: every non-trivial stage needs documentation capability.",
+    "Auto-added research_record for stage_3: every non-trivial stage needs documentation capability.",
+    "Auto-added research_record for stage_4: every non-trivial stage needs documentation capability.",
+    "Auto-added research_record for stage_5: every non-trivial stage needs documentation capability.",
+    "Auto-added research_record for stage_6: every non-trivial stage needs documentation capability.",
+    "Auto-added research_record for stage_7: every non-trivial stage needs documentation capability.",
+    "Auto-added research_record for stage_8: every non-trivial stage needs documentation capability.",
+    "Auto-added research_record for stage_9: every non-trivial stage needs documentation capability.",
+    "Auto-added research_record for stage_10: every non-trivial stage needs documentation capability."
   ],
   "errors": [],
-  "compiled_at": "2026-04-09T14:34:40.635917+00:00"
+  "compiled_at": "2026-04-10T17:12:37.124181+00:00"
 }

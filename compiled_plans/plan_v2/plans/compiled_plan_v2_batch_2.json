@@ -1,6 +1,6 @@
 {
   "plan_id": "compiled_plan_v2_batch_2",
-  "goal": "Find one or more new orthogonal specialist signals or conditioning layers that work primarily where the base does not trade, use genuinely new information, pass window stability, and prove additive value through new entries upon integration.",
+  "goal": "Найти один или несколько ортогональных specialist-сигналов или conditioning-слоёв, которые работают там, где база active-signal-v1@1 не торгует, и доказанно приносят новые входы, а не скрытый дубляж.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -9,41 +9,42 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "Base active-signal-v1@1 is immutable — no re-tuning, no hour/day/threshold variations, no cosmetic changes.",
-    "Raw single-filter event entries (H1/H2 style) are permanently forbidden.",
-    "Every new candidate must first pass complement-first mode (base_absent surface) before any other evaluation.",
-    "Every prototype must contain at least 3 logical layers: new information layer + regime confirmation + density limiter.",
-    "Model-first approaches are forbidden until the low-friction wave (Wave A) completes.",
-    "No candidate may be a renamed variation of existing hour, dow, cl_*, rsi, iv_est static, or day-of-week patterns.",
-    "If permissive integration looks good but strict additive is weak — reject for hidden cannibalism.",
-    "Record both successes and reasons for rejection in research journal."
+    "База active-signal-v1@1 immutable — не ретюнить, не менять пороги, часы, дни, исполнение.",
+    "Сырые event-entry конструкции (один event + один фильтр) запрещены — H1/H2 тупик.",
+    "Каждый кандидат сначала проходит complement-first режим: вход только на base_absent anchor-барах.",
+    "Single-filter entry запрещён — минимум три логических слоя (новый слой + подтверждение режима + ограничитель плотности).",
+    "Model-first запрещён до завершения Wave A (low-friction).",
+    "Кандидат отклоняется, если strict additive слабый, а permissive сильный — признак скрытого каннибализма."
   ],
   "slices": [
     {
       "slice_id": "compiled_plan_v2_stage_4",
-      "title": "Feature contract and custom feature publication for Wave A",
-      "hypothesis": "Translate hypotheses into correct causal features, not verbal ideas, and publish them through the feature pipeline.",
-      "objective": "Translate hypotheses into correct causal features, not verbal ideas, and publish them through the feature pipeline.",
+      "title": "Feature contract и публикация custom features для wave A",
+      "hypothesis": "Translate hypothesis ideas into correct causal features with explicit contracts, then validate, publish, and materialize them.",
+      "objective": "Translate hypothesis ideas into correct causal features with explicit contracts, then validate, publish, and materialize them.",
       "success_criteria": [
-        "All Wave A features are published and verified for causality and materialization."
+        "All Wave A features published, causality-checked, and materialized successfully."
       ],
       "allowed_tools": [
-        "features_catalog",
         "features_custom",
         "features_dataset",
-        "features_analytics"
+        "features_catalog",
+        "research_record"
       ],
       "evidence_requirements": [
-        "All Wave A features are published and verified for causality and materialization."
+        "All Wave A features published, causality-checked, and materialized successfully."
       ],
       "policy_tags": [
-        "feature_engineering",
-        "cheap_first"
+        "feature_contract"
       ],
-      "max_turns": 6,
-      "max_tool_calls": 5,
-      "max_expensive_calls": 1,
+      "max_turns": 24,
+      "max_tool_calls": 24,
+      "max_expensive_calls": 2,
       "parallel_slot": 1,
+      "budget_scale_applied": 6,
+      "depends_on": [
+        "compiled_plan_v2_stage_3"
+      ],
       "status": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
@@ -51,46 +52,45 @@
       "assigned_worker_id": null,
       "last_checkpoint_turn_id": "",
       "last_checkpoint_summary": "",
+      "last_checkpoint_status": "",
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
-      "latest_tool_result_summary": "",
-      "active_operation_tool": "",
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
-      "active_resume_tool": "",
-      "active_resume_token": "",
-      "last_tool_response_status": "",
       "artifacts": [],
       "facts": {}
     },
     {
       "slice_id": "compiled_plan_v2_stage_5",
-      "title": "Hypothesis plausibility on base-absent surface",
-      "hypothesis": "Perform early triage not on the whole market but specifically inside the base complement surface.",
-      "objective": "Perform early triage not on the whole market but specifically inside the base complement surface.",
+      "title": "Hypothesis plausibility на base-absent surface",
+      "hypothesis": "Perform early triage of prototypes on the complement surface only, discarding those that show no structured effect where the base is absent.",
+      "objective": "Perform early triage of prototypes on the complement surface only, discarding those that show no structured effect where the base is absent.",
       "success_criteria": [
-        "Only plausibility-approved prototypes remain, each showing structure specifically where the base is absent."
+        "Only plausibility-approved prototypes remain, with visible structure specifically where the base is absent."
       ],
       "allowed_tools": [
-        "backtests_analysis",
-        "backtests_conditions",
-        "experiments_run",
-        "experiments_inspect",
-        "experiments_read"
+        "features_analytics",
+        "features_dataset",
+        "research_record",
+        "research_map"
       ],
       "evidence_requirements": [
-        "Only plausibility-approved prototypes remain, each showing structure specifically where the base is absent."
+        "Only plausibility-approved prototypes remain, with visible structure specifically where the base is absent."
       ],
       "policy_tags": [
-        "triage",
+        "analysis",
         "cheap_first"
       ],
-      "max_turns": 6,
-      "max_tool_calls": 5,
-      "max_expensive_calls": 1,
-      "parallel_slot": 2,
+      "max_turns": 24,
+      "max_tool_calls": 24,
+      "max_expensive_calls": 2,
+      "parallel_slot": 1,
+      "budget_scale_applied": 6,
+      "depends_on": [
+        "compiled_plan_v2_stage_4"
+      ],
       "status": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
@@ -98,48 +98,44 @@
       "assigned_worker_id": null,
       "last_checkpoint_turn_id": "",
       "last_checkpoint_summary": "",
+      "last_checkpoint_status": "",
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
-      "latest_tool_result_summary": "",
-      "active_operation_tool": "",
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
-      "active_resume_tool": "",
-      "active_resume_token": "",
-      "last_tool_response_status": "",
       "artifacts": [],
       "facts": {}
     },
     {
       "slice_id": "compiled_plan_v2_stage_6",
-      "title": "Build strict specialist prototypes",
-      "hypothesis": "Convert surviving ideas into real signals with at least three logical layers, avoiding the H1/H2 mistake of weak single-filter architecture.",
-      "objective": "Convert surviving ideas into real signals with at least three logical layers, avoiding the H1/H2 mistake of weak single-filter architecture.",
+      "title": "Построение strict specialist prototypes",
+      "hypothesis": "Convert surviving ideas into real signal prototypes with at least three logical layers, avoiding the H1/H2 trap of weak single-filter entries.",
+      "objective": "Convert surviving ideas into real signal prototypes with at least three logical layers, avoiding the H1/H2 trap of weak single-filter entries.",
       "success_criteria": [
-        "A small set of strict specialist prototypes exists, not a loose grid of weak filters."
+        "Small set of strict specialist prototypes exists, not a loose grid of weak filters."
       ],
       "allowed_tools": [
-        "research_project",
-        "research_map",
+        "backtests_strategy",
+        "backtests_strategy_validate",
         "research_record",
-        "research_search",
-        "features_catalog",
-        "features_custom",
-        "features_dataset",
-        "features_analytics"
+        "research_map"
       ],
       "evidence_requirements": [
-        "A small set of strict specialist prototypes exists, not a loose grid of weak filters."
+        "Small set of strict specialist prototypes exists, not a loose grid of weak filters."
       ],
       "policy_tags": [
-        "hypothesis_design"
+        "modeling"
       ],
-      "max_turns": 6,
-      "max_tool_calls": 5,
-      "max_expensive_calls": 1,
-      "parallel_slot": 3,
+      "max_turns": 24,
+      "max_tool_calls": 24,
+      "max_expensive_calls": 3,
+      "parallel_slot": 1,
+      "budget_scale_applied": 6,
+      "depends_on": [
+        "compiled_plan_v2_stage_5"
+      ],
       "status": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
@@ -147,22 +143,25 @@
       "assigned_worker_id": null,
       "last_checkpoint_turn_id": "",
       "last_checkpoint_summary": "",
+      "last_checkpoint_status": "",
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
-      "latest_tool_result_summary": "",
-      "active_operation_tool": "",
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
-      "active_resume_tool": "",
-      "active_resume_token": "",
-      "last_tool_response_status": "",
       "artifacts": [],
       "facts": {}
     }
   ],
+  "plan_source_kind": "compiled_raw",
+  "source_sequence_id": "compiled_plan_v2",
+  "source_raw_plan": "raw_plans/plan_v2.md",
+  "source_manifest_path": "",
+  "source_semantic_path": "",
+  "source_compile_report_path": "",
+  "sequence_batch_index": 2,
   "status": "draft",
-  "created_at": "2026-04-09T14:18:20.893751+00:00",
-  "updated_at": "2026-04-09T14:18:20.893752+00:00"
+  "created_at": "2026-04-10T16:54:19.873609+00:00",
+  "updated_at": "2026-04-10T16:54:19.873610+00:00"
 }

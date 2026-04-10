@@ -131,6 +131,23 @@ def test_parse_worker_action_output_accepts_optional_reporting_fields() -> None:
     assert action.evidence_refs == ["artifact_1"]
 
 
+def test_parse_worker_action_output_uses_reason_as_summary_for_final_report_when_summary_missing() -> None:
+    raw = """
+    {
+      "type": "final_report",
+      "reason": "Slice objective satisfied after baseline setup and atlas initialization.",
+      "verdict": "pass",
+      "facts": {"project_id": "proj_123"}
+    }
+    """
+
+    action = parse_worker_action_output(raw, allowlist={"research_record"})
+
+    assert action.action_type == "final_report"
+    assert action.summary == "Slice objective satisfied after baseline setup and atlas initialization."
+    assert action.verdict == "pass"
+
+
 def test_parse_execution_plan_output_accepts_single_item_array_wrapper() -> None:
     raw = """
     [
@@ -221,3 +238,103 @@ def test_parse_worker_action_output_flattens_single_tool_named_argument_wrapper(
 
     assert action.tool == "datasets_preview"
     assert action.arguments == {"dataset_id": "BTCUSDT_4h", "view": "rows"}
+
+
+def test_parse_worker_action_output_flattens_tool_object_argument_wrapper() -> None:
+    raw = """
+    {
+      "type": "tool_call",
+      "tool": "research_project",
+      "arguments": {
+        "tool": {
+          "action": "create",
+          "project": {
+            "name": "active-signal-v1-cycle",
+            "goal": "Lock baseline"
+          }
+        }
+      },
+      "reason": "create the project"
+    }
+    """
+
+    action = parse_worker_action_output(raw, allowlist={"research_project"})
+
+    assert action.tool == "research_project"
+    assert action.arguments == {
+        "action": "create",
+        "project": {
+            "name": "active-signal-v1-cycle",
+            "goal": "Lock baseline",
+        },
+    }
+
+
+def test_parse_worker_action_output_ignores_direct_json_after_valid_action() -> None:
+    raw = """
+    {
+      "type": "tool_call",
+      "tool": "events",
+      "arguments": {"view": "catalog"},
+      "reason": "inspect events"
+    }
+    {
+      "status": "ok",
+      "tool_name": "events",
+      "data": {"summary": "Completed events action catalog."}
+    }
+    """
+
+    action = parse_worker_action_output(raw, allowlist={"events"})
+
+    assert action.action_type == "tool_call"
+    assert action.tool == "events"
+    assert action.arguments == {"view": "catalog"}
+
+
+def test_parse_worker_action_output_rejects_conflicting_nested_tool_wrapper() -> None:
+    raw = """
+    {
+      "type": "tool_call",
+      "tool": "research_project",
+      "arguments": {
+        "tool": {
+          "tool": "research_search",
+          "arguments": {"query": "baseline"}
+        }
+      },
+      "reason": "run a tool"
+    }
+    """
+
+    with pytest.raises(StructuredOutputError, match="tool_argument_wrapper_conflicts_with_tool_name"):
+        parse_worker_action_output(raw, allowlist={"research_project"})
+
+
+def test_parse_worker_action_output_raises_structured_error_for_invalid_control_character_json() -> None:
+    raw = '{"type":"tool_call","tool":"research_record","arguments":{"record":"bad \x01 text"},"reason":"record"}'
+
+    with pytest.raises(StructuredOutputError, match="json_decode_error:Invalid control character"):
+        parse_worker_action_output(raw, allowlist={"research_record"})
+
+
+def test_parse_worker_action_output_recovers_reason_after_redundant_closer_before_top_level_fields() -> None:
+    raw = """
+    {
+      "type": "tool_call",
+      "tool": "research_record",
+      "arguments": {
+        "project_id": "proj_123",
+        "action": "create",
+        "record": {"title": "baseline"},
+        "atlas": {"statement": "s", "coordinates": {"phase": "discovery"}}}},
+      "reason": "record the cycle invariant",
+      "expected_evidence": ["hypothesis created"]
+    }
+    """
+
+    action = parse_worker_action_output(raw, allowlist={"research_record"})
+
+    assert action.tool == "research_record"
+    assert action.reason == "record the cycle invariant"
+    assert action.expected_evidence == ["hypothesis created"]

@@ -1,6 +1,6 @@
 {
   "plan_id": "compiled_plan_v1_batch_3",
-  "goal": "Find one or more new orthogonal signals that independently add informational value and improve the base system without cannibalizing it.",
+  "goal": "Найти один или несколько новых ортогональных сигналов, которые дают самостоятельную информативность, проходят stability-проверку, доказанно расширяют покрытие базы без каннибализма, и принимаются через строгую воронку standalone → stability → integration → cannibalization → walk-forward.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -9,40 +9,47 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "Base system active-signal-v1@1 is frozen — never modify its rules, thresholds, hours, days, or execution logic.",
-    "Only genuinely new signal classes are allowed — no retuning, permutation, or filter relaxation of existing base inputs.",
-    "Every hypothesis must pass the full funnel: standalone → stability → integration → cannibalization → final report.",
-    "No brute-force parameter search; use small logical grids only.",
-    "All negative, neutral, and positive results must be recorded in research memory.",
-    "Cannibalism must be explicitly measured before any promotion."
+    "База active-signal-v1@1 неизменна на протяжении всего цикла — никаких модификаций правил, порогов, часов, дней, исполнения.",
+    "Новые сигналы должны использовать новый класс информации, а не быть перестановкой hour, dow, cl_*, rsi, iv_est, Thursday/Monday шаблонов.",
+    "Каннибализм недопустим: новый сигнал должен расширять покрытие (режимы, часы, подпространства), а не перехватывать сделки базы.",
+    "Воронка обязательна: standalone → stability → integration → cannibalization → walk-forward — пропускать шаги нельзя.",
+    "Запрещён широкий brute-force по параметрам; допускается только небольшая логическая сетка для форм входа.",
+    "Каждая гипотеза должна иметь записанное обоснование, почему она новая относительно базы и истории v1–v12.",
+    "Все отрицательные результаты фиксируются в research_record — повторное исследование закрытых идей запрещено без очень сильного основания."
   ],
   "slices": [
     {
       "slice_id": "compiled_plan_v1_stage_7",
       "title": "Интеграция с active-signal-v1@1",
-      "hypothesis": "Measure each surviving candidate's real incremental value on top of the unchanged base system.",
-      "objective": "Measure each surviving candidate's real incremental value on top of the unchanged base system.",
+      "hypothesis": "Проверить реальную ценность каждого surviving candidate поверх неизменной базы через интеграционные бэктесты с замером net delta, trades, PF, DD и ремонта слабых кварталов.",
+      "objective": "Проверить реальную ценность каждого surviving candidate поверх неизменной базы через интеграционные бэктесты с замером net delta, trades, PF, DD и ремонта слабых кварталов.",
       "success_criteria": [
-        "Full integration picture exists for every standalone candidate."
+        "Полная интеграционная картина для каждого прошедшего standalone кандидата.",
+        "Нет кандидатов, ухудшающих профиль базы."
       ],
       "allowed_tools": [
+        "backtests_strategy",
+        "backtests_plan",
+        "backtests_runs",
         "backtests_analysis",
-        "backtests_conditions",
-        "experiments_run",
-        "experiments_inspect",
-        "experiments_read"
+        "research_record"
       ],
       "evidence_requirements": [
-        "Full integration picture exists for every standalone candidate."
+        "Полная интеграционная картина для каждого прошедшего standalone кандидата.",
+        "Нет кандидатов, ухудшающих профиль базы."
       ],
       "policy_tags": [
-        "backtesting",
-        "integration"
+        "integration",
+        "critical"
       ],
-      "max_turns": 8,
-      "max_tool_calls": 6,
-      "max_expensive_calls": 2,
+      "max_turns": 24,
+      "max_tool_calls": 24,
+      "max_expensive_calls": 3,
       "parallel_slot": 1,
+      "budget_scale_applied": 6,
+      "depends_on": [
+        "compiled_plan_v1_stage_6"
+      ],
       "status": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
@@ -50,46 +57,46 @@
       "assigned_worker_id": null,
       "last_checkpoint_turn_id": "",
       "last_checkpoint_summary": "",
+      "last_checkpoint_status": "",
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
-      "latest_tool_result_summary": "",
-      "active_operation_tool": "",
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
-      "active_resume_tool": "",
-      "active_resume_token": "",
-      "last_tool_response_status": "",
       "artifacts": [],
       "facts": {}
     },
     {
       "slice_id": "compiled_plan_v1_stage_8",
       "title": "Cannibalization, ownership и new-entry proof",
-      "hypothesis": "Prove that each remaining signal adds genuinely new entries rather than parasitizing on the base.",
-      "objective": "Prove that each remaining signal adds genuinely new entries rather than parasitizing on the base.",
+      "hypothesis": "Доказать, что каждый новый сигнал добавляет реально новые входы и расширяет покрытие, а не паразитирует на сделках базы.",
+      "objective": "Доказать, что каждый новый сигнал добавляет реально новые входы и расширяет покрытие, а не паразитирует на сделках базы.",
       "success_criteria": [
-        "Direct evidence exists showing which candidates genuinely expand the system."
+        "Прямое доказательство того, что каждый кандидат реально расширяет систему.",
+        "Cannibalism verdict зафиксирован для каждого кандидата."
       ],
       "allowed_tools": [
         "backtests_analysis",
-        "backtests_conditions",
-        "experiments_run",
-        "experiments_inspect",
-        "experiments_read"
+        "backtests_runs",
+        "research_record"
       ],
       "evidence_requirements": [
-        "Direct evidence exists showing which candidates genuinely expand the system."
+        "Прямое доказательство того, что каждый кандидат реально расширяет систему.",
+        "Cannibalism verdict зафиксирован для каждого кандидата."
       ],
       "policy_tags": [
-        "analysis",
-        "integration"
+        "cannibalism_check",
+        "critical"
       ],
-      "max_turns": 8,
-      "max_tool_calls": 6,
-      "max_expensive_calls": 2,
+      "max_turns": 24,
+      "max_tool_calls": 24,
+      "max_expensive_calls": 3,
       "parallel_slot": 2,
+      "budget_scale_applied": 6,
+      "depends_on": [
+        "compiled_plan_v1_stage_7"
+      ],
       "status": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
@@ -97,42 +104,46 @@
       "assigned_worker_id": null,
       "last_checkpoint_turn_id": "",
       "last_checkpoint_summary": "",
+      "last_checkpoint_status": "",
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
-      "latest_tool_result_summary": "",
-      "active_operation_tool": "",
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
-      "active_resume_tool": "",
-      "active_resume_token": "",
-      "last_tool_response_status": "",
       "artifacts": [],
       "facts": {}
     },
     {
       "slice_id": "compiled_plan_v1_stage_9",
       "title": "Walk-forward и финальная валидация финалистов",
-      "hypothesis": "Submit every finalist to stricter walk-forward validation and pairwise compatibility checks.",
-      "objective": "Submit every finalist to stricter walk-forward validation and pairwise compatibility checks.",
+      "hypothesis": "Пропустить всех финалистов через walk-forward проверку как финальный строгий фильтр перед принятием решения.",
+      "objective": "Пропустить всех финалистов через walk-forward проверку как финальный строгий фильтр перед принятием решения.",
       "success_criteria": [
-        "Walk-forward is completed for all finalists with clear verdicts."
+        "Walk-forward завершён для всех кандидатов, дошедших до финала.",
+        "Итоговый verdict по каждому кандидату зафиксирован."
       ],
       "allowed_tools": [
-        "experiments_run"
+        "backtests_walkforward",
+        "backtests_analysis",
+        "research_record"
       ],
       "evidence_requirements": [
-        "Walk-forward is completed for all finalists with clear verdicts."
+        "Walk-forward завершён для всех кандидатов, дошедших до финала.",
+        "Итоговый verdict по каждому кандидату зафиксирован."
       ],
       "policy_tags": [
-        "backtesting",
-        "finalization"
+        "walkforward",
+        "final_validation"
       ],
-      "max_turns": 8,
-      "max_tool_calls": 6,
-      "max_expensive_calls": 2,
+      "max_turns": 24,
+      "max_tool_calls": 24,
+      "max_expensive_calls": 3,
       "parallel_slot": 3,
+      "budget_scale_applied": 6,
+      "depends_on": [
+        "compiled_plan_v1_stage_8"
+      ],
       "status": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
@@ -140,22 +151,25 @@
       "assigned_worker_id": null,
       "last_checkpoint_turn_id": "",
       "last_checkpoint_summary": "",
+      "last_checkpoint_status": "",
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
-      "latest_tool_result_summary": "",
-      "active_operation_tool": "",
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
-      "active_resume_tool": "",
-      "active_resume_token": "",
-      "last_tool_response_status": "",
       "artifacts": [],
       "facts": {}
     }
   ],
+  "plan_source_kind": "compiled_raw",
+  "source_sequence_id": "compiled_plan_v1",
+  "source_raw_plan": "raw_plans/plan_v1.md",
+  "source_manifest_path": "",
+  "source_semantic_path": "",
+  "source_compile_report_path": "",
+  "sequence_batch_index": 3,
   "status": "draft",
-  "created_at": "2026-04-09T14:16:11.875666+00:00",
-  "updated_at": "2026-04-09T14:16:11.875666+00:00"
+  "created_at": "2026-04-10T16:52:11.207555+00:00",
+  "updated_at": "2026-04-10T16:52:11.207556+00:00"
 }

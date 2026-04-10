@@ -1,14 +1,20 @@
 {
   "source_file": "raw_plans/plan_v8.md",
   "source_hash": "5eae8229d938bc04e3b296d432bba819f6c43187265bfe18b3e7cf822c4f70d4",
-  "compiled_at": "2026-04-09T14:28:47.759042+00:00",
+  "compiled_at": "2026-04-10T17:05:54.562568+00:00",
   "sequence_id": "compiled_plan_v8",
   "compile_status": "compiled",
   "warnings": [
-    "Stage ordering implies strict sequential gating: veto → early-cut → extension — parallel execution of these three routes is forbidden by design",
-    "Stages 8 and 9 are conditionally opened; if veto route fails, early-cut and extension are skipped entirely"
+    "Plan is in Russian; stage titles and objectives preserved in original language for traceability.",
+    "Feature families A–D reference custom features that must be authored and published before materialization.",
+    "Auto-added research_record for stage_4: every non-trivial stage needs documentation capability.",
+    "Auto-added research_record for stage_6: every non-trivial stage needs documentation capability.",
+    "Auto-added research_record for stage_8: every non-trivial stage needs documentation capability.",
+    "Auto-added research_record for stage_9: every non-trivial stage needs documentation capability."
   ],
   "semantic_method": "llm",
+  "semantic_path": "semantic.json",
+  "compile_report_path": "compile_report.json",
   "plan_files": [
     "plans/compiled_plan_v8_batch_1.json",
     "plans/compiled_plan_v8_batch_2.json",

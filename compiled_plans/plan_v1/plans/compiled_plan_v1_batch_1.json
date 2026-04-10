@@ -1,6 +1,6 @@
 {
   "plan_id": "compiled_plan_v1_batch_1",
-  "goal": "Find one or more new orthogonal signals that independently add informational value and improve the base system without cannibalizing it.",
+  "goal": "Найти один или несколько новых ортогональных сигналов, которые дают самостоятельную информативность, проходят stability-проверку, доказанно расширяют покрытие базы без каннибализма, и принимаются через строгую воронку standalone → stability → integration → cannibalization → walk-forward.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -9,21 +9,25 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "Base system active-signal-v1@1 is frozen — never modify its rules, thresholds, hours, days, or execution logic.",
-    "Only genuinely new signal classes are allowed — no retuning, permutation, or filter relaxation of existing base inputs.",
-    "Every hypothesis must pass the full funnel: standalone → stability → integration → cannibalization → final report.",
-    "No brute-force parameter search; use small logical grids only.",
-    "All negative, neutral, and positive results must be recorded in research memory.",
-    "Cannibalism must be explicitly measured before any promotion."
+    "База active-signal-v1@1 неизменна на протяжении всего цикла — никаких модификаций правил, порогов, часов, дней, исполнения.",
+    "Новые сигналы должны использовать новый класс информации, а не быть перестановкой hour, dow, cl_*, rsi, iv_est, Thursday/Monday шаблонов.",
+    "Каннибализм недопустим: новый сигнал должен расширять покрытие (режимы, часы, подпространства), а не перехватывать сделки базы.",
+    "Воронка обязательна: standalone → stability → integration → cannibalization → walk-forward — пропускать шаги нельзя.",
+    "Запрещён широкий brute-force по параметрам; допускается только небольшая логическая сетка для форм входа.",
+    "Каждая гипотеза должна иметь записанное обоснование, почему она новая относительно базы и истории v1–v12.",
+    "Все отрицательные результаты фиксируются в research_record — повторное исследование закрытых идей запрещено без очень сильного основания."
   ],
   "slices": [
     {
       "slice_id": "compiled_plan_v1_stage_1",
       "title": "Запуск цикла и фиксация инвариантов",
-      "hypothesis": "Lock the cycle around the immutable base and open a dedicated research project with a hypothesis map and naming scheme.",
-      "objective": "Lock the cycle around the immutable base and open a dedicated research project with a hypothesis map and naming scheme.",
+      "hypothesis": "Зафиксировать неизменную базу active-signal-v1@1, открыть отдельный исследовательский проект и завести карту гипотез с едиными осями измерения.",
+      "objective": "Зафиксировать неизменную базу active-signal-v1@1, открыть отдельный исследовательский проект и завести карту гипотез с едиными осями измерения.",
       "success_criteria": [
-        "Open project exists, hypothesis map is initialized, cycle rules are recorded, baseline reference is saved."
+        "Открытый проект существует.",
+        "Карта гипотез создана с осями hypothesis_family, data_layer, direction, expected_missing_regime, status.",
+        "Инварианты цикла зафиксированы в research_record.",
+        "Baseline-reference сохранён."
       ],
       "allowed_tools": [
         "research_project",
@@ -31,15 +35,21 @@
         "research_record"
       ],
       "evidence_requirements": [
-        "Open project exists, hypothesis map is initialized, cycle rules are recorded, baseline reference is saved."
+        "Открытый проект существует.",
+        "Карта гипотез создана с осями hypothesis_family, data_layer, direction, expected_missing_regime, status.",
+        "Инварианты цикла зафиксированы в research_record.",
+        "Baseline-reference сохранён."
       ],
       "policy_tags": [
-        "setup"
+        "setup",
+        "cheap_first"
       ],
-      "max_turns": 4,
-      "max_tool_calls": 4,
-      "max_expensive_calls": 0,
+      "max_turns": 24,
+      "max_tool_calls": 24,
+      "max_expensive_calls": 2,
       "parallel_slot": 1,
+      "budget_scale_applied": 6,
+      "depends_on": [],
       "status": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
@@ -47,44 +57,49 @@
       "assigned_worker_id": null,
       "last_checkpoint_turn_id": "",
       "last_checkpoint_summary": "",
+      "last_checkpoint_status": "",
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
-      "latest_tool_result_summary": "",
-      "active_operation_tool": "",
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
-      "active_resume_tool": "",
-      "active_resume_token": "",
-      "last_tool_response_status": "",
       "artifacts": [],
       "facts": {}
     },
     {
       "slice_id": "compiled_plan_v1_stage_2",
       "title": "Формирование пространства только новых гипотез",
-      "hypothesis": "Build a short-list of genuinely new signal families that are not permutations of the exhausted base input space.",
-      "objective": "Build a short-list of genuinely new signal families that are not permutations of the exhausted base input space.",
+      "hypothesis": "Собрать и отфильтровать список новых классов сигналов (missing-regime specialists, event-conditioned entries, derivatives-state layers, cross-symbol routing, model-backed routing, exit-originated alpha) с обоснованием новизны каждого.",
+      "objective": "Собрать и отфильтровать список новых классов сигналов (missing-regime specialists, event-conditioned entries, derivatives-state layers, cross-symbol routing, model-backed routing, exit-originated alpha) с обоснованием новизны каждого.",
       "success_criteria": [
-        "Wave-1 short-list exists with each hypothesis having a written justification of novelty relative to the base and prior history."
+        "Есть short-list первой волны.",
+        "По каждой гипотезе сформулировано, почему она действительно новая относительно базы и истории v1–v12."
       ],
       "allowed_tools": [
         "research_map",
         "research_record",
-        "research_search"
+        "research_search",
+        "datasets",
+        "features_catalog",
+        "events"
       ],
       "evidence_requirements": [
-        "Wave-1 short-list exists with each hypothesis having a written justification of novelty relative to the base and prior history."
+        "Есть short-list первой волны.",
+        "По каждой гипотезе сформулировано, почему она действительно новая относительно базы и истории v1–v12."
       ],
       "policy_tags": [
-        "setup",
+        "hypothesis_formation",
         "cheap_first"
       ],
-      "max_turns": 4,
-      "max_tool_calls": 4,
-      "max_expensive_calls": 0,
+      "max_turns": 24,
+      "max_tool_calls": 24,
+      "max_expensive_calls": 2,
       "parallel_slot": 1,
+      "budget_scale_applied": 6,
+      "depends_on": [
+        "compiled_plan_v1_stage_1"
+      ],
       "status": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
@@ -92,42 +107,57 @@
       "assigned_worker_id": null,
       "last_checkpoint_turn_id": "",
       "last_checkpoint_summary": "",
+      "last_checkpoint_status": "",
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
-      "latest_tool_result_summary": "",
-      "active_operation_tool": "",
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
-      "active_resume_tool": "",
-      "active_resume_token": "",
-      "last_tool_response_status": "",
       "artifacts": [],
       "facts": {}
     },
     {
       "slice_id": "compiled_plan_v1_stage_3",
       "title": "Data contract и feature contract для каждой новой семьи",
-      "hypothesis": "For every wave-1 hypothesis fix a precise data and feature contract — inputs, alignment, lookback, leakage surface — before any testing.",
-      "objective": "For every wave-1 hypothesis fix a precise data and feature contract — inputs, alignment, lookback, leakage surface — before any testing.",
+      "hypothesis": "Для каждой гипотезы первой волны зафиксировать точный контракт данных и признаков: входные колонки, способ построения, lookback, cross-symbol join, event alignment, leakage-контроль.",
+      "objective": "Для каждой гипотезы первой волны зафиксировать точный контракт данных и признаков: входные колонки, способ построения, lookback, cross-symbol join, event alignment, leakage-контроль.",
       "success_criteria": [
-        "Each hypothesis has a clean data and feature contract with leakage risks explicitly addressed."
+        "По каждой гипотезе есть чистый contract данных и признаков.",
+        "Leakage проверен для каждого контракта.",
+        "Custom features валидированы и опубликованы.",
+        "Event alignment проверен для event-гипотез."
       ],
       "allowed_tools": [
-        "features_catalog"
+        "datasets",
+        "datasets_preview",
+        "features_catalog",
+        "features_dataset",
+        "features_custom",
+        "features_analytics",
+        "events",
+        "events_sync",
+        "models_dataset",
+        "research_record"
       ],
       "evidence_requirements": [
-        "Each hypothesis has a clean data and feature contract with leakage risks explicitly addressed."
+        "По каждой гипотезе есть чистый contract данных и признаков.",
+        "Leakage проверен для каждого контракта.",
+        "Custom features валидированы и опубликованы.",
+        "Event alignment проверен для event-гипотез."
       ],
       "policy_tags": [
-        "data_readiness",
-        "feature_contract"
+        "data_contract",
+        "leakage_guard"
       ],
-      "max_turns": 6,
-      "max_tool_calls": 5,
-      "max_expensive_calls": 1,
+      "max_turns": 24,
+      "max_tool_calls": 24,
+      "max_expensive_calls": 3,
       "parallel_slot": 3,
+      "budget_scale_applied": 6,
+      "depends_on": [
+        "compiled_plan_v1_stage_2"
+      ],
       "status": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
@@ -135,22 +165,25 @@
       "assigned_worker_id": null,
       "last_checkpoint_turn_id": "",
       "last_checkpoint_summary": "",
+      "last_checkpoint_status": "",
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
-      "latest_tool_result_summary": "",
-      "active_operation_tool": "",
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
-      "active_resume_tool": "",
-      "active_resume_token": "",
-      "last_tool_response_status": "",
       "artifacts": [],
       "facts": {}
     }
   ],
+  "plan_source_kind": "compiled_raw",
+  "source_sequence_id": "compiled_plan_v1",
+  "source_raw_plan": "raw_plans/plan_v1.md",
+  "source_manifest_path": "",
+  "source_semantic_path": "",
+  "source_compile_report_path": "",
+  "sequence_batch_index": 1,
   "status": "draft",
-  "created_at": "2026-04-09T14:16:11.875615+00:00",
-  "updated_at": "2026-04-09T14:16:11.875618+00:00"
+  "created_at": "2026-04-10T16:52:11.207472+00:00",
+  "updated_at": "2026-04-10T16:52:11.207475+00:00"
 }

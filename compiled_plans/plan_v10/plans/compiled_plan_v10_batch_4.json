@@ -1,6 +1,6 @@
 {
   "plan_id": "compiled_plan_v10_batch_4",
-  "goal": "Доказать или опровергнуть, что microstructure feature family (прежде всего cf_micro_imbalance_1h) даёт реальный overlay alpha поверх immutable base через veto, и вынести terminal verdict: PROMOTE / WATCHLIST / REJECT.",
+  "goal": "Validate whether the microstructure feature family (primarily cf_micro_imbalance_1h) provides a real overlay alpha on top of the immutable base via honest lockbox comparison.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -9,46 +9,52 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "База active-signal-v1@1 immutable: запрещено менять базу, подбирать часы/дни/пороги/исполнение, retune label scheme или architecture.",
-    "Активна только одна feature family: microstructure_proxies. Все остальные locked.",
-    "Overlay veto обязателен первым; early-cut и directional scout разрешены только после проходного veto-lockbox.",
-    "Единственный критерий истины — matched lockbox OOS comparison (base vs base+overlay) на том же окне.",
-    "Simple baselines (bucket/threshold/logistic) обязательны до CatBoost; если простой rule не хуже модели — сложность не нужна.",
-    "Short side приоритет (short-first) во всех veto экспериментах.",
-    "Запрещено: net_pnl>0 как единственный veto label; reopening закрытых avenues (leadership, path-asymmetry, regime-disagreement, event-only overlays, derivatives positioning без реальных данных).",
-    "Feature set ограничен micro-core (7 признаков) + минимальный context-support; запрещено подмешивать старые feature packs."
+    "Base active-signal-v1@1 is immutable — never modify snapshot, thresholds, hours, days, execution, or feature set",
+    "Only microstructure_proxies family is active in v10; all other families are locked",
+    "Lockbox overlay comparison (base vs base+overlay on the same window) is the sole valid truth test",
+    "Overlay-first: prove veto-overlay before attempting early-cut or directional scout",
+    "Simpler before smarter: single-feature bucket/threshold rules before logistic before CatBoost",
+    "Short-first priority: short veto models before long veto models",
+    "Label quality over model sophistication — noisy labels kill any model",
+    "Forbidden: net_pnl>0 as sole veto label; re-opening closed directions (leadership, breadth, path-asymmetry, regime-disagreement, event-only overlays, trade-quality without new information layer, derivatives without real OI/liquidation/basis data)",
+    "Nothing is declared an improvement unless it passes matched OOS comparison against the base on the same lockbox window"
   ],
   "slices": [
     {
       "slice_id": "compiled_plan_v10_stage_10",
       "title": "Optional route execution",
-      "hypothesis": "Провести только ту ветку (early-cut или directional scout), которая прошла gate, и оценить её на lockbox.",
-      "objective": "Провести только ту ветку (early-cut или directional scout), которая прошла gate, и оценить её на lockbox.",
+      "hypothesis": "Провести только ту ветку (early-cut или directional scout), которая действительно заслужила открытие на gate.",
+      "objective": "Провести только ту ветку (early-cut или directional scout), которая действительно заслужила открытие на gate.",
       "success_criteria": [
-        "Optional route (если открыт) выполнен; lockbox result задокументирован; final decision по route принят."
+        "Открытая ветка (если есть) проведена до конца",
+        "Selection и lockbox quality проверены",
+        "Delta vs base замерен"
       ],
       "allowed_tools": [
-        "experiments_run",
-        "experiments_inspect",
-        "experiments_read",
-        "experiments_registry_inspect",
-        "backtests_plan",
+        "features_custom",
+        "models_train",
         "backtests_runs",
-        "backtests_studies",
-        "backtests_walkforward",
-        "backtests_conditions",
-        "backtests_analysis"
+        "backtests_analysis",
+        "research_record"
       ],
       "evidence_requirements": [
-        "Optional route (если открыт) выполнен; lockbox result задокументирован; final decision по route принят."
+        "Открытая ветка (если есть) проведена до конца",
+        "Selection и lockbox quality проверены",
+        "Delta vs base замерен"
       ],
       "policy_tags": [
+        "modeling",
+        "experiments",
         "optional_candidate"
       ],
-      "max_turns": 8,
-      "max_tool_calls": 6,
-      "max_expensive_calls": 2,
+      "max_turns": 36,
+      "max_tool_calls": 30,
+      "max_expensive_calls": 6,
       "parallel_slot": 1,
+      "budget_scale_applied": 6,
+      "depends_on": [
+        "compiled_plan_v10_stage_9"
+      ],
       "status": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
@@ -56,43 +62,48 @@
       "assigned_worker_id": null,
       "last_checkpoint_turn_id": "",
       "last_checkpoint_summary": "",
+      "last_checkpoint_status": "",
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
-      "latest_tool_result_summary": "",
-      "active_operation_tool": "",
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
-      "active_resume_tool": "",
-      "active_resume_token": "",
-      "last_tool_response_status": "",
       "artifacts": [],
       "facts": {}
     },
     {
       "slice_id": "compiled_plan_v10_stage_11",
       "title": "Финальный вердикт по v10",
-      "hypothesis": "Вынести terminal verdict по microstructure family: Success (PROMOTE), Partial (WATCHLIST), или Failed (REJECT), и определить next step.",
-      "objective": "Вынести terminal verdict по microstructure family: Success (PROMOTE), Partial (WATCHLIST), или Failed (REJECT), и определить next step.",
+      "hypothesis": "Получить честное решение по microstructure family: PROMOTE, WATCHLIST или REJECT.",
+      "objective": "Получить честное решение по microstructure family: PROMOTE, WATCHLIST или REJECT.",
       "success_criteria": [
-        "Есть final route classification (PROMOTE / WATCHLIST / REJECT) для microstructure family и понятный next step."
+        "Final route classification определён (PROMOTE / WATCHLIST / REJECT)",
+        "Понятный next step задокументирован",
+        "Research map и record обновлены"
       ],
       "allowed_tools": [
         "research_record",
-        "backtests_analysis",
+        "research_map",
         "notify_send"
       ],
       "evidence_requirements": [
-        "Есть final route classification (PROMOTE / WATCHLIST / REJECT) для microstructure family и понятный next step."
+        "Final route classification определён (PROMOTE / WATCHLIST / REJECT)",
+        "Понятный next step задокументирован",
+        "Research map и record обновлены"
       ],
       "policy_tags": [
         "finalization"
       ],
-      "max_turns": 4,
-      "max_tool_calls": 3,
-      "max_expensive_calls": 0,
+      "max_turns": 24,
+      "max_tool_calls": 24,
+      "max_expensive_calls": 2,
       "parallel_slot": 1,
+      "budget_scale_applied": 6,
+      "depends_on": [
+        "compiled_plan_v10_stage_8",
+        "compiled_plan_v10_stage_9"
+      ],
       "status": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
@@ -100,22 +111,25 @@
       "assigned_worker_id": null,
       "last_checkpoint_turn_id": "",
       "last_checkpoint_summary": "",
+      "last_checkpoint_status": "",
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
-      "latest_tool_result_summary": "",
-      "active_operation_tool": "",
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
-      "active_resume_tool": "",
-      "active_resume_token": "",
-      "last_tool_response_status": "",
       "artifacts": [],
       "facts": {}
     }
   ],
+  "plan_source_kind": "compiled_raw",
+  "source_sequence_id": "compiled_plan_v10",
+  "source_raw_plan": "raw_plans/plan_v10.md",
+  "source_manifest_path": "",
+  "source_semantic_path": "",
+  "source_compile_report_path": "",
+  "sequence_batch_index": 4,
   "status": "draft",
-  "created_at": "2026-04-09T14:32:33.478215+00:00",
-  "updated_at": "2026-04-09T14:32:33.478217+00:00"
+  "created_at": "2026-04-10T17:10:16.031681+00:00",
+  "updated_at": "2026-04-10T17:10:16.031683+00:00"
 }

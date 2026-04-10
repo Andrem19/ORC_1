@@ -69,13 +69,14 @@ class TaskResult:
     findings: list[str] = field(default_factory=list)            # confirmed findings (top 3)
     key_metrics: dict[str, Any] = field(default_factory=dict)    # numeric metrics from worker
     next_actions: list[str] = field(default_factory=list)        # recommended next steps (top 3)
+    sequence_label: str = ""                                      # e.g. "plan_v4 B2" — sequence + batch context
 
     @property
     def is_empty(self) -> bool:
         return not self.summary and not self.artifacts and not self.error
 
 @dataclass
-class BrokeredOrchestratorState:
+class DirectOrchestratorState:
     goal: str = ""
     status: str = "idle"  # idle | running | finished | error
     current_cycle: int = 0
@@ -91,4 +92,4 @@ class BrokeredOrchestratorState:
         self.last_change_at = now_iso
 
 
-OrchestratorState = BrokeredOrchestratorState
+OrchestratorState = DirectOrchestratorState

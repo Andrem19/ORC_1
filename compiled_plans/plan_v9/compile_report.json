@@ -8,9 +8,9 @@
   "stage_count": 11,
   "compiled_plan_count": 4,
   "warnings": [
-    "План содержит разветвлённую gated-логику: stage_8/9 (успех) и stage_10 (фейл primary) — взаимоисключающие ветки.",
-    "Этапы 8–10 являются условными; финальный вердикт (stage_11) должен аккумулировать результаты из реально пройденной ветки."
+    "Plan is research-cycle exploratory — several stages are gated and may be skipped.",
+    "Fallback family (stage_10) and optional routes (stage_8–9) are mutually exclusive paths in practice."
   ],
   "errors": [],
-  "compiled_at": "2026-04-09T14:30:46.474472+00:00"
+  "compiled_at": "2026-04-10T17:07:43.039532+00:00"
 }

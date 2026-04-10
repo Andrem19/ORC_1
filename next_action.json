@@ -1,18 +1,26 @@
 {
   "type": "tool_call",
-  "tool": "features_catalog",
+  "tool": "research_record",
   "arguments": {
-    "features_catalog": {
-      "symbol": "BTCUSDT",
-      "timeframe": "1h",
-      "include_metadata": true
-    }
+    "project_id": "cycle-invariants-v1-cccbe34e",
+    "branch_id": "branch-bccfd22c698546999edc855dca7e706c",
+    "kind": "milestone",
+    "record": {
+      "title": "Cycle invariants locked",
+      "content": "Base cycle rules recorded around active-signal-v1 @1 BTCUSDT. Anchor=1h, execution=5m. Hypothesis map initialized.",
+      "metadata": {
+        "baseline_snapshot_id": "active-signal-v1",
+        "baseline_version": 1,
+        "symbol": "BTCUSDT",
+        "anchor_timeframe": "1h",
+        "execution_timeframe": "5m",
+        "milestone_type": "cycle_lock"
+      }
+    },
+    "action": "create"
   },
-  "reason": "Events payload is loaded. Need to understand what baseline features exist in the catalog for BTCUSDT 1h to later verify orthogonality of event-based features.",
-  "expected_evidence": [
-    "List of existing baseline features for BTCUSDT 1h",
-    "Feature metadata showing which signals are currently active",
-    "Timestamps and feature definitions to compare against event-driven signals"
-  ],
+  "reason": "Project and hypothesis map are initialized. Need to record the milestone confirming cycle invariants are locked before closing the slice.",
+  "expected_evidence": ["Milestone record persisted in project timeline"],
+  "pending_questions": [],
   "reportable_issues": []
 }

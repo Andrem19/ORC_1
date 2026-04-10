@@ -1,5 +1,5 @@
 """
-Broker-only Rich runtime controller.
+Direct Rich runtime controller.
 """
 
 from __future__ import annotations
@@ -11,13 +11,23 @@ from typing import Any
 from rich.console import Console
 from rich.live import Live
 
-from app.execution_models import BrokerHealth, ToolResultEnvelope
-from app.runtime_console.models import ConsoleRuntimeState, SliceRuntimeView, ToolCallRuntimeView
+from app.execution_models import ExecutionPlan
+from app.runtime_console.models import (
+    ConsoleRuntimeState,
+    DirectToolRuntimeView,
+    SliceRuntimeView,
+    SliceTrailEntry,
+    TrailBatch,
+    TrailMap,
+    TrailPlanGroup,
+    TrailSliceSlot,
+)
 from app.runtime_console.panel import build_runtime_panel
+from app.runtime_console.progress import build_sequence_progress, load_total_batches
 
 
 class ConsoleRuntimeController:
-    """Observational live console for broker-only runtime state."""
+    """Observational live console for direct runtime state."""
 
     def __init__(
         self,
@@ -30,6 +40,9 @@ class ConsoleRuntimeController:
         self.refresh_interval_seconds = 1.0 / max(1.0, float(refresh_hz or 4.0))
         self.transient = transient
         self.state = ConsoleRuntimeState()
+        self._sequence_batch_count_cache: dict[str, int] = {}
+        self._trail_seq_counter: int = 0
+        self._trail_seq_labels: dict[str, str] = {}
         self._live: Live | None = None
         self._stop_event: threading.Event | None = None
         self._refresh_thread: threading.Thread | None = None
@@ -73,16 +86,6 @@ class ConsoleRuntimeController:
         self.state.started_at_monotonic = time.monotonic()
         self._refresh()
 
-    def on_broker_bootstrap(self, health: BrokerHealth) -> None:
-        self.state.broker_status = health.status or "unknown"
-        self.state.broker_summary = health.summary
-        self.state.broker_warnings = list(health.warnings)
-        self.state.broker_tool_count = health.tool_count
-        if health.warnings:
-            self.state.last_warning = health.warnings[-1]
-            self.state.last_warning_at = time.monotonic()
-        self._refresh()
-
     def on_planner_started(self, *, adapter_name: str, attempt: int, max_attempts: int) -> None:
         planner = self.state.planner
         planner.status = "running"
@@ -113,8 +116,11 @@ class ConsoleRuntimeController:
             self.state.last_error_at = time.monotonic()
         self._refresh()
 
-    def on_plan_created(self, *, plan_id: str) -> None:
+    def on_plan_created(self, *, plan_id: str, plan: ExecutionPlan | None = None, all_plans: list[ExecutionPlan] | None = None) -> None:
         self.state.active_plan_id = plan_id
+        if plan is not None and all_plans is not None:
+            self._sync_sequence_progress(plan=plan, all_plans=all_plans, active_slice_id=None)
+            self._build_trail_map(plan=plan, all_plans=all_plans)
         self._refresh()
 
     def on_slice_turn_started(
@@ -132,6 +138,8 @@ class ConsoleRuntimeController:
         summary: str = "",
         operation_ref: str = "",
         operation_status: str = "",
+        plan: ExecutionPlan | None = None,
+        all_plans: list[ExecutionPlan] | None = None,
     ) -> None:
         if plan_id:
             self.state.active_plan_id = plan_id
@@ -150,6 +158,8 @@ class ConsoleRuntimeController:
             active_operation_ref=operation_ref,
             active_operation_status=operation_status,
         )
+        if plan is not None and all_plans is not None:
+            self._sync_sequence_progress(plan=plan, all_plans=all_plans, active_slice_id=slice_id)
         self._refresh()
 
     def on_tool_call_started(
@@ -161,7 +171,7 @@ class ConsoleRuntimeController:
         tool_name: str,
         phase: str = "call",
     ) -> None:
-        self.state.broker_calls[slot] = ToolCallRuntimeView(
+        self.state.direct_calls[slot] = DirectToolRuntimeView(
             slot=slot,
             plan_id=plan_id,
             slice_id=slice_id,
@@ -171,50 +181,31 @@ class ConsoleRuntimeController:
         )
         self._refresh()
 
-    def on_tool_call_finished(self, *, slot: int, result: ToolResultEnvelope) -> None:
-        started = self.state.broker_calls.get(slot)
-        view = ToolCallRuntimeView(
-            slot=slot,
-            plan_id=result.plan_id,
-            slice_id=result.slice_id,
-            tool_name=result.tool,
-            phase="done",
-            retryable=result.retryable,
-            response_status=result.response_status,
-            tool_response_status=result.tool_response_status,
-            operation_ref=result.operation_ref,
-            error_class=result.error_class,
-            started_at_monotonic=started.started_at_monotonic if started else 0.0,
-            duration_ms=result.duration_ms,
-            warning_count=len(result.warnings),
-        )
-        self.state.broker_calls[slot] = view
-        if result.warnings:
-            self.state.last_warning = result.warnings[-1]
-            self.state.last_warning_at = time.monotonic()
-        if not result.ok:
-            self.state.last_error = result.summary or result.error_class
-            self.state.last_error_at = time.monotonic()
-        self._refresh()
-
     def on_slice_checkpoint(self, *, slot: int, summary: str, operation_ref: str = "", operation_status: str = "") -> None:
         self._update_slice(slot, status="checkpointed", summary=summary, operation_ref=operation_ref, operation_status=operation_status)
 
-    def on_slice_completed(self, *, slot: int, summary: str) -> None:
+    def on_slice_completed(self, *, slot: int, summary: str, via: str = "direct") -> None:
         self._update_slice(slot, status="completed", summary=summary, operation_ref="", operation_status="")
-        self.state.broker_calls.pop(slot, None)
+        self._update_trail_from_slot(slot, status="completed", execution_path=via)
+        self.state.direct_calls.pop(slot, None)
 
     def on_slice_failed(self, *, slot: int, summary: str) -> None:
         self._update_slice(slot, status="failed", summary=summary, operation_ref="", operation_status="")
+        self._update_trail_from_slot(slot, status="failed")
         self.state.last_error = summary
         self.state.last_error_at = time.monotonic()
-        self.state.broker_calls.pop(slot, None)
+        self.state.direct_calls.pop(slot, None)
 
     def on_slice_aborted(self, *, slot: int, summary: str) -> None:
         self._update_slice(slot, status="aborted", summary=summary, operation_ref="", operation_status="")
+        self._update_trail_from_slot(slot, status="aborted")
         self.state.last_warning = summary
         self.state.last_warning_at = time.monotonic()
-        self.state.broker_calls.pop(slot, None)
+        self.state.direct_calls.pop(slot, None)
+
+    def on_slice_skipped(self, *, slot: int, summary: str = "") -> None:
+        self._update_slice(slot, status="skipped", summary=summary, operation_ref="", operation_status="")
+        self._update_trail_from_slot(slot, status="skipped")
 
     def on_runtime_error(self, error: str, *, total_errors: int) -> None:
         self.state.total_errors = total_errors
@@ -261,6 +252,116 @@ class ConsoleRuntimeController:
         current.active_operation_ref = operation_ref
         current.active_operation_status = operation_status
         self._refresh()
+
+    # ------------------------------------------------------------------
+    # Trail map
+    # ------------------------------------------------------------------
+
+    def _get_trail_label(self, sequence_id: str) -> str:
+        if sequence_id in self._trail_seq_labels:
+            return self._trail_seq_labels[sequence_id]
+        self._trail_seq_counter += 1
+        label = f"v{self._trail_seq_counter}"
+        self._trail_seq_labels[sequence_id] = label
+        return label
+
+    def _build_trail_map(self, *, plan: ExecutionPlan, all_plans: list[ExecutionPlan]) -> None:
+        """Build/update the trail map from all known plans, preserving outcomes."""
+        # Collect existing outcomes: (plan_id, slice_id) → (status, execution_path)
+        outcomes: dict[tuple[str, str], tuple[str, str]] = {}
+        for pg in self.state.trail_map.plans:
+            for batch in pg.batches:
+                for slot in batch.slices:
+                    if slot.status != "pending" and slot.slice_id:
+                        outcomes[(batch.plan_id, slot.slice_id)] = (slot.status, slot.execution_path)
+
+        # Group all plans by source_sequence_id
+        sequences: dict[str, list[ExecutionPlan]] = {}
+        for p in all_plans:
+            seq_id = str(p.source_sequence_id or "").strip()
+            if seq_id:
+                sequences.setdefault(seq_id, []).append(p)
+
+        # Build new map preserving outcomes
+        _TERMINAL = {"completed", "failed", "aborted", "skipped"}
+        new_plans: list[TrailPlanGroup] = []
+        for seq_id in sorted(sequences.keys()):
+            plans_in_seq = sorted(sequences[seq_id], key=lambda p: int(p.sequence_batch_index or 0))
+            batches: list[TrailBatch] = []
+            for p in plans_in_seq:
+                slices: list[TrailSliceSlot] = []
+                for s in p.slices:
+                    key = (p.plan_id, s.slice_id)
+                    if key in outcomes:
+                        st, ep = outcomes[key]
+                        slices.append(TrailSliceSlot(slice_id=s.slice_id, status=st, execution_path=ep))
+                    elif s.status in _TERMINAL:
+                        slices.append(TrailSliceSlot(slice_id=s.slice_id, status=s.status, execution_path="direct"))
+                    else:
+                        slices.append(TrailSliceSlot(slice_id=s.slice_id))
+                batches.append(TrailBatch(plan_id=p.plan_id, slices=slices))
+            new_plans.append(TrailPlanGroup(
+                label=self._get_trail_label(seq_id),
+                sequence_id=seq_id,
+                batches=batches,
+            ))
+
+        self.state.trail_map.plans = new_plans
+
+    def _update_trail_from_slot(self, slot: int, status: str, execution_path: str = "direct") -> None:
+        """Find the trail slot from a parallel slot number and update it."""
+        existing = self.state.slices.get(slot)
+        if existing is None:
+            return
+        plan_id = existing.plan_id
+        slice_id = existing.slice_id
+        if not plan_id or not slice_id:
+            return
+        self.state.slice_trail.append(
+            SliceTrailEntry(
+                status=status,
+                execution_path=execution_path,
+                title=existing.title,
+                summary=existing.last_summary,
+            )
+        )
+        for pg in self.state.trail_map.plans:
+            for batch in pg.batches:
+                if batch.plan_id == plan_id:
+                    for ts in batch.slices:
+                        if ts.slice_id == slice_id:
+                            ts.status = status
+                            ts.execution_path = execution_path
+                            return
+
+    def sync_sequence_progress(
+        self,
+        *,
+        plan: ExecutionPlan,
+        all_plans: list[ExecutionPlan],
+        active_slice_id: str | None = None,
+    ) -> None:
+        self._sync_sequence_progress(plan=plan, all_plans=all_plans, active_slice_id=active_slice_id)
+        self._build_trail_map(plan=plan, all_plans=all_plans)
+        self._refresh()
+
+    def _sync_sequence_progress(
+        self,
+        *,
+        plan: ExecutionPlan,
+        all_plans: list[ExecutionPlan],
+        active_slice_id: str | None,
+    ) -> None:
+        total_batches = load_total_batches(
+            plan=plan,
+            cache=self._sequence_batch_count_cache,
+        )
+        self.state.sequence_progress = build_sequence_progress(
+            plan=plan,
+            all_plans=all_plans,
+            active_slice_id=active_slice_id,
+            total_batches=total_batches,
+        )
 
     def _refresh(self) -> None:
         if self._live is None:

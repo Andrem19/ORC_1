@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from app.execution_models import BaselineRef, ExecutionPlan, ExecutionStateV2, ExecutionTurn, PlanSlice, ToolResultEnvelope, WorkerAction
+from app.execution_models import BaselineRef, DirectAttemptMetadata, ExecutionPlan, ExecutionStateV2, ExecutionTurn, PlanSlice, WorkerAction
 from app.execution_store import ExecutionStateStore
 
 
@@ -105,18 +105,7 @@ def test_execution_state_store_load_ignores_additive_fields(tmp_path) -> None:
                         ],
                     }
                 ],
-                "tool_call_ledger": [
-                    {
-                        "call_id": "tool_1",
-                        "tool": "events",
-                        "ok": True,
-                        "retryable": False,
-                        "duration_ms": 10,
-                        "summary": "ok",
-                        "new_field": "ignored",
-                    }
-                ],
-                "broker_health": {"status": "healthy", "extra": "ignored"},
+                "removed_legacy_field": {"status": "ignored"},
             },
             ensure_ascii=False,
             indent=2,
@@ -130,7 +119,7 @@ def test_execution_state_store_load_ignores_additive_fields(tmp_path) -> None:
     assert loaded is not None
     assert loaded.plans[0].baseline_ref.snapshot_id == "active-signal-v1"
     assert loaded.plans[0].slices[0].slice_id == "slice_1"
-    assert loaded.tool_call_ledger[0].summary == "ok"
+    assert loaded.turn_history == []
 
 
 def test_execution_state_store_trims_completed_turns_but_keeps_active_plan_turns(tmp_path) -> None:
@@ -168,40 +157,24 @@ def test_execution_state_store_trims_completed_turns_but_keeps_active_plan_turns
     assert len([turn for turn in loaded.turn_history if turn.plan_id == "plan_done"]) == 50
 
 
-def test_execution_state_store_trims_completed_ledger_but_keeps_active_plan_entries(tmp_path) -> None:
+def test_execution_state_store_persists_direct_attempt_metadata(tmp_path) -> None:
     store = ExecutionStateStore(tmp_path / "state" / "execution_state_v2.json")
     state = ExecutionStateV2(goal="Test goal", status="running", current_plan_id="plan_active")
-    state.tool_call_ledger = [
-        ToolResultEnvelope(
-            call_id=f"call_done_{index}",
-            tool="events",
-            ok=True,
-            retryable=False,
-            duration_ms=1,
-            summary=f"done {index}",
+    state.turn_history = [
+        ExecutionTurn(
+            turn_id="turn_active_1",
             plan_id="plan_done",
             slice_id="slice_1",
+            worker_id="worker-1",
+            turn_index=1,
+            action=WorkerAction(action_id="a1", action_type="checkpoint", status="partial", summary="ok"),
+            direct_attempt=DirectAttemptMetadata(provider="test", tool_call_count=2, expensive_tool_call_count=1),
         )
-        for index in range(110)
-    ] + [
-        ToolResultEnvelope(
-            call_id=f"call_active_{index}",
-            tool="events",
-            ok=True,
-            retryable=False,
-            duration_ms=1,
-            summary=f"active {index}",
-            plan_id="plan_active",
-            slice_id="slice_active",
-        )
-        for index in range(4)
     ]
 
     store.save(state)
     loaded = store.load()
 
     assert loaded is not None
-    assert [item.call_id for item in loaded.tool_call_ledger[:3]] == ["call_done_10", "call_done_11", "call_done_12"]
-    assert [item.call_id for item in loaded.tool_call_ledger[-4:]] == ["call_active_0", "call_active_1", "call_active_2", "call_active_3"]
-    assert len([item for item in loaded.tool_call_ledger if item.plan_id == "plan_active"]) == 4
-    assert len([item for item in loaded.tool_call_ledger if item.plan_id == "plan_done"]) == 100
+    assert loaded.turn_history[0].direct_attempt.provider == "test"
+    assert loaded.turn_history[0].direct_attempt.tool_call_count == 2

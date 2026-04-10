@@ -8,10 +8,18 @@
   "stage_count": 10,
   "compiled_plan_count": 4,
   "warnings": [
-    "Plan is in Russian; stage titles and objectives translated to English for semantic consistency",
-    "M3/M4 weak-window models gated — only permitted if standard long/short classifiers show weak but recoverable pockets",
-    "Router model explicitly forbidden at v6 start; only unlocked by conditional gate after M1+M2 success"
+    "План включает cross-symbol features — требуется многосимвольная data readiness (ETHUSDT, возможно SOLUSDT/BNBUSDT).",
+    "M3/M4 weak-window модели разрешены только как gated опции при конкретных условиях.",
+    "Router-модель полностью заблокирована на старте; разрешается только если M1 и M2 обе показали meaningful OOS value.",
+    "Auto-added research_record for stage_2: every non-trivial stage needs documentation capability.",
+    "Auto-added research_record for stage_3: every non-trivial stage needs documentation capability.",
+    "Auto-added research_record for stage_4: every non-trivial stage needs documentation capability.",
+    "Auto-added research_record for stage_5: every non-trivial stage needs documentation capability.",
+    "Auto-added research_record for stage_6: every non-trivial stage needs documentation capability.",
+    "Auto-added research_record for stage_7: every non-trivial stage needs documentation capability.",
+    "Auto-added research_record for stage_8: every non-trivial stage needs documentation capability.",
+    "Auto-added research_record for stage_9: every non-trivial stage needs documentation capability."
   ],
   "errors": [],
-  "compiled_at": "2026-04-09T14:24:19.886200+00:00"
+  "compiled_at": "2026-04-10T17:02:22.767366+00:00"
 }

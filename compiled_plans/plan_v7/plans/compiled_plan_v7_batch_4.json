@@ -1,6 +1,6 @@
 {
   "plan_id": "compiled_plan_v7_batch_4",
-  "goal": "Довести до честного решения, может ли новый directional feature layer + CatBoost classification дать additive long/short sleeve поверх active-signal-v1@1 при правильных labels, полных sides/horizons и не обрезанном feature layer.",
+  "goal": "Довести до честного решения: может ли новый directional feature layer + CatBoost classification дать additive long и/или short sleeve поверх active-signal-v1@1 при корректных labels, полных sides/horizons и не обрезанном feature layer.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -9,47 +9,53 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "active-signal-v1@1 — immutable reference; запрещено менять базу, подбирать ей часы/дни/пороги/исполнение",
-    "запрещено выбирать feature set, label scheme, horizon, threshold или архитектуру по lockbox-окну",
-    "улучшением считается только matched OOS comparison с базой на том же окне",
+    "active-signal-v1@1 — immutable reference; запрещено менять базу, подбирать ей часы/дни/пороги/исолнение",
+    "запрещено объявлять улучшением всё, что не прошло matched OOS comparison с базой на том же окне",
     "запрещено возвращаться к regression-предсказанию future PnL",
     "запрещено возвращаться к IV-family как самостоятельному directional layer",
-    "label scheme frozen до training; net_pnl>0 больше не используется как primary label",
-    "short-first приоритет: short 18h → short 12h → потом long tests",
-    "сначала tail-value (top-decile lift, precision в top bucket), потом общий AUC",
-    "не обучать multiclass model; не строить router пока хотя бы один sleeve не прошёл OOS"
+    "net_pnl>0 больше не используется как primary label scheme",
+    "labels frozen после stage_2 до конца selection-stage; дрейф запрещён",
+    "short-first приоритет: сначала short 18h и short 12h, потом new long",
+    "только компактные feature packs — критический directional core, не весь зоопарк",
+    "lockbox untouched до финальной оценки; selection OOS для всех промежуточных решений",
+    "не обучать multiclass model; не строить router до первого standalone sleeve прошедшего OOS"
   ],
   "slices": [
     {
       "slice_id": "compiled_plan_v7_stage_10",
       "title": "Ownership, cannibalization и proof of new entries",
-      "hypothesis": "Доказать, что модель добавляет новые прибыльные сделки, а не просто каннибализирует существующие записи базы.",
-      "objective": "Доказать, что модель добавляет новые прибыльные сделки, а не просто каннибализирует существующие записи базы.",
+      "hypothesis": "Доказать что модель добавляет genuinely new profitable trades, а не просто заменяет базовые; проверить overlap, cannibalization и ownership.",
+      "objective": "Доказать что модель добавляет genuinely new profitable trades, а не просто заменяет базовые; проверить overlap, cannibalization и ownership.",
       "success_criteria": [
-        "overlap_rate и truly_new_trades рассчитаны",
-        "pnl_of_new_trades > 0 (ownership_positive)",
-        "final_decision принят для каждого кандидата"
+        "Overlap rate измерен для каждого candidate",
+        "PnL от genuinely new trades положителен",
+        "Ownership diagnostic подтверждает что model добавляет value а не каннибализирует базу",
+        "Final decision (accept/reject) задокументирован для каждого sleeve"
       ],
       "allowed_tools": [
         "backtests_analysis",
-        "backtests_conditions",
-        "experiments_run",
-        "experiments_inspect",
-        "experiments_read",
-        "experiments_registry_inspect"
+        "backtests_runs",
+        "research_record"
       ],
       "evidence_requirements": [
-        "overlap_rate и truly_new_trades рассчитаны",
-        "pnl_of_new_trades > 0 (ownership_positive)",
-        "final_decision принят для каждого кандидата"
+        "Overlap rate измерен для каждого candidate",
+        "PnL от genuinely new trades положителен",
+        "Ownership diagnostic подтверждает что model добавляет value а не каннибализирует базу",
+        "Final decision (accept/reject) задокументирован для каждого sleeve"
       ],
       "policy_tags": [
-        "analysis"
+        "ownership_proof",
+        "integration_gate",
+        "final_decision"
       ],
-      "max_turns": 8,
-      "max_tool_calls": 6,
-      "max_expensive_calls": 2,
+      "max_turns": 24,
+      "max_tool_calls": 24,
+      "max_expensive_calls": 3,
       "parallel_slot": 1,
+      "budget_scale_applied": 6,
+      "depends_on": [
+        "compiled_plan_v7_stage_9"
+      ],
       "status": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
@@ -57,52 +63,51 @@
       "assigned_worker_id": null,
       "last_checkpoint_turn_id": "",
       "last_checkpoint_summary": "",
+      "last_checkpoint_status": "",
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
-      "latest_tool_result_summary": "",
-      "active_operation_tool": "",
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
-      "active_resume_tool": "",
-      "active_resume_token": "",
-      "last_tool_response_status": "",
       "artifacts": [],
       "facts": {}
     },
     {
       "slice_id": "compiled_plan_v7_stage_11",
       "title": "Финальный вердикт по v7",
-      "hypothesis": "Сформулировать итоговый terminal verdict: прошёл ли classification route, какие sleeves рекомендованы к интеграции, и определить next_recommended_direction.",
-      "objective": "Сформулировать итоговый terminal verdict: прошёл ли classification route, какие sleeves рекомендованы к интеграции, и определить next_recommended_direction.",
+      "hypothesis": "Подвести итог v7: terminal verdict по model route (classification), каждому sleeve и recommended next direction.",
+      "objective": "Подвести итог v7: terminal verdict по model route (classification), каждому sleeve и recommended next direction.",
       "success_criteria": [
-        "short_12h_verdict, short_18h_verdict, long_18h_verdict зафиксированы",
-        "model_route_verdict и classification_route получили terminal decision",
-        "Полный operational checklist пройден",
-        "Финальный отчёт по v7 написан"
+        "Terminal verdict по model route (classification) получен",
+        "Каждый sleeve имеет accept/reject с обоснованием",
+        "Операционный чек-лист пройден полностью",
+        "Финальный отчёт записан в research_record"
       ],
       "allowed_tools": [
         "research_record",
-        "backtests_analysis",
-        "notify_send",
-        "research_project",
         "research_map",
-        "research_search"
+        "backtests_runs",
+        "research_project"
       ],
       "evidence_requirements": [
-        "short_12h_verdict, short_18h_verdict, long_18h_verdict зафиксированы",
-        "model_route_verdict и classification_route получили terminal decision",
-        "Полный operational checklist пройден",
-        "Финальный отчёт по v7 написан"
+        "Terminal verdict по model route (classification) получен",
+        "Каждый sleeve имеет accept/reject с обоснованием",
+        "Операционный чек-лист пройден полностью",
+        "Финальный отчёт записан в research_record"
       ],
       "policy_tags": [
-        "modeling"
+        "final_verdict",
+        "closing"
       ],
-      "max_turns": 6,
-      "max_tool_calls": 5,
-      "max_expensive_calls": 2,
+      "max_turns": 24,
+      "max_tool_calls": 24,
+      "max_expensive_calls": 3,
       "parallel_slot": 1,
+      "budget_scale_applied": 6,
+      "depends_on": [
+        "compiled_plan_v7_stage_10"
+      ],
       "status": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
@@ -110,22 +115,25 @@
       "assigned_worker_id": null,
       "last_checkpoint_turn_id": "",
       "last_checkpoint_summary": "",
+      "last_checkpoint_status": "",
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
-      "latest_tool_result_summary": "",
-      "active_operation_tool": "",
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
-      "active_resume_tool": "",
-      "active_resume_token": "",
-      "last_tool_response_status": "",
       "artifacts": [],
       "facts": {}
     }
   ],
+  "plan_source_kind": "compiled_raw",
+  "source_sequence_id": "compiled_plan_v7",
+  "source_raw_plan": "raw_plans/plan_v7.md",
+  "source_manifest_path": "",
+  "source_semantic_path": "",
+  "source_compile_report_path": "",
+  "sequence_batch_index": 4,
   "status": "draft",
-  "created_at": "2026-04-09T14:26:06.296885+00:00",
-  "updated_at": "2026-04-09T14:26:06.296891+00:00"
+  "created_at": "2026-04-10T17:04:14.014127+00:00",
+  "updated_at": "2026-04-10T17:04:14.014128+00:00"
 }

@@ -164,3 +164,16 @@ def test_compiled_plan_store_backfills_slice_dependencies_from_semantic(tmp_path
     loaded = store.load_plan(manifest, manifest.plan_files[0])
 
     assert loaded.slices[1].depends_on == ["compiled_plan_v1_stage_1"]
+
+
+def test_compiled_plan_store_normalizes_expensive_budget_on_load(tmp_path) -> None:
+    store = CompiledPlanStore(tmp_path / "compiled")
+    sequence = _sequence()
+    sequence.plans[0].slices[0].allowed_tools = ["research_record"]
+    sequence.plans[0].slices[0].max_expensive_calls = 0
+    store.save_sequence(sequence)
+
+    manifest = store.load_manifests()[0]
+    loaded = store.load_plan(manifest, manifest.plan_files[0])
+
+    assert loaded.slices[0].max_expensive_calls >= 2

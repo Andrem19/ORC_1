@@ -1,10 +1,53 @@
 """
-In-memory render state for the broker-only rich runtime console.
+In-memory render state for the direct rich runtime console.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+
+
+@dataclass
+class SliceTrailEntry:
+    """One completed slice outcome for the compact progress trail."""
+
+    status: str
+    execution_path: str = "direct"
+    title: str = ""
+    summary: str = ""
+
+
+@dataclass
+class TrailSliceSlot:
+    """One slice position in the pre-built trail map."""
+
+    slice_id: str = ""
+    status: str = "pending"  # pending | completed | failed | aborted | skipped
+    execution_path: str = "direct"  # direct | model
+
+
+@dataclass
+class TrailBatch:
+    """One batch (compiled plan) in the trail map."""
+
+    plan_id: str = ""
+    slices: list[TrailSliceSlot] = field(default_factory=list)
+
+
+@dataclass
+class TrailPlanGroup:
+    """One plan/sequence group in the trail map."""
+
+    label: str = ""  # v1, v2, etc.
+    sequence_id: str = ""
+    batches: list[TrailBatch] = field(default_factory=list)
+
+
+@dataclass
+class TrailMap:
+    """Full execution trail map — pre-built from plan structure."""
+
+    plans: list[TrailPlanGroup] = field(default_factory=list)
 
 
 @dataclass
@@ -35,7 +78,32 @@ class SliceRuntimeView:
 
 
 @dataclass
-class ToolCallRuntimeView:
+class BatchProgressView:
+    batch_index: int
+    status: str = "pending"
+    completed_slices: int = 0
+    total_slices: int = 0
+    current_slice_index: int = 0
+    current_slice_label: str = ""
+    slice_statuses: list[str] = field(default_factory=list)
+
+
+@dataclass
+class SequenceProgressView:
+    raw_plan_label: str = ""
+    sequence_id: str = ""
+    current_batch_index: int = 0
+    total_batches: int = 0
+    current_slice_index: int = 0
+    total_slices_in_batch: int = 0
+    current_slice_id: str = ""
+    current_slice_title: str = ""
+    completed_batches: int = 0
+    batch_statuses: list[BatchProgressView] = field(default_factory=list)
+
+
+@dataclass
+class DirectToolRuntimeView:
     slot: int
     plan_id: str = ""
     slice_id: str = ""
@@ -58,10 +126,8 @@ class ConsoleRuntimeState:
     active_plan_id: str = ""
     current_cycle: int = 0
     total_errors: int = 0
-    broker_status: str = "unknown"
-    broker_summary: str = ""
-    broker_warnings: list[str] = field(default_factory=list)
-    broker_tool_count: int = 0
+    direct_status: str = "unknown"
+    direct_summary: str = ""
     drain_mode: bool = False
     stop_reason: str = ""
     last_warning: str = ""
@@ -70,5 +136,8 @@ class ConsoleRuntimeState:
     last_error_at: float = 0.0
     started_at_monotonic: float = 0.0
     planner: PlannerRuntimeView = field(default_factory=PlannerRuntimeView)
+    sequence_progress: SequenceProgressView = field(default_factory=SequenceProgressView)
     slices: dict[int, SliceRuntimeView] = field(default_factory=dict)
-    broker_calls: dict[int, ToolCallRuntimeView] = field(default_factory=dict)
+    direct_calls: dict[int, DirectToolRuntimeView] = field(default_factory=dict)
+    slice_trail: list[SliceTrailEntry] = field(default_factory=list)
+    trail_map: TrailMap = field(default_factory=TrailMap)

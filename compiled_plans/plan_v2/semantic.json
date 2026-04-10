@@ -2,7 +2,7 @@
   "source_file": "raw_plans/plan_v2.md",
   "source_hash": "fac2e19e9168dae13dd9e93e69327dca3275af5f9dd30e554257985ba2ef28d5",
   "source_title": "План дальнейших исследований для v2",
-  "goal": "Find one or more new orthogonal specialist signals or conditioning layers that work primarily where the base does not trade, use genuinely new information, pass window stability, and prove additive value through new entries upon integration.",
+  "goal": "Найти один или несколько ортогональных specialist-сигналов или conditioning-слоёв, которые работают там, где база active-signal-v1@1 не торгует, и доказанно приносят новые входы, а не скрытый дубляж.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -11,33 +11,33 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "Base active-signal-v1@1 is immutable — no re-tuning, no hour/day/threshold variations, no cosmetic changes.",
-    "Raw single-filter event entries (H1/H2 style) are permanently forbidden.",
-    "Every new candidate must first pass complement-first mode (base_absent surface) before any other evaluation.",
-    "Every prototype must contain at least 3 logical layers: new information layer + regime confirmation + density limiter.",
-    "Model-first approaches are forbidden until the low-friction wave (Wave A) completes.",
-    "No candidate may be a renamed variation of existing hour, dow, cl_*, rsi, iv_est static, or day-of-week patterns.",
-    "If permissive integration looks good but strict additive is weak — reject for hidden cannibalism.",
-    "Record both successes and reasons for rejection in research journal."
+    "База active-signal-v1@1 immutable — не ретюнить, не менять пороги, часы, дни, исполнение.",
+    "Сырые event-entry конструкции (один event + один фильтр) запрещены — H1/H2 тупик.",
+    "Каждый кандидат сначала проходит complement-first режим: вход только на base_absent anchor-барах.",
+    "Single-filter entry запрещён — минимум три логических слоя (новый слой + подтверждение режима + ограничитель плотности).",
+    "Model-first запрещён до завершения Wave A (low-friction).",
+    "Кандидат отклоняется, если strict additive слабый, а permissive сильный — признак скрытого каннибализма."
   ],
   "stages": [
     {
       "stage_id": "stage_1",
-      "title": "Postmortem plan_v1 and fix new rules",
-      "objective": "Record what the weak result of the first cycle taught so the agent does not repeat the same failure under a different name.",
+      "title": "Постмортем plan_v1 и фиксация новых правил",
+      "objective": "Record a structured postmortem of plan_v1 and fix immutable v2 rules so the agent does not repeat the same failure under a different name.",
       "actions": [
         "Open a new research_project for the v2 cycle.",
-        "Write a short plan_v1 postmortem in research_record: H1/H2 died from weak selectivity and commissions; H3-H5 were not fully explored because infrastructure was not ready; core failure was not only family choice but also too-weak candidate architecture.",
-        "Fix v2 invariants: base immutable, no raw H1/H2 re-attempts, every candidate must pass complement-first first, single-filter entry forbidden, model-first forbidden until low-friction wave ends.",
-        "Create list of permitted v2 branches: IV dynamics on existing iv_est_1, event × state interactions, classifier-transition specialists, cross-symbol leadership after data readiness, model-backed routing only as late wave."
+        "Record plan_v1 postmortem in research_record: H1/H2 died from weak selectivity and commissions; H3–H5 were infrastructure-blocked; core failure was weak candidate architecture, not just wrong families.",
+        "Fix v2 invariants: base immutable, no raw H1/H2 retry, complement-first for all candidates, single-filter entry forbidden, model-first forbidden until low-friction wave completes.",
+        "Create allowed v2 branch list: IV dynamics, event×state interactions, classifier-transition specialists, cross-symbol leadership (after data readiness), model-backed routing (late wave only).",
+        "Initialize research_map with atlas structure for v2."
       ],
       "success_criteria": [
-        "An explicit postmortem exists and the agent understands that v2 is a fundamentally different class of research, not just another attempt at the same raw ideas."
+        "Explicit postmortem recorded and agent understands v2 is a different class of research, not a retry of raw ideas."
       ],
       "tool_hints": [
         "research_project",
         "research_record",
-        "research_map"
+        "research_map",
+        "research_search"
       ],
       "policy_tags": [
         "setup",
@@ -51,25 +51,30 @@
     },
     {
       "stage_id": "stage_2",
-      "title": "Build base-absent research surface",
-      "objective": "Map the anchor bars where the base does not trade, then find directional sub-spaces within that complement surface.",
+      "title": "Построение base-absent research surface",
+      "objective": "Build an anchor-level table mapping where the base trades and where it is absent, then characterize the base_absent surface to find directional sub-spaces.",
       "actions": [
-        "Collect anchor-level table via experiments_run: every 1h anchor, whether base fired long/short, available features, subsequent window result for long and short.",
+        "Run experiment to build anchor-level table: every 1h anchor, base long/short decision, available features, subsequent window outcome for long and short.",
         "Label each anchor as base_long_fired, base_short_fired, or base_absent.",
-        "On base_absent subset build a feature map across hour, dow, cl_1h, cl_4h, cl_1d, rsi, iv_est, event distances, weak-quarter and weak-month clusters.",
-        "Identify sub-spaces where base is silent but the market shows directional tendency.",
-        "Partition those sub-spaces into candidate long specialists, candidate short specialists, and unclear/noisy zones."
+        "On base_absent subset build feature map: hour, dow, cl_1h, cl_4h, cl_1d, rsi, iv_est, event distances, weak-quarter and weak-month clusters.",
+        "Find sub-spaces where base is absent but market shows directional tendency.",
+        "Partition sub-spaces into candidate long specialists, candidate short specialists, and unclear/noisy zones.",
+        "Record findings in research_record and update research_map."
       ],
       "success_criteria": [
-        "A map of missing regimes exists specifically on the surface where the base does not participate."
+        "Map of missing regimes exists specifically on the surface where the base is absent."
       ],
       "tool_hints": [
         "experiments_run",
         "experiments_read",
-        "analysis"
+        "features_catalog",
+        "datasets",
+        "events",
+        "research_record",
+        "research_map"
       ],
       "policy_tags": [
-        "setup",
+        "data_readiness",
         "cheap_first"
       ],
       "depends_on": [
@@ -82,29 +87,29 @@
     },
     {
       "stage_id": "stage_3",
-      "title": "Wave A — low-friction new layers on available data",
-      "objective": "Select hypotheses buildable without heavy external infrastructure, using already-available 1h data and minimal custom features.",
+      "title": "Wave A — low-friction новые слои на уже доступных данных",
+      "objective": "Select hypothesis families that can be built without heavy external infrastructure, using already available 1h data and minimal new custom features.",
       "actions": [
-        "For family A1 (IV dynamics from existing iv_est_1): use IV rate of change, acceleration, sign reversal, stretch vs recent history, shock-plus-decay combinations — not static buckets.",
-        "For family A2 (event × state interactions): only structured interactions such as funding/expiry distance combined with IV dynamics or classifier state, with explicit state confirmation.",
-        "For family A3 (classifier-transition specialists): regime transitions between adjacent windows, weak-to-strong, overbought-to-compressed, transitions historically occurring where base is absent.",
-        "For family A4 (compression-to-release without model): simple non-model features like range compression, low realized mobility, activity decline followed by release with regime confirmation.",
-        "For each family write a hypothesis contract: missing regime, why it is not a duplicate of the base, why it should work specifically on base_absent surface.",
-        "Publish necessary custom features for A1 and A2; check which features already exist for A3 and A4.",
-        "Cap at 6–8 hypothesis prototypes total."
+        "For each family (A1: IV dynamics, A2: Event×state, A3: Classifier-transition, A4: Compression-to-release) write hypothesis contract: missing regime, why not a duplicate of base, why it should work on base_absent surface.",
+        "Check features_catalog for available 1h features per family.",
+        "Identify which features need custom publication for A1 and A2.",
+        "Verify existing features for A3 and A4, flag gaps.",
+        "Select maximum 6–8 hypothesis prototypes total.",
+        "Record all hypotheses in research_record and research_map."
       ],
       "success_criteria": [
-        "A small, high-quality list of Wave A hypotheses exists, each data-ready or nearly data-ready."
+        "Small high-quality list of Wave A hypotheses exists, all data-ready or nearly data-ready."
       ],
       "tool_hints": [
-        "research_memory",
         "features_catalog",
-        "features_custom_validate",
-        "features_custom_publish",
-        "research_map"
+        "features_custom",
+        "events",
+        "research_record",
+        "research_map",
+        "research_search"
       ],
       "policy_tags": [
-        "hypothesis_design",
+        "feature_contract",
         "cheap_first"
       ],
       "depends_on": [
@@ -117,28 +122,27 @@
     },
     {
       "stage_id": "stage_4",
-      "title": "Feature contract and custom feature publication for Wave A",
-      "objective": "Translate hypotheses into correct causal features, not verbal ideas, and publish them through the feature pipeline.",
+      "title": "Feature contract и публикация custom features для wave A",
+      "objective": "Translate hypothesis ideas into correct causal features with explicit contracts, then validate, publish, and materialize them.",
       "actions": [
-        "For each new feature fix: data source, causal availability at decision time, lookback, warm-up behavior, human-readable interpretation.",
-        "Build IV dynamics features: IV change over 1h, IV change over 3–6h, IV acceleration, IV reversal, IV relative to recent mean/median, IV stretch combined with classifier state.",
-        "Build classifier transition features: state change between adjacent windows.",
-        "Build compression-release features: past-only compression indicators only.",
-        "For each custom feature: features_custom_validate → features_custom_publish → rebuild materialized dataset → features_dataset_inspect."
+        "For each new feature fix contract: source, causal availability at decision time, lookback, warm-up behavior, human-readable interpretation.",
+        "IV dynamics features: IV change 1h, IV change 3–6h, IV acceleration, IV reversal, IV stretch vs recent mean/median, IV stretch × classifier state.",
+        "Classifier transition features: state change between adjacent windows.",
+        "Compression-release features: past-only compression indicators.",
+        "For each custom feature: features_custom validate, features_custom publish, rebuild materialized dataset via features_dataset, then features_dataset inspect.",
+        "Record each feature contract in research_record."
       ],
       "success_criteria": [
-        "All Wave A features are published and verified for causality and materialization."
+        "All Wave A features published, causality-checked, and materialized successfully."
       ],
       "tool_hints": [
-        "feature_contract",
-        "features_custom_validate",
-        "features_custom_publish",
-        "features_dataset_build",
-        "features_dataset_inspect"
+        "features_custom",
+        "features_dataset",
+        "features_catalog",
+        "research_record"
       ],
       "policy_tags": [
-        "feature_engineering",
-        "cheap_first"
+        "feature_contract"
       ],
       "depends_on": [
         "stage_3"
@@ -150,233 +154,259 @@
     },
     {
       "stage_id": "stage_5",
-      "title": "Hypothesis plausibility on base-absent surface",
-      "objective": "Perform early triage not on the whole market but specifically inside the base complement surface.",
+      "title": "Hypothesis plausibility на base-absent surface",
+      "objective": "Perform early triage of prototypes on the complement surface only, discarding those that show no structured effect where the base is absent.",
       "actions": [
-        "For each prototype check profitability and slice behavior only on base_absent subset.",
-        "Evaluate observation count, stability across hours and days-of-week, whether effect is confined to one extreme bucket.",
-        "Look for structure, not a single beautiful tail.",
-        "Immediately reject candidates that are noisy, too broad, or fail to reduce space to a meaningful specialist regime."
+        "For each prototype check profitability and slice behavior only on base_absent subset using features_analytics.",
+        "Evaluate sample size, stability across hours and dow, whether effect is limited to one extreme bucket.",
+        "Look for structure, not a single nice tail.",
+        "Immediately reject candidates that: produce noise, are too broad, do not reduce the space to a meaningful specialist regime.",
+        "Record all rejections with reasons in research_record."
       ],
       "success_criteria": [
-        "Only plausibility-approved prototypes remain, each showing structure specifically where the base is absent."
+        "Only plausibility-approved prototypes remain, with visible structure specifically where the base is absent."
       ],
       "tool_hints": [
-        "features_profitability",
-        "analysis"
+        "features_analytics",
+        "features_dataset",
+        "research_record",
+        "research_map"
       ],
       "policy_tags": [
-        "triage",
+        "analysis",
         "cheap_first"
       ],
       "depends_on": [
         "stage_4"
       ],
       "required": true,
-      "parallelizable": true,
+      "parallelizable": false,
       "gate_hint": "",
       "raw_stage_ref": "stage_5"
     },
     {
       "stage_id": "stage_6",
-      "title": "Build strict specialist prototypes",
-      "objective": "Convert surviving ideas into real signals with at least three logical layers, avoiding the H1/H2 mistake of weak single-filter architecture.",
+      "title": "Построение strict specialist prototypes",
+      "objective": "Convert surviving ideas into real signal prototypes with at least three logical layers, avoiding the H1/H2 trap of weak single-filter entries.",
       "actions": [
-        "For each candidate build 2–4 strict prototypes; no wide parameter sweeps.",
-        "Each prototype must contain: (1) new information layer, (2) regime confirmation layer, (3) density limiter layer.",
-        "Record for each prototype: expected specialist regime, why additive by construction, expected trade density, why it should not cannibalize the base.",
-        "If a prototype again produces hundreds of weak entries, reject it outright — do not tune."
+        "For each candidate build 2–4 strict prototypes, each with minimum 3 logical layers: new layer + regime confirmation + density limiter.",
+        "No wide parameter sweeps allowed.",
+        "For each prototype record in advance: expected specialist regime, why additive by construction, expected trade density, why it should not cannibalize the base.",
+        "If a prototype produces hundreds of weak entries, reject it immediately — do not tune.",
+        "Record all prototypes and their architecture in research_record."
       ],
       "success_criteria": [
-        "A small set of strict specialist prototypes exists, not a loose grid of weak filters."
+        "Small set of strict specialist prototypes exists, not a loose grid of weak filters."
       ],
       "tool_hints": [
-        "research_memory",
-        "feature_contract"
+        "backtests_strategy",
+        "backtests_strategy_validate",
+        "research_record",
+        "research_map"
       ],
       "policy_tags": [
-        "hypothesis_design"
+        "modeling"
       ],
       "depends_on": [
         "stage_5"
       ],
       "required": true,
-      "parallelizable": true,
+      "parallelizable": false,
       "gate_hint": "",
       "raw_stage_ref": "stage_6"
     },
     {
       "stage_id": "stage_7",
       "title": "Complement-first standalone backtests",
-      "objective": "Verify whether each prototype has standalone value specifically on the space where the base does not trade.",
+      "objective": "Run standalone backtests in complement-only mode first to verify each prototype has independent value on the space where the base does not trade.",
       "actions": [
-        "Run standalone in complement-only mode: signal may only enter on base_absent anchor bars.",
-        "Only after complement-only, run full standalone for overall behavior reference.",
-        "Record for each prototype: net PnL, trade count, profit factor, max drawdown, PnL per trade, profit concentration in top N trades, quarterly profile.",
-        "Watch for H1/H2 pattern recurrence: too many trades, PF near 1.0, fees killing the idea."
+        "Run standalone backtest in complement-only mode: signal may only enter on base_absent anchor bars.",
+        "After complement-only, run full standalone for overall behavior context.",
+        "Record for each prototype: net PnL, trades, PF, DD, PnL per trade, profit concentration in top N trades, quarterly profile.",
+        "Flag if H1/H2 pattern repeats: too many trades, PF near 1.0, fees kill the idea.",
+        "Save all run results and record verdicts in research_record."
       ],
       "success_criteria": [
-        "A shortlist of prototypes exists that already look like real specialist candidates on complement-only space."
+        "Shortlist of prototypes that look like real specialist candidates even on complement-only mode."
       ],
       "tool_hints": [
-        "backtesting",
-        "backtests_run_start",
-        "backtests_conditions_run",
-        "analysis"
+        "backtests_plan",
+        "backtests_runs",
+        "backtests_analysis",
+        "research_record"
       ],
       "policy_tags": [
-        "backtest"
+        "backtesting"
       ],
       "depends_on": [
         "stage_6"
       ],
       "required": true,
-      "parallelizable": true,
+      "parallelizable": false,
       "gate_hint": "",
       "raw_stage_ref": "stage_7"
     },
     {
       "stage_id": "stage_8",
-      "title": "Stability, concentration and specialist verification",
-      "objective": "Retain only prototypes that genuinely work as specialist layers rather than living on a single lucky stretch of history.",
+      "title": "Stability, concentration и specialist verification",
+      "objective": "Retain only prototypes that work as genuine specialist layers across windows, not those living on a single lucky historical slice.",
       "actions": [
-        "Run window stability on each complement-approved prototype.",
-        "Check condition stability on key conditions.",
-        "Identify weak windows and strong windows.",
-        "Verify that all profit is not carried by a single quarter or a single anomalous move.",
-        "For specialist-type candidates prove: which specific regime they repair and that this regime was indeed weak or empty in the base."
+        "Run window stability analysis on each complement-approved prototype.",
+        "Run condition stability on key conditions via backtests_conditions.",
+        "Identify weak and strong windows.",
+        "Check whether all profit comes from a single quarter or a single anomalous move.",
+        "For specialist-type candidates prove: which regime it fixes, and that this regime was genuinely weak or empty for the base.",
+        "Record all stability findings in research_record."
       ],
       "success_criteria": [
         "Only stable specialists or honestly limited but reproducible regime-repair layers remain."
       ],
       "tool_hints": [
-        "backtests_analysis_start",
-        "backtests_conditions_run",
-        "analysis"
+        "backtests_conditions",
+        "backtests_analysis",
+        "backtests_runs",
+        "research_record"
       ],
       "policy_tags": [
-        "backtest",
-        "validation"
+        "analysis",
+        "backtesting"
       ],
       "depends_on": [
         "stage_7"
       ],
       "required": true,
-      "parallelizable": true,
+      "parallelizable": false,
       "gate_hint": "",
       "raw_stage_ref": "stage_8"
     },
     {
       "stage_id": "stage_9",
-      "title": "Integration with base in two modes",
-      "objective": "Test each finalist in both strict additive and permissive integration to reveal true orthogonality versus hidden duplication.",
+      "title": "Интеграция с базой в двух режимах",
+      "objective": "Test each finalist in both strict additive and permissive integration modes against the unchanged base to determine genuine additivity vs hidden overlap.",
       "actions": [
         "Run strict additive integration: candidate forbidden on any anchor where base already entered.",
-        "Run permissive integration: normal integration without hard prohibition.",
-        "Compare both modes against the unchanged base.",
-        "Record: delta PnL, delta trades, delta PF, delta DD, weak-quarter repair, difference between strict and permissive modes.",
-        "Interpret: strict additive good → strong orthogonality; strict weak but permissive strong → hidden duplication risk; both weak → reject."
+        "Run permissive integration: normal integration without hard exclusion.",
+        "Compare both modes against the unchanged base alone.",
+        "Record: delta PnL, delta trades, delta PF, delta DD, weak-quarter repair, strict vs permissive difference.",
+        "Interpret: strict additive good → strong orthogonality; strict weak but permissive strong → hidden overlap risk; both weak → reject."
       ],
       "success_criteria": [
-        "A clear picture exists of which candidates are truly additive versus merely appearing good by mixing with the base."
+        "Clear picture of who is genuinely additive vs who looks good only by mixing with the base."
       ],
       "tool_hints": [
-        "backtests_run_start",
-        "backtests_analysis_start",
-        "analysis"
+        "backtests_runs",
+        "backtests_analysis",
+        "backtests_strategy",
+        "research_record"
       ],
       "policy_tags": [
-        "integration",
-        "validation"
+        "backtesting",
+        "analysis"
       ],
       "depends_on": [
         "stage_8"
       ],
       "required": true,
-      "parallelizable": true,
+      "parallelizable": false,
       "gate_hint": "",
       "raw_stage_ref": "stage_9"
     },
     {
       "stage_id": "stage_10",
-      "title": "Cannibalization, ownership and new-entry proof",
-      "objective": "Formally prove that the new layer contributed genuinely new trades and new profit, not displaced base trades.",
+      "title": "Cannibalization, ownership и new-entry proof",
+      "objective": "Formally prove that each integration candidate brings genuinely new trades and new profit, not cannibalized base entries.",
       "actions": [
-        "For each integration candidate compute: overlap with base, number of truly new trades, displaced base trades, PnL of new trades only, profit ownership, coverage expansion across hours/states/event sub-spaces.",
-        "Reject candidate if: high overlap with weak strict additive, low new-trade profit, ownership shows candidate is not profit carrier, or layer mainly intercepts good base trades."
+        "For each integration candidate compute: overlap with base, number of truly new trades, base trades displaced, PnL of new trades only, profit ownership, coverage expansion (hours, states, event sub-spaces now covered).",
+        "Use signal_ownership analysis to confirm the new layer carries profit itself.",
+        "Apply hard rejection rules: reject if overlap is high and strict additive is weak; reject if new-trade PnL is small; reject if ownership shows candidate is not the profit carrier; reject if layer mainly intercepts good base trades.",
+        "Record all cannibalism findings in research_record."
       ],
       "success_criteria": [
-        "Direct proof exists showing which candidates genuinely expand the system."
+        "Direct proof exists for which candidates genuinely expand the system."
       ],
       "tool_hints": [
-        "backtests_analysis_start",
-        "analysis"
+        "backtests_analysis",
+        "research_record",
+        "research_map"
       ],
       "policy_tags": [
-        "validation",
-        "integration"
+        "analysis",
+        "finalization"
       ],
       "depends_on": [
         "stage_9"
       ],
       "required": true,
-      "parallelizable": true,
+      "parallelizable": false,
       "gate_hint": "",
       "raw_stage_ref": "stage_10"
     },
     {
       "stage_id": "stage_11",
       "title": "Wave B — medium-friction branch",
-      "objective": "Explore cross-symbol leadership, model-backed compression/routing, and event-state-model hybrids only if Wave A was inconclusive.",
+      "objective": "Explore cross-symbol leadership, model-backed compression/routing, and event-state-model hybrids only if Wave A failed to produce conclusive candidates.",
       "actions": [
-        "Verify data readiness for B1 (ETHUSDT 1h dataset and cross-symbol custom features).",
-        "Verify infrastructure readiness for B2 (models_dataset_prepare → models_train → models_to_feature pipeline).",
-        "B3 (event-state-model hybrids) only after B1/B2.",
-        "If a branch is not data-ready or infrastructure-ready, record it as a blocking issue and do not proceed."
+        "Evaluate data readiness for B1 (cross-symbol leadership): ETHUSDT 1h dataset and cross-symbol custom features.",
+        "Evaluate infrastructure readiness for B2 (model-backed): models_dataset contract, models_train, models_to_feature pipeline.",
+        "B3 (event-state-model hybrids) only after B1/B2 progress.",
+        "For each branch that is data-ready, follow the same pipeline as Wave A: hypothesis contract → feature publication → plausibility → prototype → complement standalone → stability → integration.",
+        "Record all Wave B progress in research_record and research_map."
       ],
       "success_criteria": [
-        "Wave B branches are evaluated for readiness; any that proceed produce at least one candidate reaching standalone backtest."
+        "Wave B branches evaluated for readiness; started branches follow the same strict specialist pipeline."
       ],
       "tool_hints": [
-        "data_readiness",
-        "modeling",
+        "datasets",
+        "datasets_sync",
         "features_custom",
-        "research_memory"
+        "features_dataset",
+        "models_dataset",
+        "models_train",
+        "models_to_feature",
+        "events",
+        "backtests_runs",
+        "research_record",
+        "research_map"
       ],
       "policy_tags": [
-        "conditional_branch",
-        "medium_friction"
+        "modeling",
+        "experiments"
       ],
       "depends_on": [
         "stage_10"
       ],
       "required": false,
       "parallelizable": false,
-      "gate_hint": "Wave A inconclusive — no candidate from stages 6-10 passed cannibalization and ownership proof; at least one Wave B branch must be data-ready to justify proceeding.",
+      "gate_hint": "Wave A must be inconclusive (no candidate passed cannibalization proof) before starting Wave B. If Wave A produced accepted candidates, skip this stage and go directly to walk-forward.",
       "raw_stage_ref": "stage_11"
     },
     {
       "stage_id": "stage_12",
-      "title": "Walk-forward and final selection",
-      "objective": "Run walk-forward validation on all surviving candidates and produce the final selection report with an honest answer on whether a new additive layer was found.",
+      "title": "Walk-forward и финальный отбор",
+      "objective": "Run walk-forward validation on all surviving candidates and produce a final honest verdict on whether a new additive layer was found.",
       "actions": [
-        "Run walk-forward on each finalist.",
-        "Record: walk-forward verdict, final uplift vs base, drawdown quality, new-entry proof verdict.",
-        "Assign final status: accepted, rejected, or needs-more-work.",
-        "Write final report including: base integrity confirmation, rejection journal, cannibalism journal, and honest conclusion.",
-        "Confirm operational checklist: base never changed, H1/H2 raw retry not done, base-absent surface built, hypotheses genuinely new, complement-first tested, strict additive and permissive integration both run, rejection journal filled, cannibalism journal filled, final report written, honest answer given."
+        "Run walk-forward evaluation on every candidate that passed integration and cannibalism proof.",
+        "Compare walk-forward results against the base alone: final uplift, DD quality, new-entry proof persistence.",
+        "For accepted candidates, finalize snapshot via backtests_strategy.",
+        "Write final research report with honest answer: was a new additive layer found or not.",
+        "Complete the operational checklist: base never changed, no raw H1/H2 retry, base-absent surface built, all hypotheses genuinely new, complement-first verified, strict+permissive integration done, rejection journal filled, cannibalism journal filled, final report written.",
+        "Record final verdict and all artifacts in research_record."
       ],
       "success_criteria": [
-        "Walk-forward complete for all finalists and an honest final report exists stating whether a genuinely additive new layer was found."
+        "Walk-forward completed for all finalists, honest final verdict recorded, operational checklist fully signed off."
       ],
       "tool_hints": [
-        "backtests_walkforward_start",
-        "finalization",
-        "research_record"
+        "backtests_walkforward",
+        "backtests_runs",
+        "backtests_analysis",
+        "backtests_strategy",
+        "research_record",
+        "research_map",
+        "notify_send"
       ],
       "policy_tags": [
-        "final_selection",
-        "validation"
+        "backtesting",
+        "finalization"
       ],
       "depends_on": [
         "stage_10"
@@ -387,6 +417,10 @@
       "raw_stage_ref": "stage_12"
     }
   ],
-  "warnings": [],
+  "warnings": [
+    "plan_v2 is fundamentally different from plan_v1: complement-first architecture, not raw hypothesis sweeps.",
+    "Wave B (stage_11) is gated on Wave A being inconclusive — do not start without explicit gate evaluation.",
+    "All objectives and tool_hints are in Russian source context but translated to English in this draft for agent consumption."
+  ],
   "parse_confidence": 0.95
 }

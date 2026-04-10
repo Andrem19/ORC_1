@@ -5,7 +5,7 @@ import tempfile
 from pathlib import Path
 
 from app.plan_models import PlanReport
-from app.models import BrokeredOrchestratorState, OrchestratorState, StopReason, TaskResult
+from app.models import DirectOrchestratorState, OrchestratorState, StopReason, TaskResult
 from app.state_store import StateStore
 
 
@@ -27,10 +27,10 @@ def test_save_and_load_empty():
     assert loaded.current_cycle == 0
 
 
-def test_orchestrator_state_alias_points_to_brokered_state():
+def test_orchestrator_state_alias_points_to_direct_state():
     state = OrchestratorState(goal="test goal")
 
-    assert isinstance(state, BrokeredOrchestratorState)
+    assert isinstance(state, DirectOrchestratorState)
 
 def test_save_and_load_with_results_only():
     store, path = _tmp_store()

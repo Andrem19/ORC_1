@@ -15,7 +15,7 @@ class _SemanticService:
         self.error = error
         self.calls = 0
 
-    async def extract(self, document) -> SemanticRawPlan:
+    async def extract(self, document, **kwargs) -> SemanticRawPlan:
         del document
         self.calls += 1
         if self.error:
@@ -71,7 +71,9 @@ def test_converter_service_compiles_with_llm_semantic_service(tmp_path) -> None:
 
     assert sequence.report.compile_status == "compiled"
     assert sequence.report.compiled_plan_count == 1
-    assert sequence.plans[0].slices[0].allowed_tools == ["events"]
+    tools = sequence.plans[0].slices[0].allowed_tools
+    assert "events" in tools
+    assert "research_record" in tools
 
 
 def test_converter_service_returns_failed_sequence_on_semantic_error(tmp_path) -> None:

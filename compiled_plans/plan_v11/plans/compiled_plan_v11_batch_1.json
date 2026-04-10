@@ -1,6 +1,6 @@
 {
   "plan_id": "compiled_plan_v11_batch_1",
-  "goal": "Conduct a strict forensic audit of v10 microstructure overlay results to confirm or reject their validity before any further research.",
+  "goal": "Forensic audit of v10 microstructure overlay: verify reproducibility, detect leakage, confirm same-window improvement, and deliver a final CONFIRMED / DOWNGRADED / REJECTED verdict.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -9,41 +9,41 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "Immutable reference: active-signal-v1@1 only; never modify baseline parameters, thresholds, features, or execution logic.",
-    "No new features, new directional scouts, early-cuts, or label changes are permitted in v11.",
-    "All comparisons must use identical train / selection-OOS / lockbox windows (same-window truth only).",
-    "Lockbox must never be used to choose thresholds, labels, or model hyper-parameters.",
-    "Short-only, long-only, and combined veto must be tested in separate runs; identical deltas across all three must be explained, not accepted.",
-    "Rule-based overlay must be tested before model-backed overlay.",
-    "PROMOTE status is only valid if v10 survives the entire forensic cycle."
+    "Immutable reference is active-signal-v1@1 — never modify or re-tune the base.",
+    "No new features, no new directional scouts, no early-cut, no label changes allowed.",
+    "All comparisons must use identical train / selection-OOS / lockbox windows.",
+    "Short-only, long-only, and combined veto must be tested in separate independent runs — never aggregated.",
+    "Rule-based (threshold / bucket) overlay must be validated before any model-backed overlay.",
+    "PROMOTE verdict only after every forensic block passes; any confirmed leakage triggers REJECTED.",
+    "No mixing of reproduction checks, leakage checks, and new ideas in the same run."
   ],
   "slices": [
     {
       "slice_id": "compiled_plan_v11_stage_1",
-      "title": "Freeze and forensic-cycle setup",
-      "hypothesis": "Lock v11 into audit-only mode and register the immutable reference, audit axes, and open-items checklist.",
-      "objective": "Lock v11 into audit-only mode and register the immutable reference, audit axes, and open-items checklist.",
+      "title": "Freeze и постановка forensic-cycle",
+      "hypothesis": "Open dedicated audit project, freeze immutable reference, and register all open forensic items.",
+      "objective": "Open dedicated audit project, freeze immutable reference, and register all open forensic items.",
       "success_criteria": [
-        "Dedicated v11 audit project exists with immutable reference frozen and full open-items register created."
+        "Dedicated v11 audit project exists with frozen reference and complete open-items register."
       ],
       "allowed_tools": [
         "research_project",
-        "research_map",
         "research_record",
-        "research_search"
+        "research_map"
       ],
       "evidence_requirements": [
-        "Dedicated v11 audit project exists with immutable reference frozen and full open-items register created."
+        "Dedicated v11 audit project exists with frozen reference and complete open-items register."
       ],
       "policy_tags": [
         "setup",
-        "audit",
-        "freeze"
+        "cheap_first"
       ],
-      "max_turns": 4,
-      "max_tool_calls": 4,
-      "max_expensive_calls": 0,
+      "max_turns": 24,
+      "max_tool_calls": 24,
+      "max_expensive_calls": 2,
       "parallel_slot": 1,
+      "budget_scale_applied": 6,
+      "depends_on": [],
       "status": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
@@ -51,55 +51,48 @@
       "assigned_worker_id": null,
       "last_checkpoint_turn_id": "",
       "last_checkpoint_summary": "",
+      "last_checkpoint_status": "",
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
-      "latest_tool_result_summary": "",
-      "active_operation_tool": "",
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
-      "active_resume_tool": "",
-      "active_resume_token": "",
-      "last_tool_response_status": "",
       "artifacts": [],
       "facts": {}
     },
     {
       "slice_id": "compiled_plan_v11_stage_2",
       "title": "Exact reproduction of v10 from scratch",
-      "hypothesis": "Reproduce the v10 result without any manual adjustments or prior knowledge to establish a clean baseline truth.",
-      "objective": "Reproduce the v10 result without any manual adjustments or prior knowledge to establish a clean baseline truth.",
+      "hypothesis": "Reproduce the full v10 pipeline — dataset, features, baselines, veto models, overlay snapshot, lockbox result — without any manual corrections.",
+      "objective": "Reproduce the full v10 pipeline — dataset, features, baselines, veto models, overlay snapshot, lockbox result — without any manual corrections.",
       "success_criteria": [
-        "Reproduction verdict is recorded: reproduced exactly, partially reproduced, or not reproduced."
+        "Verdict recorded: reproduced exactly, partially reproduced, or not reproduced."
       ],
       "allowed_tools": [
-        "features_custom",
-        "backtests_plan",
+        "features_dataset",
+        "models_dataset",
+        "models_train",
+        "models_registry",
+        "backtests_strategy",
         "backtests_runs",
-        "backtests_studies",
-        "backtests_walkforward",
-        "backtests_conditions",
-        "backtests_analysis",
-        "datasets",
-        "datasets_sync",
-        "datasets_preview",
-        "events",
-        "events_sync",
-        "features_catalog",
-        "features_dataset"
+        "research_record"
       ],
       "evidence_requirements": [
-        "Reproduction verdict is recorded: reproduced exactly, partially reproduced, or not reproduced."
+        "Verdict recorded: reproduced exactly, partially reproduced, or not reproduced."
       ],
       "policy_tags": [
         "reproduction",
-        "audit"
+        "expensive"
       ],
-      "max_turns": 6,
-      "max_tool_calls": 5,
-      "max_expensive_calls": 1,
+      "max_turns": 36,
+      "max_tool_calls": 30,
+      "max_expensive_calls": 6,
       "parallel_slot": 1,
+      "budget_scale_applied": 6,
+      "depends_on": [
+        "compiled_plan_v11_stage_1"
+      ],
       "status": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
@@ -107,53 +100,44 @@
       "assigned_worker_id": null,
       "last_checkpoint_turn_id": "",
       "last_checkpoint_summary": "",
+      "last_checkpoint_status": "",
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
-      "latest_tool_result_summary": "",
-      "active_operation_tool": "",
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
-      "active_resume_tool": "",
-      "active_resume_token": "",
-      "last_tool_response_status": "",
       "artifacts": [],
       "facts": {}
     },
     {
       "slice_id": "compiled_plan_v11_stage_3",
       "title": "Reference integrity audit",
-      "hypothesis": "Resolve the core contradiction in v10: lockbox baseline is listed as @3 instead of the declared @1.",
-      "objective": "Resolve the core contradiction in v10: lockbox baseline is listed as @3 instead of the declared @1.",
+      "hypothesis": "Resolve the @1 vs @3 baseline contradiction found in v10 lockbox table.",
+      "objective": "Resolve the @1 vs @3 baseline contradiction found in v10 lockbox table.",
       "success_criteria": [
-        "Clear verdict: @1 == @3 or @1 != @3 with documented evidence."
+        "Clear verdict recorded: @1 == @3 or @1 != @3 with documented differences."
       ],
       "allowed_tools": [
-        "datasets",
-        "datasets_sync",
-        "datasets_preview",
-        "events",
-        "events_sync",
-        "features_catalog",
-        "features_dataset",
-        "backtests_analysis",
-        "backtests_conditions",
-        "experiments_run",
-        "experiments_inspect",
-        "experiments_read"
+        "backtests_strategy",
+        "models_registry",
+        "research_record"
       ],
       "evidence_requirements": [
-        "Clear verdict: @1 == @3 or @1 != @3 with documented evidence."
+        "Clear verdict recorded: @1 == @3 or @1 != @3 with documented differences."
       ],
       "policy_tags": [
         "audit",
-        "reference_integrity"
+        "cheap_first"
       ],
-      "max_turns": 6,
-      "max_tool_calls": 5,
-      "max_expensive_calls": 1,
+      "max_turns": 36,
+      "max_tool_calls": 30,
+      "max_expensive_calls": 12,
       "parallel_slot": 3,
+      "budget_scale_applied": 6,
+      "depends_on": [
+        "compiled_plan_v11_stage_2"
+      ],
       "status": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
@@ -161,22 +145,25 @@
       "assigned_worker_id": null,
       "last_checkpoint_turn_id": "",
       "last_checkpoint_summary": "",
+      "last_checkpoint_status": "",
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
-      "latest_tool_result_summary": "",
-      "active_operation_tool": "",
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
-      "active_resume_tool": "",
-      "active_resume_token": "",
-      "last_tool_response_status": "",
       "artifacts": [],
       "facts": {}
     }
   ],
+  "plan_source_kind": "compiled_raw",
+  "source_sequence_id": "compiled_plan_v11",
+  "source_raw_plan": "raw_plans/plan_v11.md",
+  "source_manifest_path": "",
+  "source_semantic_path": "",
+  "source_compile_report_path": "",
+  "sequence_batch_index": 1,
   "status": "draft",
-  "created_at": "2026-04-09T14:34:40.635844+00:00",
-  "updated_at": "2026-04-09T14:34:40.635847+00:00"
+  "created_at": "2026-04-10T17:12:37.124082+00:00",
+  "updated_at": "2026-04-10T17:12:37.124085+00:00"
 }

@@ -1,11 +1,16 @@
 {
   "source_file": "raw_plans/plan_v1.md",
   "source_hash": "43d2b6894f2df1d1a134b3898365b01fbb80ef52bf06871fa29b69a5201facae",
-  "compiled_at": "2026-04-09T14:16:11.875677+00:00",
+  "compiled_at": "2026-04-10T16:52:11.207577+00:00",
   "sequence_id": "compiled_plan_v1",
   "compile_status": "compiled",
-  "warnings": [],
+  "warnings": [
+    "Исходный план содержит 10 этапов (ЭТАП 0–9), но stage_id в source нумеруется 1–10; сохранена оригинальная нумерация.",
+    "ЭТАП 9 (stage_10) не содержит явных действий в исходном тексте — действия выведены из контекста решений PROMOTE/WATCHLIST/REJECT."
+  ],
   "semantic_method": "llm",
+  "semantic_path": "semantic.json",
+  "compile_report_path": "compile_report.json",
   "plan_files": [
     "plans/compiled_plan_v1_batch_1.json",
     "plans/compiled_plan_v1_batch_2.json",

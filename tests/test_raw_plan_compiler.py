@@ -82,7 +82,28 @@ def test_compile_semantic_raw_plan_inferrs_tools_budgets_and_optional_tag() -> N
     backtest_slice = sequence.plans[0].slices[2]
 
     assert "research_project" in setup_slice.allowed_tools
-    assert feature_slice.max_turns == 6
+    assert feature_slice.max_turns == 36
+    assert feature_slice.max_tool_calls == 30
     assert "optional_candidate" in feature_slice.policy_tags
     assert "backtests_runs" in backtest_slice.allowed_tools
     assert backtest_slice.parallel_slot == 3
+
+
+def test_compile_semantic_raw_plan_auto_adds_research_record_for_documentation_stage() -> None:
+    semantic = _semantic_plan()
+    semantic.stages[0] = SemanticStage(
+        stage_id="stage_1",
+        title="Setup stage",
+        objective="Document methodology and record postmortem rules",
+        actions=["Open project", "Record methodology milestone"],
+        success_criteria=["Postmortem documented"],
+        tool_hints=["research_project"],
+        policy_tags=["setup"],
+    )
+
+    sequence = compile_semantic_raw_plan(_document(), semantic, semantic_method="llm")
+
+    setup_slice = sequence.plans[0].slices[0]
+    assert "research_record" in setup_slice.allowed_tools
+    assert setup_slice.max_expensive_calls >= 2
+    assert any("Auto-added research_record" in warning for warning in sequence.report.warnings)

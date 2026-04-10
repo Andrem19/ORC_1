@@ -7,7 +7,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from app.execution_models import BaselineRef, BrokerHealth, utc_now_iso
+from app.execution_models import BaselineRef, utc_now_iso
 
 
 @dataclass
@@ -30,12 +30,13 @@ class IncidentReference:
 
 
 @dataclass
-class ToolUsageSummary:
-    total_calls: int = 0
-    tools: dict[str, int] = field(default_factory=dict)
-    failed_calls: int = 0
-    retryable_failures: int = 0
-    total_duration_ms: int = 0
+class DirectExecutionMetrics:
+    direct_completed: int = 0
+    direct_blocked: int = 0
+    direct_failed: int = 0
+    direct_parse_retries: int = 0
+    direct_tool_calls_observed: int = 0
+    direct_incidents: int = 0
 
 
 @dataclass
@@ -72,7 +73,7 @@ class PlanBatchReport:
     baseline_ref: BaselineRef | None = None
     global_constraints: list[str] = field(default_factory=list)
     slice_results: list[SliceResultReport] = field(default_factory=list)
-    tool_usage_summary: ToolUsageSummary = field(default_factory=ToolUsageSummary)
+    direct_metrics: DirectExecutionMetrics = field(default_factory=DirectExecutionMetrics)
     incident_summary: list[IncidentReference] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
     final_verdict: str = ""
@@ -142,8 +143,7 @@ class RunSummaryReport:
     best_outcomes: list[str] = field(default_factory=list)
     unresolved_blockers: list[str] = field(default_factory=list)
     recurring_incidents: list[dict[str, Any]] = field(default_factory=list)
-    broker_health_summary: BrokerHealth | None = None
-    tool_usage_rollup: ToolUsageSummary = field(default_factory=ToolUsageSummary)
+    direct_metrics: DirectExecutionMetrics = field(default_factory=DirectExecutionMetrics)
     continue_items: list[str] = field(default_factory=list)
     drop_items: list[str] = field(default_factory=list)
     rerun_items: list[str] = field(default_factory=list)

@@ -11,6 +11,7 @@ from pathlib import Path
 from app.execution_models import BaselineRef, ExecutionPlan, PlanSlice
 from app.raw_plan_models import CompiledPlanManifest, CompiledPlanSequence
 from app.raw_plan_ordering import raw_plan_sort_key
+from app.services.direct_execution.budgeting import normalize_plan_budgets
 
 
 class CompiledPlanStore:
@@ -73,7 +74,7 @@ class CompiledPlanStore:
         if not plan.sequence_batch_index:
             plan.sequence_batch_index = _batch_index_for(plan.plan_id)
         _backfill_slice_dependencies(plan, manifest_dir=manifest_dir, semantic_path=semantic_rel)
-        return plan
+        return normalize_plan_budgets(plan)
 
 
 def _deserialize_plan(payload: dict[str, object]) -> ExecutionPlan:

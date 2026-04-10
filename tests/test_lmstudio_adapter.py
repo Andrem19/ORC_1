@@ -109,6 +109,16 @@ def test_start_and_check_returns_async_result():
     assert handle.partial_output == output
 
 
+def test_terminate_accepts_force_keyword_for_managed_shutdown():
+    adapter = _make_adapter()
+    handle = adapter.start("Write a hello world function", task_id="t1", worker_id="w1")
+
+    adapter.terminate(handle, force=False)
+    adapter.terminate(handle, force=True)
+
+    assert handle.metadata["cancelled"] is True
+
+
 def test_start_uses_default_system_prompt_when_none_provided():
     adapter = _make_adapter(model="qwen3-4b", reasoning_effort="none")
     with _mock_invoke_connection(payload={"choices": [{"message": {"content": "ok"}}]}) as patched:

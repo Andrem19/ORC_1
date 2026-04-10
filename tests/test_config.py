@@ -16,6 +16,10 @@ def test_default_config():
     assert cfg.plan_source == "planner"
     assert cfg.compiled_plan_dir == "compiled_plans"
     assert len(cfg.workers) >= 1
+    assert cfg.direct_execution.timeout_seconds == 1200
+    assert cfg.direct_execution.max_attempts_per_slice == 2
+    assert cfg.direct_execution.max_tool_calls_per_slice == 24
+    assert cfg.direct_execution.max_expensive_tool_calls_per_slice == 6
 
 
 def test_config_from_dict():
@@ -102,13 +106,30 @@ def test_lmstudio_nested_translation():
     assert cfg.lmstudio.translation.timeout_seconds == 44
 
 
-def test_load_config_with_broker_settings():
+def test_direct_execution_defaults_and_overrides():
+    cfg = load_config_from_dict(
+        {
+            "worker_timeout_policy_by_tag": {"feature_contract": 180},
+            "direct_execution": {
+                "provider": "qwen_cli",
+                "timeout_seconds": 900,
+                "max_tool_calls_per_slice": 9,
+                "mcp_endpoint_url": "http://127.0.0.1:8766/mcp",
+            },
+        }
+    )
+
+    assert cfg.worker_timeout_policy_by_tag["feature_contract"] == 180
+    assert cfg.direct_execution.provider == "qwen_cli"
+    assert cfg.direct_execution.timeout_seconds == 900
+    assert cfg.direct_execution.max_tool_calls_per_slice == 9
+    assert cfg.direct_execution.mcp_endpoint_url == "http://127.0.0.1:8766/mcp"
+
+
+def test_load_config_ignores_removed_direct_legacy_settings():
     data = {
-        "broker": {
+        "direct": {
             "endpoint_url": "http://127.0.0.1:8766/mcp",
-            "auth_mode": "bearer",
-            "token_env_var": "TEST_TOKEN",
-            "retry_budget": 3,
         },
         "worker_adapter": {
             "name": "qwen_worker_cli",
@@ -119,10 +140,6 @@ def test_load_config_with_broker_settings():
 
     cfg = load_config_from_dict(data)
 
-    assert cfg.broker.endpoint_url == "http://127.0.0.1:8766/mcp"
-    assert cfg.broker.auth_mode == "bearer"
-    assert cfg.broker.token_env_var == "TEST_TOKEN"
-    assert cfg.broker.retry_budget == 3
     assert cfg.worker_adapter.allow_tool_use is False
 
 
@@ -140,6 +157,55 @@ def test_config_accepts_compiled_raw_plan_source():
     assert cfg.raw_plan_dir == "raw_plans_custom"
     assert cfg.compiled_plan_dir == "compiled_custom"
     assert cfg.compiled_queue_skip_failures is False
+
+
+def test_config_accepts_direct_execution_section():
+    cfg = load_config_from_dict(
+        {
+            "direct_execution": {
+                "provider": "lmstudio",
+                "max_attempts_per_slice": 2,
+                "safe_exclude_tools": ["read_file"],
+            }
+        }
+    )
+
+    assert cfg.direct_execution.provider == "lmstudio"
+    assert cfg.direct_execution.max_attempts_per_slice == 2
+    assert cfg.direct_execution.safe_exclude_tools == ["read_file"]
+
+
+def test_config_ignores_unknown_direct_execution_keys() -> None:
+    cfg = load_config_from_dict(
+        {
+            "direct_execution": {
+                "provider": "lmstudio",
+                "fallback_1": "",
+                "fallback_2": "",
+                "max_tool_calls_per_slice": 12,
+            }
+        }
+    )
+
+    assert cfg.direct_execution.provider == "lmstudio"
+    assert cfg.direct_execution.max_tool_calls_per_slice == 12
+    assert cfg.direct_execution.fallback_1 == ""
+    assert cfg.direct_execution.fallback_2 == ""
+
+
+def test_config_parses_fallback_fields() -> None:
+    cfg = load_config_from_dict(
+        {
+            "direct_execution": {
+                "provider": "lmstudio",
+                "fallback_1": "qwen_cli",
+                "fallback_2": "claude_cli",
+            }
+        }
+    )
+
+    assert cfg.direct_execution.fallback_1 == "qwen_cli"
+    assert cfg.direct_execution.fallback_2 == "claude_cli"
 
 
 def test_config_rejects_invalid_plan_source():

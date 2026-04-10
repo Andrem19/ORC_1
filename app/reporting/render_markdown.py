@@ -109,6 +109,14 @@ def render_run_summary_report(report: RunSummaryReport) -> str:
         f"- Частично: {report.partial_sequences}",
         f"- Пропущено: {report.skipped_sequences}",
         "",
+        "## Direct Execution Metrics",
+        f"- Direct completed slices: {report.direct_metrics.direct_completed}",
+        f"- Direct blocked slices: {report.direct_metrics.direct_blocked}",
+        f"- Direct failed slices: {report.direct_metrics.direct_failed}",
+        f"- Direct parse retries: {report.direct_metrics.direct_parse_retries}",
+        f"- Direct tool calls observed: {report.direct_metrics.direct_tool_calls_observed}",
+        f"- Direct incidents: {report.direct_metrics.direct_incidents}",
+        "",
         "## По sequence",
     ]
     for item in report.per_sequence_table:

@@ -24,6 +24,8 @@ class AdapterResponse:
     error: str = ""
     timed_out: bool = False
     duration_seconds: float = 0.0
+    finish_reason: str = ""
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -64,11 +66,14 @@ class BaseAdapter(ABC):
         """Non-blocking check. Returns (new_output, is_finished)."""
         raise NotImplementedError(f"{self.name()} does not support background execution")
 
-    def terminate(self, handle: ProcessHandle) -> None:
+    def terminate(self, handle: ProcessHandle, *, force: bool = False) -> None:
         """Terminate the background process gracefully."""
         if handle.process is None:
             return
-        handle.process.terminate()
+        if force:
+            handle.process.kill()
+        else:
+            handle.process.terminate()
         try:
             handle.process.wait(timeout=5)
         except subprocess.TimeoutExpired:

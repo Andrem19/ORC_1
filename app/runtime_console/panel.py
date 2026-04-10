@@ -1,5 +1,5 @@
 """
-Rich renderables for the broker-only runtime console.
+Rich renderables for the direct runtime console.
 """
 
 from __future__ import annotations
@@ -11,18 +11,18 @@ from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
 
-from app.runtime_console.models import ConsoleRuntimeState
+from app.runtime_console.models import ConsoleRuntimeState, TrailMap, TrailSliceSlot
 
 
 def build_runtime_panel(state: ConsoleRuntimeState):
     summary = _build_runtime_summary(state)
     planner = _build_planner_table(state)
+    sequence_progress = _build_sequence_progress_panel(state)
     slices = _build_slices_table(state)
-    broker = _build_broker_table(state)
     footer = _build_footer(state)
     return Panel(
-        Columns([summary, planner, slices, broker], expand=True, equal=False),
-        title="Broker Runtime",
+        Columns([summary, planner, sequence_progress, slices], expand=True, equal=False),
+        title="Direct Runtime",
         subtitle=footer,
         border_style="cyan",
         padding=(0, 1),
@@ -31,14 +31,18 @@ def build_runtime_panel(state: ConsoleRuntimeState):
 
 def _build_runtime_summary(state: ConsoleRuntimeState) -> Panel:
     table = Table.grid(padding=(0, 1))
+    progress = state.sequence_progress
     table.add_row("status", _status_text(state.runtime_status, drain_mode=state.drain_mode))
-    plan_label = _short(state.active_plan_id, 12) if state.active_plan_id else "-"
-    table.add_row("plan", Text(plan_label, style="bold cyan"))
-    table.add_row("cycle", Text(str(state.current_cycle), style="white"))
+    sequence_label = progress.raw_plan_label or (_short(state.active_plan_id, 12) if state.active_plan_id else "-")
+    table.add_row("sequence", Text(sequence_label, style="bold cyan"))
+    table.add_row("progress", Text(_progress_label(state), style="white"))
+    table.add_row("current", Text(_short(progress.current_slice_title or progress.current_slice_id or "-", 24), style="white"))
     table.add_row("errors", Text(str(state.total_errors), style="yellow" if state.total_errors else "green"))
-    table.add_row("broker", _broker_health_text(state))
+    table.add_row("direct", Text(state.direct_status or "running", style="green" if state.runtime_status == "running" else "white"))
     if state.started_at_monotonic:
         table.add_row("uptime", Text(_elapsed(state.started_at_monotonic), style="cyan"))
+    if state.trail_map.plans:
+        table.add_row("trail", _build_trail_map_text(state.trail_map))
     return Panel(table, title="Runtime", border_style="blue")
 
 
@@ -62,46 +66,47 @@ def _build_slices_table(state: ConsoleRuntimeState) -> Panel:
     table = Table("slot", "task", "worker", "budget", "status", "summary", expand=True, box=None, padding=(0, 1))
     for slot in sorted(state.slices):
         item = state.slices[slot]
-        task_label = _short(item.title or item.slice_id or "-", 24)
+        task_text = (item.title or item.slice_id or "-").replace("\n", " ").strip()
         worker_label = (item.worker_id or "-")[:8]
         budget = _budget_text(item.turns_used, item.turns_total, item.tool_calls_used, item.tool_calls_total)
         status = _slice_status_text(item.status, item.active_operation_ref, item.active_operation_status)
         table.add_row(
             str(slot),
-            task_label,
+            task_text,
             worker_label,
             budget,
             status,
-            _short(item.last_summary or "-", 40),
+            _short(item.last_summary or "-", 60),
         )
     if not state.slices:
         table.add_row("-", "-", "-", "-", Text("idle", style="dim"), "-")
-    return Panel(table, title="Slices", border_style="green")
+    return Panel(table, title="Active Slices", border_style="green")
 
 
-def _build_broker_table(state: ConsoleRuntimeState) -> Panel:
-    table = Table("slot", "tool", "phase", "elapsed", "status", "op", expand=True, box=None, padding=(0, 1))
-    for slot in sorted(state.broker_calls):
-        item = state.broker_calls[slot]
-        status = item.response_status or item.tool_response_status or "-"
-        if item.error_class:
-            status = f"{status} / {item.error_class}"
-        elapsed_val = _elapsed(item.started_at_monotonic) if item.started_at_monotonic else f"{item.duration_ms}ms"
+def _build_sequence_progress_panel(state: ConsoleRuntimeState) -> Panel:
+    table = Table("batch", "status", "detail", expand=True, box=None, padding=(0, 1))
+    progress = state.sequence_progress
+    for item in progress.batch_statuses:
+        detail = f"{item.completed_slices}/{item.total_slices}" if item.total_slices else "-"
+        if item.status == "running" and item.current_slice_index:
+            detail = f"slice {item.current_slice_index}/{item.total_slices}"
         table.add_row(
-            str(slot),
-            item.tool_name or "-",
-            item.phase or "-",
-            elapsed_val,
-            status,
-            _short(item.operation_ref or "-", 22),
+            f"B{item.batch_index}",
+            _batch_status_text(item.status),
+            detail,
         )
-    if not state.broker_calls:
-        table.add_row("-", "-", "-", "-", "-", "-")
-    return Panel(table, title="Broker", border_style="yellow")
+        if item.batch_index == progress.current_batch_index:
+            for slice_status in item.slice_statuses:
+                table.add_row("", Text(slice_status, style="dim"), "")
+    if not progress.batch_statuses:
+        table.add_row("-", Text("idle", style="dim"), "-")
+    return Panel(table, title="Sequence Progress", border_style="cyan")
 
 
 def _build_footer(state: ConsoleRuntimeState) -> Text:
     parts: list[tuple[str, str]] = []
+    if state.current_cycle:
+        parts.append((f"loop #{state.current_cycle}", "dim"))
     if state.last_warning:
         age = f" ({_elapsed(state.last_warning_at)} ago)" if state.last_warning_at else ""
         parts.append((f"warning: {_short(state.last_warning, 80)}{age}", "yellow"))
@@ -111,7 +116,7 @@ def _build_footer(state: ConsoleRuntimeState) -> Text:
     if state.stop_reason:
         parts.append((f"stop: {state.stop_reason}", "bold red"))
     if not parts:
-        parts.append(("broker-only runtime console active", "dim"))
+        parts.append(("direct runtime console active", "dim"))
     text = Text()
     for index, (part, style) in enumerate(parts):
         if index:
@@ -134,19 +139,6 @@ def _status_text(status: str, *, drain_mode: bool) -> Text:
     if status == "error":
         return Text("error", style="bold red")
     return Text(status or "idle", style="white")
-
-
-def _broker_health_text(state: ConsoleRuntimeState) -> Text:
-    tool_part = f"{state.broker_tool_count}t, " if state.broker_tool_count else ""
-    warn_part = f"{len(state.broker_warnings)}w"
-    detail = f"({tool_part}{warn_part})"
-    if state.broker_status == "healthy":
-        return Text(f"healthy {detail}", style="green")
-    if state.broker_status == "degraded":
-        return Text(f"degraded {detail}", style="yellow")
-    if state.broker_status == "error":
-        return Text("error", style="red")
-    return Text(state.broker_status or "unknown", style="white")
 
 
 def _slice_status_text(status: str, operation_ref: str, operation_status: str) -> Text:
@@ -177,6 +169,27 @@ def _budget_text(turns_used: int, turns_total: int, calls_used: int, calls_total
     return Text(label, style="white")
 
 
+def _progress_label(state: ConsoleRuntimeState) -> str:
+    progress = state.sequence_progress
+    if not progress.current_batch_index:
+        return "-"
+    total_batches = "?" if progress.total_batches <= 0 else str(progress.total_batches)
+    total_slices = "?" if progress.total_slices_in_batch <= 0 else str(progress.total_slices_in_batch)
+    current_slice = progress.current_slice_index or 0
+    return f"batch {progress.current_batch_index}/{total_batches} | slice {current_slice}/{total_slices}"
+
+
+def _batch_status_text(status: str) -> Text:
+    styles = {
+        "pending": "dim",
+        "running": "green",
+        "completed": "cyan",
+        "failed": "bold red",
+        "aborted": "yellow",
+    }
+    return Text(status or "pending", style=styles.get(status, "white"))
+
+
 def _elapsed(started_at_monotonic: float) -> str:
     return f"{max(0.0, time.monotonic() - started_at_monotonic):.1f}s"
 
@@ -186,3 +199,66 @@ def _short(text: str, limit: int) -> str:
     if len(cleaned) <= limit:
         return cleaned
     return f"{cleaned[:limit - 3]}..."
+
+
+# ---------------------------------------------------------------------------
+# Trail map rendering (pytest-style)
+# ---------------------------------------------------------------------------
+
+_TRAIL_CHARS: dict[str, tuple[str, str]] = {
+    "completed": ("D", "green"),
+    "failed": ("F", "bold red"),
+    "aborted": ("A", "yellow"),
+    "skipped": ("S", "cyan"),
+}
+
+
+def _trail_slot_char(slot: TrailSliceSlot) -> tuple[str, str]:
+    """Return (character, style) for one trail slot."""
+    char_style = _TRAIL_CHARS.get(slot.status)
+    if char_style:
+        return char_style
+    return (".", "dim")
+
+
+def _build_trail_map_text(trail_map: TrailMap) -> Text:
+    """Render full trail map as pytest-style: v1|...|...|v2|D.F|...|
+
+    D (green)   = completed
+    F (red)     = failed
+    A (yellow)  = aborted
+    S (cyan)    = skipped
+    . (dim)     = pending
+    """
+    text = Text()
+    stats: dict[str, int] = {}
+    total = 0
+
+    for pg_idx, pg in enumerate(trail_map.plans):
+        if pg_idx > 0:
+            text.append(" ", style="dim")
+        text.append(pg.label, style="bold cyan")
+        for batch in pg.batches:
+            text.append("|", style="dim")
+            for slot in batch.slices:
+                total += 1
+                char, style = _trail_slot_char(slot)
+                text.append(char, style=style)
+                if slot.status != "pending":
+                    stats[slot.status] = stats.get(slot.status, 0) + 1
+
+    # Summary counters
+    if total:
+        passed = stats.get("completed", 0)
+        skipped = stats.get("skipped", 0)
+        failed = stats.get("failed", 0)
+        aborted = stats.get("aborted", 0)
+        text.append(f"  {passed}/{total}", style="green")
+        if skipped:
+            text.append(f" {skipped}S", style="cyan")
+        if failed:
+            text.append(f" {failed}F", style="bold red")
+        if aborted:
+            text.append(f" {aborted}A", style="yellow")
+
+    return text

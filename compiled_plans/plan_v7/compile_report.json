@@ -8,8 +8,13 @@
   "stage_count": 11,
   "compiled_plan_count": 4,
   "warnings": [
-    "parse_confidence=0.95: plan written in Russian with mixed terminology; semantic mapping is inferred"
+    "Auto-added research_record for stage_3: every non-trivial stage needs documentation capability.",
+    "Auto-added research_record for stage_4: every non-trivial stage needs documentation capability.",
+    "Auto-added research_record for stage_5: every non-trivial stage needs documentation capability.",
+    "Auto-added research_record for stage_6: every non-trivial stage needs documentation capability.",
+    "Auto-added research_record for stage_7: every non-trivial stage needs documentation capability.",
+    "Auto-added research_record for stage_8: every non-trivial stage needs documentation capability."
   ],
   "errors": [],
-  "compiled_at": "2026-04-09T14:26:06.296898+00:00"
+  "compiled_at": "2026-04-10T17:04:14.014135+00:00"
 }

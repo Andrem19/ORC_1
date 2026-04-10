@@ -7,6 +7,7 @@ plan_source = "compiled_raw"
 raw_plan_dir = "raw_plans"
 compiled_plan_dir = "compiled_plans"
 compiled_queue_skip_failures = true
+max_consecutive_failed_plans = 3
 converter_use_llm = true
 
 # Prompt sources for the planner:
@@ -15,13 +16,13 @@ converter_use_llm = true
 operator_directives = "Твоя задача найти новые features которые бы давали новые сигналы которые мы не получаем от сигналов в baseline т е чтобы не было канибазизма а добавлялись реально новые сигналы дающие прибыль. Составляй качественные продуманные планы. Продумывай их так чтобы workers не простаивали (у тебя 3 работника) чтобы они могли большую часть делать параллельно."
 
 worker_system_prompt = """\
-You are a trading research worker in a brokered execution runtime.
-You do not own tools and must never call MCP directly.
-Return exactly one structured JSON action per turn: tool_call, checkpoint, final_report, or abort.
+You are a trading research worker in a direct execution runtime.
+You own the approved dev_space1 tools for the current slice.
+Return exactly one terminal structured JSON result: checkpoint, final_report, or abort.
 
 ## Incident Reporting
 When you encounter infrastructure problems, contract ambiguities, or unclear tool behavior, include them in `reportable_issues`.
-The broker will capture incidents itself.
+The runtime records local incidents, and you must also call the incidents tool when dev_space1 exposes infra or contract ambiguity.
 Severity levels: 'low' (minor annoyance), 'medium' (blocks current task), 'high' (blocks entire workflow), 'critical' (data loss or system down).
 Always include as much context as possible: tool name, parameters used, exact error message, and what you expected to happen."""
 
@@ -30,6 +31,7 @@ poll_interval_seconds = 120
 max_errors_total = 50
 max_empty_cycles = 24
 plan_task_timeout_seconds = 3600
+worker_timeout_policy_by_tag = { feature_contract = 180, postmortem = 180 }
 
 state_dir = "state"
 state_file = "orchestrator_state.json"
@@ -104,19 +106,19 @@ Rules:
 """
 
 [[workers]]
-worker_id = "qwen-1"
+worker_id = "lmstudio-1"
 role = "executor"
-system_prompt = "Primary research executor. Decide the next action only. Never call MCP directly."
+system_prompt = "Primary direct research executor."
 
 [[workers]]
-worker_id = "qwen-2"
+worker_id = "lmstudio-2"
 role = "executor"
-system_prompt = "Primary research executor. Decide the next action only. Never call MCP directly."
+system_prompt = "Primary direct research executor."
 
 [[workers]]
-worker_id = "qwen-3"
+worker_id = "lmstudio-3"
 role = "executor"
-system_prompt = "Primary research executor. Decide the next action only. Never call MCP directly."
+system_prompt = "Primary direct research executor."
 
 [planner_adapter]
 name = "claude_planner_cli"
@@ -130,18 +132,34 @@ effort = ""
 capture_stderr_live = true
 
 [worker_adapter]
-name = "qwen_worker_cli"
-cli_path = "qwen"
-extra_flags = []
-allow_tool_use = false
+# Direct worker provider. LM Studio uses [direct_execution] MCP tool loop.
+name = "lmstudio_worker_api"
+base_url = "http://localhost:1234"
+api_key = "lm-studio"
+temperature = 0.1
+max_tokens = 4096
 
-[broker]
-endpoint_url = "https://mcp.remart.ovh/mcp/2708b1cec6ab6067f390e6e93c981667f704ddf3ae4190bdf8996d1b3369895d"
-auth_mode = "none"
-token_env_var = "DEV_SPACE1_MCP_BEARER_TOKEN"
+[direct_execution]
+# provider values:
+# - "lmstudio": use LM Studio chat completions plus internal dev_space1 MCP tool loop
+# - "qwen_cli": use qwen-code native tool mode
+provider = "lmstudio"
+fallback_1 = "qwen_cli"
+fallback_2 = "claude_cli"
+timeout_seconds = 1200
+max_attempts_per_slice = 2
+max_tool_calls_per_slice = 24
+max_expensive_tool_calls_per_slice = 6
+mcp_endpoint_url = "https://mcp.remart.ovh/mcp/2708b1cec6ab6067f390e6e93c981667f704ddf3ae4190bdf8996d1b3369895d"
+mcp_auth_mode = "none"
+mcp_token_env_var = "DEV_SPACE1_MCP_BEARER_TOKEN"
 connect_timeout_seconds = 10.0
 read_timeout_seconds = 60.0
-retry_budget = 2
+first_action_timeout_seconds = 45
+stalled_action_timeout_seconds = 60
+retry_budget = 1
+incident_on_unclear_contract = true
+safe_exclude_tools = ["run_shell_command", "read_file", "write_file", "edit", "grep_search", "glob", "list_directory", "web_fetch", "system_reset_space"]
 
 [research_config]
 baseline_snapshot_id = "active-signal-v1"

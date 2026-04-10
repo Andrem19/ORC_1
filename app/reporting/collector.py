@@ -12,7 +12,7 @@ from typing import Any
 
 from app.compiled_plan_store import CompiledPlanStore
 from app.config import OrchestratorConfig
-from app.execution_models import ExecutionPlan, ExecutionStateV2, PlanSlice, ToolResultEnvelope, WorkerAction
+from app.execution_models import ExecutionPlan, ExecutionStateV2, PlanSlice, WorkerAction
 from app.raw_plan_ordering import raw_plan_sort_key
 from app.reporting.models import (
     IncidentReference,
@@ -21,9 +21,16 @@ from app.reporting.models import (
     RunSummaryReport,
     SequenceExecutionReport,
     SliceResultReport,
-    ToolUsageSummary,
+    DirectExecutionMetrics,
 )
 from app.run_context import resolve_run_dir
+
+_BLOCKED_ABORT_REASON_CODES = {
+    "infra_contract_blocker",
+    "dependency_blocked",
+    "worker_contract_recovery_exhausted",
+    "tool_selection_ambiguous",
+}
 
 
 class ReportCollector:
@@ -71,7 +78,6 @@ class ReportCollector:
         plan_reports: list[PlanBatchReport],
         sequence_reports: list[SequenceExecutionReport],
     ) -> RunSummaryReport:
-        tool_usage = _tool_usage_summary(state.tool_call_ledger)
         recurring = _recurring_incidents(self._incidents)
         best_candidates = [
             f"{item.sequence_id}: {item.narrative_sections_ru.executive_summary_ru or item.executive_summary_ru or _sequence_status_ru(item.sequence_status)}"
@@ -130,8 +136,7 @@ class ReportCollector:
                 for blocker in item.blockers
             ),
             recurring_incidents=recurring,
-            broker_health_summary=state.broker_health,
-            tool_usage_rollup=tool_usage,
+            direct_metrics=_direct_metrics_for_state(state=state, incidents=self._incidents),
             continue_items=continue_items,
             drop_items=drop_items,
             rerun_items=rerun_items,
@@ -146,24 +151,24 @@ class ReportCollector:
     def _plan_report(self, *, plan: ExecutionPlan, state: ExecutionStateV2) -> PlanBatchReport:
         plan_reports_dir = self.plan_run_dir / "reports" / plan.plan_id
         slice_results = [self._slice_result(plan=plan, slice_obj=slice_obj, reports_dir=plan_reports_dir) for slice_obj in plan.slices]
-        tool_items = [item for item in state.tool_call_ledger if item.plan_id == plan.plan_id]
         incidents = self._plan_incidents(plan.plan_id)
+        plan_status = _reported_plan_status(plan=plan, state=state)
         report = PlanBatchReport(
             plan_id=plan.plan_id,
             plan_source_kind=plan.plan_source_kind,
             source_sequence_id=plan.source_sequence_id,
             source_raw_plan=plan.source_raw_plan,
-            status=plan.status,
+            status=plan_status,
             started_at=plan.created_at,
             finished_at=plan.updated_at,
             duration_ms=_duration_ms(plan.created_at, plan.updated_at),
             baseline_ref=plan.baseline_ref,
             global_constraints=list(plan.global_constraints),
             slice_results=slice_results,
-            tool_usage_summary=_tool_usage_summary(tool_items),
+            direct_metrics=_direct_metrics_for_plan(plan=plan, state=state, incidents=self._incidents),
             incident_summary=incidents,
-            warnings=_unique_preserve_order(warning for item in tool_items for warning in item.warnings),
-            final_verdict=_aggregate_plan_verdict(slice_results=slice_results, plan_status=plan.status),
+            warnings=[],
+            final_verdict=_aggregate_plan_verdict(slice_results=slice_results, plan_status=plan_status),
             final_summary=_aggregate_plan_summary(slice_results),
             next_actions=_unique_preserve_order(action for item in slice_results for action in item.next_actions),
             artifacts=_unique_preserve_order(artifact for item in slice_results for artifact in item.artifacts),
@@ -378,17 +383,36 @@ def _incident_ref(payload: dict[str, Any]) -> IncidentReference:
     )
 
 
-def _tool_usage_summary(items: list[ToolResultEnvelope]) -> ToolUsageSummary:
-    summary = ToolUsageSummary()
-    for item in items:
-        summary.total_calls += 1
-        summary.tools[item.tool] = summary.tools.get(item.tool, 0) + 1
-        summary.total_duration_ms += int(item.duration_ms or 0)
-        if not item.ok:
-            summary.failed_calls += 1
-        if item.retryable and not item.ok:
-            summary.retryable_failures += 1
-    return summary
+def _direct_metrics_for_plan(*, plan: ExecutionPlan, state: ExecutionStateV2, incidents: list[dict[str, Any]]) -> DirectExecutionMetrics:
+    metrics = DirectExecutionMetrics()
+    slice_ids = {item.slice_id for item in plan.slices}
+    for slice_obj in plan.slices:
+        if slice_obj.status == "completed":
+            metrics.direct_completed += 1
+        elif slice_obj.status == "failed":
+            metrics.direct_failed += 1
+        elif slice_obj.status == "aborted" or (slice_obj.status == "checkpointed" and slice_obj.last_checkpoint_status == "blocked"):
+            metrics.direct_blocked += 1
+    for turn in state.turn_history:
+        if turn.plan_id != plan.plan_id or turn.slice_id not in slice_ids:
+            continue
+        metrics.direct_parse_retries += int(turn.direct_attempt.parse_retry_count or 0)
+        metrics.direct_tool_calls_observed += int(turn.direct_attempt.tool_call_count or 0)
+    metrics.direct_incidents = sum(1 for item in incidents if (item.get("metadata", {}) or {}).get("plan_id") == plan.plan_id)
+    return metrics
+
+
+def _direct_metrics_for_state(*, state: ExecutionStateV2, incidents: list[dict[str, Any]]) -> DirectExecutionMetrics:
+    metrics = DirectExecutionMetrics()
+    for plan in state.plans:
+        current = _direct_metrics_for_plan(plan=plan, state=state, incidents=incidents)
+        metrics.direct_completed += current.direct_completed
+        metrics.direct_blocked += current.direct_blocked
+        metrics.direct_failed += current.direct_failed
+        metrics.direct_parse_retries += current.direct_parse_retries
+        metrics.direct_tool_calls_observed += current.direct_tool_calls_observed
+        metrics.direct_incidents += current.direct_incidents
+    return metrics
 
 
 def _aggregate_plan_verdict(*, slice_results: list[SliceResultReport], plan_status: str) -> str:
@@ -416,6 +440,8 @@ def _aggregate_plan_summary(slice_results: list[SliceResultReport]) -> str:
 def _fallback_slice_verdict(slice_obj: PlanSlice) -> str:
     if slice_obj.status == "completed":
         return "WATCHLIST"
+    if slice_obj.status == "aborted" and slice_obj.last_error in _BLOCKED_ABORT_REASON_CODES:
+        return "PENDING"
     if slice_obj.status in {"failed", "aborted"}:
         return "REJECT"
     return "PENDING"
@@ -461,6 +487,8 @@ def _sequence_status(
             return "partial", "run_stopped_before_sequence_started"
         return "skipped", "not_reached_before_run_end"
     statuses = {item.status for item in plan_reports}
+    if "stopped" in statuses:
+        return "partial", "sequence_incomplete_at_run_end"
     if "failed" in statuses:
         return "failed", ""
     expected = len(getattr(manifest, "plan_files", []) or [])
@@ -513,11 +541,18 @@ def _sequence_status_ru(status: str) -> str:
     mapping = {
         "completed": "завершено",
         "failed": "ошибка",
+        "stopped": "остановлено",
         "partial": "частично",
         "skipped": "пропущено",
         "pending": "ожидание",
     }
     return mapping.get(status, status or "-")
+
+
+def _reported_plan_status(*, plan: ExecutionPlan, state: ExecutionStateV2) -> str:
+    if plan.status == "running" and state.stop_reason == "graceful_stop":
+        return "stopped"
+    return plan.status
 
 
 def _verdict_ru(verdict: str) -> str:

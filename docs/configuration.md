@@ -4,13 +4,16 @@ The runtime reads `config.toml` and builds one canonical markdown planner-worker
 
 ## Environment
 
-Use the project conda env:
+Use only the project conda env `env6`. Do not create, activate, or use `.venv`, `venv`, bare `python`, or bare `pip` inside this repository.
 
 ```bash
 CONDA=/home/jupiter/miniconda3/bin/conda
+$CONDA activate env6
 $CONDA run -n env6 python main.py
 $CONDA run -n env6 pytest -q
 ```
+
+For terminals opened in VS Code, the workspace is configured to start directly in `conda env6`.
 
 ## Core Runtime Settings
 

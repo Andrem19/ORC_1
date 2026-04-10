@@ -14,7 +14,7 @@ from app.execution_artifacts import ExecutionArtifactStore
 from app.execution_models import ExecutionPlan, ExecutionStateV2
 from app.models import StopReason
 from app.raw_plan_ordering import raw_plan_sort_key
-from app.services.brokered_execution.planner import PlannerDecisionService
+from app.services.direct_execution.planner import PlannerDecisionService
 
 logger = logging.getLogger("orchestrator.plan_source")
 
@@ -50,7 +50,7 @@ class PlannerPlanSource(PlanSource):
         baseline_bootstrap: dict[str, Any],
         max_worker_count: int,
         max_plans_per_run: int,
-        broker_allowlist_provider: Any,
+        available_tools_provider: Any,
         state_summary_provider: Any,
     ) -> None:
         self.planner = planner
@@ -58,7 +58,7 @@ class PlannerPlanSource(PlanSource):
         self.baseline_bootstrap = baseline_bootstrap
         self.max_worker_count = max_worker_count
         self.max_plans_per_run = max(1, int(max_plans_per_run or 1))
-        self.broker_allowlist_provider = broker_allowlist_provider
+        self.available_tools_provider = available_tools_provider
         self.state_summary_provider = state_summary_provider
 
     async def next_plan_batch(self, state: ExecutionStateV2) -> ExecutionPlan | None:
@@ -67,7 +67,7 @@ class PlannerPlanSource(PlanSource):
         return await self.planner.create_plan(
             goal=self.goal,
             baseline_bootstrap=self.baseline_bootstrap,
-            available_tools=sorted(self.broker_allowlist_provider()),
+            available_tools=sorted(self.available_tools_provider()),
             worker_count=self.max_worker_count,
             plan_version=len(state.plans) + 1,
             previous_state_summary=self.state_summary_provider(),
@@ -135,8 +135,8 @@ class CompiledPlanSource(PlanSource):
                 self._warn_once(manifest.sequence_id, f"Skipping compiled sequence {manifest.sequence_id}: compile_status={manifest.compile_status}")
                 continue
             sequence_plan_ids = [plan_file.rsplit("/", 1)[-1].replace(".json", "") for plan_file in manifest.plan_files]
-            if any(executed.get(plan_id) == "failed" for plan_id in sequence_plan_ids):
-                self._warn_once(manifest.sequence_id, f"Skipping remaining batches for {manifest.sequence_id}: prior execution failed")
+            if any(executed.get(plan_id) in {"failed", "stopped"} for plan_id in sequence_plan_ids):
+                self._warn_once(manifest.sequence_id, f"Skipping remaining batches for {manifest.sequence_id}: prior execution stopped or failed")
                 if self.skip_failures:
                     continue
                 return None

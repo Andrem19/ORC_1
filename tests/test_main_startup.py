@@ -151,11 +151,11 @@ def test_create_real_orchestrator_passes_shared_lmstudio_settings_to_worker():
     ):
         create_real_orchestrator(cfg)
 
-    lm_cls.assert_called_once()
-    kwargs = lm_cls.call_args.kwargs
-    assert kwargs["base_url"] == "http://127.0.0.1:1234"
-    assert kwargs["model"] == "qwen/qwen3.5-9b"
-    assert kwargs["reasoning_effort"] == "none"
+    assert lm_cls.call_count >= 1
+    primary_kwargs = lm_cls.call_args_list[0].kwargs
+    assert primary_kwargs["base_url"] == "http://127.0.0.1:1234"
+    assert primary_kwargs["model"] == "qwen/qwen3.5-9b"
+    assert primary_kwargs["reasoning_effort"] == "none"
 
 
 def test_build_live_validation_config_isolates_runtime_dirs(tmp_path):

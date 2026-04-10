@@ -1,5 +1,5 @@
 """
-Rich console handler and broker-only runtime controller singleton.
+Rich console handler and direct runtime controller singleton.
 """
 
 from __future__ import annotations
@@ -68,7 +68,7 @@ class RichConsoleHandler(logging.Handler):
 
 
 class ProgressManager:
-    """Compatibility singleton that now owns the brokered runtime controller."""
+    """Compatibility singleton that owns the direct runtime controller."""
 
     _instance: ClassVar[ProgressManager | None] = None
 

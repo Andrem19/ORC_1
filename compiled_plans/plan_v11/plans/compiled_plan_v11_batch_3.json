@@ -1,6 +1,6 @@
 {
   "plan_id": "compiled_plan_v11_batch_3",
-  "goal": "Conduct a strict forensic audit of v10 microstructure overlay results to confirm or reject their validity before any further research.",
+  "goal": "Forensic audit of v10 microstructure overlay: verify reproducibility, detect leakage, confirm same-window improvement, and deliver a final CONFIRMED / DOWNGRADED / REJECTED verdict.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -9,45 +9,43 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "Immutable reference: active-signal-v1@1 only; never modify baseline parameters, thresholds, features, or execution logic.",
-    "No new features, new directional scouts, early-cuts, or label changes are permitted in v11.",
-    "All comparisons must use identical train / selection-OOS / lockbox windows (same-window truth only).",
-    "Lockbox must never be used to choose thresholds, labels, or model hyper-parameters.",
-    "Short-only, long-only, and combined veto must be tested in separate runs; identical deltas across all three must be explained, not accepted.",
-    "Rule-based overlay must be tested before model-backed overlay.",
-    "PROMOTE status is only valid if v10 survives the entire forensic cycle."
+    "Immutable reference is active-signal-v1@1 — never modify or re-tune the base.",
+    "No new features, no new directional scouts, no early-cut, no label changes allowed.",
+    "All comparisons must use identical train / selection-OOS / lockbox windows.",
+    "Short-only, long-only, and combined veto must be tested in separate independent runs — never aggregated.",
+    "Rule-based (threshold / bucket) overlay must be validated before any model-backed overlay.",
+    "PROMOTE verdict only after every forensic block passes; any confirmed leakage triggers REJECTED.",
+    "No mixing of reproduction checks, leakage checks, and new ideas in the same run."
   ],
   "slices": [
     {
       "slice_id": "compiled_plan_v11_stage_7",
       "title": "Snapshot assembly audit",
-      "hypothesis": "Verify that veto overlay snapshot logic respects causal order and does not retroactively block trades with future knowledge.",
-      "objective": "Verify that veto overlay snapshot logic respects causal order and does not retroactively block trades with future knowledge.",
+      "hypothesis": "Verify that veto overlay was applied in correct causal order without retroactive trade blocking or mixed long/short logic.",
+      "objective": "Verify that veto overlay was applied in correct causal order without retroactive trade blocking or mixed long/short logic.",
       "success_criteria": [
-        "Causal verdict per snapshot variant: decision timing, causal blocking, side isolation, and mixed-logic absence all confirmed or flagged."
+        "Per-variant causal verdict recorded: decision_timing_ok, causal_blocking_ok, side_isolation_ok."
       ],
       "allowed_tools": [
-        "backtests_analysis",
-        "backtests_conditions",
-        "experiments_run",
-        "experiments_inspect",
-        "experiments_read",
-        "backtests_plan",
-        "backtests_runs",
-        "backtests_studies",
-        "backtests_walkforward"
+        "backtests_strategy",
+        "backtests_strategy_validate",
+        "research_record"
       ],
       "evidence_requirements": [
-        "Causal verdict per snapshot variant: decision timing, causal blocking, side isolation, and mixed-logic absence all confirmed or flagged."
+        "Per-variant causal verdict recorded: decision_timing_ok, causal_blocking_ok, side_isolation_ok."
       ],
       "policy_tags": [
         "audit",
-        "snapshot_integrity"
+        "deep_analysis"
       ],
-      "max_turns": 8,
-      "max_tool_calls": 6,
-      "max_expensive_calls": 2,
+      "max_turns": 36,
+      "max_tool_calls": 30,
+      "max_expensive_calls": 6,
       "parallel_slot": 1,
+      "budget_scale_applied": 6,
+      "depends_on": [
+        "compiled_plan_v11_stage_2"
+      ],
       "status": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
@@ -55,50 +53,47 @@
       "assigned_worker_id": null,
       "last_checkpoint_turn_id": "",
       "last_checkpoint_summary": "",
+      "last_checkpoint_status": "",
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
-      "latest_tool_result_summary": "",
-      "active_operation_tool": "",
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
-      "active_resume_tool": "",
-      "active_resume_token": "",
-      "last_tool_response_status": "",
       "artifacts": [],
       "facts": {}
     },
     {
       "slice_id": "compiled_plan_v11_stage_8",
       "title": "Same-window matched reruns",
-      "hypothesis": "Run base and all overlay variants on the identical lockbox window to produce a trustworthy matched comparison.",
-      "objective": "Run base and all overlay variants on the identical lockbox window to produce a trustworthy matched comparison.",
+      "hypothesis": "Run base and all overlay variants on the identical lockbox window for unambiguous comparison.",
+      "objective": "Run base and all overlay variants on the identical lockbox window for unambiguous comparison.",
       "success_criteria": [
-        "Matched same-window comparison table is complete with all four routes on identical boundaries."
+        "Complete matched same-window comparison table with all four routes."
       ],
       "allowed_tools": [
         "backtests_plan",
         "backtests_runs",
-        "backtests_studies",
-        "backtests_walkforward",
-        "backtests_conditions",
-        "backtests_analysis",
-        "experiments_run",
-        "experiments_inspect",
-        "experiments_read"
+        "backtests_strategy",
+        "research_record"
       ],
       "evidence_requirements": [
-        "Matched same-window comparison table is complete with all four routes on identical boundaries."
+        "Complete matched same-window comparison table with all four routes."
       ],
       "policy_tags": [
-        "audit",
-        "matched_comparison"
+        "core_experiment",
+        "expensive"
       ],
-      "max_turns": 8,
-      "max_tool_calls": 6,
-      "max_expensive_calls": 2,
+      "max_turns": 48,
+      "max_tool_calls": 36,
+      "max_expensive_calls": 12,
       "parallel_slot": 1,
+      "budget_scale_applied": 6,
+      "depends_on": [
+        "compiled_plan_v11_stage_3",
+        "compiled_plan_v11_stage_4",
+        "compiled_plan_v11_stage_7"
+      ],
       "status": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
@@ -106,51 +101,44 @@
       "assigned_worker_id": null,
       "last_checkpoint_turn_id": "",
       "last_checkpoint_summary": "",
+      "last_checkpoint_status": "",
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
-      "latest_tool_result_summary": "",
-      "active_operation_tool": "",
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
-      "active_resume_tool": "",
-      "active_resume_token": "",
-      "last_tool_response_status": "",
       "artifacts": [],
       "facts": {}
     },
     {
       "slice_id": "compiled_plan_v11_stage_9",
       "title": "Cannibalization and ownership audit",
-      "hypothesis": "Prove that overlay improvement is driven by genuine removal of bad trades, not by hidden interaction or coverage loss.",
-      "objective": "Prove that overlay improvement is driven by genuine removal of bad trades, not by hidden interaction or coverage loss.",
+      "hypothesis": "Prove overlay improvement comes from removing genuinely bad trades, not from hidden interactions or coverage loss.",
+      "objective": "Prove overlay improvement comes from removing genuinely bad trades, not from hidden interactions or coverage loss.",
       "success_criteria": [
-        "Honest ownership/cannibalization verdict per route with quantified loser/winner removal shares."
+        "Honest ownership/cannibalization verdict per route with quantified evidence."
       ],
       "allowed_tools": [
         "backtests_analysis",
-        "backtests_conditions",
-        "experiments_run",
-        "experiments_inspect",
-        "experiments_read",
-        "backtests_plan",
         "backtests_runs",
-        "backtests_studies",
-        "backtests_walkforward"
+        "experiments_run",
+        "research_record"
       ],
       "evidence_requirements": [
-        "Honest ownership/cannibalization verdict per route with quantified loser/winner removal shares."
+        "Honest ownership/cannibalization verdict per route with quantified evidence."
       ],
       "policy_tags": [
-        "audit",
-        "cannibalization",
-        "ownership"
+        "deep_analysis"
       ],
-      "max_turns": 8,
-      "max_tool_calls": 6,
-      "max_expensive_calls": 2,
+      "max_turns": 48,
+      "max_tool_calls": 36,
+      "max_expensive_calls": 12,
       "parallel_slot": 1,
+      "budget_scale_applied": 6,
+      "depends_on": [
+        "compiled_plan_v11_stage_8"
+      ],
       "status": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
@@ -158,22 +146,25 @@
       "assigned_worker_id": null,
       "last_checkpoint_turn_id": "",
       "last_checkpoint_summary": "",
+      "last_checkpoint_status": "",
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
-      "latest_tool_result_summary": "",
-      "active_operation_tool": "",
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
-      "active_resume_tool": "",
-      "active_resume_token": "",
-      "last_tool_response_status": "",
       "artifacts": [],
       "facts": {}
     }
   ],
+  "plan_source_kind": "compiled_raw",
+  "source_sequence_id": "compiled_plan_v11",
+  "source_raw_plan": "raw_plans/plan_v11.md",
+  "source_manifest_path": "",
+  "source_semantic_path": "",
+  "source_compile_report_path": "",
+  "sequence_batch_index": 3,
   "status": "draft",
-  "created_at": "2026-04-09T14:34:40.635893+00:00",
-  "updated_at": "2026-04-09T14:34:40.635895+00:00"
+  "created_at": "2026-04-10T17:12:37.124151+00:00",
+  "updated_at": "2026-04-10T17:12:37.124152+00:00"
 }

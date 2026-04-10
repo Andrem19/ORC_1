@@ -32,8 +32,19 @@ def extract_json_object(text: str) -> dict[str, Any]:
         raw = _strip_code_fence(raw)
     try:
         payload = json.loads(raw)
-    except json.JSONDecodeError:
-        payload = json.loads(_find_balanced_json(raw))
+    except json.JSONDecodeError as exc:
+        repaired = _repair_common_json_malformed_output(raw, exc)
+        if repaired is not None:
+            try:
+                payload = json.loads(repaired)
+            except json.JSONDecodeError as repaired_exc:
+                raise StructuredOutputError(_json_error_code(repaired_exc)) from repaired_exc
+        else:
+            candidate = _find_balanced_json(raw)
+            try:
+                payload = json.loads(candidate)
+            except json.JSONDecodeError as balanced_exc:
+                raise StructuredOutputError(_json_error_code(balanced_exc)) from balanced_exc
     if isinstance(payload, list) and len(payload) == 1 and isinstance(payload[0], dict):
         payload = payload[0]
     if not isinstance(payload, dict):
@@ -119,20 +130,30 @@ def parse_plan_slice(payload: Any) -> PlanSlice:
 def parse_worker_action_output(text: str, *, allowlist: set[str]) -> WorkerAction:
     try:
         payload = extract_json_object(text)
-    except StructuredOutputError as exc:
-        recovered = _recover_inline_tool_call(text, allowlist=allowlist)
-        if recovered is None:
-            raise
-        payload = recovered
+    except StructuredOutputError:
+        recovered = _recover_worker_action_payload(text)
+        if recovered is not None:
+            payload = recovered
+        else:
+            recovered = _recover_inline_tool_call(text, allowlist=allowlist)
+            if recovered is None:
+                raise
+            payload = recovered
     raw_type = str(payload.get("type", "") or payload.get("action_type", "")).strip()
     if raw_type not in {"tool_call", "checkpoint", "final_report", "abort"}:
-        raise StructuredOutputError("worker_action_type_invalid")
+        recovered = _recover_worker_action_payload(text)
+        if recovered is None:
+            raise StructuredOutputError("worker_action_type_invalid")
+        payload = recovered
+        raw_type = str(payload.get("type", "") or payload.get("action_type", "")).strip()
     tool_name = str(payload.get("tool", "") or "").strip()
     arguments = _dict_or_empty(payload.get("args", payload.get("arguments", {})), field_name="arguments")
     if raw_type == "tool_call":
         arguments = _normalize_tool_arguments(tool_name=tool_name, arguments=arguments)
     summary = str(payload.get("summary", "") or "").strip()
     if raw_type == "abort" and not summary:
+        summary = str(payload.get("reason", "") or "").strip()
+    if raw_type in {"checkpoint", "final_report"} and not summary:
         summary = str(payload.get("reason", "") or "").strip()
     issues = [
         WorkerReportableIssue(
@@ -214,14 +235,36 @@ def _dict_or_empty(value: Any, *, field_name: str) -> dict[str, Any]:
 
 
 def _normalize_tool_arguments(*, tool_name: str, arguments: dict[str, Any]) -> dict[str, Any]:
-    nested_tool = str(arguments.get("tool", "") or "").strip()
+    normalized = dict(arguments)
+    for _ in range(3):
+        updated = _normalize_tool_arguments_once(tool_name=tool_name, arguments=normalized)
+        if updated == normalized:
+            return updated
+        normalized = updated
+    return normalized
+
+
+def _normalize_tool_arguments_once(*, tool_name: str, arguments: dict[str, Any]) -> dict[str, Any]:
+    nested_tool_value = arguments.get("tool")
+    nested_tool = str(nested_tool_value or "").strip() if not isinstance(nested_tool_value, dict) else ""
     nested_arguments = arguments.get("arguments")
+    if isinstance(nested_tool_value, dict):
+        nested_payload = dict(nested_tool_value)
+        nested_payload_tool = str(nested_payload.get("tool", "") or "").strip()
+        nested_payload_arguments = nested_payload.get("arguments")
+        if isinstance(nested_payload_arguments, dict):
+            if nested_payload_tool and nested_payload_tool != tool_name:
+                raise StructuredOutputError("tool_argument_wrapper_conflicts_with_tool_name")
+            return dict(nested_payload_arguments)
+        if set(arguments) == {"tool"}:
+            return nested_payload
+        return nested_payload
     if not isinstance(nested_arguments, dict):
         if len(arguments) == 1 and tool_name in arguments and isinstance(arguments.get(tool_name), dict):
             return dict(arguments.get(tool_name) or {})
         return arguments
     if nested_tool and nested_tool != tool_name:
-        return arguments
+        raise StructuredOutputError("tool_argument_wrapper_conflicts_with_tool_name")
     if set(arguments) <= {"tool", "arguments"}:
         return dict(nested_arguments)
     return arguments
@@ -314,6 +357,18 @@ def _recover_inline_tool_call(text: str, *, allowlist: set[str]) -> dict[str, An
     }
 
 
+def _recover_worker_action_payload(text: str) -> dict[str, Any] | None:
+    candidates = _extract_json_object_candidates(text)
+    for candidate in reversed(candidates):
+        payload = _normalize_recovered_payload(candidate)
+        if payload is None:
+            continue
+        raw_type = str(payload.get("type", "") or payload.get("action_type", "")).strip()
+        if raw_type in {"tool_call", "checkpoint", "final_report", "abort"}:
+            return payload
+    return None
+
+
 def _find_balanced_json(raw: str) -> str:
     object_start = raw.find("{")
     array_start = raw.find("[")
@@ -345,6 +400,89 @@ def _find_balanced_json(raw: str) -> str:
             if depth == 0:
                 return raw[start:index + 1]
     raise StructuredOutputError("balanced_json_object_not_found")
+
+
+def _extract_json_object_candidates(text: str) -> list[Any]:
+    raw = (text or "").strip()
+    if not raw:
+        return []
+    candidates: list[Any] = []
+    seen: set[str] = set()
+    for start in range(len(raw)):
+        if raw[start] not in "{[":
+            continue
+        try:
+            candidate_text = _find_balanced_json(raw[start:])
+            payload = json.loads(candidate_text)
+        except (StructuredOutputError, json.JSONDecodeError):
+            continue
+        key = json.dumps(payload, sort_keys=True, ensure_ascii=False) if isinstance(payload, (dict, list)) else repr(payload)
+        if key in seen:
+            continue
+        seen.add(key)
+        candidates.append(payload)
+    return candidates
+
+
+def _normalize_recovered_payload(payload: Any) -> dict[str, Any] | None:
+    if isinstance(payload, list) and len(payload) == 1 and isinstance(payload[0], dict):
+        payload = payload[0]
+    if not isinstance(payload, dict):
+        return None
+    return payload
+
+
+def _repair_common_json_malformed_output(raw: str, exc: json.JSONDecodeError) -> str | None:
+    """
+    Repair near-valid model JSON without paying a heavy parsing cost on the hot path.
+
+    The common failure we see in worker outputs is an extra unmatched closer just
+    before the model resumes emitting additional top-level fields:
+
+        {"type": "...", "arguments": {...}},"reason":"..."}
+
+    In that case json.loads() fails with Extra data. We remove the redundant
+    closer nearest to the extra-data boundary and retry a few times.
+    """
+
+    if exc.msg != "Extra data":
+        return None
+    candidate = raw
+    current_exc = exc
+    for _ in range(3):
+        redundant_index = _find_redundant_closer_before_extra(candidate, current_exc.pos)
+        if redundant_index is None:
+            return None
+        candidate = candidate[:redundant_index] + candidate[redundant_index + 1 :]
+        try:
+            json.loads(candidate)
+            return candidate
+        except json.JSONDecodeError as retry_exc:
+            current_exc = retry_exc
+            continue
+    return None
+
+
+def _json_error_code(exc: json.JSONDecodeError) -> str:
+    message = str(exc).strip()
+    if not message:
+        return "json_decode_error"
+    return f"json_decode_error:{message}"
+
+
+def _find_redundant_closer_before_extra(raw: str, extra_pos: int) -> int | None:
+    index = min(max(extra_pos - 1, 0), len(raw) - 1)
+    while index >= 0 and raw[index].isspace():
+        index -= 1
+    if index < 0:
+        return None
+    if raw[index] == ",":
+        index -= 1
+        while index >= 0 and raw[index].isspace():
+            index -= 1
+    if index < 0 or raw[index] not in "}]":
+        return None
+    return index
 
 
 def _filter_baseline_fields(value: dict[str, Any]) -> dict[str, Any]:

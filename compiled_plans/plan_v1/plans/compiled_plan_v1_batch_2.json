@@ -1,6 +1,6 @@
 {
   "plan_id": "compiled_plan_v1_batch_2",
-  "goal": "Find one or more new orthogonal signals that independently add informational value and improve the base system without cannibalizing it.",
+  "goal": "Найти один или несколько новых ортогональных сигналов, которые дают самостоятельную информативность, проходят stability-проверку, доказанно расширяют покрытие базы без каннибализма, и принимаются через строгую воронку standalone → stability → integration → cannibalization → walk-forward.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -9,36 +9,47 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "Base system active-signal-v1@1 is frozen — never modify its rules, thresholds, hours, days, or execution logic.",
-    "Only genuinely new signal classes are allowed — no retuning, permutation, or filter relaxation of existing base inputs.",
-    "Every hypothesis must pass the full funnel: standalone → stability → integration → cannibalization → final report.",
-    "No brute-force parameter search; use small logical grids only.",
-    "All negative, neutral, and positive results must be recorded in research memory.",
-    "Cannibalism must be explicitly measured before any promotion."
+    "База active-signal-v1@1 неизменна на протяжении всего цикла — никаких модификаций правил, порогов, часов, дней, исполнения.",
+    "Новые сигналы должны использовать новый класс информации, а не быть перестановкой hour, dow, cl_*, rsi, iv_est, Thursday/Monday шаблонов.",
+    "Каннибализм недопустим: новый сигнал должен расширять покрытие (режимы, часы, подпространства), а не перехватывать сделки базы.",
+    "Воронка обязательна: standalone → stability → integration → cannibalization → walk-forward — пропускать шаги нельзя.",
+    "Запрещён широкий brute-force по параметрам; допускается только небольшая логическая сетка для форм входа.",
+    "Каждая гипотеза должна иметь записанное обоснование, почему она новая относительно базы и истории v1–v12.",
+    "Все отрицательные результаты фиксируются в research_record — повторное исследование закрытых идей запрещено без очень сильного основания."
   ],
   "slices": [
     {
       "slice_id": "compiled_plan_v1_stage_4",
       "title": "Быстрый отбор через signal plausibility и feature profitability",
-      "hypothesis": "Before expensive backtests, discard hypotheses that look empty, unstable, or too similar to the base at the feature level.",
-      "objective": "Before expensive backtests, discard hypotheses that look empty, unstable, or too similar to the base at the feature level.",
+      "hypothesis": "До запуска полных бэктестов отсечь гипотезы, которые на уровне признака выглядят пусто, нестабильно или слишком похоже на базу.",
+      "objective": "До запуска полных бэктестов отсечь гипотезы, которые на уровне признака выглядят пусто, нестабильно или слишком похоже на базу.",
       "success_criteria": [
-        "Only hypotheses with preliminary signal plausibility and expected orthogonality remain."
+        "После этапа остаются только гипотезы с предварительным смыслом и ожидаемой ортогональностью.",
+        "Все отклонённые кандидаты зафиксированы с причиной в research_record."
       ],
       "allowed_tools": [
+        "features_analytics",
+        "features_catalog",
+        "features_dataset",
+        "datasets_preview",
         "research_record"
       ],
       "evidence_requirements": [
-        "Only hypotheses with preliminary signal plausibility and expected orthogonality remain."
+        "После этапа остаются только гипотезы с предварительным смыслом и ожидаемой ортогональностью.",
+        "Все отклонённые кандидаты зафиксированы с причиной в research_record."
       ],
       "policy_tags": [
         "cheap_first",
-        "analysis"
+        "filter_gate"
       ],
-      "max_turns": 4,
-      "max_tool_calls": 4,
-      "max_expensive_calls": 0,
+      "max_turns": 24,
+      "max_tool_calls": 24,
+      "max_expensive_calls": 2,
       "parallel_slot": 1,
+      "budget_scale_applied": 6,
+      "depends_on": [
+        "compiled_plan_v1_stage_3"
+      ],
       "status": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
@@ -46,42 +57,48 @@
       "assigned_worker_id": null,
       "last_checkpoint_turn_id": "",
       "last_checkpoint_summary": "",
+      "last_checkpoint_status": "",
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
-      "latest_tool_result_summary": "",
-      "active_operation_tool": "",
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
-      "active_resume_tool": "",
-      "active_resume_token": "",
-      "last_tool_response_status": "",
       "artifacts": [],
       "facts": {}
     },
     {
       "slice_id": "compiled_plan_v1_stage_5",
       "title": "Standalone backtests новых сигналов",
-      "hypothesis": "Determine whether each surviving hypothesis has independent trading value before any integration with the base.",
-      "objective": "Determine whether each surviving hypothesis has independent trading value before any integration with the base.",
+      "hypothesis": "Запустить честные standalone-бэктесты для каждого уцелевшего кандидата и оценить собственную торговую ценность без интеграции с базой.",
+      "objective": "Запустить честные standalone-бэктесты для каждого уцелевшего кандидата и оценить собственную торговую ценность без интеграции с базой.",
       "success_criteria": [
-        "Short-list of standalone candidates that are non-empty on their own."
+        "Есть shortlist standalone-кандидатов, которые не пусты сами по себе.",
+        "Все результаты записаны в research_record."
       ],
       "allowed_tools": [
+        "backtests_strategy",
+        "backtests_strategy_validate",
+        "backtests_plan",
+        "backtests_runs",
         "research_record"
       ],
       "evidence_requirements": [
-        "Short-list of standalone candidates that are non-empty on their own."
+        "Есть shortlist standalone-кандидатов, которые не пусты сами по себе.",
+        "Все результаты записаны в research_record."
       ],
       "policy_tags": [
         "backtesting",
-        "modeling"
+        "standalone"
       ],
-      "max_turns": 4,
-      "max_tool_calls": 4,
-      "max_expensive_calls": 0,
+      "max_turns": 24,
+      "max_tool_calls": 24,
+      "max_expensive_calls": 3,
       "parallel_slot": 2,
+      "budget_scale_applied": 6,
+      "depends_on": [
+        "compiled_plan_v1_stage_4"
+      ],
       "status": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
@@ -89,46 +106,47 @@
       "assigned_worker_id": null,
       "last_checkpoint_turn_id": "",
       "last_checkpoint_summary": "",
+      "last_checkpoint_status": "",
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
-      "latest_tool_result_summary": "",
-      "active_operation_tool": "",
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
-      "active_resume_tool": "",
-      "active_resume_token": "",
-      "last_tool_response_status": "",
       "artifacts": [],
       "facts": {}
     },
     {
       "slice_id": "compiled_plan_v1_stage_6",
       "title": "Stability и condition analysis",
-      "hypothesis": "Filter out attractive but locally fragile signals; keep only those that survive window decomposition or honestly qualify as specialist signals for a specific missing regime.",
-      "objective": "Filter out attractive but locally fragile signals; keep only those that survive window decomposition or honestly qualify as specialist signals for a specific missing regime.",
+      "hypothesis": "Отсеять красивые, но локальные эффекты — оставить только сигналы, устойчивые при разбиении истории, либо честно доказавшие полезность как specialist signal для конкретного missing regime.",
+      "objective": "Отсеять красивые, но локальные эффекты — оставить только сигналы, устойчивые при разбиении истории, либо честно доказавшие полезность как specialist signal для конкретного missing regime.",
       "success_criteria": [
-        "Remaining signals are either broadly stable or honestly proven as specialist signals for a missing regime."
+        "Остаются только сигналы, устойчивые широко, либо честно доказавшие specialist-полезность для конкретного missing regime.",
+        "Condition analysis завершён для каждого финалиста."
       ],
       "allowed_tools": [
-        "backtests_analysis",
         "backtests_conditions",
-        "experiments_run",
-        "experiments_inspect",
-        "experiments_read"
+        "backtests_analysis",
+        "backtests_runs",
+        "research_record"
       ],
       "evidence_requirements": [
-        "Remaining signals are either broadly stable or honestly proven as specialist signals for a missing regime."
+        "Остаются только сигналы, устойчивые широко, либо честно доказавшие specialist-полезность для конкретного missing regime.",
+        "Condition analysis завершён для каждого финалиста."
       ],
       "policy_tags": [
-        "backtesting",
-        "analysis"
+        "stability",
+        "filter_gate"
       ],
-      "max_turns": 8,
-      "max_tool_calls": 6,
-      "max_expensive_calls": 2,
+      "max_turns": 24,
+      "max_tool_calls": 24,
+      "max_expensive_calls": 3,
       "parallel_slot": 3,
+      "budget_scale_applied": 6,
+      "depends_on": [
+        "compiled_plan_v1_stage_5"
+      ],
       "status": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
@@ -136,22 +154,25 @@
       "assigned_worker_id": null,
       "last_checkpoint_turn_id": "",
       "last_checkpoint_summary": "",
+      "last_checkpoint_status": "",
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
-      "latest_tool_result_summary": "",
-      "active_operation_tool": "",
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
-      "active_resume_tool": "",
-      "active_resume_token": "",
-      "last_tool_response_status": "",
       "artifacts": [],
       "facts": {}
     }
   ],
+  "plan_source_kind": "compiled_raw",
+  "source_sequence_id": "compiled_plan_v1",
+  "source_raw_plan": "raw_plans/plan_v1.md",
+  "source_manifest_path": "",
+  "source_semantic_path": "",
+  "source_compile_report_path": "",
+  "sequence_batch_index": 2,
   "status": "draft",
-  "created_at": "2026-04-09T14:16:11.875641+00:00",
-  "updated_at": "2026-04-09T14:16:11.875642+00:00"
+  "created_at": "2026-04-10T16:52:11.207521+00:00",
+  "updated_at": "2026-04-10T16:52:11.207522+00:00"
 }
