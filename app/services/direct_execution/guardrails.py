@@ -9,7 +9,7 @@ from typing import Any
 from app.execution_models import PlanSlice, WorkerAction
 from app.services.direct_execution.fact_hydration import hydrate_final_report_facts
 
-REPAIRABLE_PROVIDER_NAMES = {"lmstudio", "qwen_cli"}
+REPAIRABLE_PROVIDER_NAMES = {"lmstudio", "qwen_cli", "claude_cli"}
 
 # Verdicts that explicitly indicate the result is NOT successful.
 _FAIL_VERDICTS = frozenset(

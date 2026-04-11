@@ -108,3 +108,75 @@ def test_claude_worker_invoke_renders_stream_json(monkeypatch) -> None:
 
     assert response.success is True
     assert "Hello world" in response.raw_output
+
+
+def test_claude_worker_invoke_counts_tool_calls_from_stream(monkeypatch) -> None:
+    """Tool calls in stream-json output are counted and stored in metadata."""
+    import json
+
+    transcript = "\n".join(
+        [
+            '{"type":"message_start","message":{"id":"msg_1"}}',
+            json.dumps({
+                "type": "content_block_start",
+                "index": 1,
+                "content_block": {"type": "tool_use", "id": "toolu_1", "name": "research_project", "input": {}},
+            }),
+            '{"type":"content_block_delta","index":1,"delta":{"type":"input_json_delta","partial_json":"{}"}}',
+            '{"type":"content_block_stop","index":1}',
+            json.dumps({
+                "type": "content_block_start",
+                "index": 2,
+                "content_block": {"type": "tool_use", "id": "toolu_2", "name": "research_map", "input": {}},
+            }),
+            '{"type":"content_block_stop","index":2}',
+            '{"type":"result","subtype":"success","result":"done"}',
+        ]
+    )
+
+    def _fake_run(*args, **kwargs):
+        del args, kwargs
+        return SimpleNamespace(returncode=0, stdout=transcript, stderr="")
+
+    adapter = ClaudeWorkerCli(cli_path="/bin/echo")
+    monkeypatch.setattr(adapter, "_resolve_cli_path", lambda: "/bin/echo")
+    monkeypatch.setattr("app.adapters.claude_worker_cli.subprocess.run", _fake_run)
+
+    response = adapter.invoke("prompt", timeout=5)
+
+    assert response.success is True
+    assert response.metadata["tool_call_count"] == 2
+    assert "research_project" in response.metadata["tool_names"]
+    assert "research_map" in response.metadata["tool_names"]
+
+
+def test_claude_worker_invoke_ignores_local_tools(monkeypatch) -> None:
+    """Local tools like Bash/read_file should not be counted."""
+    import json
+
+    transcript = "\n".join(
+        [
+            json.dumps({
+                "type": "content_block_start",
+                "content_block": {"type": "tool_use", "name": "Bash", "input": {}},
+            }),
+            json.dumps({
+                "type": "content_block_start",
+                "content_block": {"type": "tool_use", "name": "research_project", "input": {}},
+            }),
+            '{"type":"result","subtype":"success","result":"done"}',
+        ]
+    )
+
+    def _fake_run(*args, **kwargs):
+        del args, kwargs
+        return SimpleNamespace(returncode=0, stdout=transcript, stderr="")
+
+    adapter = ClaudeWorkerCli(cli_path="/bin/echo")
+    monkeypatch.setattr(adapter, "_resolve_cli_path", lambda: "/bin/echo")
+    monkeypatch.setattr("app.adapters.claude_worker_cli.subprocess.run", _fake_run)
+
+    response = adapter.invoke("prompt", timeout=5)
+
+    assert response.metadata["tool_call_count"] == 1
+    assert response.metadata["tool_names"] == ["research_project"]

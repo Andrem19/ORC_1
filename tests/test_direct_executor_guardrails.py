@@ -246,3 +246,12 @@ def test_quality_gate_case_insensitive_verdict() -> None:
     ok, reason = _check(verdict="incomplete")
     assert ok is False
     assert "incomplete" in reason
+
+
+def test_claude_cli_in_repairable_providers() -> None:
+    """claude_cli must be in REPAIRABLE_PROVIDER_NAMES for contract repair."""
+    from app.services.direct_execution.guardrails import REPAIRABLE_PROVIDER_NAMES
+
+    assert "claude_cli" in REPAIRABLE_PROVIDER_NAMES
+    assert "lmstudio" in REPAIRABLE_PROVIDER_NAMES
+    assert "qwen_cli" in REPAIRABLE_PROVIDER_NAMES

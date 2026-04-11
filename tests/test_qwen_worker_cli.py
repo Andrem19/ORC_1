@@ -106,3 +106,72 @@ def test_qwen_tool_registry_preflight_caches_visible_tools(monkeypatch) -> None:
     assert "research_record" in first["visible_tools"]
     assert calls["count"] == 1
     assert second == first
+
+
+def test_qwen_worker_invoke_counts_tool_calls_from_stream(monkeypatch) -> None:
+    """Tool calls with mcp__dev_space1__ prefix are counted in metadata."""
+    import json
+
+    transcript = "\n".join(
+        [
+            '{"type":"system","subtype":"init"}',
+            json.dumps({
+                "type": "assistant",
+                "message": {
+                    "content": [
+                        {"type": "text", "text": "checking..."},
+                        {"type": "tool_use", "id": "call_1", "name": "mcp__dev_space1__research_project", "input": {}},
+                    ],
+                },
+            }),
+            json.dumps({
+                "type": "assistant",
+                "message": {
+                    "content": [
+                        {"type": "tool_use", "id": "call_2", "name": "mcp__dev_space1__features_catalog", "input": {}},
+                    ],
+                },
+            }),
+            '{"type":"result","subtype":"success","result":"done"}',
+        ]
+    )
+
+    def _fake_run(*args, **kwargs):
+        del args, kwargs
+        return SimpleNamespace(returncode=0, stdout=transcript, stderr="")
+
+    adapter = QwenWorkerCli(cli_path="/bin/echo")
+    monkeypatch.setattr(adapter, "_resolve_cli_path", lambda: "/bin/echo")
+    monkeypatch.setattr("app.adapters.qwen_worker_cli.subprocess.run", _fake_run)
+
+    response = adapter.invoke("prompt", timeout=5)
+
+    assert response.success is True
+    assert response.metadata["tool_call_count"] == 2
+    assert "research_project" in response.metadata["tool_names"]
+    assert "features_catalog" in response.metadata["tool_names"]
+
+
+def test_qwen_worker_invoke_no_tool_calls_returns_zero(monkeypatch) -> None:
+    """When no dev_space1 tools are called, tool_call_count is 0."""
+    transcript = "\n".join(
+        [
+            '{"type":"system","subtype":"init"}',
+            '{"type":"assistant","message":{"content":[{"type":"text","text":"no tools needed"}]}}',
+            '{"type":"result","subtype":"success","result":"done"}',
+        ]
+    )
+
+    def _fake_run(*args, **kwargs):
+        del args, kwargs
+        return SimpleNamespace(returncode=0, stdout=transcript, stderr="")
+
+    adapter = QwenWorkerCli(cli_path="/bin/echo")
+    monkeypatch.setattr(adapter, "_resolve_cli_path", lambda: "/bin/echo")
+    monkeypatch.setattr("app.adapters.qwen_worker_cli.subprocess.run", _fake_run)
+
+    response = adapter.invoke("prompt", timeout=5)
+
+    assert response.success is True
+    assert response.metadata["tool_call_count"] == 0
+    assert response.metadata["tool_names"] == []

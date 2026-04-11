@@ -520,6 +520,26 @@ def test_trail_map_running_then_completed() -> None:
     assert slot.fallback_level == 1
 
 
+def test_trail_map_running_updates_fallback_level_on_provider_switch() -> None:
+    plan = _make_plan("p1", seq_id="seq_1", batch_index=1, slice_count=2)
+    controller = _make_controller()
+    controller.start()
+    try:
+        controller.on_plan_created(plan_id="p1", plan=plan, all_plans=[plan])
+        controller.on_slice_turn_started(
+            slot=1, plan_id="p1", slice_id="slice_0", worker_id="lmstudio",
+            turns_used=0, turns_total=4, tool_calls_used=0, tool_calls_total=2,
+        )
+        controller.update_worker_id(1, "qwen_cli", fallback_level=1)
+    finally:
+        controller.stop()
+
+    slot = controller.state.trail_map.plans[0].batches[0].slices[0]
+    assert slot.status == "running"
+    assert slot.fallback_level == 1
+    assert controller.state.slices[1].worker_id == "qwen_cli"
+
+
 def test_trail_map_running_preserved_on_rebuild() -> None:
     """Running status must survive a trail map rebuild."""
     plan1 = _make_plan("p1", seq_id="seq_1", batch_index=1, slice_count=2)
@@ -539,3 +559,24 @@ def test_trail_map_running_preserved_on_rebuild() -> None:
 
     slot = controller.state.trail_map.plans[0].batches[0].slices[0]
     assert slot.status == "running"
+
+
+def test_trail_map_running_fallback_level_preserved_on_rebuild() -> None:
+    plan1 = _make_plan("p1", seq_id="seq_1", batch_index=1, slice_count=2)
+    plan2 = _make_plan("p2", seq_id="seq_1", batch_index=2, slice_count=2)
+    controller = _make_controller()
+    controller.start()
+    try:
+        controller.on_plan_created(plan_id="p1", plan=plan1, all_plans=[plan1])
+        controller.on_slice_turn_started(
+            slot=1, plan_id="p1", slice_id="slice_0", worker_id="lmstudio",
+            turns_used=0, turns_total=4, tool_calls_used=0, tool_calls_total=2,
+        )
+        controller.update_worker_id(1, "claude_cli", fallback_level=2)
+        controller.on_plan_created(plan_id="p2", plan=plan2, all_plans=[plan1, plan2])
+    finally:
+        controller.stop()
+
+    slot = controller.state.trail_map.plans[0].batches[0].slices[0]
+    assert slot.status == "running"
+    assert slot.fallback_level == 2

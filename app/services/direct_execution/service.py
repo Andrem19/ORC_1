@@ -308,11 +308,12 @@ class DirectExecutionService:
         )
         fallback_attempts_data: list[dict[str, Any]] = []
         if self.fallback_executor is not None:
-            def _on_provider_switch(provider_name: str) -> None:
+            def _on_provider_switch(provider_name: str, fallback_level: int | None = None) -> None:
                 if self.console_controller is not None:
                     self.console_controller.update_worker_id(
                         _slot,
                         worker_id=provider_name,
+                        fallback_level=fallback_level,
                     )
 
             result, fallback_attempts = await self.fallback_executor.execute_with_fallback(

@@ -534,6 +534,7 @@ def test_tool_not_in_allowlist_gets_one_repair_before_next_provider() -> None:
 
     qwen_ex = ct.fallback_executors["qwen_worker_cli"]
     assert result.provider == "qwen_cli"
+    assert result.fallback_provider_index == 1
     assert len(attempts) == 1
     assert len(qwen_ex.calls) == 2
     assert "Contract Repair" in qwen_ex.calls[1]["extra_prompt_section"]
@@ -738,3 +739,54 @@ def test_all_quality_failures_exhaust_fallbacks() -> None:
     # Last fallback result is returned even though it failed the quality gate
     assert result.action is not None
     assert result.action.confidence == 0.3
+
+
+def test_qwen_preflight_failure_does_not_disable_tools() -> None:
+    """When Qwen preflight fails, allow_tool_use must NOT be set to False."""
+    from app.adapters.qwen_worker_cli import QwenWorkerCli
+
+    qwen_adapter = QwenWorkerCli(cli_path="/bin/false", allow_tool_use=True)
+    captured_kwargs: dict[str, Any] = {}
+
+    class _CapturingAdapter(_FakeAdapter):
+        """Captures adapter_invoke_kwargs passed to execute()."""
+
+    primary_result = _fail_result(error="primary_timeout")
+    qwen_result = _success_result(provider="qwen_cli")
+
+    class _CapturingExecutor:
+        """Executor that captures kwargs and returns a fixed result."""
+
+        def __init__(self, result: DirectExecutionResult) -> None:
+            self._result = result
+
+        async def execute(self, **kwargs: Any) -> DirectExecutionResult:
+            captured_kwargs.update(kwargs.get("adapter_invoke_kwargs", {}))
+            return self._result
+
+    ct = _ChainTest(
+        fallback_providers=["qwen_cli"],
+        primary_results=[primary_result],
+        fallback_results_map={"qwen_worker_cli": [qwen_result]},
+        adapter_map={"qwen_cli": qwen_adapter},
+    )
+    # Monkeypatch the preflight to return failure
+    qwen_adapter.preflight_tool_registry = lambda required_tools: {
+        "available": False,
+        "visible_tools": [],
+        "missing_required_tools": ["research_project"],
+        "reason": "missing:research_project",
+    }
+
+    result, attempts = asyncio.run(ct.fb.execute_with_fallback(
+        plan_id="plan_1",
+        slice_obj=_make_slice(),
+        baseline_bootstrap={},
+        known_facts={},
+        required_output_facts=[],
+        recent_turn_summaries=[],
+        checkpoint_summary="",
+    ))
+
+    # Key assertion: allow_tool_use should NOT be False even when preflight fails
+    assert captured_kwargs.get("allow_tool_use") is not False

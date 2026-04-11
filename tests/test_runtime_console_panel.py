@@ -267,6 +267,20 @@ def test_trail_map_all_running() -> None:
     assert "0/2" in text.plain
 
 
+def test_trail_map_running_with_fallback_level() -> None:
+    trail_map = TrailMap(plans=[
+        TrailPlanGroup(label="v1", sequence_id="s1", batches=[
+            TrailBatch(plan_id="p1", slices=[
+                TrailSliceSlot(slice_id="s1", status="running", fallback_level=1),
+                TrailSliceSlot(slice_id="s2", status="running", fallback_level=2),
+            ]),
+        ]),
+    ])
+    text = _build_trail_map_text(trail_map)
+    assert "R1R2" in text.plain
+    assert "2R" in text.plain
+
+
 # ---------------------------------------------------------------------------
 # Worker display — shows actual provider, not legacy config worker_id
 # ---------------------------------------------------------------------------

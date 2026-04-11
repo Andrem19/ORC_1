@@ -260,12 +260,14 @@ class ConsoleRuntimeController:
         current.active_operation_status = operation_status
         self._refresh()
 
-    def update_worker_id(self, slot: int, worker_id: str) -> None:
+    def update_worker_id(self, slot: int, worker_id: str, *, fallback_level: int | None = None) -> None:
         """Update the displayed worker label for a running slice (e.g. after fallback)."""
         current = self.state.slices.get(slot)
         if current is None:
             return
         current.worker_id = worker_id
+        if fallback_level is not None:
+            self._update_running_trail_fallback_level(slot, fallback_level)
         self._refresh()
 
     def update_budget(self, slot: int, *, turns_used: int | None = None, tool_calls_used: int, tool_calls_total: int) -> None:
@@ -370,6 +372,25 @@ class ConsoleRuntimeController:
                         if ts.slice_id == slice_id:
                             ts.status = "running"
                             return
+
+    def _update_running_trail_fallback_level(self, slot: int, fallback_level: int) -> None:
+        """Attach fallback level to an already-running trail slot after provider switch."""
+        existing = self.state.slices.get(slot)
+        if existing is None:
+            return
+        plan_id = existing.plan_id
+        slice_id = existing.slice_id
+        if not plan_id or not slice_id:
+            return
+        for pg in self.state.trail_map.plans:
+            for batch in pg.batches:
+                if batch.plan_id != plan_id:
+                    continue
+                for ts in batch.slices:
+                    if ts.slice_id != slice_id or ts.status != "running":
+                        continue
+                    ts.fallback_level = max(0, int(fallback_level or 0))
+                    return
 
     def _update_trail_from_slot(self, slot: int, status: str, execution_path: str = "direct", fallback_level: int = 0) -> None:
         """Find the trail slot from a parallel slot number and update it."""

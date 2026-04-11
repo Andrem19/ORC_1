@@ -20,6 +20,10 @@ from typing import Any
 from app.adapters.base import AdapterResponse, BaseAdapter, ProcessHandle
 from app.adapters.subprocess_groups import configure_popen_kwargs, terminate_process_handle
 from app.planner_stream import consume_stream_fragment
+from app.services.direct_execution.stream_tool_counter import (
+    count_tool_calls_from_single_event,
+    count_tool_calls_from_stream_json,
+)
 from app.subprocess_io import drain_pipe_text, read_available_text
 
 logger = logging.getLogger("orchestrator.adapter.claude_worker")
@@ -114,7 +118,11 @@ class ClaudeWorkerCli(BaseAdapter):
                     },
                 )
 
-            logger.info("Claude CLI completed in %.1fs, output length: %d", duration, len(output))
+            counted = count_tool_calls_from_stream_json(result.stdout or "", "claude_cli")
+            logger.info(
+                "Claude CLI completed in %.1fs, output length: %d, tool_calls: %d",
+                duration, len(output), counted.tool_call_count,
+            )
             return AdapterResponse(
                 success=True,
                 raw_output=output,
@@ -125,6 +133,8 @@ class ClaudeWorkerCli(BaseAdapter):
                     "output_mode": "stream-json",
                     "raw_stdout_present": bool(result.stdout),
                     "raw_stderr_present": bool(result.stderr),
+                    "tool_call_count": counted.tool_call_count,
+                    "tool_names": counted.tool_names,
                 },
             )
 
@@ -270,6 +280,13 @@ class ClaudeWorkerCli(BaseAdapter):
         handle.metadata["stream_buffer"] = buffer
         handle.metadata["stream_event_count"] = int(handle.metadata.get("stream_event_count", 0)) + event_count
         handle.partial_output = _append_limited(handle.partial_output, rendered, _PARTIAL_OUTPUT_LIMIT)
+        # Incremental tool call counting from raw stream lines
+        for raw_line in fragment.splitlines():
+            tool_names = count_tool_calls_from_single_event(raw_line)
+            if tool_names:
+                handle.metadata["tool_call_count"] = int(handle.metadata.get("tool_call_count", 0)) + len(tool_names)
+                existing = handle.metadata.get("tool_names") or []
+                handle.metadata["tool_names"] = existing + tool_names
         return rendered
 
     @staticmethod

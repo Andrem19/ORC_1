@@ -236,7 +236,12 @@ class FallbackExecutor:
 
             if on_provider_switch is not None:
                 try:
-                    on_provider_switch(provider_name)
+                    on_provider_switch(provider_name, idx)
+                except TypeError:
+                    try:
+                        on_provider_switch(provider_name)
+                    except Exception:
+                        pass
                 except Exception:
                     pass
 
@@ -256,16 +261,15 @@ class FallbackExecutor:
             if provider_name == "qwen_cli" and isinstance(adapter, QwenWorkerCli) and bool(getattr(self.direct_config, "qwen_tool_registry_preflight", True)):
                 registry = adapter.preflight_tool_registry(required_tools=slice_obj.allowed_tools)
                 if not registry["available"]:
-                    adapter_invoke_kwargs["allow_tool_use"] = False
+                    # Do NOT disable tool use — let Qwen try with its own MCP config.
+                    # Disabling tools guarantees zero_tool_calls → quality gate rejection.
+                    logger.warning(
+                        "Qwen tool registry preflight failed: %s (proceeding with tool_use=True)",
+                        registry.get("reason", "unknown"),
+                    )
                     extra_sections.append(
-                        build_contract_repair_prompt(
-                            provider_name=provider_name,
-                            allowed_tools=sorted({str(item).strip() for item in slice_obj.allowed_tools if str(item).strip()}),
-                            failure_reason=f"qwen_tool_registry_missing:{registry['reason']}",
-                            raw_output_excerpt="",
-                            required_output_facts=required_output_facts,
-                            registry_missing=True,
-                        )
+                        f"## Note\nQwen tool registry preflight incomplete: {registry.get('reason', '')}. "
+                        "Proceed using available MCP tools."
                     )
 
             try:
@@ -443,7 +447,7 @@ class FallbackExecutor:
             tool_call_count=repaired.tool_call_count,
             expensive_tool_call_count=repaired.expensive_tool_call_count,
             parse_retry_count=repaired.parse_retry_count + 1,
-            fallback_provider_index=repaired.fallback_provider_index,
+            fallback_provider_index=repaired.fallback_provider_index or prior_result.fallback_provider_index,
         )
 
 

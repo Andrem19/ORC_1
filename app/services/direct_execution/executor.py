@@ -231,6 +231,15 @@ class DirectSliceExecutor:
                 exclude_tools=list(getattr(self.direct_config, "safe_exclude_tools", []) or []),
                 **invoke_kwargs,
             )
+            # Extract tool call count from CLI adapter metadata (set by
+            # claude_worker_cli / qwen_worker_cli stream-json parsing).
+            meta = response.metadata or {}
+            tool_call_count = int(meta.get("tool_call_count", 0) or 0)
+            if tool_call_count == 0 and meta.get("raw_stdout"):
+                from app.services.direct_execution.stream_tool_counter import count_tool_calls_from_stream_json
+
+                counted = count_tool_calls_from_stream_json(str(meta["raw_stdout"]), provider)
+                tool_call_count = counted.tool_call_count
         artifact_path = self.artifact_store.save_direct_attempt(
             plan_id=plan_id,
             slice_id=slice_obj.slice_id,
