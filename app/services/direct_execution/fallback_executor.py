@@ -16,6 +16,7 @@ from app.execution_models import PlanSlice
 from app.runtime_incidents import LocalIncidentStore
 from app.services.direct_execution.executor import DirectExecutionResult, DirectSliceExecutor
 from app.services.direct_execution.guardrails import (
+    attempt_verdict_repair,
     build_contract_repair_prompt,
     checkpoint_complete_passes_gate,
     final_report_passes_quality_gate,
@@ -134,6 +135,47 @@ class FallbackExecutor:
         )
 
     @staticmethod
+    def _maybe_apply_verdict_repair(
+        *,
+        result: DirectExecutionResult,
+        slice_obj: PlanSlice,
+        required_output_facts: list[str],
+        inherited_facts: dict[str, Any],
+    ) -> DirectExecutionResult:
+        if result.action is None or result.action.action_type != "final_report":
+            return result
+        repaired = attempt_verdict_repair(
+            action=result.action,
+            tool_call_count=result.tool_call_count,
+            slice_obj=slice_obj,
+            required_output_facts=required_output_facts,
+            inherited_facts=inherited_facts,
+            provider=result.provider or "",
+        )
+        if repaired is None:
+            return result
+        logger.info(
+            "Verdict repaired for slice %s: %s -> WATCHLIST (confidence=%.2f, tool_calls=%d, evidence_refs=%d)",
+            slice_obj.slice_id,
+            result.action.verdict,
+            float(result.action.confidence or 0),
+            result.tool_call_count,
+            len(result.action.evidence_refs or []),
+        )
+        return DirectExecutionResult(
+            action=repaired,
+            artifact_path=result.artifact_path,
+            raw_output=result.raw_output,
+            error=result.error,
+            provider=result.provider,
+            duration_ms=result.duration_ms,
+            tool_call_count=result.tool_call_count,
+            expensive_tool_call_count=result.expensive_tool_call_count,
+            parse_retry_count=result.parse_retry_count,
+            fallback_provider_index=result.fallback_provider_index,
+        )
+
+    @staticmethod
     def _build_fallback_prompt_section(
         *,
         failed_provider: str,
@@ -180,6 +222,15 @@ class FallbackExecutor:
             recent_turn_summaries=recent_turn_summaries,
             checkpoint_summary=checkpoint_summary,
             on_tool_progress=on_tool_progress,
+        )
+
+        # Verdict repair: if the model said INCOMPLETE/PARTIAL but all evidence
+        # gates actually pass, fix the verdict to avoid a needless fallback.
+        primary_result = self._maybe_apply_verdict_repair(
+            result=primary_result,
+            slice_obj=slice_obj,
+            required_output_facts=required_output_facts,
+            inherited_facts=known_facts,
         )
 
         if self._is_success(

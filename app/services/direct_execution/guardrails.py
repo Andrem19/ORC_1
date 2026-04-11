@@ -139,6 +139,71 @@ def final_report_passes_quality_gate(
     return True, ""
 
 
+# Verdicts that indicate the model was cautious, not that the task genuinely failed.
+# These are candidates for automatic repair when evidence is actually sufficient.
+_REPAIRABLE_VERDICTS = frozenset(v.upper() for v in ("INCOMPLETE", "PARTIAL"))
+
+# Providers where verdict repair is allowed (local/weak models that tend to be
+# overly cautious).
+_VERDICT_REPAIR_PROVIDERS = frozenset({"lmstudio"})
+
+
+def attempt_verdict_repair(
+    *,
+    action: WorkerAction,
+    tool_call_count: int,
+    slice_obj: PlanSlice,
+    required_output_facts: list[str],
+    inherited_facts: dict[str, Any] | None = None,
+    provider: str = "",
+) -> WorkerAction | None:
+    """Return a repaired action with a passing verdict, or *None* if repair is not safe.
+
+    This is NOT a gate bypass — every quality-gate check (evidence refs, confidence,
+    tool calls, required facts) must pass.  Only the textual verdict is changed from
+    a cautious ``INCOMPLETE``/``PARTIAL`` to ``WATCHLIST``.
+    """
+    if str(provider or "").strip().lower() not in _VERDICT_REPAIR_PROVIDERS:
+        return None
+    if action.action_type != "final_report":
+        return None
+    verdict = str(action.verdict or "").strip().upper()
+    if verdict not in _REPAIRABLE_VERDICTS:
+        return None
+    # All quality-gate sub-checks must pass (except the verdict itself).
+    if float(action.confidence or 0) < _MIN_SUCCESS_CONFIDENCE:
+        return None
+    if tool_call_count <= 0:
+        return None
+    refs = [str(r).strip() for r in (action.evidence_refs or []) if str(r).strip()]
+    if not refs:
+        return None
+    if required_output_facts:
+        readiness = hydrate_final_report_facts(
+            slice_obj=slice_obj,
+            action=action,
+            required_output_facts=required_output_facts,
+            inherited_facts=inherited_facts,
+        )
+        if readiness.missing_required_facts:
+            return None
+    return WorkerAction(
+        action_id=action.action_id,
+        action_type=action.action_type,
+        summary=action.summary,
+        verdict="WATCHLIST",
+        findings=list(action.findings or []),
+        facts=dict(action.facts or {}),
+        evidence_refs=list(action.evidence_refs or []),
+        confidence=action.confidence,
+        status=action.status,
+        reason_code=action.reason_code,
+        reason=action.reason,
+        tool=action.tool,
+        arguments=action.arguments,
+    )
+
+
 def normalize_incomplete_reason(result: Any) -> str:
     error = str(getattr(result, "error", "") or "").strip()
     if error:
@@ -270,6 +335,7 @@ def synthesize_transcript_evidence_refs(transcript: list[dict[str, Any]], *, lim
 
 __all__ = [
     "REPAIRABLE_PROVIDER_NAMES",
+    "attempt_verdict_repair",
     "build_contract_repair_prompt",
     "checkpoint_complete_passes_gate",
     "final_report_passes_quality_gate",

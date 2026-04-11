@@ -177,6 +177,66 @@ def build_research_budget_salvage_report(
     return "```json\n" + json.dumps(payload, ensure_ascii=False) + "\n```"
 
 
+def build_generic_transcript_salvage_report(
+    *,
+    transcript: list[dict[str, Any]],
+    allowed_tools: set[str],
+    success_criteria: list[str],
+    required_output_facts: list[str],
+    slice_title: str = "",
+) -> str | None:
+    """Build a final_report from any transcript with enough successful tool evidence.
+
+    This is a last-resort salvage that triggers when domain-specific salvage
+    (research, backtests, catalog) does not apply.  All evidence gates are
+    enforced — this does NOT lower the quality bar.
+    """
+    successful = _successful_tool_entries(transcript)
+    if len(successful) < 3:
+        return None
+    tools_seen = sorted({str(e.get("tool") or "").strip() for e in successful if str(e.get("tool") or "").strip()})
+    if len(tools_seen) < 2:
+        return None
+    from app.services.direct_execution.transcript_facts import derive_facts_from_transcript
+
+    findings = [
+        f"Collected evidence from {len(successful)} successful tool calls across {len(tools_seen)} distinct tools: {', '.join(tools_seen)}.",
+    ]
+    for criterion in success_criteria[:2]:
+        text = str(criterion or "").strip()
+        if text:
+            findings.append(f"Success criterion addressed: {text}")
+    if slice_title:
+        findings.append(f"Slice: {slice_title}")
+    facts: dict[str, Any] = {
+        "execution.kind": "direct",
+        "direct.auto_finalized_from_generic_salvage": True,
+        "direct.tools_seen": tools_seen,
+        "direct.successful_tool_count": len(successful),
+    }
+    transcript_facts = derive_facts_from_transcript(transcript)
+    for key, value in transcript_facts.items():
+        facts.setdefault(key, value)
+    evidence_refs = synthesize_transcript_evidence_refs(transcript)
+    if not final_report_payload_passes_gate(
+        facts=facts,
+        findings=findings,
+        evidence_refs=evidence_refs,
+        required_output_facts=required_output_facts,
+    ):
+        return None
+    payload = {
+        "type": "final_report",
+        "summary": f"Auto-synthesized from {len(successful)} successful tool results after model stall or budget exhaustion.",
+        "verdict": "WATCHLIST",
+        "findings": findings,
+        "facts": facts,
+        "evidence_refs": evidence_refs,
+        "confidence": 0.60,
+    }
+    return "```json\n" + json.dumps(payload, ensure_ascii=False) + "\n```"
+
+
 def _successful_tool_entries(transcript: list[dict[str, Any]]) -> list[dict[str, Any]]:
     successful: list[dict[str, Any]] = []
     for entry in transcript:
@@ -202,5 +262,6 @@ def _extract_structured_content(raw_payload: Any) -> dict[str, Any]:
 __all__ = [
     "build_backtests_budget_salvage_report",
     "build_catalog_only_final_report",
+    "build_generic_transcript_salvage_report",
     "build_research_budget_salvage_report",
 ]

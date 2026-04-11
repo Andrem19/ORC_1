@@ -16,6 +16,7 @@ from app.execution_models import PlanSlice, WorkerAction
 from app.execution_parsing import StructuredOutputError, parse_worker_action_output
 from app.runtime_incidents import LocalIncidentStore
 from app.services.direct_execution.invocation import invoke_adapter_with_retries
+from app.services.direct_execution.lmstudio_finalization import build_generic_transcript_salvage_report
 from app.services.direct_execution.lmstudio_tool_loop import LmStudioToolLoop
 from app.services.direct_execution.mcp_client import DirectMcpClient, DirectMcpConfig
 from app.services.direct_execution.prompt import build_direct_slice_prompt
@@ -303,6 +304,28 @@ class DirectSliceExecutor:
         transcript_facts = derive_facts_from_transcript(transcript)
         for key, value in transcript_facts.items():
             action.facts.setdefault(key, value)
+        # Transcript synthesis: if LMStudio produced a non-terminal result
+        # (checkpoint/abort) but the transcript has enough evidence, attempt
+        # to synthesize a valid final_report.
+        if (
+            action.action_type in ("checkpoint", "abort")
+            and transcript
+            and provider == "lmstudio"
+        ):
+            synthesis = build_generic_transcript_salvage_report(
+                transcript=transcript,
+                allowed_tools=allowed_tools,
+                success_criteria=list(slice_obj.success_criteria or []),
+                required_output_facts=list(required_output_facts),
+                slice_title=slice_obj.title,
+            )
+            if synthesis is not None:
+                try:
+                    action = parse_worker_action_output(synthesis, allowlist=allowed_tools)
+                    for key, value in transcript_facts.items():
+                        action.facts.setdefault(key, value)
+                except StructuredOutputError:
+                    pass
         return DirectExecutionResult(
             action=action,
             artifact_path=str(artifact_path),

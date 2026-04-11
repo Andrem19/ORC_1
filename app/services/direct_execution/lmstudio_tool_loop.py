@@ -19,6 +19,7 @@ from app.runtime_incidents import LocalIncidentStore
 from app.services.direct_execution.lmstudio_finalization import (
     build_backtests_budget_salvage_report,
     build_catalog_only_final_report,
+    build_generic_transcript_salvage_report,
     build_research_budget_salvage_report,
 )
 from app.services.direct_execution.mcp_client import DirectMcpClient, _to_jsonable
@@ -245,6 +246,16 @@ class LmStudioToolLoop:
                         result_payload = preflight.local_payload
                     elif tool_call_count >= self.max_tool_calls:
                         salvage_raw = self._build_research_budget_salvage_report(transcript)
+                        if salvage_raw is None:
+                            salvage_raw = self._build_backtests_budget_salvage_report(transcript)
+                        if salvage_raw is None:
+                            salvage_raw = build_generic_transcript_salvage_report(
+                                transcript=transcript,
+                                allowed_tools=self.allowed_tools,
+                                success_criteria=self.success_criteria,
+                                required_output_facts=self.required_output_facts,
+                                slice_title=self.slice_title,
+                            )
                         if salvage_raw is not None:
                             self.incident_store.record(
                                 summary="Direct slice auto-finalized from research transcript after budget exhaustion",
@@ -553,6 +564,9 @@ class LmStudioToolLoop:
                             )[:4000],
                         }
                     )
+                    nudge = self._maybe_build_nudge_message(tool_call_count)
+                    if nudge:
+                        messages.append({"role": "system", "content": nudge})
             return LmStudioToolLoopResult(
                 response=AdapterResponse(
                     success=True,
@@ -574,6 +588,18 @@ class LmStudioToolLoop:
             )
         finally:
             await self.mcp_client.close()
+
+    def _maybe_build_nudge_message(self, tool_call_count: int) -> str | None:
+        threshold = max(1, int(self.max_tool_calls * 0.6))
+        if tool_call_count < threshold:
+            return None
+        remaining = self.max_tool_calls - tool_call_count
+        return (
+            f"Budget alert: {tool_call_count}/{self.max_tool_calls} tool calls used, "
+            f"{remaining} remaining. "
+            "You have enough evidence. Return your final_report now with "
+            "verdict=WATCHLIST or COMPLETE. Do not make more tool calls unless critical."
+        )
 
     def _should_auto_finalize_catalog_only(
         self,
@@ -600,7 +626,8 @@ class LmStudioToolLoop:
         guide = f"First action guide: use the minimum useful step from allowed tools [{tools}]."
         if first_criterion:
             guide += f" Prioritize evidence for: {first_criterion}."
-        guide += " Success means a final_report only."
+        guide += f"Call at least one tool from {tools} to gather evidence."
+        guide += "After calling tools, return exactly one terminal JSON final_report."
         return guide
 
     def _maybe_auto_finalize_after_stall(self, transcript: list[dict[str, Any]]) -> str | None:
@@ -613,7 +640,16 @@ class LmStudioToolLoop:
         research = self._build_research_budget_salvage_report(transcript)
         if research is not None:
             return research
-        return self._build_backtests_budget_salvage_report(transcript)
+        backtests = self._build_backtests_budget_salvage_report(transcript)
+        if backtests is not None:
+            return backtests
+        return build_generic_transcript_salvage_report(
+            transcript=transcript,
+            allowed_tools=self.allowed_tools,
+            success_criteria=self.success_criteria,
+            required_output_facts=self.required_output_facts,
+            slice_title=self.slice_title,
+        )
 
     def _build_backtests_budget_salvage_report(self, transcript: list[dict[str, Any]]) -> str | None:
         return build_backtests_budget_salvage_report(
@@ -753,9 +789,6 @@ def _is_contract_issue_payload(result_payload: dict[str, Any]) -> bool:
             "unknown research project",
         )
     )
-
-
-    
 
 
 __all__ = ["LmStudioToolLoop", "LmStudioToolLoopResult"]

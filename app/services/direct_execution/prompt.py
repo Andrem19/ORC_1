@@ -22,37 +22,45 @@ def build_direct_slice_prompt(
     required_output_facts: list[str] | None = None,
     provider: str = "",
 ) -> str:
+    weak = _is_weak_provider(provider)
     lines: list[str] = []
     if worker_system_prompt.strip():
         lines.append(worker_system_prompt.strip())
         lines.append("")
+    if weak:
+        lines.extend(_build_weak_provider_header(max_tool_calls, max_expensive_tool_calls))
+    else:
+        lines.extend(
+            [
+                "You are a direct execution worker for trading research.",
+                "You may use only the approved dev_space1 tools listed below.",
+                "Do not use shell, filesystem, workspace, web, or unrelated local tools.",
+                "Complete this slice end-to-end when possible, then return exactly one terminal JSON object.",
+                "Never return an intermediate tool_call action to the orchestrator.",
+                "You MUST call at least one tool before returning a checkpoint. Do not return a checkpoint without using tools.",
+                "",
+                "Critical dev_space1 incident rule:",
+                "- If a dev_space1 tool has an infrastructure issue, unclear contract, surprising required field, broken path, or ambiguous behavior, record an incident with the incidents tool and include precise debugging details in reportable_issues.",
+                "",
+                "Backtest/model safety:",
+                "- Do not restart heavy operations when a run_id/job_id/operation_id is already known.",
+                "- Start expensive backtests, studies, syncs, or model training only when directly required by the slice.",
+                "- Prefer status/result polling for known operation ids over duplicate starts.",
+                f"- Tool-call budget for this direct session: {max_tool_calls}.",
+                f"- Expensive-tool budget for this direct session: {max_expensive_tool_calls}.",
+                "",
+                "Output contract:",
+                "- Return exactly one JSON object wrapped in ```json``` fences.",
+                "- Allowed final types: final_report, checkpoint, abort.",
+                "- final_report requires summary, verdict, findings, facts, evidence_refs, confidence.",
+                "- checkpoint requires status=partial|complete|blocked and summary.",
+                "- abort requires reason_code and summary; use abort only for true impossibility or hard failure.",
+                "- Do not output prose outside the JSON object.",
+            ]
+        )
+    lines.append("")
     lines.extend(
         [
-            "You are a direct execution worker for trading research.",
-            "You may use only the approved dev_space1 tools listed below.",
-            "Do not use shell, filesystem, workspace, web, or unrelated local tools.",
-            "Complete this slice end-to-end when possible, then return exactly one terminal JSON object.",
-            "Never return an intermediate tool_call action to the orchestrator.",
-            "You MUST call at least one tool before returning a checkpoint. Do not return a checkpoint without using tools.",
-            "",
-            "Critical dev_space1 incident rule:",
-            "- If a dev_space1 tool has an infrastructure issue, unclear contract, surprising required field, broken path, or ambiguous behavior, record an incident with the incidents tool and include precise debugging details in reportable_issues.",
-            "",
-            "Backtest/model safety:",
-            "- Do not restart heavy operations when a run_id/job_id/operation_id is already known.",
-            "- Start expensive backtests, studies, syncs, or model training only when directly required by the slice.",
-            "- Prefer status/result polling for known operation ids over duplicate starts.",
-            f"- Tool-call budget for this direct session: {max_tool_calls}.",
-            f"- Expensive-tool budget for this direct session: {max_expensive_tool_calls}.",
-            "",
-            "Output contract:",
-            "- Return exactly one JSON object wrapped in ```json``` fences.",
-            "- Allowed final types: final_report, checkpoint, abort.",
-            "- final_report requires summary, verdict, findings, facts, evidence_refs, confidence.",
-            "- checkpoint requires status=partial|complete|blocked and summary.",
-            "- abort requires reason_code and summary; use abort only for true impossibility or hard failure.",
-            "- Do not output prose outside the JSON object.",
-            "",
             f"Plan id: {plan_id}",
             f"Slice id: {slice_payload.get('slice_id', '')}",
             f"Title: {slice_payload.get('title', '')}",
@@ -77,16 +85,20 @@ def build_direct_slice_prompt(
     lines.extend(f"- {item}" for item in allowed_tools)
     contract_hints = _tool_contract_hints(allowed_tools=allowed_tools, known_facts=known_facts)
     if contract_hints:
+        hint_limit = 3 if weak else len(contract_hints)
         lines.extend(["", "Tool contract hints:"])
-        lines.extend(f"- {item}" for item in contract_hints)
+        lines.extend(f"- {item}" for item in contract_hints[:hint_limit])
     if checkpoint_summary.strip():
         lines.extend(["", "Previous checkpoint:", checkpoint_summary.strip()])
+    recent_limit = 3 if weak else 6
     if recent_turn_summaries:
         lines.extend(["", "Recent direct attempts:"])
-        lines.extend(f"- {item}" for item in recent_turn_summaries[-6:])
+        lines.extend(f"- {item}" for item in recent_turn_summaries[-recent_limit:])
+    facts_limit = 12 if weak else 24
     compact_known_facts = _compact_known_facts(
         known_facts=known_facts,
         dependency_ids=[str(item).strip() for item in slice_payload.get("depends_on", []) or [] if str(item).strip()],
+        limit=facts_limit,
     )
     if compact_known_facts:
         lines.extend(["", "Known facts:"])
@@ -97,13 +109,17 @@ def build_direct_slice_prompt(
             lines.append(f"- {key} = {value}")
     if required_output_facts:
         lines.extend(["", "Required downstream facts:"])
-        lines.extend(f"- Include `{item}` in final_report.facts or create tool evidence that deterministically yields it." for item in required_output_facts)
-        lines.extend(
-            [
-                "- Do not return final_report if required downstream facts are still missing.",
-                "- For research short-list slices, final_report.facts must carry active research project id, short-list family names, and created hypothesis node refs.",
-            ]
-        )
+        if weak:
+            lines.extend(f"- `{item}`" for item in required_output_facts)
+            lines.append("- Include these facts in final_report.facts.")
+        else:
+            lines.extend(f"- Include `{item}` in final_report.facts or create tool evidence that deterministically yields it." for item in required_output_facts)
+            lines.extend(
+                [
+                    "- Do not return final_report if required downstream facts are still missing.",
+                    "- For research short-list slices, final_report.facts must carry active research project id, short-list family names, and created hypothesis node refs.",
+                ]
+            )
     lines.extend(
         [
             "",
@@ -111,6 +127,16 @@ def build_direct_slice_prompt(
         ]
     )
     lines.extend(f"- {item}" for item in _model_contract_footer(provider=provider))
+    if weak:
+        lines.extend(
+            [
+                "",
+                "CRITICAL RULES:",
+                "1. ALWAYS return final_report, not checkpoint.",
+                "2. NEVER use verdict INCOMPLETE, PARTIAL, or FAILED.",
+                "3. Use WATCHLIST if unsure, COMPLETE if confident.",
+            ]
+        )
     lines.extend(
         [
             "",
@@ -121,6 +147,23 @@ def build_direct_slice_prompt(
         ]
     )
     return "\n".join(lines).strip() + "\n"
+
+
+def _is_weak_provider(provider: str) -> bool:
+    return str(provider or "").strip().lower() in {"lmstudio"}
+
+
+def _build_weak_provider_header(max_tool_calls: int, max_expensive_tool_calls: int) -> list[str]:
+    return [
+        "You are a direct execution worker for trading research.",
+        "Use only the approved dev_space1 tools listed below.",
+        "Return exactly one JSON object wrapped in ```json``` fences.",
+        "The JSON must have type=final_report with: summary, verdict, findings, facts, evidence_refs, confidence.",
+        "NEVER use verdict INCOMPLETE or PARTIAL. Use WATCHLIST if unsure, COMPLETE if confident.",
+        "Call at least one tool before returning. Do not restart known operations.",
+        f"Tool budget: {max_tool_calls} calls, {max_expensive_tool_calls} expensive.",
+        "If a tool fails, fix the call per the error message.",
+    ]
 
 
 def _tool_contract_hints(*, allowed_tools: list[str], known_facts: dict[str, Any]) -> list[str]:
