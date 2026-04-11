@@ -83,7 +83,7 @@ def test_parse_worker_action_output_rejects_prefixed_mcp_tool_name() -> None:
     """
 
     with pytest.raises(StructuredOutputError, match="tool_prefixed_namespace_forbidden"):
-        parse_worker_action_output(raw, allowlist={"features_catalog"})
+        parse_worker_action_output(raw, allowlist={"features_catalog"}, provider="lmstudio")
 
 
 def test_parse_worker_action_output_accepts_final_report() -> None:
