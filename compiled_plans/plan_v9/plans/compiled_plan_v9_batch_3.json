@@ -1,6 +1,6 @@
 {
   "plan_id": "compiled_plan_v9_batch_3",
-  "goal": "Определить, содержит ли новый data universe (derivatives positioning / pressure) реальный информационный сигнал сверх текущего OHLCV+IV+classifier+breadth+event space, и может ли он стать основой overlay-route для active-signal-v1.",
+  "goal": "Найти новый data universe, который добавляет реальную информацию сверх текущего OHLCV+IV+classifier+breadth+event space, и проверить его как overlay/veto route на immutable базе active-signal-v1@1.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -9,42 +9,47 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "Immutable reference base active-signal-v1@1 — запрещено менять базу, подбирать ей часы/дни/пороги/исполнение.",
-    "Нельзя открывать full-surface directional classification или trade-quality overlays на старом data universe.",
-    "Запрещён regression на future PnL, selection по lockbox-окну, перестановка старых features.",
-    "Любое улучшение обязано пройти matched OOS comparison против базы на том же окне.",
-    "Primary family: derivatives positioning/pressure; fallback: cross-exchange pressure; reserve: microstructure proxies.",
-    "Overlay-first: новый universe сначала проверяется на veto/overlay surface; direction — только при strong overlay evidence.",
-    "Максимум 12 features в первой волне для primary family.",
-    "Максимум одна дополнительная ветка (early-cut ИЛИ extension) сверх veto.",
-    "Direction labels запрещены до overlay evidence.",
-    "Purge gap ≥24h; freeze rules: family before modeling, feature set before training, threshold before lockbox."
+    "База active-signal-v1@1 — immutable reference. Запрещено менять, подбирать часы/дни/пороги/исполнение.",
+    "Запрещено выбирать feature set, label scheme, horizon, threshold или архитектуру по lockbox-окну.",
+    "Любое улучшение должно пройти matched OOS comparison против базы на том же окне.",
+    "Raw event entries, static IV, IV dynamics, classifier transitions, regression на future PnL, full-surface directional classification, trade-quality overlays — окончательно закрыты на текущем universe.",
+    "Новый data universe обязателен: нельзя пытаться докрутить старые модели на старых данных.",
+    "Primary family — одна, fallback — одна. Идти строго по очереди, не паралельно.",
+    "Сначала information-content triage, потом модели. Без bucket sanity модель не строится.",
+    "Overlay-first, direction-second. Direction labels запрещены без overlay evidence.",
+    "Не строить больше 12 features в первой волне для любой family.",
+    "Freeze rules: family choice freeze before modeling, feature set freeze before training, threshold freeze before lockbox.",
+    "Purge gap минимум 24h для trade/holding tasks.",
+    "Максимум одна дополнительная route (early-cut ИЛИ extension), не обе.",
+    "Не обучать direction models без overlay evidence. Не обучать router."
   ],
   "slices": [
     {
       "slice_id": "compiled_plan_v9_stage_7",
       "title": "Lockbox test for veto route",
-      "hypothesis": "Провести immutable lockbox OOS comparison: base vs base+veto overlay на одном и том же окне.",
-      "objective": "Провести immutable lockbox OOS comparison: base vs base+veto overlay на одном и том же окне.",
+      "hypothesis": "Сравнить immutable base vs base+veto-overlay на lockbox OOS и получить честную оценку улучшения.",
+      "objective": "Сравнить immutable base vs base+veto-overlay на lockbox OOS и получить честную оценку улучшения.",
       "success_criteria": [
-        "Lockbox delta PnL ≥ 0, delta PF ≥ 0, delta DD ≤ 0.",
-        "PnL removed trades отрицательный (убраны убыточные).",
-        "Ownership positive."
+        "Lockbox comparison завершён",
+        "delta PnL, delta PF, delta DD, removed trades, PnL of removed trades посчитаны",
+        "Ownership assessed",
+        "Final decision per overlay: pass или fail"
       ],
       "allowed_tools": [
+        "backtests_plan",
         "backtests_runs",
         "backtests_analysis",
-        "models_compare",
         "research_record"
       ],
       "evidence_requirements": [
-        "Lockbox delta PnL ≥ 0, delta PF ≥ 0, delta DD ≤ 0.",
-        "PnL removed trades отрицательный (убраны убыточные).",
-        "Ownership positive."
+        "Lockbox comparison завершён",
+        "delta PnL, delta PF, delta DD, removed trades, PnL of removed trades посчитаны",
+        "Ownership assessed",
+        "Final decision per overlay: pass или fail"
       ],
       "policy_tags": [
         "lockbox",
-        "oos_validation"
+        "freeze"
       ],
       "max_turns": 24,
       "max_tool_calls": 24,
@@ -73,21 +78,26 @@
     },
     {
       "slice_id": "compiled_plan_v9_stage_8",
-      "title": "Early-cut / extension decision gate",
-      "hypothesis": "Если veto route прошёл lockbox — решить, есть ли evidence для одной дополнительной ветки (early-cut ИЛИ extension).",
-      "objective": "Если veto route прошёл lockbox — решить, есть ли evidence для одной дополнительной ветки (early-cut ИЛИ extension).",
+      "title": "Early-cut и extension decision gate",
+      "hypothesis": "Принять решение об открытии максимум одной дополнительной route (early-cut или extension) только если veto route passed.",
+      "objective": "Принять решение об открытии максимум одной дополнительной route (early-cut или extension) только если veto route passed.",
       "success_criteria": [
-        "Принято формальное решение: open early-cut, open extension, или neither."
+        "Принято решение: open early-cut, open extension, или locked",
+        "Максимум одна route открыта",
+        "Решение зафиксировано в research_record"
       ],
       "allowed_tools": [
         "research_record",
         "research_map"
       ],
       "evidence_requirements": [
-        "Принято формальное решение: open early-cut, open extension, или neither."
+        "Принято решение: open early-cut, open extension, или locked",
+        "Максимум одна route открыта",
+        "Решение зафиксировано в research_record"
       ],
       "policy_tags": [
-        "decision_gate",
+        "decision",
+        "gate",
         "optional_candidate"
       ],
       "max_turns": 24,
@@ -116,28 +126,33 @@
       "facts": {}
     },
     {
-      "slice_id": "compiled_plan_v9_stage_9",
-      "title": "Optional route execution (early-cut или extension)",
-      "hypothesis": "Выполнить единственную дополнительно открытую ветку: обучить модель, проверить на selection OOS и lockbox.",
-      "objective": "Выполнить единственную дополнительно открытую ветку: обучить модель, проверить на selection OOS и lockbox.",
+      "slice_id": "compiled_plan_v9_stage_9_part1",
+      "title": "Optional route execution (early-cut или extension) (exploration)",
+      "hypothesis": "Выполнить обучение и lockbox-тест для единственной дополнительной route, которая заслужила открытие.",
+      "objective": "Выполнить обучение и lockbox-тест для единственной дополнительной route, которая заслужила открытие.",
       "success_criteria": [
-        "Selection quality OK, lockbox quality OK.",
-        "Delta vs base meaningful и положительный, либо route формально закрыта."
+        "Optional route model обучена",
+        "Lockbox comparison завершён",
+        "Delta vs base meaningful оценён",
+        "Final decision: adopt или reject",
+        "Exploration phase complete"
       ],
       "allowed_tools": [
-        "models_train",
-        "models_dataset",
-        "backtests_runs",
-        "models_compare",
-        "research_record"
+        "research_record",
+        "models_registry",
+        "backtests_plan",
+        "backtests_analysis"
       ],
       "evidence_requirements": [
-        "Selection quality OK, lockbox quality OK.",
-        "Delta vs base meaningful и положительный, либо route формально закрыта."
+        "Optional route model обучена",
+        "Lockbox comparison завершён",
+        "Delta vs base meaningful оценён",
+        "Final decision: adopt или reject",
+        "Exploration phase complete"
       ],
       "policy_tags": [
         "modeling",
-        "gated",
+        "conditional",
         "optional_candidate"
       ],
       "max_turns": 24,
@@ -174,6 +189,6 @@
   "source_compile_report_path": "",
   "sequence_batch_index": 3,
   "status": "draft",
-  "created_at": "2026-04-10T17:07:43.039485+00:00",
-  "updated_at": "2026-04-10T17:07:43.039486+00:00"
+  "created_at": "2026-04-11T11:01:31.894533+00:00",
+  "updated_at": "2026-04-11T11:01:31.894537+00:00"
 }

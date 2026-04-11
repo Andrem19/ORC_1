@@ -1,6 +1,6 @@
 {
   "plan_id": "compiled_plan_v5_batch_4",
-  "goal": "Построить и валидировать новые custom features, обучить CatBoost long/short модели, и доказать через matched OOS что модельный маршрут даёт новый additive layer поверх active-signal-v1@1.",
+  "goal": "Построить и проверить новые custom features, обучить CatBoost long и short модели, прогнать на selection OOS и lockbox OOS, и дать итоговый ответ — дают ли custom-feature + CatBoost модели новый additive layer поверх active-signal-v1.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -9,42 +9,39 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "База active-signal-v1@1 — immutable reference, не меняется ни при каких условиях.",
-    "Train / selection OOS / lockbox OOS окна замораживаются до начала model training.",
-    "Purge gap минимум 24h между train и OOS, и между selection OOS и lockbox OOS.",
-    "Long и short модели обучаются раздельно, никакой shared target.",
-    "Threshold калибруется на selection OOS и фиксируется до открытия lockbox.",
-    "Обязателен strict additive backtest comparison с базой на lockbox OOS.",
-    "Каждый model sleeve получает terminal decision: PROMOTE / WATCHLIST / REJECT.",
-    "Модель не имеет права быть чёрным ящиком — feature importance и SHAP обязательны."
+    "База active-signal-v1@1 — immutable reference, не меняется ни при каких условиях",
+    "Все custom features должны быть causally correct с фиксированным lookback",
+    "train / selection OOS / lockbox OOS окна замораживаются ДО начала обучения моделей",
+    "Purge gap минимум 24h между train и OOS окнами",
+    "Long и short модели обучаются отдельно",
+    "Thresholds фиксируются до открытия lockbox",
+    "Модель не имеет права быть чёрным ящиком — feature importance и SHAP обязательны",
+    "Итог cycle v5 — бинарное решение: PROMOTE / WATCHLIST / REJECT для каждого sleeve"
   ],
   "slices": [
     {
       "slice_id": "compiled_plan_v5_stage_10",
       "title": "Финальный вердикт по model route",
-      "hypothesis": "Принять единое итоговое решение по всему v5 циклу: Model route success (A), Model route partial (B), или Model route failed (C), и написать финальный отчёт с рекомендациями для v6.",
-      "objective": "Принять единое итоговое решение по всему v5 циклу: Model route success (A), Model route partial (B), или Model route failed (C), и написать финальный отчёт с рекомендациями для v6.",
+      "hypothesis": "Получить ясное решение по всему пути custom features + CatBoost: model route success / partial / failed, и записать итоговый отчёт v5.",
+      "objective": "Получить ясное решение по всему пути custom features + CatBoost: model route success / partial / failed, и записать итоговый отчёт v5.",
       "success_criteria": [
-        "Есть единый вердикт по model route: A, B или C.",
-        "Финальный отчёт v5 записан.",
-        "Рекомендации для v6 сформулированы.",
-        "Все research артефакты зафиксированы."
+        "Есть единый итог по всему v5",
+        "Финальный отчёт написан",
+        "Рекомендации для v6 сформулированы"
       ],
       "allowed_tools": [
         "research_record",
         "research_map",
-        "research_search",
         "notify_send"
       ],
       "evidence_requirements": [
-        "Есть единый вердикт по model route: A, B или C.",
-        "Финальный отчёт v5 записан.",
-        "Рекомендации для v6 сформулированы.",
-        "Все research артефакты зафиксированы."
+        "Есть единый итог по всему v5",
+        "Финальный отчёт написан",
+        "Рекомендации для v6 сформулированы"
       ],
       "policy_tags": [
         "finalization",
-        "decision_point"
+        "decision"
       ],
       "max_turns": 24,
       "max_tool_calls": 24,
@@ -80,6 +77,6 @@
   "source_compile_report_path": "",
   "sequence_batch_index": 4,
   "status": "draft",
-  "created_at": "2026-04-10T17:00:11.747053+00:00",
-  "updated_at": "2026-04-10T17:00:11.747054+00:00"
+  "created_at": "2026-04-11T10:51:59.004169+00:00",
+  "updated_at": "2026-04-11T10:51:59.004171+00:00"
 }

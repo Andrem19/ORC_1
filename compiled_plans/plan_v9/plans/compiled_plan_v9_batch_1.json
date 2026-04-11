@@ -1,6 +1,6 @@
 {
   "plan_id": "compiled_plan_v9_batch_1",
-  "goal": "Определить, содержит ли новый data universe (derivatives positioning / pressure) реальный информационный сигнал сверх текущего OHLCV+IV+classifier+breadth+event space, и может ли он стать основой overlay-route для active-signal-v1.",
+  "goal": "Найти новый data universe, который добавляет реальную информацию сверх текущего OHLCV+IV+classifier+breadth+event space, и проверить его как overlay/veto route на immutable базе active-signal-v1@1.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -9,26 +9,31 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "Immutable reference base active-signal-v1@1 — запрещено менять базу, подбирать ей часы/дни/пороги/исполнение.",
-    "Нельзя открывать full-surface directional classification или trade-quality overlays на старом data universe.",
-    "Запрещён regression на future PnL, selection по lockbox-окну, перестановка старых features.",
-    "Любое улучшение обязано пройти matched OOS comparison против базы на том же окне.",
-    "Primary family: derivatives positioning/pressure; fallback: cross-exchange pressure; reserve: microstructure proxies.",
-    "Overlay-first: новый universe сначала проверяется на veto/overlay surface; direction — только при strong overlay evidence.",
-    "Максимум 12 features в первой волне для primary family.",
-    "Максимум одна дополнительная ветка (early-cut ИЛИ extension) сверх veto.",
-    "Direction labels запрещены до overlay evidence.",
-    "Purge gap ≥24h; freeze rules: family before modeling, feature set before training, threshold before lockbox."
+    "База active-signal-v1@1 — immutable reference. Запрещено менять, подбирать часы/дни/пороги/исполнение.",
+    "Запрещено выбирать feature set, label scheme, horizon, threshold или архитектуру по lockbox-окну.",
+    "Любое улучшение должно пройти matched OOS comparison против базы на том же окне.",
+    "Raw event entries, static IV, IV dynamics, classifier transitions, regression на future PnL, full-surface directional classification, trade-quality overlays — окончательно закрыты на текущем universe.",
+    "Новый data universe обязателен: нельзя пытаться докрутить старые модели на старых данных.",
+    "Primary family — одна, fallback — одна. Идти строго по очереди, не паралельно.",
+    "Сначала information-content triage, потом модели. Без bucket sanity модель не строится.",
+    "Overlay-first, direction-second. Direction labels запрещены без overlay evidence.",
+    "Не строить больше 12 features в первой волне для любой family.",
+    "Freeze rules: family choice freeze before modeling, feature set freeze before training, threshold freeze before lockbox.",
+    "Purge gap минимум 24h для trade/holding tasks.",
+    "Максимум одна дополнительная route (early-cut ИЛИ extension), не обе.",
+    "Не обучать direction models без overlay evidence. Не обучать router."
   ],
   "slices": [
     {
       "slice_id": "compiled_plan_v9_stage_1",
       "title": "Closure-audit v8 и фиксация pivot v9",
-      "hypothesis": "Формально закрыть текущий data universe как исчерпанный для старых маршрутов и завести чистый исследовательский проект v9.",
-      "objective": "Формально закрыть текущий data universe как исчерпанный для старых маршрутов и завести чистый исследовательский проект v9.",
+      "hypothesis": "Формально закрыть текущий data universe как исчерпанный для old routes и создать чистую стартовую точку v9.",
+      "objective": "Формально закрыть текущий data universe как исчерпанный для old routes и создать чистую стартовую точку v9.",
       "success_criteria": [
-        "Clean project v9 создан с исправной терминологией и полным open-items register.",
-        "Immutable reference зафиксирован."
+        "Существует clean project v9 с записанным closure-audit",
+        "Immutable baseline reference зафиксирован",
+        "Research map оси заведены",
+        "Open-items register создан"
       ],
       "allowed_tools": [
         "research_project",
@@ -36,8 +41,10 @@
         "research_map"
       ],
       "evidence_requirements": [
-        "Clean project v9 создан с исправной терминологией и полным open-items register.",
-        "Immutable reference зафиксирован."
+        "Существует clean project v9 с записанным closure-audit",
+        "Immutable baseline reference зафиксирован",
+        "Research map оси заведены",
+        "Open-items register создан"
       ],
       "policy_tags": [
         "setup",
@@ -69,10 +76,11 @@
     {
       "slice_id": "compiled_plan_v9_stage_2",
       "title": "Audit нового data universe",
-      "hypothesis": "Проверить availability, quality, causal usability и novelty всех candidate data families (derivatives positioning, cross-exchange, microstructure, options).",
-      "objective": "Проверить availability, quality, causal usability и novelty всех candidate data families (derivatives positioning, cross-exchange, microstructure, options).",
+      "hypothesis": "Проверить availability, quality, causal usability и novelty всех кандидатов нового data universe.",
+      "objective": "Проверить availability, quality, causal usability и novelty всех кандидатов нового data universe.",
       "success_criteria": [
-        "Заполнена таблица audit для всех четырёх candidate families с verdict usable_now."
+        "Для каждой candidate family заполнена таблица: available, common_window_ok, gaps_ok, causality_ok, novelty_ok, usable_now",
+        "Результаты записаны в research_record"
       ],
       "allowed_tools": [
         "datasets",
@@ -82,7 +90,8 @@
         "research_record"
       ],
       "evidence_requirements": [
-        "Заполнена таблица audit для всех четырёх candidate families с verdict usable_now."
+        "Для каждой candidate family заполнена таблица: available, common_window_ok, gaps_ok, causality_ok, novelty_ok, usable_now",
+        "Результаты записаны в research_record"
       ],
       "policy_tags": [
         "triage",
@@ -116,23 +125,27 @@
     {
       "slice_id": "compiled_plan_v9_stage_3",
       "title": "Выбор primary family и fallback family",
-      "hypothesis": "Выбрать одну главную data family и одну fallback, формально lock остальные.",
-      "objective": "Выбрать одну главную data family и одну fallback, формально lock остальные.",
+      "hypothesis": "Выбрать одну главную data family и одну fallback по пяти критериям оценки, остальные locked.",
+      "objective": "Выбрать одну главную data family и одну fallback по пяти критериям оценки, остальные locked.",
       "success_criteria": [
-        "Primary и fallback family выбраны и зафиксированы.",
-        "Невыбранные families формально locked."
+        "Primary family выбрана и зафиксирована",
+        "Fallback family выбрана и зафиксирована",
+        "Остальные families locked",
+        "Family choice freeze applied"
       ],
       "allowed_tools": [
         "research_record",
         "research_map"
       ],
       "evidence_requirements": [
-        "Primary и fallback family выбраны и зафиксированы.",
-        "Невыбранные families формально locked."
+        "Primary family выбрана и зафиксирована",
+        "Fallback family выбрана и зафиксирована",
+        "Остальные families locked",
+        "Family choice freeze applied"
       ],
       "policy_tags": [
-        "decision_gate",
-        "cheap_first"
+        "decision",
+        "freeze"
       ],
       "max_turns": 24,
       "max_tool_calls": 24,
@@ -168,6 +181,6 @@
   "source_compile_report_path": "",
   "sequence_batch_index": 1,
   "status": "draft",
-  "created_at": "2026-04-10T17:07:43.039400+00:00",
-  "updated_at": "2026-04-10T17:07:43.039408+00:00"
+  "created_at": "2026-04-11T11:01:31.894281+00:00",
+  "updated_at": "2026-04-11T11:01:31.894409+00:00"
 }

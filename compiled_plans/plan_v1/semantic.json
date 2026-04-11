@@ -1,8 +1,8 @@
 {
   "source_file": "raw_plans/plan_v1.md",
   "source_hash": "43d2b6894f2df1d1a134b3898365b01fbb80ef52bf06871fa29b69a5201facae",
-  "source_title": "План дальнейших исследований для v1 — поиск ортогональных сигналов к active-signal-v1@1",
-  "goal": "Найти один или несколько новых ортогональных сигналов, которые дают самостоятельную информативность, проходят stability-проверку, доказанно расширяют покрытие базы без каннибализма, и принимаются через строгую воронку standalone → stability → integration → cannibalization → walk-forward.",
+  "source_title": "План дальнейших исследований для v1",
+  "goal": "Найти один или несколько новых ортогональных сигналов, которые проходят standalone → stability → integration → cannibalization проверку и дают чистый прирост поверх неизменной базы active-signal-v1@1.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -11,31 +11,31 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "База active-signal-v1@1 неизменна на протяжении всего цикла — никаких модификаций правил, порогов, часов, дней, исполнения.",
-    "Новые сигналы должны использовать новый класс информации, а не быть перестановкой hour, dow, cl_*, rsi, iv_est, Thursday/Monday шаблонов.",
-    "Каннибализм недопустим: новый сигнал должен расширять покрытие (режимы, часы, подпространства), а не перехватывать сделки базы.",
-    "Воронка обязательна: standalone → stability → integration → cannibalization → walk-forward — пропускать шаги нельзя.",
-    "Запрещён широкий brute-force по параметрам; допускается только небольшая логическая сетка для форм входа.",
+    "База active-signal-v1@1 остается неизменной на протяжении всего цикла; тюнинг её старых правил, порогов, часов, дней и косметических вариаций запрещён.",
+    "Новый сигнал должен использовать новый класс информации, новый gating, новый missing-regime слой или новую логику входа — не перестановку старых шаблонов.",
+    "Каннибализм недопустим: новый сигнал не должен преимущественно входить там же, где база, и перехватывать уже хорошие сделки.",
+    "Acceptance-воронка обязательна: standalone → stability → integration → cannibalization → final report. Пропуск шагов запрещён.",
     "Каждая гипотеза должна иметь записанное обоснование, почему она новая относительно базы и истории v1–v12.",
-    "Все отрицательные результаты фиксируются в research_record — повторное исследование закрытых идей запрещено без очень сильного основания."
+    "Отрицательные результаты фиксируются в research_record так же обязательно, как и положительные.",
+    "Walk-forward обязателен для всех финалистов перед принятием решения о продвижении."
   ],
   "stages": [
     {
       "stage_id": "stage_1",
       "title": "Запуск цикла и фиксация инвариантов",
-      "objective": "Зафиксировать неизменную базу active-signal-v1@1, открыть отдельный исследовательский проект и завести карту гипотез с едиными осями измерения.",
+      "objective": "Зафиксировать неизменную базу active-signal-v1@1, открыть отдельный исследовательский проект, завести карту гипотез и записать инварианты цикла.",
       "actions": [
         "Открыть отдельный research_project для этого цикла.",
         "В research_map завести измерения: hypothesis_family, data_layer, direction, expected_missing_regime, status.",
-        "В research_record зафиксировать инварианты: базу не менять, старые tuned families не переоткрывать, acceptance только через полную воронку.",
-        "Сохранить точный baseline-reference этого цикла в отдельной записи.",
+        "В research_record зафиксировать инварианты: базу не менять, старые tuned families не переоткрывать, acceptance только через standalone → stability → integration → cannibalization → final report.",
+        "Сохранить точный baseline-reference цикла в отдельной записи.",
         "Определить единую схему именования кандидатов и run ids."
       ],
       "success_criteria": [
         "Открытый проект существует.",
-        "Карта гипотез создана с осями hypothesis_family, data_layer, direction, expected_missing_regime, status.",
-        "Инварианты цикла зафиксированы в research_record.",
-        "Baseline-reference сохранён."
+        "Карта гипотез создана с заданными осями.",
+        "Инварианты цикла записаны в research_record.",
+        "Baseline reference зафиксирован."
       ],
       "tool_hints": [
         "research_project",
@@ -55,27 +55,25 @@
     {
       "stage_id": "stage_2",
       "title": "Формирование пространства только новых гипотез",
-      "objective": "Собрать и отфильтровать список новых классов сигналов (missing-regime specialists, event-conditioned entries, derivatives-state layers, cross-symbol routing, model-backed routing, exit-originated alpha) с обоснованием новизны каждого.",
+      "objective": "Собрать и отфильтровать список новых классов сигналов, которые не являются переименованными или косметическими вариациями уже исчерпанного пространства базы.",
       "actions": [
-        "Собрать длинный список семейств гипотез из допустимых классов.",
-        "Для каждого семейства записать: почему оно новое, почему не дубль базы, какой missing regime ловит, через какие признаки проверяется.",
-        "Проверить research_search на уже закрытые идеи — отсечь повторения.",
-        "Сформировать short-list гипотез первой волны с полным обоснованием новизны."
+        "Собрать длинный список семейств гипотез: missing-regime long specialists, new event-conditioned entries, new derivatives-state layers, cross-symbol routing, model-backed routing, exit-originated alpha.",
+        "Для каждого семейства сформулировать: почему оно новое, почему не дубль базы, какой missing regime ловит, через какие признаки проверяется.",
+        "Отсечь всё, что похоже на повтор уже закрытых классов идей.",
+        "Сформировать short-list гипотез первой волны.",
+        "Записать обоснования новизны в research_record."
       ],
       "success_criteria": [
-        "Есть short-list первой волны.",
+        "Short-list первой волны существует.",
         "По каждой гипотезе сформулировано, почему она действительно новая относительно базы и истории v1–v12."
       ],
       "tool_hints": [
-        "research_map",
         "research_record",
-        "research_search",
-        "datasets",
-        "features_catalog",
-        "events"
+        "research_map",
+        "research_search"
       ],
       "policy_tags": [
-        "hypothesis_formation",
+        "planning",
         "cheap_first"
       ],
       "depends_on": [
@@ -89,35 +87,34 @@
     {
       "stage_id": "stage_3",
       "title": "Data contract и feature contract для каждой новой семьи",
-      "objective": "Для каждой гипотезы первой волны зафиксировать точный контракт данных и признаков: входные колонки, способ построения, lookback, cross-symbol join, event alignment, leakage-контроль.",
+      "objective": "Для каждой новой гипотезы зафиксировать точный контракт данных и признаков: входные колонки, способ построения, lookback, cross-symbol joins, event alignment, potential leakage.",
       "actions": [
-        "Для каждой гипотезы завести feature contract: список входных колонок, средства построения, decision-time доступная информация, lookback, наличие cross-symbol join, event alignment.",
-        "При необходимости custom feature: сначала features_custom validate, потом publish, потом проверить materialized dataset.",
-        "При необходимости model-backed feature: подготовить отдельный train/validation/test контур без leakage в OOS.",
+        "Для каждой гипотезы завести feature contract: список входных колонок, средства построения, decision-time доступная информация, lookback, наличие cross-symbol join, наличие event alignment.",
+        "Если нужен custom feature: features_custom validate → publish → проверить materialized dataset.",
+        "Если нужен model-backed feature: подготовить отдельный train/validation/test контур, не допуская leakage в OOS.",
         "Для event-гипотез проверить alignment и покрытие через events.",
-        "Зафиксировать интерпретацию каждого нового признака в человеческом виде."
+        "Для каждого нового признака зафиксировать интерпретацию в человеческом виде."
       ],
       "success_criteria": [
         "По каждой гипотезе есть чистый contract данных и признаков.",
-        "Leakage проверен для каждого контракта.",
-        "Custom features валидированы и опубликованы.",
-        "Event alignment проверен для event-гипотез."
+        "Leakage проверен.",
+        "Custom features опубликованы (если нужны).",
+        "Agent понимает, что именно будет тестироваться."
       ],
       "tool_hints": [
-        "datasets",
-        "datasets_preview",
         "features_catalog",
         "features_dataset",
         "features_custom",
-        "features_analytics",
+        "datasets",
+        "datasets_preview",
         "events",
         "events_sync",
         "models_dataset",
         "research_record"
       ],
       "policy_tags": [
-        "data_contract",
-        "leakage_guard"
+        "data_readiness",
+        "feature_contract"
       ],
       "depends_on": [
         "stage_2"
@@ -130,31 +127,30 @@
     {
       "stage_id": "stage_4",
       "title": "Быстрый отбор через signal plausibility и feature profitability",
-      "objective": "До запуска полных бэктестов отсечь гипотезы, которые на уровне признака выглядят пусто, нестабильно или слишком похоже на базу.",
+      "objective": "Отсечь кандидатов, которые уже на уровне признака выглядят пустыми, нестабильными или слишком похожими на базу, до запуска полноценных бэктестов.",
       "actions": [
-        "Для каждого нового признака сделать первичный profitability scan.",
+        "Для каждого нового признака сделать первичный profitability scan через features_analytics.",
         "Проверить bucket-поведение и monotonicity.",
         "Проверить, не сводится ли эффект к одному экстремальному bucket.",
         "Сделать предварительное сравнение покрытия против базы: часы, дни, режимы, event subspaces.",
-        "Удалить кандидатов, которые выглядят как скрытая реплика известных правил."
+        "Удалить кандидатов, которые выглядят как скрытая реплика известных правил базы."
       ],
       "success_criteria": [
-        "После этапа остаются только гипотезы с предварительным смыслом и ожидаемой ортогональностью.",
-        "Все отклонённые кандидаты зафиксированы с причиной в research_record."
+        "Остаются только гипотезы с предварительным смыслом и ожидаемой ортогональностью.",
+        "Явно пустые и неортогональные кандидаты удалены и зафиксированы в research_record как отрицательные."
       ],
       "tool_hints": [
         "features_analytics",
         "features_catalog",
-        "features_dataset",
         "datasets_preview",
         "research_record"
       ],
       "policy_tags": [
         "cheap_first",
-        "filter_gate"
+        "analysis"
       ],
       "depends_on": [
-        "stage_3"
+        "stage_3_part2"
       ],
       "required": true,
       "parallelizable": true,
@@ -164,27 +160,29 @@
     {
       "stage_id": "stage_5",
       "title": "Standalone backtests новых сигналов",
-      "objective": "Запустить честные standalone-бэктесты для каждого уцелевшего кандидата и оценить собственную торговую ценность без интеграции с базой.",
+      "objective": "Проверить, даёт ли каждый оставшийся кандидат собственную торговую ценность до интеграции с базой.",
       "actions": [
         "Для каждого кандидата собрать минимально честную standalone-версию сигнала.",
-        "Не делать широкий brute-force по параметрам; ограничиться небольшой логической сеткой.",
-        "Сохранить для каждого standalone сигнала: net PnL, trades, PF, DD, PnL на сделку, квартальное распределение, концентрацию прибыли.",
-        "Описать, какую рыночную ситуацию каждый сигнал пытается ловить."
+        "Не делать широкий brute force по параметрам; ограничиться небольшой логической сеткой.",
+        "Запустить backtests_runs с backtests_plan предпроверкой.",
+        "Для каждого standalone сигнала сохранить: net PnL, trades, PF, DD, PnL per trade, квартальное распределение, концентрацию прибыли.",
+        "Описать, какую рыночную ситуацию ловит каждый сигнал.",
+        "Зафиксировать результаты в research_record."
       ],
       "success_criteria": [
-        "Есть shortlist standalone-кандидатов, которые не пусты сами по себе.",
-        "Все результаты записаны в research_record."
+        "Shortlist standalone-кандидатов, которые не пусты сами по себе.",
+        "Результаты каждого прогона сохранены."
       ],
       "tool_hints": [
-        "backtests_strategy",
-        "backtests_strategy_validate",
         "backtests_plan",
         "backtests_runs",
+        "backtests_strategy",
+        "backtests_strategy_validate",
         "research_record"
       ],
       "policy_tags": [
-        "backtesting",
-        "standalone"
+        "modeling",
+        "backtesting"
       ],
       "depends_on": [
         "stage_4"
@@ -197,27 +195,27 @@
     {
       "stage_id": "stage_6",
       "title": "Stability и condition analysis",
-      "objective": "Отсеять красивые, но локальные эффекты — оставить только сигналы, устойчивые при разбиении истории, либо честно доказавшие полезность как specialist signal для конкретного missing regime.",
+      "objective": "Отсеять красивые, но локальные эффекты; оставить только сигналы, которые устойчивы при разбиении истории или честно доказали полезность как specialist signal для отдельного missing regime.",
       "actions": [
         "Для каждого standalone-финалиста провести window stability analysis.",
-        "Запустить condition stability analysis по ключевым условиям.",
+        "Запустить backtests_conditions для condition stability по ключевым условиям.",
         "Найти слабые окна и понять, почему сигнал там не работает.",
         "Проверить, не держится ли результат на одном большом движении.",
-        "Если сигнал работает только в одном подрежиме — зафиксировать; допустимо, если этот подрежим базе не покрыт."
+        "Если сигнал работает только в одном подрежиме — записать; допустимо, если этот подрежим базе не покрыт.",
+        "Зафиксировать результаты stability в research_record."
       ],
       "success_criteria": [
-        "Остаются только сигналы, устойчивые широко, либо честно доказавшие specialist-полезность для конкретного missing regime.",
-        "Condition analysis завершён для каждого финалиста."
+        "Остаются только сигналы, устойчивые широко, или specialist signals с доказанной полезностью для отдельного missing regime.",
+        "Condition analysis завершён для всех финалистов."
       ],
       "tool_hints": [
         "backtests_conditions",
         "backtests_analysis",
-        "backtests_runs",
         "research_record"
       ],
       "policy_tags": [
-        "stability",
-        "filter_gate"
+        "analysis",
+        "backtesting"
       ],
       "depends_on": [
         "stage_5"
@@ -230,27 +228,29 @@
     {
       "stage_id": "stage_7",
       "title": "Интеграция с active-signal-v1@1",
-      "objective": "Проверить реальную ценность каждого surviving candidate поверх неизменной базы через интеграционные бэктесты с замером net delta, trades, PF, DD и ремонта слабых кварталов.",
+      "objective": "Проверить реальную ценность каждого surviving candidate поверх неизменной базы, а не абстрактную standalone-силу.",
       "actions": [
         "Для каждого surviving candidate создать интегрированный snapshot с базой.",
         "Сравнивать только против неизменной базы active-signal-v1@1.",
-        "Замерять: net delta PnL, изменение trades, PF, DD, изменение по слабым кварталам базы.",
-        "Отклонять или отправлять на пересборку кандидатов, ухудшающих профиль при интеграции."
+        "Замерять: net delta, изменение trades, PF, DD, изменение по слабым кварталам базы.",
+        "Если интеграция ухудшает профиль — кандидат отклоняется или уходит на пересборку.",
+        "Не принимать кандидата только из-за красивого standalone.",
+        "Зафиксировать интеграционные результаты."
       ],
       "success_criteria": [
         "Полная интеграционная картина для каждого прошедшего standalone кандидата.",
-        "Нет кандидатов, ухудшающих профиль базы."
+        "Каждый кандидат имеет ясный вердикт: promote, revise или reject."
       ],
       "tool_hints": [
-        "backtests_strategy",
-        "backtests_plan",
         "backtests_runs",
-        "backtests_analysis",
+        "backtests_plan",
+        "backtests_strategy",
         "research_record"
       ],
       "policy_tags": [
-        "integration",
-        "critical"
+        "modeling",
+        "backtesting",
+        "integration"
       ],
       "depends_on": [
         "stage_6"
@@ -263,25 +263,26 @@
     {
       "stage_id": "stage_8",
       "title": "Cannibalization, ownership и new-entry proof",
-      "objective": "Доказать, что каждый новый сигнал добавляет реально новые входы и расширяет покрытие, а не паразитирует на сделках базы.",
+      "objective": "Доказать, что новый сигнал добавляет реально новые входы и расширяет покрытие, а не паразитирует на базе.",
       "actions": [
         "Посчитать overlap нового сигнала с базой.",
         "Посчитать truly new trades, replaced base trades, PnL именно новых сделок.",
-        "Запустить layer_compare и signal_ownership analysis.",
-        "Проверить coverage expansion по часам, дням, режимам."
+        "Запустить backtests_analysis с layer_compare и signal_ownership.",
+        "Проверить coverage expansion по часам, дням, режимам, event subspaces.",
+        "Записать cannibalism verdict для каждого кандидата."
       ],
       "success_criteria": [
-        "Прямое доказательство того, что каждый кандидат реально расширяет систему.",
-        "Cannibalism verdict зафиксирован для каждого кандидата."
+        "Прямое доказательство: кто реально расширяет систему.",
+        "Cannibalism verdict определён для каждого кандидата."
       ],
       "tool_hints": [
         "backtests_analysis",
-        "backtests_runs",
         "research_record"
       ],
       "policy_tags": [
-        "cannibalism_check",
-        "critical"
+        "analysis",
+        "integration",
+        "critical_gate"
       ],
       "depends_on": [
         "stage_7"
@@ -294,25 +295,25 @@
     {
       "stage_id": "stage_9",
       "title": "Walk-forward и финальная валидация финалистов",
-      "objective": "Пропустить всех финалистов через walk-forward проверку как финальный строгий фильтр перед принятием решения.",
+      "objective": "Пропустить финалистов через walk-forward как строгую финальную проверку перед принятием решения о продвижении.",
       "actions": [
-        "Запустить walk-forward evaluation для каждого финалиста.",
-        "Оценить walk-forward verdict: стабильность, деградация, OOS-качество.",
-        "Проверить pairwise compatibility если несколько финалистов проходят.",
-        "Свести итоговый uplift vs base, DD quality, new-entry proof verdict."
+        "Запустить backtests_walkforward для каждого финалиста.",
+        "Оценить walk-forward verdict, final uplift vs base, DD quality.",
+        "Проверить pairwise compatibility между кандидатами, если их больше одного.",
+        "Зафиксировать final_status каждого кандидата."
       ],
       "success_criteria": [
         "Walk-forward завершён для всех кандидатов, дошедших до финала.",
-        "Итоговый verdict по каждому кандидату зафиксирован."
+        "Каждый кандидат имеет final_status: pass или fail."
       ],
       "tool_hints": [
         "backtests_walkforward",
-        "backtests_analysis",
         "research_record"
       ],
       "policy_tags": [
-        "walkforward",
-        "final_validation"
+        "backtesting",
+        "finalization",
+        "critical_gate"
       ],
       "depends_on": [
         "stage_8"
@@ -325,30 +326,28 @@
     {
       "stage_id": "stage_10",
       "title": "Финальный отбор и решение по продвижению",
-      "objective": "Принять решение PROMOTE / WATCHLIST SPECIALIST / REJECT по каждому кандидату на основании всех собранных доказательств, составить каннибализм-журнал и финальный отчёт.",
+      "objective": "Принять итоговое решение по каждому кандидату: PROMOTE, WATCHLIST SPECIALIST или REJECT — на основе всей накопленной доказательной базы.",
       "actions": [
-        "Свести все результаты по каждому кандидату в итоговую таблицу.",
-        "Принять решение: PROMOTE (интеграция в mainline), WATCHLIST SPECIALIST (специалист для отдельного режима), REJECT.",
-        "Составить обязательный журнал каннибализма: overlap_rate, new_trade_share, base_trade_loss_share, integration_net_effect.",
-        "Заполнить операционный чек-лист: база не изменена, каждая гипотеза имеет обоснование новизны, есть standalone, отрицательные результаты записаны, финальный отчёт написан.",
-        "Записать финальный отчёт в research_record и отправить уведомление."
+        "Свести все результаты: standalone, stability, integration, cannibalization, walk-forward.",
+        "Заполнить таблицу каннибализма с overlap_rate, new_trade_share, base_trade_loss_share, integration_net_effect.",
+        "Для каждого кандидата принять решение: PROMOTE (продвижение в mainline), WATCHLIST SPECIALIST (наблюдение), REJECT (отклонение).",
+        "Проверить операционный чек-лист: база не изменена, каждая гипотеза имеет обоснование новизны, есть standalone для каждого финалиста, отрицательные результаты записаны, финальный отчет написан.",
+        "Написать итоговый финальный отчет и отправить через notify_send."
       ],
       "success_criteria": [
-        "По каждому кандидату есть явное решение PROMOTE / WATCHLIST / REJECT с обоснованием.",
-        "Журнал каннибализма заполнен.",
-        "Операционный чек-лист пройден полностью.",
-        "Финальный отчёт записан."
+        "Каждый кандидат имеет итоговое решение с evidence_ref.",
+        "База не была изменена ни разу.",
+        "Отрицательные результаты зафиксированы.",
+        "Финальный отчет написан.",
+        "Есть честный ответ: найден ли реально новый входной слой."
       ],
       "tool_hints": [
         "research_record",
         "research_map",
-        "research_search",
-        "notify_send",
-        "gold_collection"
+        "notify_send"
       ],
       "policy_tags": [
-        "finalization",
-        "decision"
+        "finalization"
       ],
       "depends_on": [
         "stage_9"
@@ -360,8 +359,8 @@
     }
   ],
   "warnings": [
-    "Исходный план содержит 10 этапов (ЭТАП 0–9), но stage_id в source нумеруется 1–10; сохранена оригинальная нумерация.",
-    "ЭТАП 9 (stage_10) не содержит явных действий в исходном тексте — действия выведены из контекста решений PROMOTE/WATCHLIST/REJECT."
+    "Парсер не извлёк полный текст плана (full_text пуст); семантика восстановлена из candidate_stages и global_sections.",
+    "Этап 9 (stage_10) не содержит explicit objective, actions и success_criteria — они выведены из контекста раздела решений."
   ],
   "parse_confidence": 0.95
 }

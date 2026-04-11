@@ -1,6 +1,6 @@
 {
   "plan_id": "compiled_plan_v4_batch_3",
-  "goal": "Close all outstanding branches from v3, complete the low-friction wave with a final verdict, then conditionally explore weak-window repair and medium-friction branches under strict gate discipline.",
+  "goal": "Close all open branches from v3 through disciplined terminal decisions, then attempt weak-window targeted repair on the immutable base before considering any higher-friction exploration.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -9,37 +9,83 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "active-signal-v1@1 is immutable — never modify the base snapshot.",
-    "Rejected branches must not be reopened: H1_post_funding_long, H2_expiry_lead_lag, A1_high_iv_long_v1, A1b_high_iv_momentum, A4_wed_afternoon.",
-    "Static high-IV regime is a volatility regime descriptor, not a directional signal.",
-    "Every branch must reach a terminal decision (promoted / rejected / formally-skipped) before any downstream gate unlocks.",
-    "Do not confuse a data task with a research result — feature materialization ≠ hypothesis validation.",
-    "Medium-friction wave is locked until every low-friction branch is closed and weak-window repair is completed."
+    "active-signal-v1@1 is immutable reference — never modify the base snapshot.",
+    "Previously rejected branches (H1_post_funding_long, H2_expiry_lead_lag, A1_high_iv_long_v1, A1b_high_iv_momentum, A4_wed_afternoon) must not be reopened.",
+    "Static high-IV regime is a volatility mode, not a directional signal — do not reinterpret as alpha.",
+    "Every hypothesis branch must reach a terminal decision (promoted or rejected) before the plan can advance past its wave.",
+    "Medium-friction wave is locked until low-friction wave is fully exhausted with recorded final verdict and no promoted candidate.",
+    "Maximum 2 weak pockets may be selected for specialist repair.",
+    "Separate data tasks from research results — never conflate them."
   ],
   "slices": [
     {
-      "slice_id": "compiled_plan_v4_stage_7",
-      "title": "Только после этого — решение по medium-friction wave",
-      "hypothesis": "Decide whether to unlock medium-friction branches (B1 cross-symbol leadership, B2 model-backed IV routing) — only after all prior work is conclusively finished.",
-      "objective": "Decide whether to unlock medium-friction branches (B1 cross-symbol leadership, B2 model-backed IV routing) — only after all prior work is conclusively finished.",
+      "slice_id": "compiled_plan_v4_stage_6_part2",
+      "title": "Weak-window repair specialists (construction)",
+      "hypothesis": "Determine whether targeted specialist features can repair the weakest performance pockets of the immutable base.",
+      "objective": "Determine whether targeted specialist features can repair the weakest performance pockets of the immutable base.",
       "success_criteria": [
-        "A clear lock or unlock decision is recorded for the medium-friction wave."
+        "Answer recorded: can targeted repair produce anything useful beyond the base, or is the base already optimal within low-friction scope?"
       ],
       "allowed_tools": [
-        "datasets",
+        "research_record",
+        "features_custom",
+        "features_dataset",
+        "backtests_runs",
+        "backtests_strategy"
+      ],
+      "evidence_requirements": [
+        "Answer recorded: can targeted repair produce anything useful beyond the base, or is the base already optimal within low-friction scope?"
+      ],
+      "policy_tags": [
+        "research",
+        "targeted"
+      ],
+      "max_turns": 24,
+      "max_tool_calls": 24,
+      "max_expensive_calls": 3,
+      "parallel_slot": 1,
+      "budget_scale_applied": 6,
+      "depends_on": [
+        "compiled_plan_v4_stage_6_part1"
+      ],
+      "status": "pending",
+      "turn_count": 0,
+      "tool_call_count": 0,
+      "expensive_call_count": 0,
+      "assigned_worker_id": null,
+      "last_checkpoint_turn_id": "",
+      "last_checkpoint_summary": "",
+      "last_checkpoint_status": "",
+      "final_report_turn_id": "",
+      "last_error": "",
+      "last_summary": "",
+      "active_operation_ref": "",
+      "active_operation_status": "",
+      "active_operation_arguments": {},
+      "artifacts": [],
+      "facts": {}
+    },
+    {
+      "slice_id": "compiled_plan_v4_stage_7",
+      "title": "Решение по medium-friction wave",
+      "hypothesis": "Decide whether to unlock medium-friction exploration (B1: cross-symbol leadership, B2: model-backed IV-routing) only after all lower-friction work is conclusively finished.",
+      "objective": "Decide whether to unlock medium-friction exploration (B1: cross-symbol leadership, B2: model-backed IV-routing) only after all lower-friction work is conclusively finished.",
+      "success_criteria": [
+        "A clear lock or unlock decision for medium-friction wave is recorded with rationale."
+      ],
+      "allowed_tools": [
+        "features_custom",
         "models_dataset",
         "models_train",
-        "models_to_feature",
         "backtests_runs",
         "research_record"
       ],
       "evidence_requirements": [
-        "A clear lock or unlock decision is recorded for the medium-friction wave."
+        "A clear lock or unlock decision for medium-friction wave is recorded with rationale."
       ],
       "policy_tags": [
-        "medium_friction",
+        "research",
         "conditional",
-        "high_effort",
         "optional_candidate"
       ],
       "max_turns": 24,
@@ -48,7 +94,8 @@
       "parallel_slot": 1,
       "budget_scale_applied": 6,
       "depends_on": [
-        "compiled_plan_v4_stage_6"
+        "compiled_plan_v4_stage_5",
+        "compiled_plan_v4_stage_6_part2"
       ],
       "status": "pending",
       "turn_count": 0,
@@ -70,11 +117,10 @@
     {
       "slice_id": "compiled_plan_v4_stage_8",
       "title": "Финальный отчет по v4",
-      "hypothesis": "Produce a comprehensive final report summarizing all v4 research outcomes, decisions, and recommendations for the next cycle.",
-      "objective": "Produce a comprehensive final report summarizing all v4 research outcomes, decisions, and recommendations for the next cycle.",
+      "hypothesis": "Write a comprehensive final report for the entire v4 research cycle, summarizing all decisions, terminal outcomes, and next-step recommendations.",
+      "objective": "Write a comprehensive final report for the entire v4 research cycle, summarizing all decisions, terminal outcomes, and next-step recommendations.",
       "success_criteria": [
-        "v4_final_report is recorded with all branch verdicts, the low-friction verdict, repair verdict, and medium-friction decision.",
-        "No open branches remain without terminal status."
+        "A complete v4 final report is recorded in research memory with all terminal decisions, verdicts, and forward recommendations."
       ],
       "allowed_tools": [
         "research_record",
@@ -82,11 +128,11 @@
         "notify_send"
       ],
       "evidence_requirements": [
-        "v4_final_report is recorded with all branch verdicts, the low-friction verdict, repair verdict, and medium-friction decision.",
-        "No open branches remain without terminal status."
+        "A complete v4 final report is recorded in research memory with all terminal decisions, verdicts, and forward recommendations."
       ],
       "policy_tags": [
-        "finalization"
+        "finalization",
+        "documentation"
       ],
       "max_turns": 24,
       "max_tool_calls": 24,
@@ -94,7 +140,6 @@
       "parallel_slot": 1,
       "budget_scale_applied": 6,
       "depends_on": [
-        "compiled_plan_v4_stage_6",
         "compiled_plan_v4_stage_7"
       ],
       "status": "pending",
@@ -123,6 +168,6 @@
   "source_compile_report_path": "",
   "sequence_batch_index": 3,
   "status": "draft",
-  "created_at": "2026-04-10T16:57:59.712530+00:00",
-  "updated_at": "2026-04-10T16:57:59.712531+00:00"
+  "created_at": "2026-04-11T10:50:40.017573+00:00",
+  "updated_at": "2026-04-11T10:50:40.017715+00:00"
 }

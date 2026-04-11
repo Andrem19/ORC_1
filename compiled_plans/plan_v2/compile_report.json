@@ -5,13 +5,12 @@
   "compile_status": "compiled",
   "parser_confidence": 0.95,
   "semantic_method": "llm",
-  "stage_count": 12,
-  "compiled_plan_count": 4,
+  "stage_count": 13,
+  "compiled_plan_count": 5,
   "warnings": [
-    "plan_v2 is fundamentally different from plan_v1: complement-first architecture, not raw hypothesis sweeps.",
-    "Wave B (stage_11) is gated on Wave A being inconclusive — do not start without explicit gate evaluation.",
-    "All objectives and tool_hints are in Russian source context but translated to English in this draft for agent consumption."
+    "Plan is written in Russian; semantic intent was inferred without loss of meaning.",
+    "Stage 11 (Wave B) is explicitly gated on Wave A being inconclusive — the compiler must treat it as a conditional branch."
   ],
   "errors": [],
-  "compiled_at": "2026-04-10T16:54:19.873673+00:00"
+  "compiled_at": "2026-04-11T10:47:21.717369+00:00"
 }

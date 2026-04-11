@@ -1,13 +1,15 @@
 {
   "source_file": "raw_plans/plan_v5.md",
   "source_hash": "c21a9aced25f3fb034b4f6b839bf8ec6d7705db97fd2ea5ba66ef82f7f09f5f4",
-  "compiled_at": "2026-04-10T17:00:11.747062+00:00",
+  "compiled_at": "2026-04-11T10:51:59.004181+00:00",
   "sequence_id": "compiled_plan_v5",
   "compile_status": "compiled",
   "warnings": [
-    "Полный текст raw_plans/plan_v5.md не был передан в full_text; парсинг основан на candidate_stages и global_sections.",
-    "Optional catboost-router (m3) упомянут в контексте, но не выделен в отдельный stage — может быть включён в stage_6 если потребуется.",
     "Auto-added research_record for stage_3: every non-trivial stage needs documentation capability.",
+    "Auto-added research_record for stage_4: every non-trivial stage needs documentation capability.",
+    "Auto-added research_record for stage_5: every non-trivial stage needs documentation capability.",
+    "Auto-added research_record for stage_6: every non-trivial stage needs documentation capability.",
+    "Auto-added research_record for stage_7: every non-trivial stage needs documentation capability.",
     "Auto-added research_record for stage_8: every non-trivial stage needs documentation capability."
   ],
   "semantic_method": "llm",

@@ -1,16 +1,20 @@
 {
   "source_file": "raw_plans/plan_v7.md",
   "source_hash": "50047c8ea7fe63bf16bf9495c6650924453fc99241a6855b73f138a0d41ba9eb",
-  "compiled_at": "2026-04-10T17:04:14.014135+00:00",
+  "compiled_at": "2026-04-11T10:56:27.522026+00:00",
   "sequence_id": "compiled_plan_v7",
   "compile_status": "compiled",
   "warnings": [
+    "Plan is written in Russian; stage titles and objectives preserved in original language for fidelity.",
+    "Weak-window models M4/M5 are gated optional branches — not promoted unless base directional models show weak but substantive signal.",
+    "v6 left drift between planned barrier labels and actually used net_pnl>0 — v7 must enforce strict label discipline.",
     "Auto-added research_record for stage_3: every non-trivial stage needs documentation capability.",
-    "Auto-added research_record for stage_4: every non-trivial stage needs documentation capability.",
     "Auto-added research_record for stage_5: every non-trivial stage needs documentation capability.",
     "Auto-added research_record for stage_6: every non-trivial stage needs documentation capability.",
+    "Auto-added research_record for stage_6b: every non-trivial stage needs documentation capability.",
     "Auto-added research_record for stage_7: every non-trivial stage needs documentation capability.",
-    "Auto-added research_record for stage_8: every non-trivial stage needs documentation capability."
+    "Auto-added research_record for stage_8: every non-trivial stage needs documentation capability.",
+    "Auto-added research_record for stage_9: every non-trivial stage needs documentation capability."
   ],
   "semantic_method": "llm",
   "semantic_path": "semantic.json",

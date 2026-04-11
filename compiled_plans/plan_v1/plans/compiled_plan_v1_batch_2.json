@@ -1,6 +1,6 @@
 {
   "plan_id": "compiled_plan_v1_batch_2",
-  "goal": "Найти один или несколько новых ортогональных сигналов, которые дают самостоятельную информативность, проходят stability-проверку, доказанно расширяют покрытие базы без каннибализма, и принимаются через строгую воронку standalone → stability → integration → cannibalization → walk-forward.",
+  "goal": "Найти один или несколько новых ортогональных сигналов, которые проходят standalone → stability → integration → cannibalization проверку и дают чистый прирост поверх неизменной базы active-signal-v1@1.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -9,46 +9,98 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "База active-signal-v1@1 неизменна на протяжении всего цикла — никаких модификаций правил, порогов, часов, дней, исполнения.",
-    "Новые сигналы должны использовать новый класс информации, а не быть перестановкой hour, dow, cl_*, rsi, iv_est, Thursday/Monday шаблонов.",
-    "Каннибализм недопустим: новый сигнал должен расширять покрытие (режимы, часы, подпространства), а не перехватывать сделки базы.",
-    "Воронка обязательна: standalone → stability → integration → cannibalization → walk-forward — пропускать шаги нельзя.",
-    "Запрещён широкий brute-force по параметрам; допускается только небольшая логическая сетка для форм входа.",
+    "База active-signal-v1@1 остается неизменной на протяжении всего цикла; тюнинг её старых правил, порогов, часов, дней и косметических вариаций запрещён.",
+    "Новый сигнал должен использовать новый класс информации, новый gating, новый missing-regime слой или новую логику входа — не перестановку старых шаблонов.",
+    "Каннибализм недопустим: новый сигнал не должен преимущественно входить там же, где база, и перехватывать уже хорошие сделки.",
+    "Acceptance-воронка обязательна: standalone → stability → integration → cannibalization → final report. Пропуск шагов запрещён.",
     "Каждая гипотеза должна иметь записанное обоснование, почему она новая относительно базы и истории v1–v12.",
-    "Все отрицательные результаты фиксируются в research_record — повторное исследование закрытых идей запрещено без очень сильного основания."
+    "Отрицательные результаты фиксируются в research_record так же обязательно, как и положительные.",
+    "Walk-forward обязателен для всех финалистов перед принятием решения о продвижении."
   ],
   "slices": [
     {
+      "slice_id": "compiled_plan_v1_stage_3_part2",
+      "title": "Data contract и feature contract для каждой новой семьи (construction)",
+      "hypothesis": "Для каждой новой гипотезы зафиксировать точный контракт данных и признаков: входные колонки, способ построения, lookback, cross-symbol joins, event alignment, potential leakage.",
+      "objective": "Для каждой новой гипотезы зафиксировать точный контракт данных и признаков: входные колонки, способ построения, lookback, cross-symbol joins, event alignment, potential leakage.",
+      "success_criteria": [
+        "По каждой гипотезе есть чистый contract данных и признаков.",
+        "Leakage проверен.",
+        "Custom features опубликованы (если нужны).",
+        "Agent понимает, что именно будет тестироваться."
+      ],
+      "allowed_tools": [
+        "research_record",
+        "features_dataset",
+        "features_custom",
+        "events_sync",
+        "models_dataset"
+      ],
+      "evidence_requirements": [
+        "По каждой гипотезе есть чистый contract данных и признаков.",
+        "Leakage проверен.",
+        "Custom features опубликованы (если нужны).",
+        "Agent понимает, что именно будет тестироваться."
+      ],
+      "policy_tags": [
+        "data_readiness",
+        "feature_contract"
+      ],
+      "max_turns": 24,
+      "max_tool_calls": 24,
+      "max_expensive_calls": 3,
+      "parallel_slot": 1,
+      "budget_scale_applied": 6,
+      "depends_on": [
+        "compiled_plan_v1_stage_3_part1"
+      ],
+      "status": "pending",
+      "turn_count": 0,
+      "tool_call_count": 0,
+      "expensive_call_count": 0,
+      "assigned_worker_id": null,
+      "last_checkpoint_turn_id": "",
+      "last_checkpoint_summary": "",
+      "last_checkpoint_status": "",
+      "final_report_turn_id": "",
+      "last_error": "",
+      "last_summary": "",
+      "active_operation_ref": "",
+      "active_operation_status": "",
+      "active_operation_arguments": {},
+      "artifacts": [],
+      "facts": {}
+    },
+    {
       "slice_id": "compiled_plan_v1_stage_4",
       "title": "Быстрый отбор через signal plausibility и feature profitability",
-      "hypothesis": "До запуска полных бэктестов отсечь гипотезы, которые на уровне признака выглядят пусто, нестабильно или слишком похоже на базу.",
-      "objective": "До запуска полных бэктестов отсечь гипотезы, которые на уровне признака выглядят пусто, нестабильно или слишком похоже на базу.",
+      "hypothesis": "Отсечь кандидатов, которые уже на уровне признака выглядят пустыми, нестабильными или слишком похожими на базу, до запуска полноценных бэктестов.",
+      "objective": "Отсечь кандидатов, которые уже на уровне признака выглядят пустыми, нестабильными или слишком похожими на базу, до запуска полноценных бэктестов.",
       "success_criteria": [
-        "После этапа остаются только гипотезы с предварительным смыслом и ожидаемой ортогональностью.",
-        "Все отклонённые кандидаты зафиксированы с причиной в research_record."
+        "Остаются только гипотезы с предварительным смыслом и ожидаемой ортогональностью.",
+        "Явно пустые и неортогональные кандидаты удалены и зафиксированы в research_record как отрицательные."
       ],
       "allowed_tools": [
         "features_analytics",
         "features_catalog",
-        "features_dataset",
         "datasets_preview",
         "research_record"
       ],
       "evidence_requirements": [
-        "После этапа остаются только гипотезы с предварительным смыслом и ожидаемой ортогональностью.",
-        "Все отклонённые кандидаты зафиксированы с причиной в research_record."
+        "Остаются только гипотезы с предварительным смыслом и ожидаемой ортогональностью.",
+        "Явно пустые и неортогональные кандидаты удалены и зафиксированы в research_record как отрицательные."
       ],
       "policy_tags": [
         "cheap_first",
-        "filter_gate"
+        "analysis"
       ],
       "max_turns": 24,
       "max_tool_calls": 24,
       "max_expensive_calls": 2,
-      "parallel_slot": 1,
+      "parallel_slot": 2,
       "budget_scale_applied": 6,
       "depends_on": [
-        "compiled_plan_v1_stage_3"
+        "compiled_plan_v1_stage_3_part2"
       ],
       "status": "pending",
       "turn_count": 0,
@@ -70,74 +122,26 @@
     {
       "slice_id": "compiled_plan_v1_stage_5",
       "title": "Standalone backtests новых сигналов",
-      "hypothesis": "Запустить честные standalone-бэктесты для каждого уцелевшего кандидата и оценить собственную торговую ценность без интеграции с базой.",
-      "objective": "Запустить честные standalone-бэктесты для каждого уцелевшего кандидата и оценить собственную торговую ценность без интеграции с базой.",
+      "hypothesis": "Проверить, даёт ли каждый оставшийся кандидат собственную торговую ценность до интеграции с базой.",
+      "objective": "Проверить, даёт ли каждый оставшийся кандидат собственную торговую ценность до интеграции с базой.",
       "success_criteria": [
-        "Есть shortlist standalone-кандидатов, которые не пусты сами по себе.",
-        "Все результаты записаны в research_record."
+        "Shortlist standalone-кандидатов, которые не пусты сами по себе.",
+        "Результаты каждого прогона сохранены."
       ],
       "allowed_tools": [
-        "backtests_strategy",
-        "backtests_strategy_validate",
         "backtests_plan",
         "backtests_runs",
+        "backtests_strategy",
+        "backtests_strategy_validate",
         "research_record"
       ],
       "evidence_requirements": [
-        "Есть shortlist standalone-кандидатов, которые не пусты сами по себе.",
-        "Все результаты записаны в research_record."
+        "Shortlist standalone-кандидатов, которые не пусты сами по себе.",
+        "Результаты каждого прогона сохранены."
       ],
       "policy_tags": [
-        "backtesting",
-        "standalone"
-      ],
-      "max_turns": 24,
-      "max_tool_calls": 24,
-      "max_expensive_calls": 3,
-      "parallel_slot": 2,
-      "budget_scale_applied": 6,
-      "depends_on": [
-        "compiled_plan_v1_stage_4"
-      ],
-      "status": "pending",
-      "turn_count": 0,
-      "tool_call_count": 0,
-      "expensive_call_count": 0,
-      "assigned_worker_id": null,
-      "last_checkpoint_turn_id": "",
-      "last_checkpoint_summary": "",
-      "last_checkpoint_status": "",
-      "final_report_turn_id": "",
-      "last_error": "",
-      "last_summary": "",
-      "active_operation_ref": "",
-      "active_operation_status": "",
-      "active_operation_arguments": {},
-      "artifacts": [],
-      "facts": {}
-    },
-    {
-      "slice_id": "compiled_plan_v1_stage_6",
-      "title": "Stability и condition analysis",
-      "hypothesis": "Отсеять красивые, но локальные эффекты — оставить только сигналы, устойчивые при разбиении истории, либо честно доказавшие полезность как specialist signal для конкретного missing regime.",
-      "objective": "Отсеять красивые, но локальные эффекты — оставить только сигналы, устойчивые при разбиении истории, либо честно доказавшие полезность как specialist signal для конкретного missing regime.",
-      "success_criteria": [
-        "Остаются только сигналы, устойчивые широко, либо честно доказавшие specialist-полезность для конкретного missing regime.",
-        "Condition analysis завершён для каждого финалиста."
-      ],
-      "allowed_tools": [
-        "backtests_conditions",
-        "backtests_analysis",
-        "backtests_runs",
-        "research_record"
-      ],
-      "evidence_requirements": [
-        "Остаются только сигналы, устойчивые широко, либо честно доказавшие specialist-полезность для конкретного missing regime.",
-        "Condition analysis завершён для каждого финалиста."
-      ],
-      "policy_tags": [
-        "stability",
-        "filter_gate"
+        "modeling",
+        "backtesting"
       ],
       "max_turns": 24,
       "max_tool_calls": 24,
@@ -145,7 +149,7 @@
       "parallel_slot": 3,
       "budget_scale_applied": 6,
       "depends_on": [
-        "compiled_plan_v1_stage_5"
+        "compiled_plan_v1_stage_4"
       ],
       "status": "pending",
       "turn_count": 0,
@@ -173,6 +177,6 @@
   "source_compile_report_path": "",
   "sequence_batch_index": 2,
   "status": "draft",
-  "created_at": "2026-04-10T16:52:11.207521+00:00",
-  "updated_at": "2026-04-10T16:52:11.207522+00:00"
+  "created_at": "2026-04-11T10:45:01.661373+00:00",
+  "updated_at": "2026-04-11T10:45:01.661374+00:00"
 }

@@ -8,19 +8,9 @@
   "stage_count": 11,
   "compiled_plan_count": 4,
   "warnings": [
-    "v10 lockbox table referenced baseline as @3 instead of declared @1 — must be resolved in Stage 3.",
-    "v10 veto models report AUC ~0.95 which is unusually high and a shortcut/leakage risk.",
-    "v10 short/long/combined veto showed identical delta in lockbox — requires explicit explanation.",
-    "Auto-added research_record for stage_2: every non-trivial stage needs documentation capability.",
-    "Auto-added research_record for stage_3: every non-trivial stage needs documentation capability.",
-    "Auto-added research_record for stage_4: every non-trivial stage needs documentation capability.",
-    "Auto-added research_record for stage_5: every non-trivial stage needs documentation capability.",
-    "Auto-added research_record for stage_6: every non-trivial stage needs documentation capability.",
-    "Auto-added research_record for stage_7: every non-trivial stage needs documentation capability.",
-    "Auto-added research_record for stage_8: every non-trivial stage needs documentation capability.",
-    "Auto-added research_record for stage_9: every non-trivial stage needs documentation capability.",
-    "Auto-added research_record for stage_10: every non-trivial stage needs documentation capability."
+    "Plan is written in Russian; stage titles and objectives translated to English for semantic consistency.",
+    "v10 reported suspiciously high veto-model AUC/PR (~0.95) and identical delta across short/long/combined — primary red flags driving this audit."
   ],
   "errors": [],
-  "compiled_at": "2026-04-10T17:12:37.124181+00:00"
+  "compiled_at": "2026-04-11T11:05:11.914152+00:00"
 }

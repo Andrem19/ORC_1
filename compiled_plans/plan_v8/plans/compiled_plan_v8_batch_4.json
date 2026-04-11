@@ -1,6 +1,6 @@
 {
   "plan_id": "compiled_plan_v8_batch_4",
-  "goal": "Pivot from full-surface directional prediction to base-conditional overlays (veto, early-cut, hold-extension) that improve the quality of already-selected base trades on BTCUSDT.",
+  "goal": "Pivot from failed full-surface directional prediction to base-conditional trade-quality overlays — entry veto, early-cut, and hold-extension — that improve the immutable base without retuning its logic.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -9,42 +9,44 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "Base snapshot active-signal-v1@1 is immutable — never retune its logic, thresholds, hours, days, or execution parameters.",
-    "Full-surface directional classification on leadership/breadth/path-asymmetry/regime features is terminally closed (v4–v7 verdict).",
-    "No regression on future PnL. No classifier-transition standalone layer. No raw event / static IV directional ideas.",
-    "No feature/label/threshold/architecture selection on lockbox — selection OOS only.",
-    "Overlay models train only on trade-level datasets; never on anchor-level surfaces.",
-    "All comparisons vs base must be matched: same trade windows, same notionals, strict overlay evaluation.",
-    "Labels frozen before training. Thresholds not tuned on lockbox. Purge gap ≥ 24h between windows.",
-    "One route at a time: veto first, early-cut only if veto shows signal, extension only if underheld winners found.",
-    "Any improvement claim requires matched lockbox OOS comparison vs immutable base."
+    "Base snapshot active-signal-v1@1 is immutable — never modify its signals, thresholds, hours, days, or execution logic",
+    "No full-surface directional classification or regression on future PnL (v4–v7 routes terminally closed)",
+    "All v8 work operates on trade-level surface of already-executed base trades, not on all anchor bars",
+    "Feature selection, label selection, and threshold selection only on selection OOS — never on lockbox",
+    "Overlay labels must be frozen before any model training begins",
+    "Do not mix entry-veto and exit-extension objectives in a single label",
+    "Purge gap between train / selection-OOS / lockbox windows must be ≥ max holding horizon (minimum 24h)",
+    "Every improvement claim requires matched lockbox OOS comparison against immutable base on same trade window with same notionals"
   ],
   "slices": [
     {
       "slice_id": "compiled_plan_v8_stage_10",
-      "title": "Ownership, cannibalization и финальный overlay verdict",
-      "hypothesis": "Compute ownership, cannibalization, and overlap analysis for every surviving overlay route, and deliver the final v8 verdict: overlay success, partial, or failed.",
-      "objective": "Compute ownership, cannibalization, and overlap analysis for every surviving overlay route, and deliver the final v8 verdict: overlay success, partial, or failed.",
+      "title": "Ownership, cannibalization analysis, and final overlay verdict",
+      "hypothesis": "Compute ownership and cannibalization for every surviving overlay route, render a final honest verdict (success / partial / failed), and close v8 with a complete report.",
+      "objective": "Compute ownership and cannibalization for every surviving overlay route, render a final honest verdict (success / partial / failed), and close v8 with a complete report.",
       "success_criteria": [
-        "Ownership and cannibalization analysis complete for all surviving routes.",
-        "Final overlay route verdict recorded (success / partial / failed).",
-        "Comprehensive v8 final report written via research_record."
+        "Ownership analysis completed for every surviving overlay",
+        "Cannibalization risk assessed — no overlay worsens net outcome",
+        "Final verdict rendered with clear decision per route",
+        "v8 closure report written with all result fields populated",
+        "Next direction documented based on outcome"
       ],
       "allowed_tools": [
         "backtests_analysis",
         "research_record",
         "research_map",
-        "research_search"
+        "models_registry",
+        "models_compare"
       ],
       "evidence_requirements": [
-        "Ownership and cannibalization analysis complete for all surviving routes.",
-        "Final overlay route verdict recorded (success / partial / failed).",
-        "Comprehensive v8 final report written via research_record."
+        "Ownership analysis completed for every surviving overlay",
+        "Cannibalization risk assessed — no overlay worsens net outcome",
+        "Final verdict rendered with clear decision per route",
+        "v8 closure report written with all result fields populated",
+        "Next direction documented based on outcome"
       ],
       "policy_tags": [
-        "finalization",
-        "verdict",
-        "ownership_analysis"
+        "finalization"
       ],
       "max_turns": 24,
       "max_tool_calls": 24,
@@ -82,6 +84,6 @@
   "source_compile_report_path": "",
   "sequence_batch_index": 4,
   "status": "draft",
-  "created_at": "2026-04-10T17:05:54.562561+00:00",
-  "updated_at": "2026-04-10T17:05:54.562562+00:00"
+  "created_at": "2026-04-11T10:59:07.560987+00:00",
+  "updated_at": "2026-04-11T10:59:07.560990+00:00"
 }

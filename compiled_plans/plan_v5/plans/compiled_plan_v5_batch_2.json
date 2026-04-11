@@ -1,6 +1,6 @@
 {
   "plan_id": "compiled_plan_v5_batch_2",
-  "goal": "Построить и валидировать новые custom features, обучить CatBoost long/short модели, и доказать через matched OOS что модельный маршрут даёт новый additive layer поверх active-signal-v1@1.",
+  "goal": "Построить и проверить новые custom features, обучить CatBoost long и short модели, прогнать на selection OOS и lockbox OOS, и дать итоговый ответ — дают ли custom-feature + CatBoost модели новый additive layer поверх active-signal-v1.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -9,45 +9,43 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "База active-signal-v1@1 — immutable reference, не меняется ни при каких условиях.",
-    "Train / selection OOS / lockbox OOS окна замораживаются до начала model training.",
-    "Purge gap минимум 24h между train и OOS, и между selection OOS и lockbox OOS.",
-    "Long и short модели обучаются раздельно, никакой shared target.",
-    "Threshold калибруется на selection OOS и фиксируется до открытия lockbox.",
-    "Обязателен strict additive backtest comparison с базой на lockbox OOS.",
-    "Каждый model sleeve получает terminal decision: PROMOTE / WATCHLIST / REJECT.",
-    "Модель не имеет права быть чёрным ящиком — feature importance и SHAP обязательны."
+    "База active-signal-v1@1 — immutable reference, не меняется ни при каких условиях",
+    "Все custom features должны быть causally correct с фиксированным lookback",
+    "train / selection OOS / lockbox OOS окна замораживаются ДО начала обучения моделей",
+    "Purge gap минимум 24h между train и OOS окнами",
+    "Long и short модели обучаются отдельно",
+    "Thresholds фиксируются до открытия lockbox",
+    "Модель не имеет права быть чёрным ящиком — feature importance и SHAP обязательны",
+    "Итог cycle v5 — бинарное решение: PROMOTE / WATCHLIST / REJECT для каждого sleeve"
   ],
   "slices": [
     {
       "slice_id": "compiled_plan_v5_stage_4",
       "title": "Dataset contract и chronological split без утечек",
-      "hypothesis": "Зафиксировать train / selection OOS / lockbox OOS окна, purge gap, target definitions и построить modeling datasets до начала обучения моделей.",
-      "objective": "Зафиксировать train / selection OOS / lockbox OOS окна, purge gap, target definitions и построить modeling datasets до начала обучения моделей.",
+      "hypothesis": "Зафиксировать train / selection OOS / lockbox OOS окна и purge gap до начала обучения моделей, построить modeling datasets.",
+      "objective": "Зафиксировать train / selection OOS / lockbox OOS окна и purge gap до начала обучения моделей, построить modeling datasets.",
       "success_criteria": [
-        "Все modeling windows frozen: train, selection OOS, lockbox OOS.",
-        "Purge gap ≥ 24h подтверждён.",
-        "Modeling datasets materialized.",
-        "Target definitions зафиксированы."
+        "Все modeling windows frozen до начала training",
+        "Purge gap соблюдён",
+        "Target definitions зафиксированы"
       ],
       "allowed_tools": [
         "models_dataset",
+        "features_dataset",
         "research_record"
       ],
       "evidence_requirements": [
-        "Все modeling windows frozen: train, selection OOS, lockbox OOS.",
-        "Purge gap ≥ 24h подтверждён.",
-        "Modeling datasets materialized.",
-        "Target definitions зафиксированы."
+        "Все modeling windows frozen до начала training",
+        "Purge gap соблюдён",
+        "Target definitions зафиксированы"
       ],
       "policy_tags": [
         "contract",
-        "data_pipeline",
-        "critical"
+        "anti_leakage"
       ],
-      "max_turns": 24,
-      "max_tool_calls": 24,
-      "max_expensive_calls": 2,
+      "max_turns": 36,
+      "max_tool_calls": 30,
+      "max_expensive_calls": 6,
       "parallel_slot": 1,
       "budget_scale_applied": 6,
       "depends_on": [
@@ -73,12 +71,11 @@
     {
       "slice_id": "compiled_plan_v5_stage_5",
       "title": "Быстрая plausibility-проверка feature packs на train/selection discipline",
-      "hypothesis": "Не обучать все pack'и подряд — сначала отсеять feature packs через минимальные prototype модели, проверить signal quality на selection OOS, и выбрать максимум 2 лучших setup на сторону.",
-      "objective": "Не обучать все pack'и подряд — сначала отсеять feature packs через минимальные prototype модели, проверить signal quality на selection OOS, и выбрать максимум 2 лучших setup на сторону.",
+      "hypothesis": "Отсеять feature packs через минимальные long/short prototypes на selection OOS, выбрать максимум 2 лучших setup на сторону.",
+      "objective": "Отсеять feature packs через минимальные long/short prototypes на selection OOS, выбрать максимум 2 лучших setup на сторону.",
       "success_criteria": [
-        "Каждый feature pack оценён на selection OOS.",
-        "Есть shortlist максимум 2 long и 2 short setups для full training.",
-        "Экономическая правдоподобность проверена."
+        "Есть shortlist модельных setups для full training",
+        "Каждый setup проверен на selection OOS"
       ],
       "allowed_tools": [
         "models_train",
@@ -87,18 +84,17 @@
         "research_record"
       ],
       "evidence_requirements": [
-        "Каждый feature pack оценён на selection OOS.",
-        "Есть shortlist максимум 2 long и 2 short setups для full training.",
-        "Экономическая правдоподобность проверена."
+        "Есть shortlist модельных setups для full training",
+        "Каждый setup проверен на selection OOS"
       ],
       "policy_tags": [
-        "screening",
-        "modeling"
+        "cheap_first",
+        "filtering"
       ],
       "max_turns": 24,
       "max_tool_calls": 24,
       "max_expensive_calls": 2,
-      "parallel_slot": 1,
+      "parallel_slot": 2,
       "budget_scale_applied": 6,
       "depends_on": [
         "compiled_plan_v5_stage_4"
@@ -123,34 +119,32 @@
     {
       "slice_id": "compiled_plan_v5_stage_6",
       "title": "Обучение CatBoost-long и CatBoost-short",
-      "hypothesis": "Обучить по 1–2 disciplined CatBoost candidate models на сторону (long и short раздельно) на утверждённых feature packs, с фиксацией params, best iteration, feature importance, SHAP.",
-      "objective": "Обучить по 1–2 disciplined CatBoost candidate models на сторону (long и short раздельно) на утверждённых feature packs, с фиксацией params, best iteration, feature importance, SHAP.",
+      "hypothesis": "Обучить по одной-две disciplined candidate CatBoost models на сторону с frozen params, feature importance и SHAP.",
+      "objective": "Обучить по одной-две disciplined candidate CatBoost models на сторону с frozen params, feature importance и SHAP.",
       "success_criteria": [
-        "Есть frozen CatBoost long candidate model(s).",
-        "Есть frozen CatBoost short candidate model(s).",
-        "Feature importance и SHAP записаны.",
-        "Selection OOS quality приемлемый."
+        "Есть frozen model candidates для long и short",
+        "Feature importance и SHAP записаны",
+        "Selection OOS quality проверено"
       ],
       "allowed_tools": [
         "models_train",
-        "models_compare",
         "models_registry",
+        "models_compare",
+        "models_to_feature",
         "research_record"
       ],
       "evidence_requirements": [
-        "Есть frozen CatBoost long candidate model(s).",
-        "Есть frozen CatBoost short candidate model(s).",
-        "Feature importance и SHAP записаны.",
-        "Selection OOS quality приемлемый."
+        "Есть frozen model candidates для long и short",
+        "Feature importance и SHAP записаны",
+        "Selection OOS quality проверено"
       ],
       "policy_tags": [
         "modeling",
-        "expensive",
-        "critical"
+        "disciplined"
       ],
-      "max_turns": 24,
-      "max_tool_calls": 24,
-      "max_expensive_calls": 2,
+      "max_turns": 36,
+      "max_tool_calls": 30,
+      "max_expensive_calls": 6,
       "parallel_slot": 3,
       "budget_scale_applied": 6,
       "depends_on": [
@@ -182,6 +176,6 @@
   "source_compile_report_path": "",
   "sequence_batch_index": 2,
   "status": "draft",
-  "created_at": "2026-04-10T17:00:11.746993+00:00",
-  "updated_at": "2026-04-10T17:00:11.746995+00:00"
+  "created_at": "2026-04-11T10:51:59.003126+00:00",
+  "updated_at": "2026-04-11T10:51:59.003256+00:00"
 }

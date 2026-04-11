@@ -1,16 +1,12 @@
 {
   "source_file": "raw_plans/plan_v8.md",
   "source_hash": "5eae8229d938bc04e3b296d432bba819f6c43187265bfe18b3e7cf822c4f70d4",
-  "compiled_at": "2026-04-10T17:05:54.562568+00:00",
+  "compiled_at": "2026-04-11T10:59:07.561005+00:00",
   "sequence_id": "compiled_plan_v8",
   "compile_status": "compiled",
   "warnings": [
-    "Plan is in Russian; stage titles and objectives preserved in original language for traceability.",
-    "Feature families A–D reference custom features that must be authored and published before materialization.",
-    "Auto-added research_record for stage_4: every non-trivial stage needs documentation capability.",
-    "Auto-added research_record for stage_6: every non-trivial stage needs documentation capability.",
-    "Auto-added research_record for stage_8: every non-trivial stage needs documentation capability.",
-    "Auto-added research_record for stage_9: every non-trivial stage needs documentation capability."
+    "Plan is in Russian; stage titles and objectives are translated to English in the semantic draft while preserving original intent",
+    "Stages 8 and 9 are gated on positive evidence from prior stages — the plan may terminate earlier if veto route shows no signal"
   ],
   "semantic_method": "llm",
   "semantic_path": "semantic.json",

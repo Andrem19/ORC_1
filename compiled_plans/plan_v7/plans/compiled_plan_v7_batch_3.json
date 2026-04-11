@@ -1,6 +1,6 @@
 {
   "plan_id": "compiled_plan_v7_batch_3",
-  "goal": "Довести до честного решения: может ли новый directional feature layer + CatBoost classification дать additive long и/или short sleeve поверх active-signal-v1@1 при корректных labels, полных sides/horizons и не обрезанном feature layer.",
+  "goal": "Довести до честного решения: может ли новый directional feature layer + CatBoost classification дать additive long/short sleeve поверх active-signal-v1@1 при корректных labels, полных sides и horizons.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -9,28 +9,80 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "active-signal-v1@1 — immutable reference; запрещено менять базу, подбирать ей часы/дни/пороги/исолнение",
-    "запрещено объявлять улучшением всё, что не прошло matched OOS comparison с базой на том же окне",
-    "запрещено возвращаться к regression-предсказанию future PnL",
-    "запрещено возвращаться к IV-family как самостоятельному directional layer",
-    "net_pnl>0 больше не используется как primary label scheme",
-    "labels frozen после stage_2 до конца selection-stage; дрейф запрещён",
-    "short-first приоритет: сначала short 18h и short 12h, потом new long",
-    "только компактные feature packs — критический directional core, не весь зоопарк",
-    "lockbox untouched до финальной оценки; selection OOS для всех промежуточных решений",
-    "не обучать multiclass model; не строить router до первого standalone sleeve прошедшего OOS"
+    "База active-signal-v1@1 immutable — не менять, не подбирать часы/дни/пороги/исолнение.",
+    "Не выбирать feature set, label scheme, horizon, threshold или архитектуру по lockbox-окну.",
+    "Улучшением считается только matched OOS comparison с базой на том же окне.",
+    "Не возвращаться к regression-предсказанию future PnL.",
+    "Не возвращаться к IV-family как к самостоятельному directional layer.",
+    "net_pnl>0 больше не использовать как primary label scheme.",
+    "Не обучать multiclass model и не строить router до прохождения хотя бы одного standalone sleeve через OOS.",
+    "Labels frozen до training и не меняются до конца selection-stage.",
+    "Выбор pack и threshold — только по selection OOS; lockbox untouched.",
+    "Short-first приоритет: short 18h → short 12h → new long tests."
   ],
   "slices": [
     {
+      "slice_id": "compiled_plan_v7_stage_6b",
+      "title": "Weak-window optional models (M4/M5)",
+      "hypothesis": "Если базовые directional models показали слабый но содержательный signal — обучить M4_short_cls_weak_window и M5_long_cls_weak_window.",
+      "objective": "Если базовые directional models показали слабый но содержательный signal — обучить M4_short_cls_weak_window и M5_long_cls_weak_window.",
+      "success_criteria": [
+        "Gate проверен: базовые models показали слабый но содержательный signal.",
+        "M4 и M5 обучены (если gate пройден) или пропущены (если нет)."
+      ],
+      "allowed_tools": [
+        "models_train",
+        "models_compare",
+        "models_registry",
+        "research_record"
+      ],
+      "evidence_requirements": [
+        "Gate проверен: базовые models показали слабый но содержательный signal.",
+        "M4 и M5 обучены (если gate пройден) или пропущены (если нет)."
+      ],
+      "policy_tags": [
+        "optional",
+        "gated",
+        "weak_window",
+        "optional_candidate"
+      ],
+      "max_turns": 36,
+      "max_tool_calls": 30,
+      "max_expensive_calls": 12,
+      "parallel_slot": 1,
+      "budget_scale_applied": 6,
+      "depends_on": [
+        "compiled_plan_v7_stage_5",
+        "compiled_plan_v7_stage_6"
+      ],
+      "status": "pending",
+      "turn_count": 0,
+      "tool_call_count": 0,
+      "expensive_call_count": 0,
+      "assigned_worker_id": null,
+      "last_checkpoint_turn_id": "",
+      "last_checkpoint_summary": "",
+      "last_checkpoint_status": "",
+      "final_report_turn_id": "",
+      "last_error": "",
+      "last_summary": "",
+      "active_operation_ref": "",
+      "active_operation_status": "",
+      "active_operation_arguments": {},
+      "artifacts": [],
+      "facts": {}
+    },
+    {
       "slice_id": "compiled_plan_v7_stage_7",
       "title": "Full training и frozen model candidates",
-      "hypothesis": "Обучить финальные production-quality модели для всех кандидатов прошедших plausibility; заморозить параметры и лучшие итерации.",
-      "objective": "Обучить финальные production-quality модели для всех кандидатов прошедших plausibility; заморозить параметры и лучшие итерации.",
+      "hypothesis": "Обучить финальные модели для всех кандидатов, прошедших plausibility, и заморозить их для lockbox.",
+      "objective": "Обучить финальные модели для всех кандидатов, прошедших plausibility, и заморозить их для lockbox.",
       "success_criteria": [
-        "Все promoted модели обучены с финальными параметрами",
-        "Параметры и best_iteration заморожены для каждой модели",
-        "Immutable versions зарегистрированы в models_registry",
-        "Selection OOS метрики подтверждены и задокументированы"
+        "Каждый promoted candidate обучен финально.",
+        "params_frozen=true, best_iteration зафиксирован.",
+        "selection_oos_ok подтверждён.",
+        "frozen_for_lockbox=true.",
+        "Model versions зарегистрированы."
       ],
       "allowed_tools": [
         "models_train",
@@ -39,14 +91,15 @@
         "research_record"
       ],
       "evidence_requirements": [
-        "Все promoted модели обучены с финальными параметрами",
-        "Параметры и best_iteration заморожены для каждой модели",
-        "Immutable versions зарегистрированы в models_registry",
-        "Selection OOS метрики подтверждены и задокументированы"
+        "Каждый promoted candidate обучен финально.",
+        "params_frozen=true, best_iteration зафиксирован.",
+        "selection_oos_ok подтверждён.",
+        "frozen_for_lockbox=true.",
+        "Model versions зарегистрированы."
       ],
       "policy_tags": [
-        "full_training",
-        "model_freeze"
+        "freeze",
+        "full_training"
       ],
       "max_turns": 24,
       "max_tool_calls": 24,
@@ -77,28 +130,31 @@
     {
       "slice_id": "compiled_plan_v7_stage_8",
       "title": "Превращение лучших моделей в tradeable sleeves",
-      "hypothesis": "Перевести frozen model candidates в tradeable sleeves: выбрать и заморозить thresholds, оценить expected trade density.",
-      "objective": "Перевести frozen model candidates в tradeable sleeves: выбрать и заморозить thresholds, оценить expected trade density.",
+      "hypothesis": "Перевести frozen model candidates в tradeable sleeves с frozen thresholds и publish как model-backed features.",
+      "objective": "Перевести frozen model candidates в tradeable sleeves с frozen thresholds и publish как model-backed features.",
       "success_criteria": [
-        "Каждая модель имеет ≥1 frozen threshold tier",
-        "Thresholds выбраны только по selection OOS",
-        "Expected density оценена и задокументирована",
-        "Sleeves готовы к OOS backtest"
+        "sleeve_id определён для каждого promoted model.",
+        "threshold_frozen_before_lockbox=true.",
+        "expected_density оценён.",
+        "ready_for_oos_backtest=true.",
+        "Model-backed features опубликованы."
       ],
       "allowed_tools": [
         "models_to_feature",
         "models_registry",
         "backtests_strategy",
+        "features_custom",
         "research_record"
       ],
       "evidence_requirements": [
-        "Каждая модель имеет ≥1 frozen threshold tier",
-        "Thresholds выбраны только по selection OOS",
-        "Expected density оценена и задокументирована",
-        "Sleeves готовы к OOS backtest"
+        "sleeve_id определён для каждого promoted model.",
+        "threshold_frozen_before_lockbox=true.",
+        "expected_density оценён.",
+        "ready_for_oos_backtest=true.",
+        "Model-backed features опубликованы."
       ],
       "policy_tags": [
-        "threshold_freeze",
+        "freeze",
         "sleeve_creation"
       ],
       "max_turns": 24,
@@ -108,57 +164,6 @@
       "budget_scale_applied": 6,
       "depends_on": [
         "compiled_plan_v7_stage_7"
-      ],
-      "status": "pending",
-      "turn_count": 0,
-      "tool_call_count": 0,
-      "expensive_call_count": 0,
-      "assigned_worker_id": null,
-      "last_checkpoint_turn_id": "",
-      "last_checkpoint_summary": "",
-      "last_checkpoint_status": "",
-      "final_report_turn_id": "",
-      "last_error": "",
-      "last_summary": "",
-      "active_operation_ref": "",
-      "active_operation_status": "",
-      "active_operation_arguments": {},
-      "artifacts": [],
-      "facts": {}
-    },
-    {
-      "slice_id": "compiled_plan_v7_stage_9",
-      "title": "Matched OOS comparison против базы",
-      "hypothesis": "Провести lockbox OOS backtest каждого sleeve и сравнить с базой active-signal-v1@1 на том же окне — главный критерий additive value.",
-      "objective": "Провести lockbox OOS backtest каждого sleeve и сравнить с базой active-signal-v1@1 на том же окне — главный критерий additive value.",
-      "success_criteria": [
-        "Все sleeves протестированы на lockbox OOS",
-        "Matched comparison с базой выполнен на идентичном окне",
-        "PnL, PF, max_dd, avg/median trade задокументированы для sleeve и базы"
-      ],
-      "allowed_tools": [
-        "backtests_plan",
-        "backtests_runs",
-        "backtests_analysis",
-        "research_record"
-      ],
-      "evidence_requirements": [
-        "Все sleeves протестированы на lockbox OOS",
-        "Matched comparison с базой выполнен на идентичном окне",
-        "PnL, PF, max_dd, avg/median trade задокументированы для sleeve и базы"
-      ],
-      "policy_tags": [
-        "lockbox_evaluation",
-        "matched_comparison",
-        "critical_gate"
-      ],
-      "max_turns": 24,
-      "max_tool_calls": 24,
-      "max_expensive_calls": 3,
-      "parallel_slot": 1,
-      "budget_scale_applied": 6,
-      "depends_on": [
-        "compiled_plan_v7_stage_8"
       ],
       "status": "pending",
       "turn_count": 0,
@@ -186,6 +191,6 @@
   "source_compile_report_path": "",
   "sequence_batch_index": 3,
   "status": "draft",
-  "created_at": "2026-04-10T17:04:14.014103+00:00",
-  "updated_at": "2026-04-10T17:04:14.014105+00:00"
+  "created_at": "2026-04-11T10:56:27.521977+00:00",
+  "updated_at": "2026-04-11T10:56:27.521981+00:00"
 }

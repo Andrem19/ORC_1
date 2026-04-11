@@ -1,6 +1,6 @@
 {
   "plan_id": "compiled_plan_v9_batch_2",
-  "goal": "Определить, содержит ли новый data universe (derivatives positioning / pressure) реальный информационный сигнал сверх текущего OHLCV+IV+classifier+breadth+event space, и может ли он стать основой overlay-route для active-signal-v1.",
+  "goal": "Найти новый data universe, который добавляет реальную информацию сверх текущего OHLCV+IV+classifier+breadth+event space, и проверить его как overlay/veto route на immutable базе active-signal-v1@1.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -9,39 +9,47 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "Immutable reference base active-signal-v1@1 — запрещено менять базу, подбирать ей часы/дни/пороги/исполнение.",
-    "Нельзя открывать full-surface directional classification или trade-quality overlays на старом data universe.",
-    "Запрещён regression на future PnL, selection по lockbox-окну, перестановка старых features.",
-    "Любое улучшение обязано пройти matched OOS comparison против базы на том же окне.",
-    "Primary family: derivatives positioning/pressure; fallback: cross-exchange pressure; reserve: microstructure proxies.",
-    "Overlay-first: новый universe сначала проверяется на veto/overlay surface; direction — только при strong overlay evidence.",
-    "Максимум 12 features в первой волне для primary family.",
-    "Максимум одна дополнительная ветка (early-cut ИЛИ extension) сверх veto.",
-    "Direction labels запрещены до overlay evidence.",
-    "Purge gap ≥24h; freeze rules: family before modeling, feature set before training, threshold before lockbox."
+    "База active-signal-v1@1 — immutable reference. Запрещено менять, подбирать часы/дни/пороги/исполнение.",
+    "Запрещено выбирать feature set, label scheme, horizon, threshold или архитектуру по lockbox-окну.",
+    "Любое улучшение должно пройти matched OOS comparison против базы на том же окне.",
+    "Raw event entries, static IV, IV dynamics, classifier transitions, regression на future PnL, full-surface directional classification, trade-quality overlays — окончательно закрыты на текущем universe.",
+    "Новый data universe обязателен: нельзя пытаться докрутить старые модели на старых данных.",
+    "Primary family — одна, fallback — одна. Идти строго по очереди, не паралельно.",
+    "Сначала information-content triage, потом модели. Без bucket sanity модель не строится.",
+    "Overlay-first, direction-second. Direction labels запрещены без overlay evidence.",
+    "Не строить больше 12 features в первой волне для любой family.",
+    "Freeze rules: family choice freeze before modeling, feature set freeze before training, threshold freeze before lockbox.",
+    "Purge gap минимум 24h для trade/holding tasks.",
+    "Максимум одна дополнительная route (early-cut ИЛИ extension), не обе.",
+    "Не обучать direction models без overlay evidence. Не обучать router."
   ],
   "slices": [
     {
       "slice_id": "compiled_plan_v9_stage_4",
       "title": "Feature contract и materialization для primary family",
-      "hypothesis": "Построить minimal viable feature layer (≤12 features) для выбранной primary family и проверить coverage, causality, bucket sanity.",
-      "objective": "Построить minimal viable feature layer (≤12 features) для выбранной primary family и проверить coverage, causality, bucket sanity.",
+      "hypothesis": "Построить minimal viable feature layer (максимум 12 features) для primary family с полной валидацией.",
+      "objective": "Построить minimal viable feature layer (максимум 12 features) для primary family с полной валидацией.",
       "success_criteria": [
-        "Все primary features валидированы, опубликованы, материализованы.",
-        "Coverage ≥95% на целевом окне, bucket sanity подтверждён."
+        "Максимум 12 features опубликовано и материализовано",
+        "Каждый feature: validated=true, published=true, materialized=true",
+        "Coverage_ok=true для всех features",
+        "Bucket_sanity_ok=true (coverage, null-rate, stability, lift, monotonicity)"
       ],
       "allowed_tools": [
         "features_custom",
         "features_dataset",
-        "features_analytics",
+        "features_catalog",
         "research_record"
       ],
       "evidence_requirements": [
-        "Все primary features валидированы, опубликованы, материализованы.",
-        "Coverage ≥95% на целевом окне, bucket sanity подтверждён."
+        "Максимум 12 features опубликовано и материализовано",
+        "Каждый feature: validated=true, published=true, materialized=true",
+        "Coverage_ok=true для всех features",
+        "Bucket_sanity_ok=true (coverage, null-rate, stability, lift, monotonicity)"
       ],
       "policy_tags": [
-        "feature_engineering"
+        "feature_engineering",
+        "freeze"
       ],
       "max_turns": 24,
       "max_tool_calls": 24,
@@ -71,28 +79,31 @@
     {
       "slice_id": "compiled_plan_v9_stage_5",
       "title": "Trade-surface atlas augmentation",
-      "hypothesis": "Привязать новый feature layer к trade surface базы и определить, где новая family strongest.",
-      "objective": "Привязать новый feature layer к trade surface базы и определить, где новая family strongest.",
+      "hypothesis": "Привязать новый feature layer к trade surface базы и выявить, где новая family strongest.",
+      "objective": "Привязать новый feature layer к trade surface базы и выявить, где новая family strongest.",
       "success_criteria": [
-        "Atlas обогащён новыми features на всех ключевых временных точках.",
-        "Сегментный анализ показывает, где новая family имеет наибольший потенциал."
+        "Atlas базы обогащён новыми features",
+        "Определены strongest/weakhest сегменты trade surface по новой family",
+        "Результаты записаны"
       ],
       "allowed_tools": [
         "features_dataset",
-        "datasets_preview",
+        "features_analytics",
+        "backtests_strategy",
         "research_record"
       ],
       "evidence_requirements": [
-        "Atlas обогащён новыми features на всех ключевых временных точках.",
-        "Сегментный анализ показывает, где новая family имеет наибольший потенциал."
+        "Atlas базы обогащён новыми features",
+        "Определены strongest/weakhest сегменты trade surface по новой family",
+        "Результаты записаны"
       ],
       "policy_tags": [
-        "analysis",
-        "cheap_first"
+        "atlas",
+        "analysis"
       ],
       "max_turns": 24,
       "max_tool_calls": 24,
-      "max_expensive_calls": 2,
+      "max_expensive_calls": 3,
       "parallel_slot": 1,
       "budget_scale_applied": 6,
       "depends_on": [
@@ -118,12 +129,13 @@
     {
       "slice_id": "compiled_plan_v9_stage_6",
       "title": "Veto-route plausibility on new family",
-      "hypothesis": "Обучить veto overlay models (long/short) на selection OOS и проверить, даёт ли новая family meaningful veto signal.",
-      "objective": "Обучить veto overlay models (long/short) на selection OOS и проверить, даёт ли новая family meaningful veto signal.",
+      "hypothesis": "Обучить veto-overlay модели на новой family и оценить, даёт ли она meaningful veto signal.",
+      "objective": "Обучить veto-overlay модели на новой family и оценить, даёт ли она meaningful veto signal.",
       "success_criteria": [
-        "ROC AUC > baseline, PR AUC > baseline.",
-        "Worst-bucket lift и precision в veto bucket показывают экономический смысл.",
-        "Simulated selection improvement ≥0 при удалении flagged trades."
+        "Veto-long и veto-short модели обучены",
+        "ROC AUC, PR AUC, worst-bucket lift, precision посчитаны на selection OOS",
+        "Simulated selection economic effect посчитан",
+        "Принято решение: promoted_to_lockbox или нет"
       ],
       "allowed_tools": [
         "models_dataset",
@@ -133,9 +145,10 @@
         "research_record"
       ],
       "evidence_requirements": [
-        "ROC AUC > baseline, PR AUC > baseline.",
-        "Worst-bucket lift и precision в veto bucket показывают экономический смысл.",
-        "Simulated selection improvement ≥0 при удалении flagged trades."
+        "Veto-long и veto-short модели обучены",
+        "ROC AUC, PR AUC, worst-bucket lift, precision посчитаны на selection OOS",
+        "Simulated selection economic effect посчитан",
+        "Принято решение: promoted_to_lockbox или нет"
       ],
       "policy_tags": [
         "modeling",
@@ -175,6 +188,6 @@
   "source_compile_report_path": "",
   "sequence_batch_index": 2,
   "status": "draft",
-  "created_at": "2026-04-10T17:07:43.039444+00:00",
-  "updated_at": "2026-04-10T17:07:43.039446+00:00"
+  "created_at": "2026-04-11T11:01:31.894479+00:00",
+  "updated_at": "2026-04-11T11:01:31.894483+00:00"
 }

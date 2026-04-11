@@ -1,6 +1,6 @@
 {
   "plan_id": "compiled_plan_v3_batch_4",
-  "goal": "Завершить незакрытую ветку A1 через полный acceptance chain, затем при необходимости исследовать ровно одну следующую low-friction ветку, не допуская преждевременного расширения поиска.",
+  "goal": "Close the unfinished A1 branch from v2 to a final PROMOTE/REJECT verdict, and only if A1 fails open exactly one next low-friction candidate through the full acceptance chain.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -9,32 +9,32 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "active-signal-v1@1 — immutable reference; запрещено менять базу, подбирать ей часы/дни/пороги/исполнение.",
-    "Любое улучшение обязано пройти через strict additive integration, permissive integration, ownership и cannibalization proof.",
-    "Одновременно открыта максимум одна low-friction ветка (A1 → затем A2 или A3, но не обе).",
-    "Wave B (medium-friction) запрещена, пока обе low-friction ветки не закрыты без promoted candidate.",
-    "Если candidate перестаёт быть положительным после удаления одного сильного куска истории — это не mainline-quality add-on.",
-    "Финальное решение по каждой ветке: PROMOTE / WATCHLIST / REJECT — без исключений."
+    "active-signal-v1@1 is immutable: never retune its hours, days, thresholds, or execution parameters",
+    "Any candidate must pass strict-additive, permissive-integration, ownership, and cannibalization proof before promotion",
+    "No medium-friction wave B until both low-friction branches (A1 + one of A2/A3) are fully closed with no promoted candidate",
+    "Only one active low-friction branch may be investigated at a time",
+    "Maximum 3-4 features per prototype; maximum 2-3 prototypes per branch",
+    "If a candidate loses positivity after removing its strongest historical segment, it is not mainline-quality"
   ],
   "slices": [
     {
       "slice_id": "compiled_plan_v3_stage_10",
-      "title": "Контроль запрета на medium-friction wave",
-      "hypothesis": "Верифицировать, что условия для открытия Wave B не выполнены, и зафиксировать статус запрета.",
-      "objective": "Верифицировать, что условия для открытия Wave B не выполнены, и зафиксировать статус запрета.",
+      "title": "Контроль запрета на medium-friction wave B",
+      "hypothesis": "Enforce the hard gate: wave B (cross-symbol, model-backed routing, hybrids) is forbidden until both low-friction branches are fully closed without a promoted candidate.",
+      "objective": "Enforce the hard gate: wave B (cross-symbol, model-backed routing, hybrids) is forbidden until both low-friction branches are fully closed without a promoted candidate.",
       "success_criteria": [
-        "Контрольная таблица заполнена: A1 закрыт, A2/A3 закрыта, Wave B статус определён."
+        "All three gate conditions are verified and recorded: A1 closed, A2/A3 closed, wave B not opened"
       ],
       "allowed_tools": [
         "research_record",
         "research_map"
       ],
       "evidence_requirements": [
-        "Контрольная таблица заполнена: A1 закрыт, A2/A3 закрыта, Wave B статус определён."
+        "All three gate conditions are verified and recorded: A1 closed, A2/A3 closed, wave B not opened"
       ],
       "policy_tags": [
         "gate",
-        "control"
+        "discipline"
       ],
       "max_turns": 24,
       "max_tool_calls": 24,
@@ -42,7 +42,9 @@
       "parallel_slot": 1,
       "budget_scale_applied": 6,
       "depends_on": [
-        "compiled_plan_v3_stage_6"
+        "compiled_plan_v3_stage_6",
+        "compiled_plan_v3_stage_8",
+        "compiled_plan_v3_stage_9"
       ],
       "status": "pending",
       "turn_count": 0,
@@ -64,11 +66,12 @@
     {
       "slice_id": "compiled_plan_v3_stage_11",
       "title": "Финальный отчёт агента",
-      "hypothesis": "Составить обязательный итоговый отчёт по plan_v3 в строгом порядке: v2 пробелы → закрытие A1 → природа A1 → выбор следующей ветки → результат ветки → главный итог → рекомендации для v4.",
-      "objective": "Составить обязательный итоговый отчёт по plan_v3 в строгом порядке: v2 пробелы → закрытие A1 → природа A1 → выбор следующей ветки → результат ветки → главный итог → рекомендации для v4.",
+      "hypothesis": "Produce the mandatory structured final report covering v2 gaps, A1 closure verdict, next-branch results, overall v3 outcome, and concrete v4 recommendations.",
+      "objective": "Produce the mandatory structured final report covering v2 gaps, A1 closure verdict, next-branch results, overall v3 outcome, and concrete v4 recommendations.",
       "success_criteria": [
-        "Полный отчёт записан в research memory по обязательной структуре.",
-        "Оператор уведомлён о завершении plan_v3."
+        "Final report follows the mandatory 7-section structure",
+        "All branch decisions are recorded with rationale",
+        "v4 recommendations are concrete and actionable"
       ],
       "allowed_tools": [
         "research_record",
@@ -76,8 +79,9 @@
         "notify_send"
       ],
       "evidence_requirements": [
-        "Полный отчёт записан в research memory по обязательной структуре.",
-        "Оператор уведомлён о завершении plan_v3."
+        "Final report follows the mandatory 7-section structure",
+        "All branch decisions are recorded with rationale",
+        "v4 recommendations are concrete and actionable"
       ],
       "policy_tags": [
         "finalization",
@@ -117,6 +121,6 @@
   "source_compile_report_path": "",
   "sequence_batch_index": 4,
   "status": "draft",
-  "created_at": "2026-04-10T16:56:15.057300+00:00",
-  "updated_at": "2026-04-10T16:56:15.057302+00:00"
+  "created_at": "2026-04-11T10:49:08.828981+00:00",
+  "updated_at": "2026-04-11T10:49:08.828982+00:00"
 }

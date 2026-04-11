@@ -1,6 +1,6 @@
 {
   "plan_id": "compiled_plan_v6_batch_1",
-  "goal": "Найти и проверить новые cross-symbol directional custom features, обучить на них CatBoost long/short классификаторы, верифицировать на selection OOS и lockbox OOS, и сравнить с базой active-signal-v1@1 через matched OOS comparison.",
+  "goal": "Найти и проверить новые cross-symbol directional custom features, обучить на них CatBoost long/short classifiers, и доказать их additive value поверх active-signal-v1@1 через matched OOS comparison.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -9,27 +9,29 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "База active-signal-v1@1 — immutable reference. Запрещено менять базу, подбирать ей часы/дни/пороги/исполнение.",
-    "Запрещено обучать модель на данных, которые потом используются как финальный OOS.",
-    "Запрещено выбирать feature set, target, threshold или архитектуру по lockbox-окну.",
-    "Улучшение — только если прошёл matched OOS comparison с базой на том же окне.",
-    "Используется classification (directional barrier-based long/short labels), а не regression на future PnL.",
-    "Нужен новый информационный слой (cross-symbol leadership/breadth), а не вариации старых IV-фичей.",
-    "Отдельные long и short модели. Общая multiclass или router-модель запрещены на старте v6.",
-    "Максимум 3–4 сильных feature families, не широкий зоопарк.",
-    "Компактный disciplined HPO grid: depth 4/6/8, lr 0.03/0.05, moderate regularization, 2–3 seeds.",
-    "Допустимые горизонты: 12h, 18h. Допустимые barrier schemes: balanced, conservative.",
-    "Purge gap между train и более поздними окнами — не меньше 24h.",
-    "Thresholds замораживаются до открытия lockbox."
+    "База active-signal-v1@1 — immutable reference. Запрещено менять базу, подбирать ей параметры, обучать на финальном OOS.",
+    "Выбор feature set, target, threshold или архитектуры по lockbox-окну запрещён. Lockbox только проверяет frozen choice.",
+    "Улучшением считается только matched OOS comparison с базой на том же окне.",
+    "v5 regression route формально закрыт. v6 использует только classification (long/short labels).",
+    "Новый информационный слой обязателен — недостаточно переставлять старые IV/classifier features.",
+    "Сначала отдельные long и short classifiers (M1, M2). Router-модель запрещена до подтверждения обеих.",
+    "base-absent surface для discovery, matched OOS для финальной правды.",
+    "Не более 3–4 сильных feature families. Без широкой feature inflation.",
+    "Компактный disciplined HPO: depth {4,6,8}, lr {0.03,0.05}, moderate regularization, 2–3 seeds.",
+    "Purge gap между train и later windows — не менее 24h.",
+    "Горизонты только 12h и 18h. Barrier schemes только balanced и conservative."
   ],
   "slices": [
     {
       "slice_id": "compiled_plan_v6_stage_1",
       "title": "Старт v6 и фиксация новой model discipline",
-      "hypothesis": "Открыть новый research project под v6, зафиксировать immutable baseline reference, формально закрыть v5 regression route и завести research atlas с anti-leakage правилами.",
-      "objective": "Открыть новый research project под v6, зафиксировать immutable baseline reference, формально закрыть v5 regression route и завести research atlas с anti-leakage правилами.",
+      "hypothesis": "Открыть новый исследовательский проект, зафиксировать immutable baseline reference, формально закрыть v5 regression route, завести atlas оси и записать anti-leakage правила.",
+      "objective": "Открыть новый исследовательский проект, зафиксировать immutable baseline reference, формально закрыть v5 regression route, завести atlas оси и записать anti-leakage правила.",
       "success_criteria": [
-        "Создан проект v6, immutable reference зафиксирован, atlas определён, v5 regression formally closed, anti-leakage rules записаны."
+        "Новый проект создан",
+        "Immutable reference зафиксирован",
+        "Правила v6 (classification-only, new-layer-required, matched-OOS-only) записаны",
+        "Atlas оси заведены"
       ],
       "allowed_tools": [
         "research_project",
@@ -37,10 +39,14 @@
         "research_map"
       ],
       "evidence_requirements": [
-        "Создан проект v6, immutable reference зафиксирован, atlas определён, v5 regression formally closed, anti-leakage rules записаны."
+        "Новый проект создан",
+        "Immutable reference зафиксирован",
+        "Правила v6 (classification-only, new-layer-required, matched-OOS-only) записаны",
+        "Atlas оси заведены"
       ],
       "policy_tags": [
-        "setup"
+        "setup",
+        "cheap_first"
       ],
       "max_turns": 24,
       "max_tool_calls": 24,
@@ -68,24 +74,30 @@
     {
       "slice_id": "compiled_plan_v6_stage_2",
       "title": "Data readiness для нового information layer",
-      "hypothesis": "Проверить готовность 1h datasets для cross-symbol features (BTCUSDT, ETHUSDT, SOLUSDT, BNBUSDT) и events (funding, expiry), зафиксировать final symbol universe для v6.",
-      "objective": "Проверить готовность 1h datasets для cross-symbol features (BTCUSDT, ETHUSDT, SOLUSDT, BNBUSDT) и events (funding, expiry), зафиксировать final symbol universe для v6.",
+      "hypothesis": "Проверить доступность и качество 1h datasets для cross-symbol features (BTCUSDT, ETHUSDT + опционально SOLUSDT, BNBUSDT) и event stores, затем заморозить final symbol universe.",
+      "objective": "Проверить доступность и качество 1h datasets для cross-symbol features (BTCUSDT, ETHUSDT + опционально SOLUSDT, BNBUSDT) и event stores, затем заморозить final symbol universe.",
       "success_criteria": [
-        "Frozen symbol universe определён, понятно какие cross-symbol features реально можно строить."
+        "Frozen symbol universe определён",
+        "Все символы в universe имеют готовые 1h datasets",
+        "Funding и expiry events доступны",
+        "Понятно, какие cross-symbol features реально можно строить"
       ],
       "allowed_tools": [
         "datasets",
-        "datasets_sync",
         "datasets_preview",
         "events",
         "events_sync",
         "research_record"
       ],
       "evidence_requirements": [
-        "Frozen symbol universe определён, понятно какие cross-symbol features реально можно строить."
+        "Frozen symbol universe определён",
+        "Все символы в universe имеют готовые 1h datasets",
+        "Funding и expiry events доступны",
+        "Понятно, какие cross-symbol features реально можно строить"
       ],
       "policy_tags": [
-        "data_readiness"
+        "data_readiness",
+        "cheap_first"
       ],
       "max_turns": 36,
       "max_tool_calls": 30,
@@ -115,10 +127,13 @@
     {
       "slice_id": "compiled_plan_v6_stage_3",
       "title": "Feature contract и materialization для v6 feature packs",
-      "hypothesis": "Построить четыре feature packs (leadership-breadth, path-asymmetry, regime-disagreement, hybrid-event) через контракт, валидацию, публикацию, материализацию и проверку causality.",
-      "objective": "Построить четыре feature packs (leadership-breadth, path-asymmetry, regime-disagreement, hybrid-event) через контракт, валидацию, публикацию, материализацию и проверку causality.",
+      "hypothesis": "Построить 4 feature packs (leadership-breadth, path-asymmetry, regime-disagreement, hybrid-event): записать contracts, валидировать, опубликовать, материализовать, проверить coverage и causality.",
+      "objective": "Построить 4 feature packs (leadership-breadth, path-asymmetry, regime-disagreement, hybrid-event): записать contracts, валидировать, опубликовать, материализовать, проверить coverage и causality.",
       "success_criteria": [
-        "Все 4 feature packs materialized, есть общий common_model_window, leakage не обнаружен, features deployable."
+        "Все 4 feature packs materialized",
+        "Coverage и warmup проверены для каждого feature",
+        "Causality нарушений не обнаружено",
+        "Общий common_model_window определён"
       ],
       "allowed_tools": [
         "features_custom",
@@ -128,15 +143,19 @@
         "research_record"
       ],
       "evidence_requirements": [
-        "Все 4 feature packs materialized, есть общий common_model_window, leakage не обнаружен, features deployable."
+        "Все 4 feature packs materialized",
+        "Coverage и warmup проверены для каждого feature",
+        "Causality нарушений не обнаружено",
+        "Общий common_model_window определён"
       ],
       "policy_tags": [
-        "feature_contract"
+        "feature_engineering",
+        "gate_critical"
       ],
       "max_turns": 36,
       "max_tool_calls": 30,
       "max_expensive_calls": 6,
-      "parallel_slot": 3,
+      "parallel_slot": 1,
       "budget_scale_applied": 6,
       "depends_on": [
         "compiled_plan_v6_stage_2"
@@ -167,6 +186,6 @@
   "source_compile_report_path": "",
   "sequence_batch_index": 1,
   "status": "draft",
-  "created_at": "2026-04-10T17:02:22.767274+00:00",
-  "updated_at": "2026-04-10T17:02:22.767277+00:00"
+  "created_at": "2026-04-11T10:54:10.388273+00:00",
+  "updated_at": "2026-04-11T10:54:10.388362+00:00"
 }

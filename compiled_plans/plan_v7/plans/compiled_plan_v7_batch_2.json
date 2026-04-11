@@ -1,6 +1,6 @@
 {
   "plan_id": "compiled_plan_v7_batch_2",
-  "goal": "Довести до честного решения: может ли новый directional feature layer + CatBoost classification дать additive long и/или short sleeve поверх active-signal-v1@1 при корректных labels, полных sides/horizons и не обрезанном feature layer.",
+  "goal": "Довести до честного решения: может ли новый directional feature layer + CatBoost classification дать additive long/short sleeve поверх active-signal-v1@1 при корректных labels, полных sides и horizons.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -9,27 +9,27 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "active-signal-v1@1 — immutable reference; запрещено менять базу, подбирать ей часы/дни/пороги/исолнение",
-    "запрещено объявлять улучшением всё, что не прошло matched OOS comparison с базой на том же окне",
-    "запрещено возвращаться к regression-предсказанию future PnL",
-    "запрещено возвращаться к IV-family как самостоятельному directional layer",
-    "net_pnl>0 больше не используется как primary label scheme",
-    "labels frozen после stage_2 до конца selection-stage; дрейф запрещён",
-    "short-first приоритет: сначала short 18h и short 12h, потом new long",
-    "только компактные feature packs — критический directional core, не весь зоопарк",
-    "lockbox untouched до финальной оценки; selection OOS для всех промежуточных решений",
-    "не обучать multiclass model; не строить router до первого standalone sleeve прошедшего OOS"
+    "База active-signal-v1@1 immutable — не менять, не подбирать часы/дни/пороги/исолнение.",
+    "Не выбирать feature set, label scheme, horizon, threshold или архитектуру по lockbox-окну.",
+    "Улучшением считается только matched OOS comparison с базой на том же окне.",
+    "Не возвращаться к regression-предсказанию future PnL.",
+    "Не возвращаться к IV-family как к самостоятельному directional layer.",
+    "net_pnl>0 больше не использовать как primary label scheme.",
+    "Не обучать multiclass model и не строить router до прохождения хотя бы одного standalone sleeve через OOS.",
+    "Labels frozen до training и не меняются до конца selection-stage.",
+    "Выбор pack и threshold — только по selection OOS; lockbox untouched.",
+    "Short-first приоритет: short 18h → short 12h → new long tests."
   ],
   "slices": [
     {
       "slice_id": "compiled_plan_v7_stage_4",
       "title": "Dataset split и modeling surfaces",
-      "hypothesis": "Окончательно freeze modeling surfaces: подтвердить train/selection-OOS/lockbox-OOS окна и подготовить dataset surfaces для обучения.",
-      "objective": "Окончательно freeze modeling surfaces: подтвердить train/selection-OOS/lockbox-OOS окна и подготовить dataset surfaces для обучения.",
+      "hypothesis": "После завершения core-features окончательно freeze modeling surfaces: frozen windows (train, selection OOS, lockbox OOS) и три поверхности (full, base_absent, weak_window).",
+      "objective": "После завершения core-features окончательно freeze modeling surfaces: frozen windows (train, selection OOS, lockbox OOS) и три поверхности (full, base_absent, weak_window).",
       "success_criteria": [
-        "Frozen windows подтверждены и задокументированы",
-        "full_surface и base_absent_surface подготовлены",
-        "selection rules зафиксированы: pack и threshold — по selection OOS только"
+        "Frozen windows подтверждены и зафиксированы.",
+        "full_surface и base_absent_surface подготовлены.",
+        "Выбор pack и threshold ограничен selection OOS."
       ],
       "allowed_tools": [
         "models_dataset",
@@ -37,13 +37,13 @@
         "research_record"
       ],
       "evidence_requirements": [
-        "Frozen windows подтверждены и задокументированы",
-        "full_surface и base_absent_surface подготовлены",
-        "selection rules зафиксированы: pack и threshold — по selection OOS только"
+        "Frozen windows подтверждены и зафиксированы.",
+        "full_surface и base_absent_surface подготовлены.",
+        "Выбор pack и threshold ограничен selection OOS."
       ],
       "policy_tags": [
-        "data_freeze",
-        "leakage_guard"
+        "freeze",
+        "data_readiness"
       ],
       "max_turns": 24,
       "max_tool_calls": 24,
@@ -51,6 +51,7 @@
       "parallel_slot": 1,
       "budget_scale_applied": 6,
       "depends_on": [
+        "compiled_plan_v7_stage_2",
         "compiled_plan_v7_stage_3"
       ],
       "status": "pending",
@@ -73,30 +74,30 @@
     {
       "slice_id": "compiled_plan_v7_stage_5",
       "title": "Short-first plausibility stage",
-      "hypothesis": "Обучить и проверить short-side модели M1_short_12h и M2_short_18h на plausibility: ROC AUC, PR AUC, top-decile precision, economic sanity — всё на selection OOS.",
-      "objective": "Обучить и проверить short-side модели M1_short_12h и M2_short_18h на plausibility: ROC AUC, PR AUC, top-decile precision, economic sanity — всё на selection OOS.",
+      "hypothesis": "Проверить short-side models M1_short_12h и M2_short_18h на plausibility: AUC, PR AUC, top-decile lift, economic sanity — всё на selection OOS.",
+      "objective": "Проверить short-side models M1_short_12h и M2_short_18h на plausibility: AUC, PR AUC, top-decile lift, economic sanity — всё на selection OOS.",
       "success_criteria": [
-        "M1_short_12h обучена и оценена на selection OOS по всем metric dimensions",
-        "M2_short_18h обучена и оценена на selection OOS по всем metric dimensions",
-        "Economic plausibility проверена: нет edge только в случайном хвосте на микросэмпле",
-        "Решение о promotion в full training задокументировано для каждого setup"
+        "M1_short_12h обучена и оценена на selection OOS.",
+        "M2_short_18h обучена и оценена на selection OOS.",
+        "Для каждого: auc_ok, pr_ok, top_decile_ok, economic_plausibility_ok определены.",
+        "Promote/reject решение зафиксировано."
       ],
       "allowed_tools": [
         "models_train",
-        "models_dataset",
         "models_compare",
         "models_registry",
+        "features_dataset",
         "research_record"
       ],
       "evidence_requirements": [
-        "M1_short_12h обучена и оценена на selection OOS по всем metric dimensions",
-        "M2_short_18h обучена и оценена на selection OOS по всем metric dimensions",
-        "Economic plausibility проверена: нет edge только в случайном хвосте на микросэмпле",
-        "Решение о promotion в full training задокументировано для каждого setup"
+        "M1_short_12h обучена и оценена на selection OOS.",
+        "M2_short_18h обучена и оценена на selection OOS.",
+        "Для каждого: auc_ok, pr_ok, top_decile_ok, economic_plausibility_ok определены.",
+        "Promote/reject решение зафиксировано."
       ],
       "policy_tags": [
         "short_first",
-        "plausibility_check",
+        "plausibility",
         "selection_oos_only"
       ],
       "max_turns": 36,
@@ -127,28 +128,28 @@
     {
       "slice_id": "compiled_plan_v7_stage_6",
       "title": "Long 18h plausibility stage",
-      "hypothesis": "Проверить long side только на 18h horizon с balanced_barrier и conservative_barrier, используя Leadership-Breadth, Path-Asymmetry и Long-Recovery-Core packs.",
-      "objective": "Проверить long side только на 18h horizon с balanced_barrier и conservative_barrier, используя Leadership-Breadth, Path-Asymmetry и Long-Recovery-Core packs.",
+      "hypothesis": "Проверить long-side model M3_long_cls_18h на plausibility после завершения short-side evaluation, используя balanced_barrier и conservative_barrier.",
+      "objective": "Проверить long-side model M3_long_cls_18h на plausibility после завершения short-side evaluation, используя balanced_barrier и conservative_barrier.",
       "success_criteria": [
-        "M3_long_18h обучена и оценена на selection OOS для обоих label schemes",
-        "Economic plausibility проверена",
-        "Решение о promotion задокументировано"
+        "M3_long_18h обучена и оценена на selection OOS с обоими label schemes.",
+        "auc_ok, pr_ok, top_decile_ok, economic_plausibility_ok определены.",
+        "Promote/reject решение зафиксировано."
       ],
       "allowed_tools": [
         "models_train",
-        "models_dataset",
         "models_compare",
         "models_registry",
+        "features_dataset",
         "research_record"
       ],
       "evidence_requirements": [
-        "M3_long_18h обучена и оценена на selection OOS для обоих label schemes",
-        "Economic plausibility проверена",
-        "Решение о promotion задокументировано"
+        "M3_long_18h обучена и оценена на selection OOS с обоими label schemes.",
+        "auc_ok, pr_ok, top_decile_ok, economic_plausibility_ok определены.",
+        "Promote/reject решение зафиксировано."
       ],
       "policy_tags": [
         "long_side",
-        "plausibility_check",
+        "plausibility",
         "selection_oos_only"
       ],
       "max_turns": 36,
@@ -185,6 +186,6 @@
   "source_compile_report_path": "",
   "sequence_batch_index": 2,
   "status": "draft",
-  "created_at": "2026-04-10T17:04:14.014075+00:00",
-  "updated_at": "2026-04-10T17:04:14.014076+00:00"
+  "created_at": "2026-04-11T10:56:27.521733+00:00",
+  "updated_at": "2026-04-11T10:56:27.521734+00:00"
 }

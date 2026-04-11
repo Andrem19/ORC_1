@@ -1,6 +1,6 @@
 {
   "plan_id": "compiled_plan_v5_batch_1",
-  "goal": "Построить и валидировать новые custom features, обучить CatBoost long/short модели, и доказать через matched OOS что модельный маршрут даёт новый additive layer поверх active-signal-v1@1.",
+  "goal": "Построить и проверить новые custom features, обучить CatBoost long и short модели, прогнать на selection OOS и lockbox OOS, и дать итоговый ответ — дают ли custom-feature + CatBoost модели новый additive layer поверх active-signal-v1.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -9,26 +9,26 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "База active-signal-v1@1 — immutable reference, не меняется ни при каких условиях.",
-    "Train / selection OOS / lockbox OOS окна замораживаются до начала model training.",
-    "Purge gap минимум 24h между train и OOS, и между selection OOS и lockbox OOS.",
-    "Long и short модели обучаются раздельно, никакой shared target.",
-    "Threshold калибруется на selection OOS и фиксируется до открытия lockbox.",
-    "Обязателен strict additive backtest comparison с базой на lockbox OOS.",
-    "Каждый model sleeve получает terminal decision: PROMOTE / WATCHLIST / REJECT.",
-    "Модель не имеет права быть чёрным ящиком — feature importance и SHAP обязательны."
+    "База active-signal-v1@1 — immutable reference, не меняется ни при каких условиях",
+    "Все custom features должны быть causally correct с фиксированным lookback",
+    "train / selection OOS / lockbox OOS окна замораживаются ДО начала обучения моделей",
+    "Purge gap минимум 24h между train и OOS окнами",
+    "Long и short модели обучаются отдельно",
+    "Thresholds фиксируются до открытия lockbox",
+    "Модель не имеет права быть чёрным ящиком — feature importance и SHAP обязательны",
+    "Итог cycle v5 — бинарное решение: PROMOTE / WATCHLIST / REJECT для каждого sleeve"
   ],
   "slices": [
     {
       "slice_id": "compiled_plan_v5_stage_1",
       "title": "Старт v5 и фиксация model-research discipline",
-      "hypothesis": "Открыть новый исследовательский цикл v5 и зафиксировать строгую модельную дисциплину: immutable reference, atlas оси, anti-leakage rules.",
-      "objective": "Открыть новый исследовательский цикл v5 и зафиксировать строгую модельную дисциплину: immutable reference, atlas оси, anti-leakage rules.",
+      "hypothesis": "Открыть новый исследовательский цикл v5 и зафиксировать строгую модельную дисциплину, immutable reference и anti-leakage rules.",
+      "objective": "Открыть новый исследовательский цикл v5 и зафиксировать строгую модельную дисциплину, immutable reference и anti-leakage rules.",
       "success_criteria": [
-        "Создан проект v5 с project_id.",
-        "Immutable reference зафиксирован.",
-        "Atlas определён с нужными осями.",
-        "Anti-leakage rules записаны."
+        "Создан новый проект v5",
+        "Immutable reference зафиксирован",
+        "Atlas осей заведён в research_map",
+        "Anti-leakage rules записаны в research_record"
       ],
       "allowed_tools": [
         "research_project",
@@ -36,10 +36,10 @@
         "research_map"
       ],
       "evidence_requirements": [
-        "Создан проект v5 с project_id.",
-        "Immutable reference зафиксирован.",
-        "Atlas определён с нужными осями.",
-        "Anti-leakage rules записаны."
+        "Создан новый проект v5",
+        "Immutable reference зафиксирован",
+        "Atlas осей заведён в research_map",
+        "Anti-leakage rules записаны в research_record"
       ],
       "policy_tags": [
         "setup",
@@ -71,23 +71,24 @@
     {
       "slice_id": "compiled_plan_v5_stage_2",
       "title": "Feature contract для новых custom features",
-      "hypothesis": "Перевести все planned feature ideas (IV divergence, transition persistence, failed breakout, expiry compression, failure-event pack, post-event disappointment) в строгий причинный feature contract с описанием, raw input, lookback, causality, side bias.",
-      "objective": "Перевести все planned feature ideas (IV divergence, transition persistence, failed breakout, expiry compression, failure-event pack, post-event disappointment) в строгий причинный feature contract с описанием, raw input, lookback, causality, side bias.",
+      "hypothesis": "Перевести все feature ideas в строгий причинный contract с описанием, raw input, lookback, causality, интерпретацией и side bias.",
+      "objective": "Перевести все feature ideas в строгий причинный contract с описанием, raw input, lookback, causality, интерпретацией и side bias.",
       "success_criteria": [
-        "Полный feature contract по всем planned features: cf_price_iv_divergence_3h, cf_transition_persistence, cf_failed_breakout_down_12h, cf_expiry_compression_release, failure-event pack, post-event disappointment family.",
-        "Каждая запись содержит описание, raw input, lookback, causality, side bias."
+        "Полный feature contract по всем planned features записан",
+        "Каждый feature имеет causality_check, lookback, side_bias"
       ],
       "allowed_tools": [
+        "research_record",
         "features_custom",
-        "research_record"
+        "features_catalog"
       ],
       "evidence_requirements": [
-        "Полный feature contract по всем planned features: cf_price_iv_divergence_3h, cf_transition_persistence, cf_failed_breakout_down_12h, cf_expiry_compression_release, failure-event pack, post-event disappointment family.",
-        "Каждая запись содержит описание, raw input, lookback, causality, side bias."
+        "Полный feature contract по всем planned features записан",
+        "Каждый feature имеет causality_check, lookback, side_bias"
       ],
       "policy_tags": [
         "contract",
-        "no_compute"
+        "documentation"
       ],
       "max_turns": 24,
       "max_tool_calls": 24,
@@ -117,31 +118,30 @@
     {
       "slice_id": "compiled_plan_v5_stage_3",
       "title": "Валидация, публикация и materialization custom features",
-      "hypothesis": "Сделать все утверждённые custom features реально доступными в feature dataset: валидировать, опубликовать, собрать managed dataset и проверить coverage, NaN, leakage.",
-      "objective": "Сделать все утверждённые custom features реально доступными в feature dataset: валидировать, опубликовать, собрать managed dataset и проверить coverage, NaN, leakage.",
+      "hypothesis": "Сделать весь selected feature set реально доступным для моделей: валидация, публикация, materialization, проверка NaN/coverage/leakage, фиксация common_model_window.",
+      "objective": "Сделать весь selected feature set реально доступным для моделей: валидация, публикация, materialization, проверка NaN/coverage/leakage, фиксация common_model_window.",
       "success_criteria": [
-        "Все selected features валидированы и опубликованы.",
-        "Managed feature dataset materialized с полным coverage.",
-        "Warmup OK, NaN в допустимых пределах.",
-        "Leakage не обнаружен.",
-        "common_model_window зафиксирован."
+        "Все selected features materialized",
+        "Общий modeling frame готов",
+        "NaN, coverage, leakage проверки пройдены",
+        "common_model_window зафиксирован"
       ],
       "allowed_tools": [
         "features_custom",
         "features_dataset",
+        "features_analytics",
         "features_catalog",
         "research_record"
       ],
       "evidence_requirements": [
-        "Все selected features валидированы и опубликованы.",
-        "Managed feature dataset materialized с полным coverage.",
-        "Warmup OK, NaN в допустимых пределах.",
-        "Leakage не обнаружен.",
-        "common_model_window зафиксирован."
+        "Все selected features materialized",
+        "Общий modeling frame готов",
+        "NaN, coverage, leakage проверки пройдены",
+        "common_model_window зафиксирован"
       ],
       "policy_tags": [
-        "data_pipeline",
-        "expensive"
+        "data_readiness",
+        "validation"
       ],
       "max_turns": 36,
       "max_tool_calls": 30,
@@ -177,6 +177,6 @@
   "source_compile_report_path": "",
   "sequence_batch_index": 1,
   "status": "draft",
-  "created_at": "2026-04-10T17:00:11.746947+00:00",
-  "updated_at": "2026-04-10T17:00:11.746952+00:00"
+  "created_at": "2026-04-11T10:51:59.003066+00:00",
+  "updated_at": "2026-04-11T10:51:59.003079+00:00"
 }

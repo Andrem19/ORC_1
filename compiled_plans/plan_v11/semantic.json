@@ -1,8 +1,8 @@
 {
   "source_file": "raw_plans/plan_v11.md",
   "source_hash": "3f49d822ba6a5bfa9dab725eed820edaac3196724c74fd317b87b3d2bee21676",
-  "source_title": "План дальнейших исследований для v11",
-  "goal": "Forensic audit of v10 microstructure overlay: verify reproducibility, detect leakage, confirm same-window improvement, and deliver a final CONFIRMED / DOWNGRADED / REJECTED verdict.",
+  "source_title": "План дальнейших исследований для v11 — forensic audit of v10",
+  "goal": "Conduct a rigorous forensic audit of the v10 microstructure overlay result to confirm, downgrade, or reject it as a genuine improvement over the immutable baseline.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -11,28 +11,29 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "Immutable reference is active-signal-v1@1 — never modify or re-tune the base.",
-    "No new features, no new directional scouts, no early-cut, no label changes allowed.",
-    "All comparisons must use identical train / selection-OOS / lockbox windows.",
-    "Short-only, long-only, and combined veto must be tested in separate independent runs — never aggregated.",
-    "Rule-based (threshold / bucket) overlay must be validated before any model-backed overlay.",
-    "PROMOTE verdict only after every forensic block passes; any confirmed leakage triggers REJECTED.",
-    "No mixing of reproduction checks, leakage checks, and new ideas in the same run."
+    "v11 is audit-only: no new features, no new directional scouts, no early-cut, no label changes.",
+    "Immutable reference is active-signal-v1@1 — never modify the baseline.",
+    "All comparisons must use the same lockbox window for base and overlay.",
+    "Short-only, long-only, and combined veto must be tested as separate runs — never aggregated into a single story.",
+    "Leakage, reference, window, and snapshot audits must complete before any interpretive conclusion.",
+    "Simple rule-based overlay must be validated before model-backed overlay.",
+    "PROMOTE status is only valid if v10 survives the entire forensic cycle."
   ],
   "stages": [
     {
       "stage_id": "stage_1",
-      "title": "Freeze и постановка forensic-cycle",
-      "objective": "Open dedicated audit project, freeze immutable reference, and register all open forensic items.",
+      "title": "Freeze and forensic-cycle setup",
+      "objective": "Lock v11 into audit-only mode, create the audit project, register all open forensic items.",
       "actions": [
-        "Open research_project for v11 forensic cycle.",
-        "Record v10 claimed success and list specific red flags in research_record.",
-        "Lock immutable reference: snapshot_id=active-signal-v1, version=1, symbol=BTCUSDT, anchor=1h, execution=5m.",
+        "Open a new research_project for v11 audit cycle.",
+        "Record in research_record: v10 claimed success, why it needs forensic validation, specific red flags to check.",
+        "Pin immutable reference: snapshot_id=active-signal-v1, version=1, symbol=BTCUSDT, anchor=1h, execution=5m.",
         "Define research_map axes: audit_block, side, run_type, leakage_type, comparison_window, final_verdict.",
         "Create open-items register: reference_integrity, window_integrity, feature_leakage_audit, label_leakage_audit, snapshot_assembly_audit, reproduce_v10, same_window_base_runs, short_long_combined_separation, cannibalization_ownership, final_v11_verdict."
       ],
       "success_criteria": [
-        "Dedicated v11 audit project exists with frozen reference and complete open-items register."
+        "Separate v11 audit-project exists with frozen audit-only mode.",
+        "All 10 forensic open-items registered in the research map."
       ],
       "tool_hints": [
         "research_project",
@@ -41,7 +42,8 @@
       ],
       "policy_tags": [
         "setup",
-        "cheap_first"
+        "freeze",
+        "audit_only"
       ],
       "depends_on": [],
       "required": true,
@@ -52,185 +54,119 @@
     {
       "stage_id": "stage_2",
       "title": "Exact reproduction of v10 from scratch",
-      "objective": "Reproduce the full v10 pipeline — dataset, features, baselines, veto models, overlay snapshot, lockbox result — without any manual corrections.",
+      "objective": "Reproduce the full v10 result from clean state without manual adjustments to determine if it is reproducible at all.",
       "actions": [
-        "Rebuild dataset and micro-core features from raw data.",
-        "Recalculate bucket-veto and threshold-veto baselines.",
-        "Retrain best short-veto and long-veto models with identical v10 configuration.",
+        "Rebuild dataset and micro-core features from scratch.",
+        "Recompute baselines: bucket veto and threshold veto.",
+        "Rebuild best short and long veto models.",
         "Reassemble overlay snapshot.",
-        "Replay reported lockbox result and compare metrics."
+        "Repeat the reported lockbox result exactly."
       ],
       "success_criteria": [
-        "Verdict recorded: reproduced exactly, partially reproduced, or not reproduced."
+        "Reproduction verdict: reproduced exactly / partially reproduced / not reproduced."
       ],
       "tool_hints": [
         "features_dataset",
-        "models_dataset",
         "models_train",
-        "models_registry",
         "backtests_strategy",
-        "backtests_runs"
+        "backtests_runs",
+        "research_record"
       ],
       "policy_tags": [
         "reproduction",
-        "expensive"
+        "no_adjustments",
+        "cheap_first"
       ],
       "depends_on": [
         "stage_1"
       ],
       "required": true,
       "parallelizable": false,
-      "gate_hint": "If not reproduced, downstream audits must account for divergence.",
+      "gate_hint": "",
       "raw_stage_ref": "stage_2"
     },
     {
       "stage_id": "stage_3",
       "title": "Reference integrity audit",
-      "objective": "Resolve the @1 vs @3 baseline contradiction found in v10 lockbox table.",
+      "objective": "Resolve the core contradiction: v10 lockbox table referenced @3 as baseline while the plan specified immutable @1.",
       "actions": [
-        "Inspect active-signal-v1@1 and active-signal-v1@3 side by side.",
-        "Compare logic, parameters, execution rules, filters, exits, symbol and window coverage.",
-        "If snapshots differ: declare v10 comparison invalid and schedule reruns against @1."
+        "Inspect and compare active-signal-v1@1 vs active-signal-v1@3: logic, parameters, execution, filters, exits, symbol and window coverage.",
+        "If snapshots are not identical: declare v10 comparison invalid and rerun all v10 comparisons strictly against @1."
       ],
       "success_criteria": [
-        "Clear verdict recorded: @1 == @3 or @1 != @3 with documented differences."
+        "Clear verdict: @1 == @3, or @1 != @3 with documented diffs.",
+        "If mismatch: all prior v10 comparisons flagged as invalid."
       ],
       "tool_hints": [
         "backtests_strategy",
         "models_registry",
-        "signal_api_binding_inspect"
+        "research_record"
       ],
       "policy_tags": [
         "audit",
-        "cheap_first"
+        "reference_integrity"
       ],
       "depends_on": [
-        "stage_2"
+        "stage_1"
       ],
       "required": true,
       "parallelizable": true,
-      "gate_hint": "If @1 != @3, all v10 lockbox comparisons must be rerun against @1 before proceeding.",
+      "gate_hint": "",
       "raw_stage_ref": "stage_3"
     },
     {
       "stage_id": "stage_4",
       "title": "Window integrity audit",
-      "objective": "Verify that all v10 runs used identical train / selection-OOS / lockbox windows with no look-ahead.",
+      "objective": "Verify that train, selection-OOS, and lockbox windows are identical across all v10 runs and that lockbox was never peeked at.",
       "actions": [
-        "Extract exact train, selection-OOS, and lockbox window boundaries from every v10 run.",
-        "Confirm thresholds were selected only on selection-OOS, never on lockbox.",
-        "Confirm lockbox was never used to choose thresholds or labels.",
-        "Confirm same lockbox window used for base and all overlay variants.",
-        "Verify window did not shift between short / long / combined runs."
+        "Pin exact train / selection-OOS / lockbox window boundaries.",
+        "Verify thresholds were selected only on selection-OOS, never on lockbox.",
+        "Verify same lockbox window used for base and overlay runs.",
+        "Check that window was not shifted between short / long / combined runs."
       ],
       "success_criteria": [
-        "Verdict recorded: window discipline valid or invalid with specific violations."
+        "Window discipline verdict: valid or invalid with specific violations documented."
       ],
       "tool_hints": [
         "backtests_plan",
-        "backtests_runs"
+        "research_record"
       ],
       "policy_tags": [
         "audit",
-        "cheap_first"
+        "window_integrity"
       ],
       "depends_on": [
-        "stage_2"
+        "stage_3"
       ],
       "required": true,
-      "parallelizable": true,
+      "parallelizable": false,
       "gate_hint": "",
       "raw_stage_ref": "stage_4"
     },
     {
       "stage_id": "stage_5",
       "title": "Feature leakage audit",
-      "objective": "Confirm every micro-feature is causally clean — no future information leaks into decision time.",
+      "objective": "Verify that all micro-features are causally clean with no future information leaking into decision-time features.",
       "actions": [
-        "For each micro-feature audit: source timeframe, aggregation cutoff, 5m→1h alignment, warmup/null handling, materialization alignment.",
-        "Deep-focus on cf_micro_imbalance_1h, cf_micro_close_pressure_1h, cf_micro_shock_cluster_1h.",
-        "Run shift test: shift feature ±1 bar and check if suspiciously good performance persists.",
-        "Run null-mask sanity: check if presence/absence of feature is itself a hidden signal.",
+        "For each micro-feature audit: source timeframe, exact aggregation cutoff, future-5m-bar leakage into 1h decision, warmup and null handling, dataset materialization alignment.",
+        "Focus on cf_micro_imbalance_1h, cf_micro_close_pressure_1h, cf_micro_shock_cluster_1h.",
+        "Run shift test: shift feature +/-1 bar and check if result stays suspiciously good.",
+        "Run null-mask sanity: check if feature presence/absence is itself a hidden signal.",
         "Run timestamp audit: manually verify several decision timestamps."
       ],
       "success_criteria": [
-        "Per-feature verdict: leakage absent, suspicious, or confirmed leakage."
+        "Per-feature leakage verdict: leakage absent / suspicious / confirmed leakage."
       ],
       "tool_hints": [
         "features_dataset",
         "features_custom",
         "features_analytics",
-        "experiments_run"
+        "research_record"
       ],
       "policy_tags": [
         "audit",
-        "deep_analysis"
-      ],
-      "depends_on": [
-        "stage_2"
-      ],
-      "required": true,
-      "parallelizable": true,
-      "gate_hint": "Any confirmed leakage halts promotion path.",
-      "raw_stage_ref": "stage_5"
-    },
-    {
-      "stage_id": "stage_6",
-      "title": "Label leakage and shortcut audit",
-      "objective": "Determine whether veto labels are near-identical to features, making model success tautological.",
-      "actions": [
-        "Inspect label construction: bad_trade_pnl_balanced, fragile_trade_mae_balanced, bad_trade_composite_balanced.",
-        "Measure mutual information between label membership and cf_micro_imbalance_1h.",
-        "Check for direct threshold shortcut between label definition and strongest feature.",
-        "Ablation: model with only cf_micro_imbalance_1h.",
-        "Ablation: model without cf_micro_imbalance_1h.",
-        "Ablation: model with shuffled labels.",
-        "Ablation: model with shuffled feature."
-      ],
-      "success_criteria": [
-        "Verdict recorded: labels valid, labels too shortcut-prone, or labels invalid."
-      ],
-      "tool_hints": [
-        "models_dataset",
-        "models_train",
-        "models_compare",
-        "features_analytics",
-        "experiments_run"
-      ],
-      "policy_tags": [
-        "audit",
-        "deep_analysis"
-      ],
-      "depends_on": [
-        "stage_5"
-      ],
-      "required": true,
-      "parallelizable": true,
-      "gate_hint": "If labels are shortcut-prone or invalid, veto model results are unreliable.",
-      "raw_stage_ref": "stage_6"
-    },
-    {
-      "stage_id": "stage_7",
-      "title": "Snapshot assembly audit",
-      "objective": "Verify that veto overlay was applied in correct causal order without retroactive trade blocking or mixed long/short logic.",
-      "actions": [
-        "Inspect overlay snapshot assembly logic step by step.",
-        "Verify veto decision timing relative to feature availability.",
-        "Confirm no retroactive blocking of already-opened trades.",
-        "Confirm no mixed logic between long-veto and short-veto paths.",
-        "Separately audit: short-only snapshot, long-only snapshot, combined snapshot."
-      ],
-      "success_criteria": [
-        "Per-variant causal verdict recorded: decision_timing_ok, causal_blocking_ok, side_isolation_ok."
-      ],
-      "tool_hints": [
-        "backtests_strategy",
-        "backtests_strategy_validate",
-        "signal_api_binding_inspect"
-      ],
-      "policy_tags": [
-        "audit",
-        "deep_analysis"
+        "feature_leakage",
+        "red_team"
       ],
       "depends_on": [
         "stage_2"
@@ -238,30 +174,98 @@
       "required": true,
       "parallelizable": true,
       "gate_hint": "",
+      "raw_stage_ref": "stage_5"
+    },
+    {
+      "stage_id": "stage_6",
+      "title": "Label leakage and shortcut audit",
+      "objective": "Check whether veto models achieved suspiciously high AUC because label construction is near-identical to the strongest feature.",
+      "actions": [
+        "Audit label construction for bad_trade_pnl_balanced, fragile_trade_mae_balanced, bad_trade_composite_balanced.",
+        "Measure direct association between label membership and cf_micro_imbalance_1h.",
+        "Test for near-direct threshold shortcut between label and single feature.",
+        "Run ablations: model with only cf_micro_imbalance_1h, model without it, model with shuffled labels, model with shuffled feature."
+      ],
+      "success_criteria": [
+        "Label verdict: labels valid / labels too shortcut-prone / labels invalid."
+      ],
+      "tool_hints": [
+        "models_train",
+        "models_compare",
+        "features_analytics",
+        "research_record"
+      ],
+      "policy_tags": [
+        "audit",
+        "label_leakage",
+        "ablation"
+      ],
+      "depends_on": [
+        "stage_5"
+      ],
+      "required": true,
+      "parallelizable": false,
+      "gate_hint": "",
+      "raw_stage_ref": "stage_6"
+    },
+    {
+      "stage_id": "stage_7",
+      "title": "Snapshot assembly audit",
+      "objective": "Verify that the veto overlay was integrated causally — no retroactive trade blocking or mixed long/short logic.",
+      "actions": [
+        "Inspect overlay snapshot assembly logic step by step.",
+        "Verify when veto decision is computed and which feature value is available at decision moment.",
+        "Confirm no retroactive blocking of already-opened trades.",
+        "Confirm no mixed logic between long and short veto paths.",
+        "Audit separately: short-only snapshot, long-only snapshot, combined snapshot."
+      ],
+      "success_criteria": [
+        "Causal verdict per snapshot variant: decision timing OK, causal blocking OK, side isolation OK, no mixed logic."
+      ],
+      "tool_hints": [
+        "backtests_strategy",
+        "backtests_strategy_validate",
+        "backtests_runs",
+        "research_record"
+      ],
+      "policy_tags": [
+        "audit",
+        "snapshot_assembly",
+        "causality"
+      ],
+      "depends_on": [
+        "stage_2",
+        "stage_5"
+      ],
+      "required": true,
+      "parallelizable": false,
+      "gate_hint": "",
       "raw_stage_ref": "stage_7"
     },
     {
       "stage_id": "stage_8",
       "title": "Same-window matched reruns",
-      "objective": "Run base and all overlay variants on the identical lockbox window for unambiguous comparison.",
+      "objective": "Run immutable base and all overlay variants on the identical lockbox window to produce an unambiguous comparison.",
       "actions": [
         "Run immutable base @1 on lockbox window.",
         "Run short-only veto overlay over base on same lockbox window.",
         "Run long-only veto overlay over base on same lockbox window.",
         "Run combined veto overlay over base on same lockbox window.",
-        "For each run record: trades, net PnL, PF, DD, win rate, removed trades, removed winners."
+        "For each run compute: trades, net PnL, PF, DD, win rate, removed trades, removed winners."
       ],
       "success_criteria": [
-        "Complete matched same-window comparison table with all four routes."
+        "Matched same-window comparison table with all four routes completed and metrics computed."
       ],
       "tool_hints": [
         "backtests_plan",
         "backtests_runs",
-        "backtests_strategy"
+        "backtests_analysis",
+        "research_record"
       ],
       "policy_tags": [
-        "core_experiment",
-        "expensive"
+        "matched_rerun",
+        "same_window",
+        "lockbox"
       ],
       "depends_on": [
         "stage_3",
@@ -270,30 +274,30 @@
       ],
       "required": true,
       "parallelizable": false,
-      "gate_hint": "Cannot proceed until reference, window, and snapshot audits are resolved.",
+      "gate_hint": "",
       "raw_stage_ref": "stage_8"
     },
     {
       "stage_id": "stage_9",
       "title": "Cannibalization and ownership audit",
-      "objective": "Prove overlay improvement comes from removing genuinely bad trades, not from hidden interactions or coverage loss.",
+      "objective": "Prove the overlay genuinely improves the system by removing bad trades, not by masking problems or destroying profitable coverage.",
       "actions": [
-        "For each route (short-only, long-only, combined): list removed trades, PnL of removed trades, share of removed losers, share of removed winners.",
-        "Check which side benefits more.",
-        "Audit weak-window repair: does overlay fix genuinely weak windows?",
-        "Audit regime-specific coverage loss: does overlay kill profitable clusters?",
-        "Compute ownership: is improvement driven by removed bad trades or by hidden base-mechanics interaction?"
+        "For short-only, long-only, combined: list removed trades, PnL of removed trades, share of removed losers vs winners, which side benefited more.",
+        "Check weak-window repair and regime-specific coverage loss.",
+        "Verify overlay does not kill strong profitable clusters.",
+        "Compute ownership: improvement driven by removing bad trades vs hidden interaction with base mechanics."
       ],
       "success_criteria": [
-        "Honest ownership/cannibalization verdict per route with quantified evidence."
+        "Ownership/cannibalization verdict per route with quantified removed-loser share, removed-winner share, and coverage-loss risk."
       ],
       "tool_hints": [
         "backtests_analysis",
-        "backtests_runs",
-        "experiments_run"
+        "research_record"
       ],
       "policy_tags": [
-        "deep_analysis"
+        "audit",
+        "cannibalization",
+        "ownership"
       ],
       "depends_on": [
         "stage_8"
@@ -306,24 +310,26 @@
     {
       "stage_id": "stage_10",
       "title": "Negative controls and robustness",
-      "objective": "Stress-test the overlay result with placebo thresholds, perturbations, and time-slice splits to rule out accidental fit.",
+      "objective": "Stress-test the overlay result with placebo thresholds, perturbations, time-slice splits, and cross-side misapplication to rule out random-artifact fit.",
       "actions": [
-        "Placebo thresholds: slightly worse, slightly better, and opposite-side threshold.",
-        "Perturbation test: threshold ± small epsilon.",
-        "Time-slice robustness: first half vs second half of lockbox.",
+        "Placebo thresholds: slightly worse, slightly better, and opposite-side thresholds.",
+        "Small perturbation test: threshold +/- epsilon.",
+        "Time-slice robustness: first half of lockbox vs second half.",
         "Side-perturbation: apply long threshold to short side and vice versa."
       ],
       "success_criteria": [
-        "Robustness verdict per test: result is stable, fragile, or artifact-driven."
+        "Robustness verdict per test: result is stable across perturbations, or fragile with specific break-points documented."
       ],
       "tool_hints": [
-        "backtests_runs",
         "backtests_studies",
-        "backtests_strategy"
+        "backtests_runs",
+        "backtests_analysis",
+        "research_record"
       ],
       "policy_tags": [
         "robustness",
-        "expensive"
+        "negative_controls",
+        "stress_test"
       ],
       "depends_on": [
         "stage_8"
@@ -335,41 +341,44 @@
     },
     {
       "stage_id": "stage_11",
-      "title": "Финальный вердикт по v11",
-      "objective": "Synthesize all audit findings into a single forensic verdict on the v10 microstructure overlay.",
+      "title": "Final v11 forensic verdict",
+      "objective": "Render the final forensic verdict on the v10 microstructure overlay: CONFIRMED, DOWNGRADED TO WATCHLIST, or REJECTED.",
       "actions": [
-        "Summarize findings from every audit block into a consolidated evidence table.",
-        "Classify outcome as CONFIRMED (all audits pass, overlay genuinely improves base), DOWNGRADED TO WATCHLIST (signal alive but methodology weak or improvement fragile), or REJECTED (leakage found, reference mismatched, result not reproducible).",
-        "Record final verdict and supporting evidence in research_record.",
-        "Update research_map axes with final_verdict.",
-        "Send notification with verdict summary."
+        "Aggregate all audit findings across stages 2–10.",
+        "Classify outcome: CONFIRMED (reproducible, no leakage, overlay genuinely improves base), DOWNGRADED TO WATCHLIST (signal alive but fragile or methodologically weak), or REJECTED (leakage found, reference mismatched, non-reproducible, or improvement vanishes on honest rerun).",
+        "Record final verdict in research_record and update research_map.",
+        "If CONFIRMED: mark PROMOTE status as validated.",
+        "If DOWNGRADED or REJECTED: document specific failure reasons and recommended next steps.",
+        "Send final verdict notification."
       ],
       "success_criteria": [
-        "Final forensic verdict recorded: CONFIRMED, DOWNGRADED TO WATCHLIST, or REJECTED with full justification."
+        "Final forensic verdict recorded with full justification chain.",
+        "All open-items from stage_1 resolved."
       ],
       "tool_hints": [
         "research_record",
         "research_map",
-        "notify_send"
+        "notify_send",
+        "gold_collection"
       ],
       "policy_tags": [
-        "finalization"
+        "verdict",
+        "finalization",
+        "promotion_gate"
       ],
       "depends_on": [
-        "stage_6",
         "stage_9",
         "stage_10"
       ],
       "required": true,
       "parallelizable": false,
-      "gate_hint": "",
+      "gate_hint": "If any earlier audit stage yields a definitive REJECTED finding (e.g. confirmed leakage or non-reproducibility), this stage still runs but may fast-path to REJECTED verdict.",
       "raw_stage_ref": "stage_11"
     }
   ],
   "warnings": [
-    "v10 lockbox table referenced baseline as @3 instead of declared @1 — must be resolved in Stage 3.",
-    "v10 veto models report AUC ~0.95 which is unusually high and a shortcut/leakage risk.",
-    "v10 short/long/combined veto showed identical delta in lockbox — requires explicit explanation."
+    "Plan is written in Russian; stage titles and objectives translated to English for semantic consistency.",
+    "v10 reported suspiciously high veto-model AUC/PR (~0.95) and identical delta across short/long/combined — primary red flags driving this audit."
   ],
   "parse_confidence": 0.95
 }

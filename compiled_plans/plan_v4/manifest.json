@@ -1,12 +1,13 @@
 {
   "source_file": "raw_plans/plan_v4.md",
   "source_hash": "5f893e59f6395c11f80524bf4a5f550955fa6484442db247b274c0c80d75cd4b",
-  "compiled_at": "2026-04-10T16:57:59.712544+00:00",
+  "compiled_at": "2026-04-11T10:50:40.017728+00:00",
   "sequence_id": "compiled_plan_v4",
   "compile_status": "compiled",
   "warnings": [
-    "Parse confidence 0.90 — actions for stages 3 and 4 had sparse action hints; sub-steps were inferred from section titles.",
-    "Stage 8 had no explicit objective, actions, or success criteria in the source — inferred from plan context."
+    "Plan source is in Russian; stage titles and objectives are translated/paraphrased.",
+    "Stage 3 raw markdown references sub-steps (feature contract, materialization, plausibility, prototypes, acceptance chain) but actions_hint is empty — sub-steps were inferred from section titles.",
+    "Stage 8 has no explicit objective or success criteria in source; inferred from raw_markdown context."
   ],
   "semantic_method": "llm",
   "semantic_path": "semantic.json",

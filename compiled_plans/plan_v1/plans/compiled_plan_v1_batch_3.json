@@ -1,6 +1,6 @@
 {
   "plan_id": "compiled_plan_v1_batch_3",
-  "goal": "Найти один или несколько новых ортогональных сигналов, которые дают самостоятельную информативность, проходят stability-проверку, доказанно расширяют покрытие базы без каннибализма, и принимаются через строгую воронку standalone → stability → integration → cannibalization → walk-forward.",
+  "goal": "Найти один или несколько новых ортогональных сигналов, которые проходят standalone → stability → integration → cannibalization проверку и дают чистый прирост поверх неизменной базы active-signal-v1@1.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -9,43 +9,90 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "База active-signal-v1@1 неизменна на протяжении всего цикла — никаких модификаций правил, порогов, часов, дней, исполнения.",
-    "Новые сигналы должны использовать новый класс информации, а не быть перестановкой hour, dow, cl_*, rsi, iv_est, Thursday/Monday шаблонов.",
-    "Каннибализм недопустим: новый сигнал должен расширять покрытие (режимы, часы, подпространства), а не перехватывать сделки базы.",
-    "Воронка обязательна: standalone → stability → integration → cannibalization → walk-forward — пропускать шаги нельзя.",
-    "Запрещён широкий brute-force по параметрам; допускается только небольшая логическая сетка для форм входа.",
+    "База active-signal-v1@1 остается неизменной на протяжении всего цикла; тюнинг её старых правил, порогов, часов, дней и косметических вариаций запрещён.",
+    "Новый сигнал должен использовать новый класс информации, новый gating, новый missing-regime слой или новую логику входа — не перестановку старых шаблонов.",
+    "Каннибализм недопустим: новый сигнал не должен преимущественно входить там же, где база, и перехватывать уже хорошие сделки.",
+    "Acceptance-воронка обязательна: standalone → stability → integration → cannibalization → final report. Пропуск шагов запрещён.",
     "Каждая гипотеза должна иметь записанное обоснование, почему она новая относительно базы и истории v1–v12.",
-    "Все отрицательные результаты фиксируются в research_record — повторное исследование закрытых идей запрещено без очень сильного основания."
+    "Отрицательные результаты фиксируются в research_record так же обязательно, как и положительные.",
+    "Walk-forward обязателен для всех финалистов перед принятием решения о продвижении."
   ],
   "slices": [
     {
-      "slice_id": "compiled_plan_v1_stage_7",
-      "title": "Интеграция с active-signal-v1@1",
-      "hypothesis": "Проверить реальную ценность каждого surviving candidate поверх неизменной базы через интеграционные бэктесты с замером net delta, trades, PF, DD и ремонта слабых кварталов.",
-      "objective": "Проверить реальную ценность каждого surviving candidate поверх неизменной базы через интеграционные бэктесты с замером net delta, trades, PF, DD и ремонта слабых кварталов.",
+      "slice_id": "compiled_plan_v1_stage_6",
+      "title": "Stability и condition analysis",
+      "hypothesis": "Отсеять красивые, но локальные эффекты; оставить только сигналы, которые устойчивы при разбиении истории или честно доказали полезность как specialist signal для отдельного missing regime.",
+      "objective": "Отсеять красивые, но локальные эффекты; оставить только сигналы, которые устойчивы при разбиении истории или честно доказали полезность как specialist signal для отдельного missing regime.",
       "success_criteria": [
-        "Полная интеграционная картина для каждого прошедшего standalone кандидата.",
-        "Нет кандидатов, ухудшающих профиль базы."
+        "Остаются только сигналы, устойчивые широко, или specialist signals с доказанной полезностью для отдельного missing regime.",
+        "Condition analysis завершён для всех финалистов."
       ],
       "allowed_tools": [
-        "backtests_strategy",
-        "backtests_plan",
-        "backtests_runs",
+        "backtests_conditions",
         "backtests_analysis",
         "research_record"
       ],
       "evidence_requirements": [
-        "Полная интеграционная картина для каждого прошедшего standalone кандидата.",
-        "Нет кандидатов, ухудшающих профиль базы."
+        "Остаются только сигналы, устойчивые широко, или specialist signals с доказанной полезностью для отдельного missing regime.",
+        "Condition analysis завершён для всех финалистов."
       ],
       "policy_tags": [
-        "integration",
-        "critical"
+        "analysis",
+        "backtesting"
       ],
       "max_turns": 24,
       "max_tool_calls": 24,
       "max_expensive_calls": 3,
       "parallel_slot": 1,
+      "budget_scale_applied": 6,
+      "depends_on": [
+        "compiled_plan_v1_stage_5"
+      ],
+      "status": "pending",
+      "turn_count": 0,
+      "tool_call_count": 0,
+      "expensive_call_count": 0,
+      "assigned_worker_id": null,
+      "last_checkpoint_turn_id": "",
+      "last_checkpoint_summary": "",
+      "last_checkpoint_status": "",
+      "final_report_turn_id": "",
+      "last_error": "",
+      "last_summary": "",
+      "active_operation_ref": "",
+      "active_operation_status": "",
+      "active_operation_arguments": {},
+      "artifacts": [],
+      "facts": {}
+    },
+    {
+      "slice_id": "compiled_plan_v1_stage_7",
+      "title": "Интеграция с active-signal-v1@1",
+      "hypothesis": "Проверить реальную ценность каждого surviving candidate поверх неизменной базы, а не абстрактную standalone-силу.",
+      "objective": "Проверить реальную ценность каждого surviving candidate поверх неизменной базы, а не абстрактную standalone-силу.",
+      "success_criteria": [
+        "Полная интеграционная картина для каждого прошедшего standalone кандидата.",
+        "Каждый кандидат имеет ясный вердикт: promote, revise или reject."
+      ],
+      "allowed_tools": [
+        "backtests_runs",
+        "backtests_plan",
+        "backtests_strategy",
+        "research_record"
+      ],
+      "evidence_requirements": [
+        "Полная интеграционная картина для каждого прошедшего standalone кандидата.",
+        "Каждый кандидат имеет ясный вердикт: promote, revise или reject."
+      ],
+      "policy_tags": [
+        "modeling",
+        "backtesting",
+        "integration"
+      ],
+      "max_turns": 24,
+      "max_tool_calls": 24,
+      "max_expensive_calls": 3,
+      "parallel_slot": 2,
       "budget_scale_applied": 6,
       "depends_on": [
         "compiled_plan_v1_stage_6"
@@ -70,71 +117,24 @@
     {
       "slice_id": "compiled_plan_v1_stage_8",
       "title": "Cannibalization, ownership и new-entry proof",
-      "hypothesis": "Доказать, что каждый новый сигнал добавляет реально новые входы и расширяет покрытие, а не паразитирует на сделках базы.",
-      "objective": "Доказать, что каждый новый сигнал добавляет реально новые входы и расширяет покрытие, а не паразитирует на сделках базы.",
+      "hypothesis": "Доказать, что новый сигнал добавляет реально новые входы и расширяет покрытие, а не паразитирует на базе.",
+      "objective": "Доказать, что новый сигнал добавляет реально новые входы и расширяет покрытие, а не паразитирует на базе.",
       "success_criteria": [
-        "Прямое доказательство того, что каждый кандидат реально расширяет систему.",
-        "Cannibalism verdict зафиксирован для каждого кандидата."
+        "Прямое доказательство: кто реально расширяет систему.",
+        "Cannibalism verdict определён для каждого кандидата."
       ],
       "allowed_tools": [
-        "backtests_analysis",
-        "backtests_runs",
-        "research_record"
-      ],
-      "evidence_requirements": [
-        "Прямое доказательство того, что каждый кандидат реально расширяет систему.",
-        "Cannibalism verdict зафиксирован для каждого кандидата."
-      ],
-      "policy_tags": [
-        "cannibalism_check",
-        "critical"
-      ],
-      "max_turns": 24,
-      "max_tool_calls": 24,
-      "max_expensive_calls": 3,
-      "parallel_slot": 2,
-      "budget_scale_applied": 6,
-      "depends_on": [
-        "compiled_plan_v1_stage_7"
-      ],
-      "status": "pending",
-      "turn_count": 0,
-      "tool_call_count": 0,
-      "expensive_call_count": 0,
-      "assigned_worker_id": null,
-      "last_checkpoint_turn_id": "",
-      "last_checkpoint_summary": "",
-      "last_checkpoint_status": "",
-      "final_report_turn_id": "",
-      "last_error": "",
-      "last_summary": "",
-      "active_operation_ref": "",
-      "active_operation_status": "",
-      "active_operation_arguments": {},
-      "artifacts": [],
-      "facts": {}
-    },
-    {
-      "slice_id": "compiled_plan_v1_stage_9",
-      "title": "Walk-forward и финальная валидация финалистов",
-      "hypothesis": "Пропустить всех финалистов через walk-forward проверку как финальный строгий фильтр перед принятием решения.",
-      "objective": "Пропустить всех финалистов через walk-forward проверку как финальный строгий фильтр перед принятием решения.",
-      "success_criteria": [
-        "Walk-forward завершён для всех кандидатов, дошедших до финала.",
-        "Итоговый verdict по каждому кандидату зафиксирован."
-      ],
-      "allowed_tools": [
-        "backtests_walkforward",
         "backtests_analysis",
         "research_record"
       ],
       "evidence_requirements": [
-        "Walk-forward завершён для всех кандидатов, дошедших до финала.",
-        "Итоговый verdict по каждому кандидату зафиксирован."
+        "Прямое доказательство: кто реально расширяет систему.",
+        "Cannibalism verdict определён для каждого кандидата."
       ],
       "policy_tags": [
-        "walkforward",
-        "final_validation"
+        "analysis",
+        "integration",
+        "critical_gate"
       ],
       "max_turns": 24,
       "max_tool_calls": 24,
@@ -142,7 +142,7 @@
       "parallel_slot": 3,
       "budget_scale_applied": 6,
       "depends_on": [
-        "compiled_plan_v1_stage_8"
+        "compiled_plan_v1_stage_7"
       ],
       "status": "pending",
       "turn_count": 0,
@@ -170,6 +170,6 @@
   "source_compile_report_path": "",
   "sequence_batch_index": 3,
   "status": "draft",
-  "created_at": "2026-04-10T16:52:11.207555+00:00",
-  "updated_at": "2026-04-10T16:52:11.207556+00:00"
+  "created_at": "2026-04-11T10:45:01.661400+00:00",
+  "updated_at": "2026-04-11T10:45:01.661402+00:00"
 }

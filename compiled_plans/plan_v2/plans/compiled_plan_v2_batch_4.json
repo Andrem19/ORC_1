@@ -1,6 +1,6 @@
 {
   "plan_id": "compiled_plan_v2_batch_4",
-  "goal": "Найти один или несколько ортогональных specialist-сигналов или conditioning-слоёв, которые работают там, где база active-signal-v1@1 не торгует, и доказанно приносят новые входы, а не скрытый дубляж.",
+  "goal": "Find one or more new orthogonal specialist signals or conditioning layers that work where active-signal-v1@1 is absent, prove their additive value, and avoid repeating v1's single-filter event-entry mistakes.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -9,33 +9,33 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "База active-signal-v1@1 immutable — не ретюнить, не менять пороги, часы, дни, исполнение.",
-    "Сырые event-entry конструкции (один event + один фильтр) запрещены — H1/H2 тупик.",
-    "Каждый кандидат сначала проходит complement-first режим: вход только на base_absent anchor-барах.",
-    "Single-filter entry запрещён — минимум три логических слоя (новый слой + подтверждение режима + ограничитель плотности).",
-    "Model-first запрещён до завершения Wave A (low-friction).",
-    "Кандидат отклоняется, если strict additive слабый, а permissive сильный — признак скрытого каннибализма."
+    "Base active-signal-v1@1 is immutable: no retuning of hours, days, thresholds, or execution rules.",
+    "Raw single-filter event-entry constructions (H1/H2 style) are permanently banned.",
+    "Every new candidate must first pass complement-first mode before any other evaluation.",
+    "Model-first approaches are forbidden until the low-friction Wave A is fully exhausted.",
+    "Each prototype must have at least three logical layers: new information layer, regime/state confirmation, and entry-density limiter.",
+    "A candidate whose profit vanishes under strict-additive mode is rejected regardless of permissive-integrated performance."
   ],
   "slices": [
     {
       "slice_id": "compiled_plan_v2_stage_10",
-      "title": "Cannibalization, ownership и new-entry proof",
-      "hypothesis": "Formally prove that each integration candidate brings genuinely new trades and new profit, not cannibalized base entries.",
-      "objective": "Formally prove that each integration candidate brings genuinely new trades and new profit, not cannibalized base entries.",
+      "title": "Cannibalization, ownership and new-entry proof",
+      "hypothesis": "Formally prove that each surviving candidate contributes genuinely new trades and new profit rather than parasitizing on base entries.",
+      "objective": "Formally prove that each surviving candidate contributes genuinely new trades and new profit rather than parasitizing on base entries.",
       "success_criteria": [
-        "Direct proof exists for which candidates genuinely expand the system."
+        "Direct proof exists of which candidates genuinely expand the system."
       ],
       "allowed_tools": [
         "backtests_analysis",
-        "research_record",
-        "research_map"
+        "experiments_run",
+        "research_record"
       ],
       "evidence_requirements": [
-        "Direct proof exists for which candidates genuinely expand the system."
+        "Direct proof exists of which candidates genuinely expand the system."
       ],
       "policy_tags": [
         "analysis",
-        "finalization"
+        "verification"
       ],
       "max_turns": 24,
       "max_tool_calls": 24,
@@ -63,37 +63,31 @@
       "facts": {}
     },
     {
-      "slice_id": "compiled_plan_v2_stage_11",
-      "title": "Wave B — medium-friction branch",
-      "hypothesis": "Explore cross-symbol leadership, model-backed compression/routing, and event-state-model hybrids only if Wave A failed to produce conclusive candidates.",
-      "objective": "Explore cross-symbol leadership, model-backed compression/routing, and event-state-model hybrids only if Wave A failed to produce conclusive candidates.",
+      "slice_id": "compiled_plan_v2_stage_11_part1",
+      "title": "Wave B — medium-friction branch (exploration)",
+      "hypothesis": "Explore cross-symbol leadership, model-backed compression/routing, and event-state-model hybrids only if Wave A failed to produce a conclusive additive candidate.",
+      "objective": "Explore cross-symbol leadership, model-backed compression/routing, and event-state-model hybrids only if Wave A failed to produce a conclusive additive candidate.",
       "success_criteria": [
-        "Wave B branches evaluated for readiness; started branches follow the same strict specialist pipeline."
+        "Wave B branches are evaluated with at least one candidate reaching standalone backtest.",
+        "Exploration phase complete"
       ],
       "allowed_tools": [
-        "datasets",
-        "datasets_sync",
-        "features_custom",
-        "features_dataset",
-        "models_dataset",
-        "models_train",
-        "models_to_feature",
-        "events",
-        "backtests_runs",
         "research_record",
-        "research_map"
+        "datasets"
       ],
       "evidence_requirements": [
-        "Wave B branches evaluated for readiness; started branches follow the same strict specialist pipeline."
+        "Wave B branches are evaluated with at least one candidate reaching standalone backtest.",
+        "Exploration phase complete"
       ],
       "policy_tags": [
-        "modeling",
-        "experiments",
+        "medium_friction",
+        "conditional_branch",
+        "models",
         "optional_candidate"
       ],
       "max_turns": 24,
       "max_tool_calls": 24,
-      "max_expensive_calls": 4,
+      "max_expensive_calls": 2,
       "parallel_slot": 1,
       "budget_scale_applied": 6,
       "depends_on": [
@@ -117,28 +111,29 @@
       "facts": {}
     },
     {
-      "slice_id": "compiled_plan_v2_stage_12",
-      "title": "Walk-forward и финальный отбор",
-      "hypothesis": "Run walk-forward validation on all surviving candidates and produce a final honest verdict on whether a new additive layer was found.",
-      "objective": "Run walk-forward validation on all surviving candidates and produce a final honest verdict on whether a new additive layer was found.",
+      "slice_id": "compiled_plan_v2_stage_11_part2",
+      "title": "Wave B — medium-friction branch (construction)",
+      "hypothesis": "Explore cross-symbol leadership, model-backed compression/routing, and event-state-model hybrids only if Wave A failed to produce a conclusive additive candidate.",
+      "objective": "Explore cross-symbol leadership, model-backed compression/routing, and event-state-model hybrids only if Wave A failed to produce a conclusive additive candidate.",
       "success_criteria": [
-        "Walk-forward completed for all finalists, honest final verdict recorded, operational checklist fully signed off."
+        "Wave B branches are evaluated with at least one candidate reaching standalone backtest."
       ],
       "allowed_tools": [
-        "backtests_walkforward",
-        "backtests_runs",
-        "backtests_analysis",
-        "backtests_strategy",
         "research_record",
-        "research_map",
-        "notify_send"
+        "features_custom",
+        "models_dataset",
+        "models_train",
+        "models_to_feature",
+        "backtests_runs"
       ],
       "evidence_requirements": [
-        "Walk-forward completed for all finalists, honest final verdict recorded, operational checklist fully signed off."
+        "Wave B branches are evaluated with at least one candidate reaching standalone backtest."
       ],
       "policy_tags": [
-        "backtesting",
-        "finalization"
+        "medium_friction",
+        "conditional_branch",
+        "models",
+        "optional_candidate"
       ],
       "max_turns": 24,
       "max_tool_calls": 24,
@@ -146,7 +141,7 @@
       "parallel_slot": 1,
       "budget_scale_applied": 6,
       "depends_on": [
-        "compiled_plan_v2_stage_10"
+        "compiled_plan_v2_stage_11_part1"
       ],
       "status": "pending",
       "turn_count": 0,
@@ -174,6 +169,6 @@
   "source_compile_report_path": "",
   "sequence_batch_index": 4,
   "status": "draft",
-  "created_at": "2026-04-10T16:54:19.873661+00:00",
-  "updated_at": "2026-04-10T16:54:19.873662+00:00"
+  "created_at": "2026-04-11T10:47:21.716824+00:00",
+  "updated_at": "2026-04-11T10:47:21.716886+00:00"
 }

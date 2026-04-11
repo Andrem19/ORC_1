@@ -1,21 +1,18 @@
 {
   "source_file": "raw_plans/plan_v6.md",
   "source_hash": "8b5e129c4e5aa98a65f5ad5ec0bd7c7510586b6b9e9f606f9a7a7baa30ff4de6",
-  "compiled_at": "2026-04-10T17:02:22.767366+00:00",
+  "compiled_at": "2026-04-11T10:54:10.388452+00:00",
   "sequence_id": "compiled_plan_v6",
   "compile_status": "compiled",
   "warnings": [
-    "План включает cross-symbol features — требуется многосимвольная data readiness (ETHUSDT, возможно SOLUSDT/BNBUSDT).",
-    "M3/M4 weak-window модели разрешены только как gated опции при конкретных условиях.",
-    "Router-модель полностью заблокирована на старте; разрешается только если M1 и M2 обе показали meaningful OOS value.",
+    "План написан на русском — все objective и action описания переведены в семантическую форму без потери смысла.",
     "Auto-added research_record for stage_2: every non-trivial stage needs documentation capability.",
     "Auto-added research_record for stage_3: every non-trivial stage needs documentation capability.",
     "Auto-added research_record for stage_4: every non-trivial stage needs documentation capability.",
     "Auto-added research_record for stage_5: every non-trivial stage needs documentation capability.",
     "Auto-added research_record for stage_6: every non-trivial stage needs documentation capability.",
     "Auto-added research_record for stage_7: every non-trivial stage needs documentation capability.",
-    "Auto-added research_record for stage_8: every non-trivial stage needs documentation capability.",
-    "Auto-added research_record for stage_9: every non-trivial stage needs documentation capability."
+    "Auto-added research_record for stage_8: every non-trivial stage needs documentation capability."
   ],
   "semantic_method": "llm",
   "semantic_path": "semantic.json",

@@ -1,6 +1,6 @@
 {
   "plan_id": "compiled_plan_v8_batch_1",
-  "goal": "Pivot from full-surface directional prediction to base-conditional overlays (veto, early-cut, hold-extension) that improve the quality of already-selected base trades on BTCUSDT.",
+  "goal": "Pivot from failed full-surface directional prediction to base-conditional trade-quality overlays — entry veto, early-cut, and hold-extension — that improve the immutable base without retuning its logic.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -9,26 +9,27 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "Base snapshot active-signal-v1@1 is immutable — never retune its logic, thresholds, hours, days, or execution parameters.",
-    "Full-surface directional classification on leadership/breadth/path-asymmetry/regime features is terminally closed (v4–v7 verdict).",
-    "No regression on future PnL. No classifier-transition standalone layer. No raw event / static IV directional ideas.",
-    "No feature/label/threshold/architecture selection on lockbox — selection OOS only.",
-    "Overlay models train only on trade-level datasets; never on anchor-level surfaces.",
-    "All comparisons vs base must be matched: same trade windows, same notionals, strict overlay evaluation.",
-    "Labels frozen before training. Thresholds not tuned on lockbox. Purge gap ≥ 24h between windows.",
-    "One route at a time: veto first, early-cut only if veto shows signal, extension only if underheld winners found.",
-    "Any improvement claim requires matched lockbox OOS comparison vs immutable base."
+    "Base snapshot active-signal-v1@1 is immutable — never modify its signals, thresholds, hours, days, or execution logic",
+    "No full-surface directional classification or regression on future PnL (v4–v7 routes terminally closed)",
+    "All v8 work operates on trade-level surface of already-executed base trades, not on all anchor bars",
+    "Feature selection, label selection, and threshold selection only on selection OOS — never on lockbox",
+    "Overlay labels must be frozen before any model training begins",
+    "Do not mix entry-veto and exit-extension objectives in a single label",
+    "Purge gap between train / selection-OOS / lockbox windows must be ≥ max holding horizon (minimum 24h)",
+    "Every improvement claim requires matched lockbox OOS comparison against immutable base on same trade window with same notionals"
   ],
   "slices": [
     {
       "slice_id": "compiled_plan_v8_stage_1",
-      "title": "Closure-audit v7 и фиксация инвариантов v8",
-      "hypothesis": "Formally record the terminal verdict of v7 full-surface classification, open the v8 research project, and fix immutable reference + research map axes.",
-      "objective": "Formally record the terminal verdict of v7 full-surface classification, open the v8 research project, and fix immutable reference + research map axes.",
+      "title": "Closure-audit v7 and v8 invariant fixation",
+      "hypothesis": "Formally record the terminal failure of v7 full-surface directional classification, open the v8 research project, and fix all immutable references and map axes.",
+      "objective": "Formally record the terminal failure of v7 full-surface directional classification, open the v8 research project, and fix all immutable references and map axes.",
       "success_criteria": [
-        "v8 research project is open with recorded v7 verdict.",
-        "Immutable base reference formally recorded.",
-        "Research map axes and open-items register created."
+        "v8 research project created and active",
+        "v7 terminal verdict formally recorded in research memory",
+        "Immutable base reference locked with all five fields",
+        "Research map initialised with all six axes",
+        "Open-items register created with all seven items"
       ],
       "allowed_tools": [
         "research_project",
@@ -36,13 +37,15 @@
         "research_map"
       ],
       "evidence_requirements": [
-        "v8 research project is open with recorded v7 verdict.",
-        "Immutable base reference formally recorded.",
-        "Research map axes and open-items register created."
+        "v8 research project created and active",
+        "v7 terminal verdict formally recorded in research memory",
+        "Immutable base reference locked with all five fields",
+        "Research map initialised with all six axes",
+        "Open-items register created with all seven items"
       ],
       "policy_tags": [
         "setup",
-        "immutable_base"
+        "cheap_first"
       ],
       "max_turns": 24,
       "max_tool_calls": 24,
@@ -69,27 +72,30 @@
     },
     {
       "slice_id": "compiled_plan_v8_stage_2",
-      "title": "Построить trade-surface atlas immutable base",
-      "hypothesis": "Build the trade-level atlas from the immutable base, transitioning from anchor-level to trade-level thinking, with full entry/exit/path/context records per trade.",
-      "objective": "Build the trade-level atlas from the immutable base, transitioning from anchor-level to trade-level thinking, with full entry/exit/path/context records per trade.",
+      "title": "Build trade-surface atlas of immutable base",
+      "hypothesis": "Transition from anchor-level to trade-level thinking by extracting every executed base trade with full context and building analytical cuts across the trade surface.",
+      "objective": "Transition from anchor-level to trade-level thinking by extracting every executed base trade with full context and building analytical cuts across the trade surface.",
       "success_criteria": [
-        "Complete trade-level atlas with all required fields populated.",
-        "Cross-section analytics produced for long/short, winners/losers, exit reasons.",
-        "Worst-decile, fragile, and underheld-winner subsets identified."
+        "Complete trade surface extracted covering full data window",
+        "All per-trade fields populated including MFE, MAE, path shape, exit reason",
+        "Analytical cuts produced for long/short, winner/loser, exit-type, and weak windows",
+        "Worst-decile, fragile, and underheld-winner clusters explicitly identified"
       ],
       "allowed_tools": [
         "backtests_runs",
         "backtests_analysis",
+        "datasets",
+        "events",
         "research_record"
       ],
       "evidence_requirements": [
-        "Complete trade-level atlas with all required fields populated.",
-        "Cross-section analytics produced for long/short, winners/losers, exit reasons.",
-        "Worst-decile, fragile, and underheld-winner subsets identified."
+        "Complete trade surface extracted covering full data window",
+        "All per-trade fields populated including MFE, MAE, path shape, exit reason",
+        "Analytical cuts produced for long/short, winner/loser, exit-type, and weak windows",
+        "Worst-decile, fragile, and underheld-winner clusters explicitly identified"
       ],
       "policy_tags": [
-        "data_readiness",
-        "trade_level"
+        "data_readiness"
       ],
       "max_turns": 24,
       "max_tool_calls": 24,
@@ -119,28 +125,31 @@
     {
       "slice_id": "compiled_plan_v8_stage_3",
       "title": "Freeze overlay label contracts",
-      "hypothesis": "Define and freeze all overlay label schemas (veto, early-cut, extension) plus ambiguity policy before any model training begins.",
-      "objective": "Define and freeze all overlay label schemas (veto, early-cut, extension) plus ambiguity policy before any model training begins.",
+      "hypothesis": "Define and freeze all overlay labels (veto, early-cut, extension) before any model training, including ambiguity policy and material improvement thresholds.",
+      "objective": "Define and freeze all overlay labels (veto, early-cut, extension) before any model training, including ambiguity policy and material improvement thresholds.",
       "success_criteria": [
-        "All label definitions formally recorded and frozen.",
-        "Ambiguity policy documented (near-zero, mixed, material improvement threshold)."
+        "All six label definitions frozen with explicit positive-class criteria",
+        "Ambiguity policy documented for near-zero and mixed trades",
+        "Material improvement threshold defined quantitatively",
+        "Labels recorded in research memory before any training"
       ],
       "allowed_tools": [
         "research_record",
-        "research_map"
+        "models_dataset"
       ],
       "evidence_requirements": [
-        "All label definitions formally recorded and frozen.",
-        "Ambiguity policy documented (near-zero, mixed, material improvement threshold)."
+        "All six label definitions frozen with explicit positive-class criteria",
+        "Ambiguity policy documented for near-zero and mixed trades",
+        "Material improvement threshold defined quantitatively",
+        "Labels recorded in research memory before any training"
       ],
       "policy_tags": [
-        "label_contract",
-        "freeze_before_training"
+        "feature_contract"
       ],
       "max_turns": 24,
       "max_tool_calls": 24,
       "max_expensive_calls": 2,
-      "parallel_slot": 1,
+      "parallel_slot": 3,
       "budget_scale_applied": 6,
       "depends_on": [
         "compiled_plan_v8_stage_2"
@@ -171,6 +180,6 @@
   "source_compile_report_path": "",
   "sequence_batch_index": 1,
   "status": "draft",
-  "created_at": "2026-04-10T17:05:54.562452+00:00",
-  "updated_at": "2026-04-10T17:05:54.562454+00:00"
+  "created_at": "2026-04-11T10:59:07.559903+00:00",
+  "updated_at": "2026-04-11T10:59:07.560474+00:00"
 }

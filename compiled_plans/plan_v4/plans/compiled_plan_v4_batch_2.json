@@ -1,6 +1,6 @@
 {
   "plan_id": "compiled_plan_v4_batch_2",
-  "goal": "Close all outstanding branches from v3, complete the low-friction wave with a final verdict, then conditionally explore weak-window repair and medium-friction branches under strict gate discipline.",
+  "goal": "Close all open branches from v3 through disciplined terminal decisions, then attempt weak-window targeted repair on the immutable base before considering any higher-friction exploration.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -9,37 +9,37 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "active-signal-v1@1 is immutable — never modify the base snapshot.",
-    "Rejected branches must not be reopened: H1_post_funding_long, H2_expiry_lead_lag, A1_high_iv_long_v1, A1b_high_iv_momentum, A4_wed_afternoon.",
-    "Static high-IV regime is a volatility regime descriptor, not a directional signal.",
-    "Every branch must reach a terminal decision (promoted / rejected / formally-skipped) before any downstream gate unlocks.",
-    "Do not confuse a data task with a research result — feature materialization ≠ hypothesis validation.",
-    "Medium-friction wave is locked until every low-friction branch is closed and weak-window repair is completed."
+    "active-signal-v1@1 is immutable reference — never modify the base snapshot.",
+    "Previously rejected branches (H1_post_funding_long, H2_expiry_lead_lag, A1_high_iv_long_v1, A1b_high_iv_momentum, A4_wed_afternoon) must not be reopened.",
+    "Static high-IV regime is a volatility mode, not a directional signal — do not reinterpret as alpha.",
+    "Every hypothesis branch must reach a terminal decision (promoted or rejected) before the plan can advance past its wave.",
+    "Medium-friction wave is locked until low-friction wave is fully exhausted with recorded final verdict and no promoted candidate.",
+    "Maximum 2 weak pockets may be selected for specialist repair.",
+    "Separate data tasks from research results — never conflate them."
   ],
   "slices": [
     {
       "slice_id": "compiled_plan_v4_stage_4",
-      "title": "Только если A2 не promoted — полностью закрыть A3_broader_cl_transition",
-      "hypothesis": "If A2 was rejected, close the backup branch A3 (broader candlestick transition) with a full acceptance chain so it does not remain half-alive.",
-      "objective": "If A2 was rejected, close the backup branch A3 (broader candlestick transition) with a full acceptance chain so it does not remain half-alive.",
+      "title": "Полностью закрыть A3_broader_cl_transition (только если A2 не promoted)",
+      "hypothesis": "Only if A2 was not promoted, bring the backup branch A3 to a terminal decision so no half-alive branches remain.",
+      "objective": "Only if A2 was not promoted, bring the backup branch A3 to a terminal decision so no half-alive branches remain.",
       "success_criteria": [
-        "A3_broader_cl_transition has a terminal decision (promoted or rejected or formally-skipped)."
+        "A3 has a terminal decision: promoted or rejected with documented reason."
       ],
       "allowed_tools": [
         "features_custom",
         "features_dataset",
-        "backtests_strategy",
         "backtests_runs",
         "backtests_analysis",
         "research_record"
       ],
       "evidence_requirements": [
-        "A3_broader_cl_transition has a terminal decision (promoted or rejected or formally-skipped)."
+        "A3 has a terminal decision: promoted or rejected with documented reason."
       ],
       "policy_tags": [
-        "low_friction",
-        "acceptance_chain",
+        "research",
         "conditional",
+        "full_chain",
         "optional_candidate"
       ],
       "max_turns": 24,
@@ -70,22 +70,22 @@
     {
       "slice_id": "compiled_plan_v4_stage_5",
       "title": "Общий вердикт по low-friction wave",
-      "hypothesis": "Produce a single definitive verdict on whether the low-friction exploration space has been exhausted.",
-      "objective": "Produce a single definitive verdict on whether the low-friction exploration space has been exhausted.",
+      "hypothesis": "Produce a single binding final verdict on whether the low-friction candidate space has been exhausted.",
+      "objective": "Produce a single binding final verdict on whether the low-friction candidate space has been exhausted.",
       "success_criteria": [
-        "A single final verdict on low-friction wave is recorded and signed off."
+        "A single, unambiguous low_friction_final verdict is recorded."
       ],
       "allowed_tools": [
+        "backtests_strategy",
         "backtests_runs",
-        "backtests_analysis",
         "research_record"
       ],
       "evidence_requirements": [
-        "A single final verdict on low-friction wave is recorded and signed off."
+        "A single, unambiguous low_friction_final verdict is recorded."
       ],
       "policy_tags": [
-        "decision_gate",
-        "cheap_first"
+        "decision",
+        "synthesis"
       ],
       "max_turns": 24,
       "max_tool_calls": 24,
@@ -114,28 +114,25 @@
       "facts": {}
     },
     {
-      "slice_id": "compiled_plan_v4_stage_6",
-      "title": "Новая программа v4 — weak-window repair specialists",
-      "hypothesis": "Attempt targeted repair of the weakest performance pockets in the immutable base using narrowly scoped specialist hypotheses.",
-      "objective": "Attempt targeted repair of the weakest performance pockets in the immutable base using narrowly scoped specialist hypotheses.",
+      "slice_id": "compiled_plan_v4_stage_6_part1",
+      "title": "Weak-window repair specialists (exploration)",
+      "hypothesis": "Determine whether targeted specialist features can repair the weakest performance pockets of the immutable base.",
+      "objective": "Determine whether targeted specialist features can repair the weakest performance pockets of the immutable base.",
       "success_criteria": [
-        "Answer documented: can targeted repair produce meaningful improvement over the base or not."
+        "Answer recorded: can targeted repair produce anything useful beyond the base, or is the base already optimal within low-friction scope?",
+        "Exploration phase complete"
       ],
       "allowed_tools": [
-        "features_analytics",
-        "backtests_analysis",
-        "features_custom",
-        "features_dataset",
-        "backtests_strategy",
-        "backtests_runs",
-        "research_record"
+        "research_record",
+        "backtests_analysis"
       ],
       "evidence_requirements": [
-        "Answer documented: can targeted repair produce meaningful improvement over the base or not."
+        "Answer recorded: can targeted repair produce anything useful beyond the base, or is the base already optimal within low-friction scope?",
+        "Exploration phase complete"
       ],
       "policy_tags": [
-        "specialist_repair",
-        "acceptance_chain"
+        "research",
+        "targeted"
       ],
       "max_turns": 24,
       "max_tool_calls": 24,
@@ -171,6 +168,6 @@
   "source_compile_report_path": "",
   "sequence_batch_index": 2,
   "status": "draft",
-  "created_at": "2026-04-10T16:57:59.712506+00:00",
-  "updated_at": "2026-04-10T16:57:59.712508+00:00"
+  "created_at": "2026-04-11T10:50:40.017318+00:00",
+  "updated_at": "2026-04-11T10:50:40.017538+00:00"
 }

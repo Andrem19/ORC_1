@@ -1,8 +1,8 @@
 {
   "source_file": "raw_plans/plan_v8.md",
   "source_hash": "5eae8229d938bc04e3b296d432bba819f6c43187265bfe18b3e7cf822c4f70d4",
-  "source_title": "План дальнейших исследований для v8 — base-conditional trade-quality overlays",
-  "goal": "Pivot from full-surface directional prediction to base-conditional overlays (veto, early-cut, hold-extension) that improve the quality of already-selected base trades on BTCUSDT.",
+  "source_title": "План дальнейших исследований для v8",
+  "goal": "Pivot from failed full-surface directional prediction to base-conditional trade-quality overlays — entry veto, early-cut, and hold-extension — that improve the immutable base without retuning its logic.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -11,32 +11,33 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "Base snapshot active-signal-v1@1 is immutable — never retune its logic, thresholds, hours, days, or execution parameters.",
-    "Full-surface directional classification on leadership/breadth/path-asymmetry/regime features is terminally closed (v4–v7 verdict).",
-    "No regression on future PnL. No classifier-transition standalone layer. No raw event / static IV directional ideas.",
-    "No feature/label/threshold/architecture selection on lockbox — selection OOS only.",
-    "Overlay models train only on trade-level datasets; never on anchor-level surfaces.",
-    "All comparisons vs base must be matched: same trade windows, same notionals, strict overlay evaluation.",
-    "Labels frozen before training. Thresholds not tuned on lockbox. Purge gap ≥ 24h between windows.",
-    "One route at a time: veto first, early-cut only if veto shows signal, extension only if underheld winners found.",
-    "Any improvement claim requires matched lockbox OOS comparison vs immutable base."
+    "Base snapshot active-signal-v1@1 is immutable — never modify its signals, thresholds, hours, days, or execution logic",
+    "No full-surface directional classification or regression on future PnL (v4–v7 routes terminally closed)",
+    "All v8 work operates on trade-level surface of already-executed base trades, not on all anchor bars",
+    "Feature selection, label selection, and threshold selection only on selection OOS — never on lockbox",
+    "Overlay labels must be frozen before any model training begins",
+    "Do not mix entry-veto and exit-extension objectives in a single label",
+    "Purge gap between train / selection-OOS / lockbox windows must be ≥ max holding horizon (minimum 24h)",
+    "Every improvement claim requires matched lockbox OOS comparison against immutable base on same trade window with same notionals"
   ],
   "stages": [
     {
       "stage_id": "stage_1",
-      "title": "Closure-audit v7 и фиксация инвариантов v8",
-      "objective": "Formally record the terminal verdict of v7 full-surface classification, open the v8 research project, and fix immutable reference + research map axes.",
+      "title": "Closure-audit v7 and v8 invariant fixation",
+      "objective": "Formally record the terminal failure of v7 full-surface directional classification, open the v8 research project, and fix all immutable references and map axes.",
       "actions": [
-        "Open a new research_project for v8.",
-        "Record v7 terminal verdict via research_record: classification route on full surface terminally failed, reasons for closure, rationale for v8 pivot to trade-quality overlays.",
-        "Record immutable reference: snapshot_id=active-signal-v1, version=1, symbol=BTCUSDT, anchor=1h, execution=5m.",
-        "Define research_map axes: overlay_route, side, feature_family, label_family, model_stage, final_decision.",
-        "Create open-items register: trade_surface_atlas, veto_label_contract, veto_long, veto_short, earlycut_route_lock, extension_route_lock, final_overlay_verdict."
+        "Open a new research_project for v8",
+        "Record v7 terminal verdict via research_record: full-surface classification route terminally failed, reasons for closure, rationale for v8 pivot",
+        "Fix immutable reference: snapshot_id=active-signal-v1, version=1, symbol=BTCUSDT, anchor=1h, execution=5m",
+        "Create research_map axes: overlay_route, side, feature_family, label_family, model_stage, final_decision",
+        "Create open-items register: trade_surface_atlas, veto_label_contract, veto_long, veto_short, earlycut_route_lock, extension_route_lock, final_overlay_verdict"
       ],
       "success_criteria": [
-        "v8 research project is open with recorded v7 verdict.",
-        "Immutable base reference formally recorded.",
-        "Research map axes and open-items register created."
+        "v8 research project created and active",
+        "v7 terminal verdict formally recorded in research memory",
+        "Immutable base reference locked with all five fields",
+        "Research map initialised with all six axes",
+        "Open-items register created with all seven items"
       ],
       "tool_hints": [
         "research_project",
@@ -45,7 +46,7 @@
       ],
       "policy_tags": [
         "setup",
-        "immutable_base"
+        "cheap_first"
       ],
       "depends_on": [],
       "required": true,
@@ -55,27 +56,29 @@
     },
     {
       "stage_id": "stage_2",
-      "title": "Построить trade-surface atlas immutable base",
-      "objective": "Build the trade-level atlas from the immutable base, transitioning from anchor-level to trade-level thinking, with full entry/exit/path/context records per trade.",
+      "title": "Build trade-surface atlas of immutable base",
+      "objective": "Transition from anchor-level to trade-level thinking by extracting every executed base trade with full context and building analytical cuts across the trade surface.",
       "actions": [
-        "Collect all executed trades of immutable base over the full available period.",
-        "For each trade record: side, entry/exit timestamps, entry/exit prices, realized PnL, MFE, MAE, time-in-trade, exit reason, weak-window membership, context at entry, path in first 1h/3h/6h.",
-        "Build cross-sections: long vs short, winners vs losers, stop-loss vs time-limit vs take-profit, weak quarters, weakest pockets.",
-        "Isolate special subsets: worst-decile trades, fragile trades, underheld winners."
+        "Collect all trades of the immutable base over the full available period",
+        "For each trade record: side, entry time, exit time, realized PnL, MFE, MAE, time-in-trade, exit reason, weak-window membership, context at entry, path in first 1h/3h/6h",
+        "Build cuts: long vs short, winners vs losers, stop-loss vs time-limit vs take-profit, weak quarters, weakest pockets",
+        "Separately identify: worst-decile trades, fragile trades, underheld winners"
       ],
       "success_criteria": [
-        "Complete trade-level atlas with all required fields populated.",
-        "Cross-section analytics produced for long/short, winners/losers, exit reasons.",
-        "Worst-decile, fragile, and underheld-winner subsets identified."
+        "Complete trade surface extracted covering full data window",
+        "All per-trade fields populated including MFE, MAE, path shape, exit reason",
+        "Analytical cuts produced for long/short, winner/loser, exit-type, and weak windows",
+        "Worst-decile, fragile, and underheld-winner clusters explicitly identified"
       ],
       "tool_hints": [
         "backtests_runs",
         "backtests_analysis",
+        "datasets",
+        "events",
         "research_record"
       ],
       "policy_tags": [
-        "data_readiness",
-        "trade_level"
+        "data_readiness"
       ],
       "depends_on": [
         "stage_1"
@@ -88,87 +91,91 @@
     {
       "stage_id": "stage_3",
       "title": "Freeze overlay label contracts",
-      "objective": "Define and freeze all overlay label schemas (veto, early-cut, extension) plus ambiguity policy before any model training begins.",
+      "objective": "Define and freeze all overlay labels (veto, early-cut, extension) before any model training, including ambiguity policy and material improvement thresholds.",
       "actions": [
-        "Define veto labels: bad_trade_balanced, bad_trade_conservative — for both long and short sides.",
-        "Define early-cut labels: cut_now_balanced, cut_now_conservative.",
-        "Define extension labels: extend_hold_balanced, extend_hold_conservative.",
-        "Freeze ambiguity policy: handling of near-zero trades, mixed trades, threshold for meaningful material improvement."
+        "Define veto labels: bad_trade_balanced, bad_trade_conservative for each side",
+        "Define early-cut labels: cut_now_balanced, cut_now_conservative",
+        "Define extension labels: extend_hold_balanced, extend_hold_conservative",
+        "Fix ambiguity policy for near-zero trades, mixed trades, and what counts as material improvement"
       ],
       "success_criteria": [
-        "All label definitions formally recorded and frozen.",
-        "Ambiguity policy documented (near-zero, mixed, material improvement threshold)."
+        "All six label definitions frozen with explicit positive-class criteria",
+        "Ambiguity policy documented for near-zero and mixed trades",
+        "Material improvement threshold defined quantitatively",
+        "Labels recorded in research memory before any training"
       ],
       "tool_hints": [
         "research_record",
-        "research_map"
+        "models_dataset"
       ],
       "policy_tags": [
-        "label_contract",
-        "freeze_before_training"
+        "feature_contract"
       ],
       "depends_on": [
         "stage_2"
       ],
       "required": true,
-      "parallelizable": false,
+      "parallelizable": true,
       "gate_hint": "",
       "raw_stage_ref": "stage_3"
     },
     {
       "stage_id": "stage_4",
-      "title": "Feature contract для trade-quality overlays",
-      "objective": "Author, validate, publish, and materialize new trade-quality custom features (families A–D) on the base trade surface, prioritizing veto-route features first.",
+      "title": "Feature contract for trade-quality overlays",
+      "objective": "Author, validate, publish, and materialize all new trade-context feature families (A–D) on the base trade surface with warmup/coverage/causality checks.",
       "actions": [
-        "Priority 1 — veto features (family A + D): cf_entry_stretch_6h, cf_entry_range_position_12h, cf_entry_exhaustion_score, cf_signal_freshness, cf_confluence_density, cf_trade_eth_btc_confirmation, cf_trade_breadth_confirmation, cf_trade_event_headwind.",
-        "Priority 2 — post-entry features (family B): cf_first_1h_followthrough, cf_first_3h_adverse_excursion, cf_first_3h_support_reclaim, cf_post_entry_instability, cf_early_failure_signature.",
-        "Priority 3 — exit-time features (family C): cf_mfe_before_time_limit, cf_trend_persistence_at_time_limit, cf_exit_context_strength, cf_reversal_risk_at_time_limit, cf_extension_quality_score.",
-        "For each feature: write contract, validate, publish, materialize, verify warmup/coverage/causality."
+        "Priority 1 — Entry-context features for veto route: cf_entry_stretch_6h, cf_entry_range_position_12h, cf_entry_exhaustion_score, cf_signal_freshness, cf_confluence_density, cf_trade_eth_btc_confirmation, cf_trade_breadth_confirmation, cf_trade_event_headwind",
+        "Priority 2 — Post-entry features for early-cut: cf_first_1h_followthrough, cf_first_3h_adverse_excursion, cf_post_entry_instability, cf_early_failure_signature",
+        "Priority 3 — Exit-time features for extension: cf_mfe_before_time_limit, cf_trend_persistence_at_time_limit, cf_exit_context_strength, cf_reversal_risk_at_time_limit, cf_extension_quality_score",
+        "For each feature: write contract, validate, publish, materialize, verify warmup/coverage/causality"
       ],
       "success_criteria": [
-        "Priority 1 veto features validated, published, and materialized with acceptable warmup and coverage.",
-        "Priority 2 and 3 features published as contracts at minimum."
+        "All Priority 1 features validated, published, and materialized with acceptable warmup and coverage",
+        "Priority 2 and 3 features authored and validated (materialization may follow gate)",
+        "No feature leaks future information relative to trade entry timestamp",
+        "Feature catalog updated with all new custom features"
       ],
       "tool_hints": [
         "features_custom",
-        "features_catalog",
         "features_dataset",
-        "features_analytics"
+        "features_catalog",
+        "research_record"
       ],
       "policy_tags": [
         "feature_contract",
-        "veto_first"
+        "cheap_first"
       ],
       "depends_on": [
-        "stage_2",
-        "stage_3"
+        "stage_2"
       ],
       "required": true,
-      "parallelizable": false,
+      "parallelizable": true,
       "gate_hint": "",
       "raw_stage_ref": "stage_4"
     },
     {
       "stage_id": "stage_5",
-      "title": "Dataset split и modeling surfaces для overlays",
-      "objective": "Create trade-level time-ordered train/selection-OOS/lockbox-OOS splits by entry timestamp and assemble modeling surfaces for each side.",
+      "title": "Dataset split and modeling surfaces for overlays",
+      "objective": "Establish trade-level temporal OOS splits (train / selection-OOS / lockbox) by entry timestamp and assemble per-side modeling surfaces with frozen feature sets.",
       "actions": [
-        "Split trades by entry timestamp: train_trades, selection_oos_trades, lockbox_oos_trades.",
-        "Assemble surfaces: all_base_trades, long_base_trades, short_base_trades, weak_window_trades (if needed).",
-        "Enforce purge gap ≥ 24h between windows.",
-        "Record: feature set chosen on selection OOS only, thresholds chosen on selection OOS only."
+        "Split trades by entry timestamp into train_trades, selection_oos_trades, lockbox_oos_trades",
+        "Assemble surfaces: all_base_trades, long_base_trades, short_base_trades, weak_window_trades if needed",
+        "Enforce purge gap ≥ 24h between windows",
+        "Lock feature set and threshold selection to selection OOS only"
       ],
       "success_criteria": [
-        "Frozen train/selection-OOS/lockbox-OOS split with ≥ 24h purge gaps.",
-        "Modeling surfaces assembled per side with correct label joins."
+        "Temporal split completed with no overlap and purge gap ≥ 24h",
+        "All modeling surfaces materialized with correct features and frozen labels",
+        "Feature set selection locked to selection OOS",
+        "Dataset contract recorded and immutable"
       ],
       "tool_hints": [
         "models_dataset",
+        "features_dataset",
         "research_record"
       ],
       "policy_tags": [
-        "data_split",
-        "oos_integrity"
+        "data_readiness"
       ],
       "depends_on": [
         "stage_3",
@@ -181,60 +188,60 @@
     },
     {
       "stage_id": "stage_6",
-      "title": "Veto-route plausibility stage",
-      "objective": "Train and evaluate veto models (CatBoost, long + short, balanced + conservative) on selection OOS to determine if worst base trades can be reliably identified.",
+      "title": "Veto-route plausibility on selection OOS",
+      "objective": "Train CatBoost veto classifiers per side and label family, then evaluate on selection OOS whether worst base trades can be reliably identified.",
       "actions": [
-        "Train CatBoost-veto-short-balanced and CatBoost-veto-short-conservative on short trade surface.",
-        "Train CatBoost-veto-long-balanced and CatBoost-veto-long-conservative on long trade surface.",
-        "Evaluate on selection OOS: ROC AUC, PR AUC, worst-decile lift, precision in veto bucket, economic effect if top-risk trades removed."
+        "Train CatBoost-veto-short-balanced and CatBoost-veto-short-conservative on short trade surface",
+        "Train CatBoost-veto-long-balanced and CatBoost-veto-long-conservative on long trade surface",
+        "Evaluate on selection OOS: ROC AUC, PR AUC, worst-decile lift, precision in veto bucket, economic effect of removing top-risk trades"
       ],
       "success_criteria": [
-        "At least one veto model shows PR AUC meaningfully above random on selection OOS.",
-        "Economic effect estimate (removing vetoed trades) is positive on selection OOS."
+        "At least one veto model achieves ROC AUC meaningfully above 0.50 on selection OOS",
+        "Worst-decile lift is positive — model ranks bad trades higher",
+        "Economic simulation of vetoing top-risk trades shows non-trivial PnL/PF improvement on selection OOS",
+        "Results recorded with full metrics in research memory"
       ],
       "tool_hints": [
         "models_train",
+        "models_compare",
         "models_registry",
-        "models_compare"
+        "research_record"
       ],
       "policy_tags": [
-        "modeling",
-        "veto_route",
-        "selection_oos_only"
+        "modeling"
       ],
       "depends_on": [
-        "stage_4",
         "stage_5"
       ],
       "required": true,
-      "parallelizable": true,
+      "parallelizable": false,
       "gate_hint": "",
       "raw_stage_ref": "stage_6"
     },
     {
       "stage_id": "stage_7",
       "title": "Lockbox test for veto overlays",
-      "objective": "Run the strict matched lockbox OOS comparison — immutable base vs base+veto overlay — to confirm whether veto overlays materially improve the base on unseen data.",
+      "objective": "Apply the best veto models on the untouched lockbox window and measure whether the overlay materially improves the immutable base on strictly out-of-sample trades.",
       "actions": [
-        "Freeze thresholds from best veto models.",
-        "Run immutable base on lockbox trades.",
-        "Run base + veto overlay on same lockbox trades.",
-        "Compute: delta PnL, delta PF, delta DD, trades removed, PnL of removed trades, effect by weak windows."
+        "Freeze thresholds from best veto models",
+        "Run immutable base on lockbox trades as reference",
+        "Run base + veto overlay on same lockbox trades",
+        "Compute: delta PnL, delta PF, delta DD, trades removed, PnL of removed trades, effect by weak windows"
       ],
       "success_criteria": [
-        "Matched comparison completed on lockbox with same trade windows and notionals.",
-        "Verdict recorded: material improvement confirmed, partial, or failed."
+        "Lockbox comparison is matched — same trades, same notionals, same window",
+        "Material improvement delta quantified across PnL, PF, DD",
+        "Effect on weak windows separately assessed",
+        "Veto route formally promoted, watchlisted, or rejected"
       ],
       "tool_hints": [
         "backtests_runs",
         "backtests_analysis",
-        "models_compare",
+        "models_registry",
         "research_record"
       ],
       "policy_tags": [
-        "lockbox_test",
-        "matched_comparison",
-        "final_truth"
+        "backtesting"
       ],
       "depends_on": [
         "stage_6"
@@ -246,93 +253,91 @@
     },
     {
       "stage_id": "stage_8",
-      "title": "Только если veto route показывает signal — открыть early-cut route",
-      "objective": "Investigate post-entry early-cut overlays only if veto models demonstrated at least weak meaningful signal and bad trades are recognizable in post-entry phase.",
+      "title": "Early-cut route — conditional on veto signal",
+      "objective": "Investigate post-entry early-cut overlays only if the veto route demonstrated at least weak meaningful signal, to determine if failing trades can be rescued mid-flight.",
       "actions": [
-        "Verify veto route gate condition: at least weak meaningful signal on selection OOS.",
-        "Train CatBoost-earlycut-long and CatBoost-earlycut-short models.",
-        "Evaluate on selection OOS: improvement vs baseline exit, net delta after fees, DD improvement, cut quality (real losers vs future winners)."
+        "Train CatBoost-earlycut-long and CatBoost-earlycut-short on respective surfaces",
+        "Evaluate on selection OOS: improvement vs baseline exit on same trades, net delta after fees, DD improvement, false-cut rate on future winners"
       ],
       "success_criteria": [
-        "Gate condition verified before any early-cut training.",
-        "Selection OOS metrics show early-cut improves over baseline exit on same trades."
+        "Early-cut models trained with frozen labels on correct trade surfaces",
+        "Selection OOS shows improvement over baseline exit with positive net delta after fees",
+        "Model cuts real losers more often than future winners"
       ],
       "tool_hints": [
         "models_train",
-        "models_registry",
         "models_compare",
-        "backtests_runs"
+        "backtests_runs",
+        "research_record"
       ],
       "policy_tags": [
-        "modeling",
-        "early_cut",
-        "gated_route"
+        "modeling"
       ],
       "depends_on": [
         "stage_7"
       ],
       "required": false,
       "parallelizable": false,
-      "gate_hint": "Veto models must show at least weak meaningful signal on selection OOS, and analysis must confirm bad trades are recognizable in post-entry phase.",
+      "gate_hint": "Early-cut route opens only if veto models showed at least weak meaningful signal on selection OOS and analysis indicates bad trades are recognizable in post-entry phase",
       "raw_stage_ref": "stage_8"
     },
     {
       "stage_id": "stage_9",
-      "title": "Только если есть evidence of underheld winners — открыть hold-extension route",
-      "objective": "Investigate hold-extension overlays only if the trade-surface atlas revealed an underheld winner cluster and selection diagnostics suggest extension has a chance.",
+      "title": "Hold-extension route — conditional on underheld winners",
+      "objective": "Test whether a rare class of underheld winning trades can be identified and held longer for incremental PnL, only if the trade-surface atlas and selection diagnostics support it.",
       "actions": [
-        "Verify extension gate condition: underheld winner cluster identified in trade-surface atlas.",
-        "Train CatBoost-extend-long and CatBoost-extend-short models.",
-        "Evaluate on selection OOS: incremental PnL on extension subset, extension hit rate, DD impact."
+        "Train CatBoost-extend-long and CatBoost-extend-short on respective surfaces",
+        "Evaluate on selection OOS: incremental PnL on extension subset, extension hit rate, DD impact"
       ],
       "success_criteria": [
-        "Gate condition verified: atlas shows underheld winner cluster.",
-        "Selection OOS shows positive incremental PnL without material DD worsening."
+        "Extension models trained with frozen labels",
+        "Selection OOS shows positive incremental PnL on extension subset",
+        "Extension does not materially worsen drawdown",
+        "Hit rate of extensions is meaningfully above random"
       ],
       "tool_hints": [
         "models_train",
-        "models_registry",
         "models_compare",
-        "backtests_runs"
+        "backtests_runs",
+        "research_record"
       ],
       "policy_tags": [
-        "modeling",
-        "hold_extension",
-        "gated_route"
+        "modeling"
       ],
       "depends_on": [
-        "stage_7"
+        "stage_8"
       ],
       "required": false,
-      "parallelizable": true,
-      "gate_hint": "Trade-surface atlas must show underheld winner cluster AND selection diagnostics must indicate extension has viable chance.",
+      "parallelizable": false,
+      "gate_hint": "Extension route opens only if trade-surface atlas showed underheld winner cluster and early-cut or selection diagnostics give positive evidence that extension has a chance",
       "raw_stage_ref": "stage_9"
     },
     {
       "stage_id": "stage_10",
-      "title": "Ownership, cannibalization и финальный overlay verdict",
-      "objective": "Compute ownership, cannibalization, and overlap analysis for every surviving overlay route, and deliver the final v8 verdict: overlay success, partial, or failed.",
+      "title": "Ownership, cannibalization analysis, and final overlay verdict",
+      "objective": "Compute ownership and cannibalization for every surviving overlay route, render a final honest verdict (success / partial / failed), and close v8 with a complete report.",
       "actions": [
-        "For each surviving overlay route (veto, early-cut, extension): compute ownership, removed-bad-trades count, DD saved, overlap with weak-window clusters.",
-        "Determine if improvement is real or cosmetic via matched lockbox comparison.",
-        "Record final verdict per route: promote, watchlist, or reject.",
-        "Write comprehensive v8 final report with project_id, trade_surface summary, model counts, route verdicts, and next direction."
+        "For each surviving overlay route compute: ownership attribution, bad trades removed / DD saved, overlap with weak-window clusters, real vs cosmetic improvement assessment",
+        "Render final verdict per route: promote, watchlist, or kill",
+        "Record overall v8 outcome: overlay success (A), partial (B), or failed (C)",
+        "Write complete v8 closure report with final decision table"
       ],
       "success_criteria": [
-        "Ownership and cannibalization analysis complete for all surviving routes.",
-        "Final overlay route verdict recorded (success / partial / failed).",
-        "Comprehensive v8 final report written via research_record."
+        "Ownership analysis completed for every surviving overlay",
+        "Cannibalization risk assessed — no overlay worsens net outcome",
+        "Final verdict rendered with clear decision per route",
+        "v8 closure report written with all result fields populated",
+        "Next direction documented based on outcome"
       ],
       "tool_hints": [
         "backtests_analysis",
         "research_record",
         "research_map",
-        "research_search"
+        "models_registry",
+        "models_compare"
       ],
       "policy_tags": [
-        "finalization",
-        "verdict",
-        "ownership_analysis"
+        "finalization"
       ],
       "depends_on": [
         "stage_7",
@@ -346,8 +351,8 @@
     }
   ],
   "warnings": [
-    "Plan is in Russian; stage titles and objectives preserved in original language for traceability.",
-    "Feature families A–D reference custom features that must be authored and published before materialization."
+    "Plan is in Russian; stage titles and objectives are translated to English in the semantic draft while preserving original intent",
+    "Stages 8 and 9 are gated on positive evidence from prior stages — the plan may terminate earlier if veto route shows no signal"
   ],
   "parse_confidence": 0.95
 }

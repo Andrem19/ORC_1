@@ -1,6 +1,6 @@
 {
   "plan_id": "compiled_plan_v7_batch_1",
-  "goal": "Довести до честного решения: может ли новый directional feature layer + CatBoost classification дать additive long и/или short sleeve поверх active-signal-v1@1 при корректных labels, полных sides/horizons и не обрезанном feature layer.",
+  "goal": "Довести до честного решения: может ли новый directional feature layer + CatBoost classification дать additive long/short sleeve поверх active-signal-v1@1 при корректных labels, полных sides и horizons.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -9,28 +9,28 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "active-signal-v1@1 — immutable reference; запрещено менять базу, подбирать ей часы/дни/пороги/исолнение",
-    "запрещено объявлять улучшением всё, что не прошло matched OOS comparison с базой на том же окне",
-    "запрещено возвращаться к regression-предсказанию future PnL",
-    "запрещено возвращаться к IV-family как самостоятельному directional layer",
-    "net_pnl>0 больше не используется как primary label scheme",
-    "labels frozen после stage_2 до конца selection-stage; дрейф запрещён",
-    "short-first приоритет: сначала short 18h и short 12h, потом new long",
-    "только компактные feature packs — критический directional core, не весь зоопарк",
-    "lockbox untouched до финальной оценки; selection OOS для всех промежуточных решений",
-    "не обучать multiclass model; не строить router до первого standalone sleeve прошедшего OOS"
+    "База active-signal-v1@1 immutable — не менять, не подбирать часы/дни/пороги/исолнение.",
+    "Не выбирать feature set, label scheme, horizon, threshold или архитектуру по lockbox-окну.",
+    "Улучшением считается только matched OOS comparison с базой на том же окне.",
+    "Не возвращаться к regression-предсказанию future PnL.",
+    "Не возвращаться к IV-family как к самостоятельному directional layer.",
+    "net_pnl>0 больше не использовать как primary label scheme.",
+    "Не обучать multiclass model и не строить router до прохождения хотя бы одного standalone sleeve через OOS.",
+    "Labels frozen до training и не меняются до конца selection-stage.",
+    "Выбор pack и threshold — только по selection OOS; lockbox untouched.",
+    "Short-first приоритет: short 18h → short 12h → new long tests."
   ],
   "slices": [
     {
       "slice_id": "compiled_plan_v7_stage_1",
       "title": "Closure-audit v6 и фиксация инвариантов v7",
-      "hypothesis": "Честно зафиксировать что в v6 закрыто, что pending, какие выводы окончательные; создать проект и навигационный атлас для v7.",
-      "objective": "Честно зафиксировать что в v6 закрыто, что pending, какие выводы окончательные; создать проект и навигационный атлас для v7.",
+      "hypothesis": "Честно зафиксировать, что именно в v6 осталось недоделанным, открыть проект v7 и завести research map с осями и open-items register.",
+      "objective": "Честно зафиксировать, что именно в v6 осталось недоделанным, открыть проект v7 и завести research map с осями и open-items register.",
       "success_criteria": [
-        "v7 research project создан и активен",
-        "v6 closure-audit записан в research_record",
-        "atlas dimensions заведены в research_map",
-        "open-items register содержит все 7 позиций"
+        "project_id создан и зафиксирован.",
+        "v6 closure-audit node записан в research_record.",
+        "Open-items register содержит минимум 7 позиций.",
+        "Atlas dimensions определены в research_map."
       ],
       "allowed_tools": [
         "research_project",
@@ -38,15 +38,15 @@
         "research_map"
       ],
       "evidence_requirements": [
-        "v7 research project создан и активен",
-        "v6 closure-audit записан в research_record",
-        "atlas dimensions заведены в research_map",
-        "open-items register содержит все 7 позиций"
+        "project_id создан и зафиксирован.",
+        "v6 closure-audit node записан в research_record.",
+        "Open-items register содержит минимум 7 позиций.",
+        "Atlas dimensions определены в research_map."
       ],
       "policy_tags": [
         "setup",
-        "audit",
-        "cheap_first"
+        "cheap_first",
+        "foundation"
       ],
       "max_turns": 24,
       "max_tool_calls": 24,
@@ -74,30 +74,33 @@
     {
       "slice_id": "compiled_plan_v7_stage_2",
       "title": "Freeze barrier-label contract",
-      "hypothesis": "Утвердить ровно два label schemes (balanced_barrier, conservative_barrier) для двух horizons и двух sides; после фиксации запретить любые изменения labels до конца selection-stage.",
-      "objective": "Утвердить ровно два label schemes (balanced_barrier, conservative_barrier) для двух horizons и двух sides; после фиксации запретить любые изменения labels до конца selection-stage.",
+      "hypothesis": "Формально утвердить ровно два label schemes (balanced_barrier, conservative_barrier) для всех сторон и горизонтов и запретить изменения до конца selection-stage.",
+      "objective": "Формально утвердить ровно два label schemes (balanced_barrier, conservative_barrier) для всех сторон и горизонтов и запретить изменения до конца selection-stage.",
       "success_criteria": [
-        "balanced_barrier и conservative_barrier формально определены для long и short на 12h и 18h",
-        "ambiguous case handling задокументирован",
-        "label contract записан и frozen в research_record"
+        "balanced_barrier определён для long и short на 12h и 18h.",
+        "conservative_barrier определён для long и short на 12h и 18h.",
+        "ambiguous case handling задокументирован.",
+        "net_pnl>0 scheme официально отвергнут."
       ],
       "allowed_tools": [
         "research_record",
-        "research_map"
+        "models_dataset"
       ],
       "evidence_requirements": [
-        "balanced_barrier и conservative_barrier формально определены для long и short на 12h и 18h",
-        "ambiguous case handling задокументирован",
-        "label contract записан и frozen в research_record"
+        "balanced_barrier определён для long и short на 12h и 18h.",
+        "conservative_barrier определён для long и short на 12h и 18h.",
+        "ambiguous case handling задокументирован.",
+        "net_pnl>0 scheme официально отвергнут."
       ],
       "policy_tags": [
-        "label_discipline",
-        "contract_freeze"
+        "contract",
+        "freeze",
+        "no_regression"
       ],
       "max_turns": 24,
       "max_tool_calls": 24,
       "max_expensive_calls": 2,
-      "parallel_slot": 1,
+      "parallel_slot": 2,
       "budget_scale_applied": 6,
       "depends_on": [
         "compiled_plan_v7_stage_1"
@@ -122,13 +125,14 @@
     {
       "slice_id": "compiled_plan_v7_stage_3",
       "title": "Достроить critical directional core",
-      "hypothesis": "Построить, валидировать, опубликовать и материализовать недостающие directional features строго по приоритету: short-first → long support → context.",
-      "objective": "Построить, валидировать, опубликовать и материализовать недостающие directional features строго по приоритету: short-first → long support → context.",
+      "hypothesis": "Построить, валидировать и материализовать минимально необходимый набор directional features: short-first (приоритет), затем long support, затем context.",
+      "objective": "Построить, валидировать и материализовать минимально необходимый набор directional features: short-first (приоритет), затем long support, затем context.",
       "success_criteria": [
-        "Все short-first priority features валидированы, опубликованы и материализованы",
-        "Все long support features валидированы, опубликованы и материализованы",
-        "Все context features валидированы, опубликованы и материализованы",
-        "Coverage и warmup проверены для каждого feature без проблем"
+        "Все short-first missing features валидированы и опубликованы.",
+        "Все long support features валидированы и опубликованы.",
+        "Все context features валидированы и опубликованы.",
+        "Coverage и warmup issues ≤ 0 для критических features.",
+        "Материализованный feature dataset содержит весь core."
       ],
       "allowed_tools": [
         "features_custom",
@@ -138,23 +142,24 @@
         "research_record"
       ],
       "evidence_requirements": [
-        "Все short-first priority features валидированы, опубликованы и материализованы",
-        "Все long support features валидированы, опубликованы и материализованы",
-        "Все context features валидированы, опубликованы и материализованы",
-        "Coverage и warmup проверены для каждого feature без проблем"
+        "Все short-first missing features валидированы и опубликованы.",
+        "Все long support features валидированы и опубликованы.",
+        "Все context features валидированы и опубликованы.",
+        "Coverage и warmup issues ≤ 0 для критических features.",
+        "Материализованный feature dataset содержит весь core."
       ],
       "policy_tags": [
-        "feature_engineering",
         "short_first",
-        "sequential_priority"
+        "cheap_first",
+        "directional_core"
       ],
       "max_turns": 36,
       "max_tool_calls": 30,
       "max_expensive_calls": 6,
-      "parallel_slot": 1,
+      "parallel_slot": 3,
       "budget_scale_applied": 6,
       "depends_on": [
-        "compiled_plan_v7_stage_2"
+        "compiled_plan_v7_stage_1"
       ],
       "status": "pending",
       "turn_count": 0,
@@ -182,6 +187,6 @@
   "source_compile_report_path": "",
   "sequence_batch_index": 1,
   "status": "draft",
-  "created_at": "2026-04-10T17:04:14.014035+00:00",
-  "updated_at": "2026-04-10T17:04:14.014037+00:00"
+  "created_at": "2026-04-11T10:56:27.521693+00:00",
+  "updated_at": "2026-04-11T10:56:27.521698+00:00"
 }

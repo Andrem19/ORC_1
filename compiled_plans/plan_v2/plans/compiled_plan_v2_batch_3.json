@@ -1,6 +1,6 @@
 {
   "plan_id": "compiled_plan_v2_batch_3",
-  "goal": "Найти один или несколько ортогональных specialist-сигналов или conditioning-слоёв, которые работают там, где база active-signal-v1@1 не торгует, и доказанно приносят новые входы, а не скрытый дубляж.",
+  "goal": "Find one or more new orthogonal specialist signals or conditioning layers that work where active-signal-v1@1 is absent, prove their additive value, and avoid repeating v1's single-filter event-entry mistakes.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -9,33 +9,34 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "База active-signal-v1@1 immutable — не ретюнить, не менять пороги, часы, дни, исполнение.",
-    "Сырые event-entry конструкции (один event + один фильтр) запрещены — H1/H2 тупик.",
-    "Каждый кандидат сначала проходит complement-first режим: вход только на base_absent anchor-барах.",
-    "Single-filter entry запрещён — минимум три логических слоя (новый слой + подтверждение режима + ограничитель плотности).",
-    "Model-first запрещён до завершения Wave A (low-friction).",
-    "Кандидат отклоняется, если strict additive слабый, а permissive сильный — признак скрытого каннибализма."
+    "Base active-signal-v1@1 is immutable: no retuning of hours, days, thresholds, or execution rules.",
+    "Raw single-filter event-entry constructions (H1/H2 style) are permanently banned.",
+    "Every new candidate must first pass complement-first mode before any other evaluation.",
+    "Model-first approaches are forbidden until the low-friction Wave A is fully exhausted.",
+    "Each prototype must have at least three logical layers: new information layer, regime/state confirmation, and entry-density limiter.",
+    "A candidate whose profit vanishes under strict-additive mode is rejected regardless of permissive-integrated performance."
   ],
   "slices": [
     {
       "slice_id": "compiled_plan_v2_stage_7",
       "title": "Complement-first standalone backtests",
-      "hypothesis": "Run standalone backtests in complement-only mode first to verify each prototype has independent value on the space where the base does not trade.",
-      "objective": "Run standalone backtests in complement-only mode first to verify each prototype has independent value on the space where the base does not trade.",
+      "hypothesis": "Verify whether each prototype has standalone value specifically on the base-absent surface before any integration testing.",
+      "objective": "Verify whether each prototype has standalone value specifically on the base-absent surface before any integration testing.",
       "success_criteria": [
-        "Shortlist of prototypes that look like real specialist candidates even on complement-only mode."
+        "A shortlist of prototypes exists that look like real specialist candidates even in complement-only mode."
       ],
       "allowed_tools": [
-        "backtests_plan",
         "backtests_runs",
+        "backtests_plan",
         "backtests_analysis",
         "research_record"
       ],
       "evidence_requirements": [
-        "Shortlist of prototypes that look like real specialist candidates even on complement-only mode."
+        "A shortlist of prototypes exists that look like real specialist candidates even in complement-only mode."
       ],
       "policy_tags": [
-        "backtesting"
+        "backtesting",
+        "complement_first"
       ],
       "max_turns": 24,
       "max_tool_calls": 24,
@@ -64,29 +65,28 @@
     },
     {
       "slice_id": "compiled_plan_v2_stage_8",
-      "title": "Stability, concentration и specialist verification",
-      "hypothesis": "Retain only prototypes that work as genuine specialist layers across windows, not those living on a single lucky historical slice.",
-      "objective": "Retain only prototypes that work as genuine specialist layers across windows, not those living on a single lucky historical slice.",
+      "title": "Stability, concentration and specialist verification",
+      "hypothesis": "Retain only prototypes that work as genuine specialist layers across time, not those riding a single lucky historical stretch.",
+      "objective": "Retain only prototypes that work as genuine specialist layers across time, not those riding a single lucky historical stretch.",
       "success_criteria": [
         "Only stable specialists or honestly limited but reproducible regime-repair layers remain."
       ],
       "allowed_tools": [
         "backtests_conditions",
         "backtests_analysis",
-        "backtests_runs",
         "research_record"
       ],
       "evidence_requirements": [
         "Only stable specialists or honestly limited but reproducible regime-repair layers remain."
       ],
       "policy_tags": [
-        "analysis",
-        "backtesting"
+        "stability",
+        "verification"
       ],
       "max_turns": 24,
       "max_tool_calls": 24,
       "max_expensive_calls": 3,
-      "parallel_slot": 1,
+      "parallel_slot": 2,
       "budget_scale_applied": 6,
       "depends_on": [
         "compiled_plan_v2_stage_7"
@@ -110,29 +110,28 @@
     },
     {
       "slice_id": "compiled_plan_v2_stage_9",
-      "title": "Интеграция с базой в двух режимах",
-      "hypothesis": "Test each finalist in both strict additive and permissive integration modes against the unchanged base to determine genuine additivity vs hidden overlap.",
-      "objective": "Test each finalist in both strict additive and permissive integration modes against the unchanged base to determine genuine additivity vs hidden overlap.",
+      "title": "Integration with base in two modes",
+      "hypothesis": "Test every finalist in both strict-additive and permissive-integrated modes against the unchanged base to separate genuinely additive signals from those that look good only by mixing with base trades.",
+      "objective": "Test every finalist in both strict-additive and permissive-integrated modes against the unchanged base to separate genuinely additive signals from those that look good only by mixing with base trades.",
       "success_criteria": [
-        "Clear picture of who is genuinely additive vs who looks good only by mixing with the base."
+        "A clear picture exists of who is genuinely additive versus who only looks good by mixing with the base."
       ],
       "allowed_tools": [
         "backtests_runs",
         "backtests_analysis",
-        "backtests_strategy",
         "research_record"
       ],
       "evidence_requirements": [
-        "Clear picture of who is genuinely additive vs who looks good only by mixing with the base."
+        "A clear picture exists of who is genuinely additive versus who only looks good by mixing with the base."
       ],
       "policy_tags": [
-        "backtesting",
-        "analysis"
+        "integration",
+        "verification"
       ],
       "max_turns": 24,
       "max_tool_calls": 24,
       "max_expensive_calls": 3,
-      "parallel_slot": 1,
+      "parallel_slot": 3,
       "budget_scale_applied": 6,
       "depends_on": [
         "compiled_plan_v2_stage_8"
@@ -163,6 +162,6 @@
   "source_compile_report_path": "",
   "sequence_batch_index": 3,
   "status": "draft",
-  "created_at": "2026-04-10T16:54:19.873634+00:00",
-  "updated_at": "2026-04-10T16:54:19.873636+00:00"
+  "created_at": "2026-04-11T10:47:21.716710+00:00",
+  "updated_at": "2026-04-11T10:47:21.716711+00:00"
 }

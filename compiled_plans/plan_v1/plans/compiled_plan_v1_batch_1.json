@@ -1,6 +1,6 @@
 {
   "plan_id": "compiled_plan_v1_batch_1",
-  "goal": "Найти один или несколько новых ортогональных сигналов, которые дают самостоятельную информативность, проходят stability-проверку, доказанно расширяют покрытие базы без каннибализма, и принимаются через строгую воронку standalone → stability → integration → cannibalization → walk-forward.",
+  "goal": "Найти один или несколько новых ортогональных сигналов, которые проходят standalone → stability → integration → cannibalization проверку и дают чистый прирост поверх неизменной базы active-signal-v1@1.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -9,25 +9,25 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "База active-signal-v1@1 неизменна на протяжении всего цикла — никаких модификаций правил, порогов, часов, дней, исполнения.",
-    "Новые сигналы должны использовать новый класс информации, а не быть перестановкой hour, dow, cl_*, rsi, iv_est, Thursday/Monday шаблонов.",
-    "Каннибализм недопустим: новый сигнал должен расширять покрытие (режимы, часы, подпространства), а не перехватывать сделки базы.",
-    "Воронка обязательна: standalone → stability → integration → cannibalization → walk-forward — пропускать шаги нельзя.",
-    "Запрещён широкий brute-force по параметрам; допускается только небольшая логическая сетка для форм входа.",
+    "База active-signal-v1@1 остается неизменной на протяжении всего цикла; тюнинг её старых правил, порогов, часов, дней и косметических вариаций запрещён.",
+    "Новый сигнал должен использовать новый класс информации, новый gating, новый missing-regime слой или новую логику входа — не перестановку старых шаблонов.",
+    "Каннибализм недопустим: новый сигнал не должен преимущественно входить там же, где база, и перехватывать уже хорошие сделки.",
+    "Acceptance-воронка обязательна: standalone → stability → integration → cannibalization → final report. Пропуск шагов запрещён.",
     "Каждая гипотеза должна иметь записанное обоснование, почему она новая относительно базы и истории v1–v12.",
-    "Все отрицательные результаты фиксируются в research_record — повторное исследование закрытых идей запрещено без очень сильного основания."
+    "Отрицательные результаты фиксируются в research_record так же обязательно, как и положительные.",
+    "Walk-forward обязателен для всех финалистов перед принятием решения о продвижении."
   ],
   "slices": [
     {
       "slice_id": "compiled_plan_v1_stage_1",
       "title": "Запуск цикла и фиксация инвариантов",
-      "hypothesis": "Зафиксировать неизменную базу active-signal-v1@1, открыть отдельный исследовательский проект и завести карту гипотез с едиными осями измерения.",
-      "objective": "Зафиксировать неизменную базу active-signal-v1@1, открыть отдельный исследовательский проект и завести карту гипотез с едиными осями измерения.",
+      "hypothesis": "Зафиксировать неизменную базу active-signal-v1@1, открыть отдельный исследовательский проект, завести карту гипотез и записать инварианты цикла.",
+      "objective": "Зафиксировать неизменную базу active-signal-v1@1, открыть отдельный исследовательский проект, завести карту гипотез и записать инварианты цикла.",
       "success_criteria": [
         "Открытый проект существует.",
-        "Карта гипотез создана с осями hypothesis_family, data_layer, direction, expected_missing_regime, status.",
-        "Инварианты цикла зафиксированы в research_record.",
-        "Baseline-reference сохранён."
+        "Карта гипотез создана с заданными осями.",
+        "Инварианты цикла записаны в research_record.",
+        "Baseline reference зафиксирован."
       ],
       "allowed_tools": [
         "research_project",
@@ -36,9 +36,9 @@
       ],
       "evidence_requirements": [
         "Открытый проект существует.",
-        "Карта гипотез создана с осями hypothesis_family, data_layer, direction, expected_missing_regime, status.",
-        "Инварианты цикла зафиксированы в research_record.",
-        "Baseline-reference сохранён."
+        "Карта гипотез создана с заданными осями.",
+        "Инварианты цикла записаны в research_record.",
+        "Baseline reference зафиксирован."
       ],
       "policy_tags": [
         "setup",
@@ -70,26 +70,23 @@
     {
       "slice_id": "compiled_plan_v1_stage_2",
       "title": "Формирование пространства только новых гипотез",
-      "hypothesis": "Собрать и отфильтровать список новых классов сигналов (missing-regime specialists, event-conditioned entries, derivatives-state layers, cross-symbol routing, model-backed routing, exit-originated alpha) с обоснованием новизны каждого.",
-      "objective": "Собрать и отфильтровать список новых классов сигналов (missing-regime specialists, event-conditioned entries, derivatives-state layers, cross-symbol routing, model-backed routing, exit-originated alpha) с обоснованием новизны каждого.",
+      "hypothesis": "Собрать и отфильтровать список новых классов сигналов, которые не являются переименованными или косметическими вариациями уже исчерпанного пространства базы.",
+      "objective": "Собрать и отфильтровать список новых классов сигналов, которые не являются переименованными или косметическими вариациями уже исчерпанного пространства базы.",
       "success_criteria": [
-        "Есть short-list первой волны.",
+        "Short-list первой волны существует.",
         "По каждой гипотезе сформулировано, почему она действительно новая относительно базы и истории v1–v12."
       ],
       "allowed_tools": [
-        "research_map",
         "research_record",
-        "research_search",
-        "datasets",
-        "features_catalog",
-        "events"
+        "research_map",
+        "research_search"
       ],
       "evidence_requirements": [
-        "Есть short-list первой волны.",
+        "Short-list первой волны существует.",
         "По каждой гипотезе сформулировано, почему она действительно новая относительно базы и истории v1–v12."
       ],
       "policy_tags": [
-        "hypothesis_formation",
+        "planning",
         "cheap_first"
       ],
       "max_turns": 24,
@@ -118,42 +115,39 @@
       "facts": {}
     },
     {
-      "slice_id": "compiled_plan_v1_stage_3",
-      "title": "Data contract и feature contract для каждой новой семьи",
-      "hypothesis": "Для каждой гипотезы первой волны зафиксировать точный контракт данных и признаков: входные колонки, способ построения, lookback, cross-symbol join, event alignment, leakage-контроль.",
-      "objective": "Для каждой гипотезы первой волны зафиксировать точный контракт данных и признаков: входные колонки, способ построения, lookback, cross-symbol join, event alignment, leakage-контроль.",
+      "slice_id": "compiled_plan_v1_stage_3_part1",
+      "title": "Data contract и feature contract для каждой новой семьи (exploration)",
+      "hypothesis": "Для каждой новой гипотезы зафиксировать точный контракт данных и признаков: входные колонки, способ построения, lookback, cross-symbol joins, event alignment, potential leakage.",
+      "objective": "Для каждой новой гипотезы зафиксировать точный контракт данных и признаков: входные колонки, способ построения, lookback, cross-symbol joins, event alignment, potential leakage.",
       "success_criteria": [
         "По каждой гипотезе есть чистый contract данных и признаков.",
-        "Leakage проверен для каждого контракта.",
-        "Custom features валидированы и опубликованы.",
-        "Event alignment проверен для event-гипотез."
+        "Leakage проверен.",
+        "Custom features опубликованы (если нужны).",
+        "Agent понимает, что именно будет тестироваться.",
+        "Exploration phase complete"
       ],
       "allowed_tools": [
+        "research_record",
+        "features_catalog",
         "datasets",
         "datasets_preview",
-        "features_catalog",
-        "features_dataset",
-        "features_custom",
-        "features_analytics",
-        "events",
-        "events_sync",
-        "models_dataset",
-        "research_record"
+        "events"
       ],
       "evidence_requirements": [
         "По каждой гипотезе есть чистый contract данных и признаков.",
-        "Leakage проверен для каждого контракта.",
-        "Custom features валидированы и опубликованы.",
-        "Event alignment проверен для event-гипотез."
+        "Leakage проверен.",
+        "Custom features опубликованы (если нужны).",
+        "Agent понимает, что именно будет тестироваться.",
+        "Exploration phase complete"
       ],
       "policy_tags": [
-        "data_contract",
-        "leakage_guard"
+        "data_readiness",
+        "feature_contract"
       ],
       "max_turns": 24,
       "max_tool_calls": 24,
-      "max_expensive_calls": 3,
-      "parallel_slot": 3,
+      "max_expensive_calls": 2,
+      "parallel_slot": 1,
       "budget_scale_applied": 6,
       "depends_on": [
         "compiled_plan_v1_stage_2"
@@ -184,6 +178,6 @@
   "source_compile_report_path": "",
   "sequence_batch_index": 1,
   "status": "draft",
-  "created_at": "2026-04-10T16:52:11.207472+00:00",
-  "updated_at": "2026-04-10T16:52:11.207475+00:00"
+  "created_at": "2026-04-11T10:45:01.661334+00:00",
+  "updated_at": "2026-04-11T10:45:01.661337+00:00"
 }

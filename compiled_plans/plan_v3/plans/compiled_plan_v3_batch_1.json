@@ -1,6 +1,6 @@
 {
   "plan_id": "compiled_plan_v3_batch_1",
-  "goal": "Завершить незакрытую ветку A1 через полный acceptance chain, затем при необходимости исследовать ровно одну следующую low-friction ветку, не допуская преждевременного расширения поиска.",
+  "goal": "Close the unfinished A1 branch from v2 to a final PROMOTE/REJECT verdict, and only if A1 fails open exactly one next low-friction candidate through the full acceptance chain.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -9,23 +9,23 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "active-signal-v1@1 — immutable reference; запрещено менять базу, подбирать ей часы/дни/пороги/исполнение.",
-    "Любое улучшение обязано пройти через strict additive integration, permissive integration, ownership и cannibalization proof.",
-    "Одновременно открыта максимум одна low-friction ветка (A1 → затем A2 или A3, но не обе).",
-    "Wave B (medium-friction) запрещена, пока обе low-friction ветки не закрыты без promoted candidate.",
-    "Если candidate перестаёт быть положительным после удаления одного сильного куска истории — это не mainline-quality add-on.",
-    "Финальное решение по каждой ветке: PROMOTE / WATCHLIST / REJECT — без исключений."
+    "active-signal-v1@1 is immutable: never retune its hours, days, thresholds, or execution parameters",
+    "Any candidate must pass strict-additive, permissive-integration, ownership, and cannibalization proof before promotion",
+    "No medium-friction wave B until both low-friction branches (A1 + one of A2/A3) are fully closed with no promoted candidate",
+    "Only one active low-friction branch may be investigated at a time",
+    "Maximum 3-4 features per prototype; maximum 2-3 prototypes per branch",
+    "If a candidate loses positivity after removing its strongest historical segment, it is not mainline-quality"
   ],
   "slices": [
     {
       "slice_id": "compiled_plan_v3_stage_1",
       "title": "Аудит артефактов v2 и фиксация инвариантов v3",
-      "hypothesis": "Создать чистый организационный фундамент для v3: новый проект, явный reference, карта гипотез и дисциплина закрытия веток.",
-      "objective": "Создать чистый организационный фундамент для v3: новый проект, явный reference, карта гипотез и дисциплина закрытия веток.",
+      "hypothesis": "Open a clean v3 research project, record a full v2 postmortem, and fix the invariant and hypothesis-tracking discipline before any new work.",
+      "objective": "Open a clean v3 research project, record a full v2 postmortem, and fix the invariant and hypothesis-tracking discipline before any new work.",
       "success_criteria": [
-        "Существует чистый проект v3 с однозначным reference.",
-        "Карта гипотез определена с нужными осями.",
-        "Дисциплина закрытия веток зафиксирована в record."
+        "v3 project exists with no reference confusion",
+        "Hypothesis atlas defined in research_map",
+        "Branch closure discipline recorded as invariant"
       ],
       "allowed_tools": [
         "research_project",
@@ -33,9 +33,9 @@
         "research_map"
       ],
       "evidence_requirements": [
-        "Существует чистый проект v3 с однозначным reference.",
-        "Карта гипотез определена с нужными осями.",
-        "Дисциплина закрытия веток зафиксирована в record."
+        "v3 project exists with no reference confusion",
+        "Hypothesis atlas defined in research_map",
+        "Branch closure discipline recorded as invariant"
       ],
       "policy_tags": [
         "setup",
@@ -67,26 +67,26 @@
     {
       "slice_id": "compiled_plan_v3_stage_2",
       "title": "Полный forensic-review ветки A1",
-      "hypothesis": "Восстановить и зафиксировать exact logic A1_high_iv_long_v1, проверить воспроизводимость и отсутствие drift/mismatch относительно v2.",
-      "objective": "Восстановить и зафиксировать exact logic A1_high_iv_long_v1, проверить воспроизводимость и отсутствие drift/mismatch относительно v2.",
+      "hypothesis": "Reconstruct the exact logic, signals, and trade anatomy of A1_high_iv_long_v1 from v2 artefacts before any new testing.",
+      "objective": "Reconstruct the exact logic, signals, and trade anatomy of A1_high_iv_long_v1 from v2 artefacts before any new testing.",
       "success_criteria": [
-        "A1 описан строго и воспроизводимо: exact logic, заявленные vs фактические результаты.",
-        "Определён drift/mismatch статус."
+        "A1 logic is fully reproduced and documented",
+        "v2 claimed results are compared against v3 actual results",
+        "Signal orthogonality to base is assessed"
       ],
       "allowed_tools": [
-        "research_search",
-        "research_record",
         "backtests_strategy",
         "backtests_runs",
-        "features_catalog",
-        "backtests_analysis"
+        "backtests_analysis",
+        "research_record"
       ],
       "evidence_requirements": [
-        "A1 описан строго и воспроизводимо: exact logic, заявленные vs фактические результаты.",
-        "Определён drift/mismatch статус."
+        "A1 logic is fully reproduced and documented",
+        "v2 claimed results are compared against v3 actual results",
+        "Signal orthogonality to base is assessed"
       ],
       "policy_tags": [
-        "analysis",
+        "forensic",
         "cheap_first"
       ],
       "max_turns": 24,
@@ -117,25 +117,25 @@
     {
       "slice_id": "compiled_plan_v3_stage_3",
       "title": "Stability и concentration для A1",
-      "hypothesis": "Проверить, является ли A1 устойчивым specialist-layer, а не артефактом одного удачного периода истории.",
-      "objective": "Проверить, является ли A1 устойчивым specialist-layer, а не артефактом одного удачного периода истории.",
+      "hypothesis": "Determine whether A1 survives as a genuine specialist layer across time windows and is not driven by a concentrated cluster of trades.",
+      "objective": "Determine whether A1 survives as a genuine specialist layer across time windows and is not driven by a concentrated cluster of trades.",
       "success_criteria": [
-        "Все окна и сегменты проанализированы.",
-        "Concentration check пройден или провален с явным verdict."
+        "Honest verdict on whether A1 remains positive across the majority of windows",
+        "Concentration check completed: result is not driven by a handful of outlier trades"
       ],
       "allowed_tools": [
-        "backtests_conditions",
         "backtests_analysis",
+        "backtests_conditions",
         "backtests_runs",
         "research_record"
       ],
       "evidence_requirements": [
-        "Все окна и сегменты проанализированы.",
-        "Concentration check пройден или провален с явным verdict."
+        "Honest verdict on whether A1 remains positive across the majority of windows",
+        "Concentration check completed: result is not driven by a handful of outlier trades"
       ],
       "policy_tags": [
-        "analysis",
-        "validation"
+        "validation",
+        "cheap_first"
       ],
       "max_turns": 24,
       "max_tool_calls": 24,
@@ -171,6 +171,6 @@
   "source_compile_report_path": "",
   "sequence_batch_index": 1,
   "status": "draft",
-  "created_at": "2026-04-10T16:56:15.057216+00:00",
-  "updated_at": "2026-04-10T16:56:15.057219+00:00"
+  "created_at": "2026-04-11T10:49:08.828604+00:00",
+  "updated_at": "2026-04-11T10:49:08.828610+00:00"
 }

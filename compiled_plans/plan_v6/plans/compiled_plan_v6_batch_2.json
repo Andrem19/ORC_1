@@ -1,6 +1,6 @@
 {
   "plan_id": "compiled_plan_v6_batch_2",
-  "goal": "Найти и проверить новые cross-symbol directional custom features, обучить на них CatBoost long/short классификаторы, верифицировать на selection OOS и lockbox OOS, и сравнить с базой active-signal-v1@1 через matched OOS comparison.",
+  "goal": "Найти и проверить новые cross-symbol directional custom features, обучить на них CatBoost long/short classifiers, и доказать их additive value поверх active-signal-v1@1 через matched OOS comparison.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -9,27 +9,30 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "База active-signal-v1@1 — immutable reference. Запрещено менять базу, подбирать ей часы/дни/пороги/исполнение.",
-    "Запрещено обучать модель на данных, которые потом используются как финальный OOS.",
-    "Запрещено выбирать feature set, target, threshold или архитектуру по lockbox-окну.",
-    "Улучшение — только если прошёл matched OOS comparison с базой на том же окне.",
-    "Используется classification (directional barrier-based long/short labels), а не regression на future PnL.",
-    "Нужен новый информационный слой (cross-symbol leadership/breadth), а не вариации старых IV-фичей.",
-    "Отдельные long и short модели. Общая multiclass или router-модель запрещены на старте v6.",
-    "Максимум 3–4 сильных feature families, не широкий зоопарк.",
-    "Компактный disciplined HPO grid: depth 4/6/8, lr 0.03/0.05, moderate regularization, 2–3 seeds.",
-    "Допустимые горизонты: 12h, 18h. Допустимые barrier schemes: balanced, conservative.",
-    "Purge gap между train и более поздними окнами — не меньше 24h.",
-    "Thresholds замораживаются до открытия lockbox."
+    "База active-signal-v1@1 — immutable reference. Запрещено менять базу, подбирать ей параметры, обучать на финальном OOS.",
+    "Выбор feature set, target, threshold или архитектуры по lockbox-окну запрещён. Lockbox только проверяет frozen choice.",
+    "Улучшением считается только matched OOS comparison с базой на том же окне.",
+    "v5 regression route формально закрыт. v6 использует только classification (long/short labels).",
+    "Новый информационный слой обязателен — недостаточно переставлять старые IV/classifier features.",
+    "Сначала отдельные long и short classifiers (M1, M2). Router-модель запрещена до подтверждения обеих.",
+    "base-absent surface для discovery, matched OOS для финальной правды.",
+    "Не более 3–4 сильных feature families. Без широкой feature inflation.",
+    "Компактный disciplined HPO: depth {4,6,8}, lr {0.03,0.05}, moderate regularization, 2–3 seeds.",
+    "Purge gap между train и later windows — не менее 24h.",
+    "Горизонты только 12h и 18h. Barrier schemes только balanced и conservative."
   ],
   "slices": [
     {
       "slice_id": "compiled_plan_v6_stage_4",
       "title": "Dataset contract и label design без утечек",
-      "hypothesis": "Зафиксировать train/selection_OOS/lockbox_OOS windows, label schemes (balanced/conservative), горизонты (12h/18h), и построить full и base-absent datasets до начала обучения.",
-      "objective": "Зафиксировать train/selection_OOS/lockbox_OOS windows, label schemes (balanced/conservative), горизонты (12h/18h), и построить full и base-absent datasets до начала обучения.",
+      "hypothesis": "Заморозить train/selection_oos/lockbox_oos windows, зафиксировать label schemes (balanced + conservative, горизонты 12h/18h), построить full и base-absent surfaces.",
+      "objective": "Заморозить train/selection_oos/lockbox_oos windows, зафиксировать label schemes (balanced + conservative, горизонты 12h/18h), построить full и base-absent surfaces.",
       "success_criteria": [
-        "Dataset split и labels полностью frozen до начала обучения."
+        "Dataset split полностью frozen",
+        "Labels frozen (balanced + conservative × 12h + 18h)",
+        "Оба surfaces (full и base-absent) созданы",
+        "Purge gap соблюдён",
+        "Dataset IDs зафиксированы"
       ],
       "allowed_tools": [
         "models_dataset",
@@ -37,10 +40,15 @@
         "research_record"
       ],
       "evidence_requirements": [
-        "Dataset split и labels полностью frozen до начала обучения."
+        "Dataset split полностью frozen",
+        "Labels frozen (balanced + conservative × 12h + 18h)",
+        "Оба surfaces (full и base-absent) созданы",
+        "Purge gap соблюдён",
+        "Dataset IDs зафиксированы"
       ],
       "policy_tags": [
-        "data_readiness"
+        "data_contract",
+        "anti_leakage"
       ],
       "max_turns": 36,
       "max_tool_calls": 30,
@@ -70,23 +78,29 @@
     {
       "slice_id": "compiled_plan_v6_stage_5",
       "title": "Быстрая plausibility-проверка feature packs",
-      "hypothesis": "Отсеять feature packs без directional сигнала: обучить минимальные long/short classifiers на каждом pack, оценить ranking value и economic plausibility на selection OOS, оставить максимум 2 setups на сторону.",
-      "objective": "Отсеять feature packs без directional сигнала: обучить минимальные long/short classifiers на каждом pack, оценить ranking value и economic plausibility на selection OOS, оставить максимум 2 setups на сторону.",
+      "hypothesis": "Для каждого feature pack обучить минимальные long/short classifiers, проверить ranking value и economic plausibility на selection OOS, отобрать максимум 2 setup на сторону.",
+      "objective": "Для каждого feature pack обучить минимальные long/short classifiers, проверить ranking value и economic plausibility на selection OOS, отобрать максимум 2 setup на сторону.",
       "success_criteria": [
-        "Есть shortlist setups (максимум 2 на сторону) для полноценного обучения."
+        "Каждый pack протестирован минимальными моделями",
+        "Selection OOS ranking quality оценён",
+        "Economic plausibility проверена",
+        "Shortlist максимум 2 long + 2 short setups для полного обучения"
       ],
       "allowed_tools": [
         "models_train",
-        "models_registry",
         "models_compare",
+        "models_registry",
         "research_record"
       ],
       "evidence_requirements": [
-        "Есть shortlist setups (максимум 2 на сторону) для полноценного обучения."
+        "Каждый pack протестирован минимальными моделями",
+        "Selection OOS ranking quality оценён",
+        "Economic plausibility проверена",
+        "Shortlist максимум 2 long + 2 short setups для полного обучения"
       ],
       "policy_tags": [
-        "modeling",
-        "cheap_first"
+        "cheap_first",
+        "filtering"
       ],
       "max_turns": 24,
       "max_tool_calls": 24,
@@ -116,21 +130,29 @@
     {
       "slice_id": "compiled_plan_v6_stage_6",
       "title": "Обучение CatBoost long/short classifiers",
-      "hypothesis": "Обучить disciplined candidate models M1_long_cls и M2_short_cls (варианты A/B) на отобранных setups с compact grid, early stopping, class weights, calibration sanity.",
-      "objective": "Обучить disciplined candidate models M1_long_cls и M2_short_cls (варианты A/B) на отобранных setups с compact grid, early stopping, class weights, calibration sanity.",
+      "hypothesis": "Обучить disciplined candidate models (M1_long_A/B, M2_short_A/B) на лучших setups с компактным grid, ранним остановом, feature importance и SHAP.",
+      "objective": "Обучить disciplined candidate models (M1_long_A/B, M2_short_A/B) на лучших setups с компактным grid, ранним остановом, feature importance и SHAP.",
       "success_criteria": [
-        "Есть frozen long/short model candidates с feature importance и SHAP."
+        "Frozen long model candidate(s) с model card",
+        "Frozen short model candidate(s) с model card",
+        "Selection OOS quality зафиксирована",
+        "Feature importance и SHAP доступны"
       ],
       "allowed_tools": [
         "models_train",
         "models_registry",
+        "models_compare",
         "research_record"
       ],
       "evidence_requirements": [
-        "Есть frozen long/short model candidates с feature importance и SHAP."
+        "Frozen long model candidate(s) с model card",
+        "Frozen short model candidate(s) с model card",
+        "Selection OOS quality зафиксирована",
+        "Feature importance и SHAP доступны"
       ],
       "policy_tags": [
-        "modeling"
+        "modeling",
+        "expensive"
       ],
       "max_turns": 24,
       "max_tool_calls": 24,
@@ -166,6 +188,6 @@
   "source_compile_report_path": "",
   "sequence_batch_index": 2,
   "status": "draft",
-  "created_at": "2026-04-10T17:02:22.767310+00:00",
-  "updated_at": "2026-04-10T17:02:22.767311+00:00"
+  "created_at": "2026-04-11T10:54:10.388398+00:00",
+  "updated_at": "2026-04-11T10:54:10.388399+00:00"
 }

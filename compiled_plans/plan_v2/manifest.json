@@ -1,13 +1,12 @@
 {
   "source_file": "raw_plans/plan_v2.md",
   "source_hash": "fac2e19e9168dae13dd9e93e69327dca3275af5f9dd30e554257985ba2ef28d5",
-  "compiled_at": "2026-04-10T16:54:19.873673+00:00",
+  "compiled_at": "2026-04-11T10:47:21.717369+00:00",
   "sequence_id": "compiled_plan_v2",
   "compile_status": "compiled",
   "warnings": [
-    "plan_v2 is fundamentally different from plan_v1: complement-first architecture, not raw hypothesis sweeps.",
-    "Wave B (stage_11) is gated on Wave A being inconclusive — do not start without explicit gate evaluation.",
-    "All objectives and tool_hints are in Russian source context but translated to English in this draft for agent consumption."
+    "Plan is written in Russian; semantic intent was inferred without loss of meaning.",
+    "Stage 11 (Wave B) is explicitly gated on Wave A being inconclusive — the compiler must treat it as a conditional branch."
   ],
   "semantic_method": "llm",
   "semantic_path": "semantic.json",
@@ -16,6 +15,7 @@
     "plans/compiled_plan_v2_batch_1.json",
     "plans/compiled_plan_v2_batch_2.json",
     "plans/compiled_plan_v2_batch_3.json",
-    "plans/compiled_plan_v2_batch_4.json"
+    "plans/compiled_plan_v2_batch_4.json",
+    "plans/compiled_plan_v2_batch_5.json"
   ]
 }

@@ -1,6 +1,6 @@
 {
   "plan_id": "compiled_plan_v10_batch_3",
-  "goal": "Validate whether the microstructure feature family (primarily cf_micro_imbalance_1h) provides a real overlay alpha on top of the immutable base via honest lockbox comparison.",
+  "goal": "Честно доказать или опровергнуть, что microstructure-family (прежде всего cf_micro_imbalance_1h) даёт реальный overlay alpha поверх immutable base active-signal-v1.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -9,38 +9,38 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "Base active-signal-v1@1 is immutable — never modify snapshot, thresholds, hours, days, execution, or feature set",
-    "Only microstructure_proxies family is active in v10; all other families are locked",
-    "Lockbox overlay comparison (base vs base+overlay on the same window) is the sole valid truth test",
-    "Overlay-first: prove veto-overlay before attempting early-cut or directional scout",
-    "Simpler before smarter: single-feature bucket/threshold rules before logistic before CatBoost",
-    "Short-first priority: short veto models before long veto models",
-    "Label quality over model sophistication — noisy labels kill any model",
-    "Forbidden: net_pnl>0 as sole veto label; re-opening closed directions (leadership, breadth, path-asymmetry, regime-disagreement, event-only overlays, trade-quality without new information layer, derivatives without real OI/liquidation/basis data)",
-    "Nothing is declared an improvement unless it passes matched OOS comparison against the base on the same lockbox window"
+    "active-signal-v1@1 — immutable reference, менять базу запрещено",
+    "любое улучшение обязано пройти matched OOS lockbox comparison против базы на том же окне",
+    "активна только одна data family: microstructure_proxies, все остальные locked",
+    "feature selection / threshold / архитектура не подбираются по lockbox-окну",
+    "simple baselines проверяются до сложных моделей (simpler before smarter)",
+    "short side проверяется первой (short-first priority)",
+    "veto-overlay route обязателен; early-cut и directional scout открываются только через gate",
+    "запрещены: net_pnl>0 как единственный veto label, regression на future PnL, повторное открытие закрытых routes (leadership, breadth, path-asymmetry, regime-disagreement, event-only, trade-quality без нового слоя)",
+    "microstructure должен пройти тест почти сам по себе, без подмешивания старых feature packs"
   ],
   "slices": [
     {
       "slice_id": "compiled_plan_v10_stage_7",
       "title": "Long veto models",
-      "hypothesis": "Обучить long veto models и сравнить с short side; не продвигать long если он заметно слабее без компенсации.",
-      "objective": "Обучить long veto models и сравнить с short side; не продвигать long если он заметно слабее без компенсации.",
+      "hypothesis": "Обучить long veto models на frozen labels и сравнить с short side; не продвигать, если заметно слабее без компенсации по economics.",
+      "objective": "Обучить long veto models на frozen labels и сравнить с short side; не продвигать, если заметно слабее без компенсации по economics.",
       "success_criteria": [
-        "Long veto models обучены по всем 3 label families",
-        "Side-by-side сравнение с short выполнено",
-        "Решение о продвижении long в lockbox принято"
+        "Long veto models обучены для трёх label families",
+        "Сравнение long vs short проведено",
+        "Принято решение, продвигать ли long route в lockbox"
       ],
       "allowed_tools": [
-        "models_dataset",
         "models_train",
-        "models_registry",
+        "models_dataset",
         "models_compare",
+        "models_registry",
         "research_record"
       ],
       "evidence_requirements": [
-        "Long veto models обучены по всем 3 label families",
-        "Side-by-side сравнение с short выполнено",
-        "Решение о продвижении long в lockbox принято"
+        "Long veto models обучены для трёх label families",
+        "Сравнение long vs short проведено",
+        "Принято решение, продвигать ли long route в lockbox"
       ],
       "policy_tags": [
         "modeling"
@@ -51,6 +51,7 @@
       "parallel_slot": 1,
       "budget_scale_applied": 6,
       "depends_on": [
+        "compiled_plan_v10_stage_5",
         "compiled_plan_v10_stage_6"
       ],
       "status": "pending",
@@ -73,28 +74,28 @@
     {
       "slice_id": "compiled_plan_v10_stage_8",
       "title": "Lockbox overlay test against immutable base",
-      "hypothesis": "Доказать или опровергнуть microstructure overlay на реальном OOS lockbox — центральный тест v10.",
-      "objective": "Доказать или опровергнуть microstructure overlay на реальном OOS lockbox — центральный тест v10.",
+      "hypothesis": "Доказать или опровергнуть microstructure overlay на реальном lockbox OOS: сравнить immutable base против base+short veto, base+long veto, base+combined veto.",
+      "objective": "Доказать или опровергнуть microstructure overlay на реальном lockbox OOS: сравнить immutable base против base+short veto, base+long veto, base+combined veto.",
       "success_criteria": [
-        "Lockbox overlay test проведён для всех surviving veto routes",
-        "Полная таблица overlay метрик заполнена",
-        "Ownership improvement проверен"
+        "Lockbox overlay test проведён для всех surviving models",
+        "Delta PnL, PF, DD, removed trades, PnL removed, winner share, weak-window repair, ownership посчитаны",
+        "Есть честное сравнение base vs overlay на lockbox"
       ],
       "allowed_tools": [
-        "backtests_strategy",
-        "backtests_plan",
         "backtests_runs",
+        "backtests_strategy",
         "backtests_analysis",
+        "backtests_plan",
         "research_record"
       ],
       "evidence_requirements": [
-        "Lockbox overlay test проведён для всех surviving veto routes",
-        "Полная таблица overlay метрик заполнена",
-        "Ownership improvement проверен"
+        "Lockbox overlay test проведён для всех surviving models",
+        "Delta PnL, PF, DD, removed trades, PnL removed, winner share, weak-window repair, ownership посчитаны",
+        "Есть честное сравнение base vs overlay на lockbox"
       ],
       "policy_tags": [
         "backtesting",
-        "lockbox"
+        "validation"
       ],
       "max_turns": 48,
       "max_tool_calls": 36,
@@ -102,6 +103,7 @@
       "parallel_slot": 1,
       "budget_scale_applied": 6,
       "depends_on": [
+        "compiled_plan_v10_stage_6",
         "compiled_plan_v10_stage_7"
       ],
       "status": "pending",
@@ -124,29 +126,28 @@
     {
       "slice_id": "compiled_plan_v10_stage_9",
       "title": "Gate for early-cut and directional scout",
-      "hypothesis": "Проверить условия открытия optional routes; открыть максимум одну ветку или ни одной.",
-      "objective": "Проверить условия открытия optional routes; открыть максимум одну ветку или ни одной.",
+      "hypothesis": "Решить на основе lockbox результатов, открывать ли early-cut или directional scout route; открыть максимум одну ветку.",
+      "objective": "Решить на основе lockbox результатов, открывать ли early-cut или directional scout route; открыть максимум одну ветку.",
       "success_criteria": [
-        "Оба gate условия формально проверены и задокументированы",
-        "Принято решение об открытии/закрытии каждой ветки",
-        "Максимум одна ветка открыта"
+        "Решение по каждому gate задокументировано (opened/locked, why)",
+        "Максимум одна optional ветка открыта"
       ],
       "allowed_tools": [
-        "research_record",
-        "research_map"
+        "backtests_strategy",
+        "research_record"
       ],
       "evidence_requirements": [
-        "Оба gate условия формально проверены и задокументированы",
-        "Принято решение об открытии/закрытии каждой ветки",
-        "Максимум одна ветка открыта"
+        "Решение по каждому gate задокументировано (opened/locked, why)",
+        "Максимум одна optional ветка открыта"
       ],
       "policy_tags": [
-        "analysis",
-        "gate"
+        "validation",
+        "gate",
+        "optional_candidate"
       ],
       "max_turns": 24,
       "max_tool_calls": 24,
-      "max_expensive_calls": 2,
+      "max_expensive_calls": 3,
       "parallel_slot": 1,
       "budget_scale_applied": 6,
       "depends_on": [
@@ -178,6 +179,6 @@
   "source_compile_report_path": "",
   "sequence_batch_index": 3,
   "status": "draft",
-  "created_at": "2026-04-10T17:10:16.031655+00:00",
-  "updated_at": "2026-04-10T17:10:16.031656+00:00"
+  "created_at": "2026-04-11T11:03:23.954549+00:00",
+  "updated_at": "2026-04-11T11:03:23.954685+00:00"
 }

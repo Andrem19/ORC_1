@@ -5,12 +5,13 @@
   "compile_status": "compiled",
   "parser_confidence": 0.95,
   "semantic_method": "llm",
-  "stage_count": 11,
+  "stage_count": 12,
   "compiled_plan_count": 4,
   "warnings": [
-    "Plan is research-cycle exploratory — several stages are gated and may be skipped.",
-    "Fallback family (stage_10) and optional routes (stage_8–9) are mutually exclusive paths in practice."
+    "Primary family (derivatives positioning/pressure) требует проверки availability OI, funding, basis, liquidations — может оказаться частично недоступной.",
+    "Fallback family (cross-exchange pressure) зависит от multi-venue данных, coverage может быть ограничен.",
+    "Options structure помечена как only-if-available: если данные недоступны, family пропускается без потери целостности плана."
   ],
   "errors": [],
-  "compiled_at": "2026-04-10T17:07:43.039532+00:00"
+  "compiled_at": "2026-04-11T11:01:31.894608+00:00"
 }

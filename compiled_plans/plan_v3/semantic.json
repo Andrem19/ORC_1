@@ -2,7 +2,7 @@
   "source_file": "raw_plans/plan_v3.md",
   "source_hash": "5ae5c7f47d6dba65f942f9d6e3ca35863e78662922e4f57baf2e51b68788d8eb",
   "source_title": "План дальнейших исследований для v3",
-  "goal": "Завершить незакрытую ветку A1 через полный acceptance chain, затем при необходимости исследовать ровно одну следующую low-friction ветку, не допуская преждевременного расширения поиска.",
+  "goal": "Close the unfinished A1 branch from v2 to a final PROMOTE/REJECT verdict, and only if A1 fails open exactly one next low-friction candidate through the full acceptance chain.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -11,36 +11,34 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "active-signal-v1@1 — immutable reference; запрещено менять базу, подбирать ей часы/дни/пороги/исполнение.",
-    "Любое улучшение обязано пройти через strict additive integration, permissive integration, ownership и cannibalization proof.",
-    "Одновременно открыта максимум одна low-friction ветка (A1 → затем A2 или A3, но не обе).",
-    "Wave B (medium-friction) запрещена, пока обе low-friction ветки не закрыты без promoted candidate.",
-    "Если candidate перестаёт быть положительным после удаления одного сильного куска истории — это не mainline-quality add-on.",
-    "Финальное решение по каждой ветке: PROMOTE / WATCHLIST / REJECT — без исключений."
+    "active-signal-v1@1 is immutable: never retune its hours, days, thresholds, or execution parameters",
+    "Any candidate must pass strict-additive, permissive-integration, ownership, and cannibalization proof before promotion",
+    "No medium-friction wave B until both low-friction branches (A1 + one of A2/A3) are fully closed with no promoted candidate",
+    "Only one active low-friction branch may be investigated at a time",
+    "Maximum 3-4 features per prototype; maximum 2-3 prototypes per branch",
+    "If a candidate loses positivity after removing its strongest historical segment, it is not mainline-quality"
   ],
   "stages": [
     {
       "stage_id": "stage_1",
       "title": "Аудит артефактов v2 и фиксация инвариантов v3",
-      "objective": "Создать чистый организационный фундамент для v3: новый проект, явный reference, карта гипотез и дисциплина закрытия веток.",
+      "objective": "Open a clean v3 research project, record a full v2 postmortem, and fix the invariant and hypothesis-tracking discipline before any new work.",
       "actions": [
-        "Открыть новый research_project для v3.",
-        "В research_record записать явный разбор v2: что сделано, что нет, почему.",
-        "Зафиксировать один-единственный reference snapshot: active-signal-v1@1.",
-        "В research_map завести оси: branch, data_layer, regime_type, acceptance_stage, final_decision.",
-        "Завести явный список статусов: active, hold, rejected, promoted, watchlist.",
-        "Записать инварианты v3 в research_record."
+        "Create a new research_project for v3",
+        "Record an explicit v2 audit in research_record",
+        "Confirm single reference snapshot active-signal-v1@1",
+        "Define research_map axes: branch, data_layer, regime_type, acceptance_stage, final_decision",
+        "Establish branch lifecycle statuses: active, hold, rejected, promoted, watchlist"
       ],
       "success_criteria": [
-        "Существует чистый проект v3 с однозначным reference.",
-        "Карта гипотез определена с нужными осями.",
-        "Дисциплина закрытия веток зафиксирована в record."
+        "v3 project exists with no reference confusion",
+        "Hypothesis atlas defined in research_map",
+        "Branch closure discipline recorded as invariant"
       ],
       "tool_hints": [
         "research_project",
         "research_record",
-        "research_map",
-        "system_bootstrap"
+        "research_map"
       ],
       "policy_tags": [
         "setup",
@@ -55,29 +53,27 @@
     {
       "stage_id": "stage_2",
       "title": "Полный forensic-review ветки A1",
-      "objective": "Восстановить и зафиксировать exact logic A1_high_iv_long_v1, проверить воспроизводимость и отсутствие drift/mismatch относительно v2.",
+      "objective": "Reconstruct the exact logic, signals, and trade anatomy of A1_high_iv_long_v1 from v2 artefacts before any new testing.",
       "actions": [
-        "Найти и поднять все артефакты A1 из research memory и snapshot library.",
-        "Зафиксировать exact logic A1: conditions, features, timeframe, entry/exit rules.",
-        "Воспроизвести standalone backtest A1 и сверить с v2 заявленными результатами.",
-        "Проверить signal_orthogonality к базе.",
-        "Составить краткий trade anatomy и exit breakdown.",
-        "Записать forensic verdict в research_record."
+        "Recover all A1 artefacts (snapshots, runs, features)",
+        "Document exact A1 entry/exit logic",
+        "Check for drift or mismatch between v2 claims and actual artefacts",
+        "Produce trade anatomy breakdown",
+        "Compute per-trade statistics"
       ],
       "success_criteria": [
-        "A1 описан строго и воспроизводимо: exact logic, заявленные vs фактические результаты.",
-        "Определён drift/mismatch статус."
+        "A1 logic is fully reproduced and documented",
+        "v2 claimed results are compared against v3 actual results",
+        "Signal orthogonality to base is assessed"
       ],
       "tool_hints": [
-        "research_search",
-        "research_record",
         "backtests_strategy",
         "backtests_runs",
-        "features_catalog",
-        "backtests_analysis"
+        "backtests_analysis",
+        "research_record"
       ],
       "policy_tags": [
-        "analysis",
+        "forensic",
         "cheap_first"
       ],
       "depends_on": [
@@ -91,28 +87,26 @@
     {
       "stage_id": "stage_3",
       "title": "Stability и concentration для A1",
-      "objective": "Проверить, является ли A1 устойчивым specialist-layer, а не артефактом одного удачного периода истории.",
+      "objective": "Determine whether A1 survives as a genuine specialist layer across time windows and is not driven by a concentrated cluster of trades.",
       "actions": [
-        "Провести window stability: разбить на кварталы, полугодия, rolling windows.",
-        "Проверить стабильность по hour, dow, cl_1h сегментам.",
-        "Провести condition stability анализ.",
-        "Выполнить concentration check: удалить сильнейший кусок истории и несколько лучших сделок.",
-        "Сравнить результаты до и после удаления.",
-        "Записать честный verdict."
+        "Run window stability analysis on A1 across quarters, half-years, and rolling windows",
+        "Check stability stratified by hour, day-of-week, and cl_1h regime",
+        "Test resilience after removing the strongest historical segment",
+        "Run condition stability analysis"
       ],
       "success_criteria": [
-        "Все окна и сегменты проанализированы.",
-        "Concentration check пройден или провален с явным verdict."
+        "Honest verdict on whether A1 remains positive across the majority of windows",
+        "Concentration check completed: result is not driven by a handful of outlier trades"
       ],
       "tool_hints": [
-        "backtests_conditions",
         "backtests_analysis",
+        "backtests_conditions",
         "backtests_runs",
         "research_record"
       ],
       "policy_tags": [
-        "analysis",
-        "validation"
+        "validation",
+        "cheap_first"
       ],
       "depends_on": [
         "stage_2"
@@ -125,28 +119,26 @@
     {
       "stage_id": "stage_4",
       "title": "Обязательная интеграция A1 в двух режимах",
-      "objective": "Доказать или опровергнуть, что A1 является настоящим additive layer поверх неизменной базы, через strict additive и permissive integration.",
+      "objective": "Close the main v2 gap by proving whether A1 is truly additive through both strict-additive and permissive integration against the unchanged base.",
       "actions": [
-        "Создать integration snapshot: base + A1 strict additive.",
-        "Создать integration snapshot: base + A1 permissive integrated.",
-        "Запустить backtest для обоих режимов.",
-        "Сравнить delta_pnl, delta_trades, delta_pf, delta_dd относительно неизменной базы.",
-        "Оценить weak_quarter_repair в обоих режимах.",
-        "Записать полную интеграционную картину."
+        "Run strict additive integration (A1 signals layered on top of base without overlap)",
+        "Run permissive integration (A1 and base coexist with conflict resolution)",
+        "Compare both modes against the immutable base on PnL, trade count, profit factor, and drawdown",
+        "Assess whether weak quarters are repaired"
       ],
       "success_criteria": [
-        "Есть полная интеграционная картина A1: strict_additive и permissive режимы с delta метриками."
+        "Complete integration picture for A1 in both modes",
+        "Delta metrics against base computed for PnL, trades, PF, DD, and weak-quarter repair"
       ],
       "tool_hints": [
-        "backtests_strategy",
         "backtests_runs",
         "backtests_analysis",
+        "backtests_strategy",
         "research_record"
       ],
       "policy_tags": [
-        "analysis",
-        "validation",
-        "critical"
+        "integration",
+        "mandatory"
       ],
       "depends_on": [
         "stage_3"
@@ -159,19 +151,17 @@
     {
       "stage_id": "stage_5",
       "title": "Ownership, cannibalization и proof of new entries для A1",
-      "objective": "Доказать природу delta A1: расширяет ли A1 покрытие системы, или cannibalizes базу без реального улучшения.",
+      "objective": "Prove the nature of A1's delta to the base by measuring overlap, truly new trades, replaced base trades, and coverage expansion.",
       "actions": [
-        "Запустить layer_compare анализ.",
-        "Запустить signal_ownership анализ.",
-        "Посчитать overlap с базой: сколько сделок A1 совпадают с базой.",
-        "Посчитать truly_new_trades и replaced_base_trades.",
-        "Оценить pnl_of_new_trades и coverage_expansion.",
-        "Ответить: A1 реально расширяет систему?",
-        "Записать ownership verdict."
+        "Compute trade overlap between A1 and base",
+        "Count truly new trades vs. replaced base trades",
+        "Run layer_compare and signal_ownership analyses",
+        "Measure coverage expansion",
+        "Determine whether A1 genuinely extends the system or merely reshuffles base PnL"
       ],
       "success_criteria": [
-        "Полная ownership картина: overlap, new trades, replaced trades, coverage expansion.",
-        "Достаточно данных для окончательного решения по A1."
+        "Ownership and cannibalization metrics are recorded",
+        "Enough evidence exists for a final PROMOTE / WATCHLIST / REJECT decision on A1"
       ],
       "tool_hints": [
         "backtests_analysis",
@@ -179,9 +169,8 @@
         "research_record"
       ],
       "policy_tags": [
-        "analysis",
         "validation",
-        "critical"
+        "mandatory"
       ],
       "depends_on": [
         "stage_4"
@@ -193,25 +182,28 @@
     },
     {
       "stage_id": "stage_6",
-      "title": "Финальное решение по A1: PROMOTE / WATCHLIST / REJECT",
-      "objective": "Принять окончательное решение по A1 на основе всех накопленных доказательств, не оставляя ветку в подвешенном состоянии.",
+      "title": "Финальное решение по A1",
+      "objective": "Close A1 definitively with one of three verdicts: PROMOTE, WATCHLIST SPECIALIST, or REJECT.",
       "actions": [
-        "Свести результаты stage_2–stage_5 в единую таблицу.",
-        "Принять одно из трёх решений: PROMOTE (реальный additive layer), WATCHLIST SPECIALIST (обоснованный потенциал, но недостаточно данных), REJECT (не переживает интеграцию).",
-        "Записать решение с main_reason и can_revisit флагом в research_record.",
-        "Обновить research_map: установить final_decision для ветки A1."
+        "Aggregate all evidence from stages 2–5",
+        "Render final decision: PROMOTE / WATCHLIST / REJECT",
+        "Record decision and main reason in research_record",
+        "If PROMOTED: publish to model-backed feature or snapshot library",
+        "If WATCHLIST: document revisit conditions",
+        "If REJECTED: close the branch permanently"
       ],
       "success_criteria": [
-        "A1 закрыт окончательно с однозначным решением PROMOTE/WATCHLIST/REJECT.",
-        "Решение записано с обоснованием в research memory."
+        "A1 is definitively closed with a recorded verdict and rationale"
       ],
       "tool_hints": [
         "research_record",
-        "research_map"
+        "research_map",
+        "models_to_feature",
+        "backtests_strategy"
       ],
       "policy_tags": [
         "decision",
-        "critical"
+        "checkpoint"
       ],
       "depends_on": [
         "stage_5"
@@ -223,122 +215,114 @@
     },
     {
       "stage_id": "stage_7",
-      "title": "Открыть ровно одну следующую low-friction ветку (только если A1 не promoted)",
-      "objective": "Выбрать ровно одну следующую ветку (A2_iv_acceleration или A3_broader_cl_transition) и подготовить её к чистому тесту, не расползаясь в широкий поиск.",
+      "title": "Выбор ровно одной следующей low-friction ветки (если A1 не promoted)",
+      "objective": "If A1 was not promoted, select exactly one next low-friction branch (A2_iv_acceleration preferred, then A3_broader_cl_transition) and prepare its hypothesis and feature contracts.",
       "actions": [
-        "Если A1 promoted — пропустить этот этап и все последующие до stage_10.",
-        "Если A1 не promoted — выбрать ровно одну ветку по приоритету: A2_iv_acceleration (приоритет 1), A3_broader_cl_transition (приоритет 2).",
-        "Подготовить feature contract для выбранной ветки.",
-        "Подготовить hypothesis contract.",
-        "Зафиксировать выбор и обоснование в research_record."
+        "Evaluate remaining low-friction candidates from v2 base-absent surface",
+        "Prioritize A2_iv_acceleration; fall back to A3_broader_cl_transition only if A2 is unavailable",
+        "Prepare feature contract and hypothesis contract for the chosen branch",
+        "Do not touch wave B until this branch completes the full acceptance chain"
       ],
       "success_criteria": [
-        "Выбрана только одна следующая ветка с обоснованием why_not_alternative.",
-        "Feature contract и hypothesis contract готовы."
+        "Exactly one next branch is selected with documented rationale",
+        "Feature and hypothesis contracts are ready for clean testing"
       ],
       "tool_hints": [
-        "research_record",
-        "research_map",
         "features_catalog",
         "features_custom",
-        "backtests_strategy"
+        "research_record",
+        "research_map"
       ],
       "policy_tags": [
-        "branch_selection",
-        "gated"
+        "gated_branch",
+        "cheap_first"
       ],
       "depends_on": [
         "stage_6"
       ],
       "required": false,
       "parallelizable": false,
-      "gate_hint": "Выполняется только если A1 не получил статус PROMOTE. Если A1 promoted — переход к stage_10.",
+      "gate_hint": "A1 was not PROMOTED; a new branch is needed",
       "raw_stage_ref": "stage_7"
     },
     {
       "stage_id": "stage_8",
-      "title": "A. Прототипирование A2_iv_acceleration",
-      "objective": "Проверить, даёт ли динамика IV новый specialist-layer через компактный набор признаков и строгие прототипы.",
+      "title": "A2_iv_acceleration: прототип и standalone-тест",
+      "objective": "Test whether IV dynamics produce a viable specialist layer by building a compact feature set and running it through plausibility and standalone checks on the base-absent surface.",
       "actions": [
-        "Построить компактный набор IV-динамики признаков (максимум 3-4).",
-        "Провести causality check, warmup check, materialization check.",
-        "Проверить на base_absent surface.",
-        "Собрать максимум 2-3 strict prototypes.",
-        "Провести standalone backtest каждого прототипа."
+        "Build compact feature set (max 3-4 features) capturing IV acceleration dynamics",
+        "Run causality check, warmup check, and materialization check",
+        "Evaluate features on base-absent surface",
+        "Build max 2-3 strict prototypes",
+        "Run standalone backtests on surviving prototypes"
       ],
       "success_criteria": [
-        "Есть либо один зрелый A2 prototype с plausibility_ok и standalone_ok, либо честный ранний отказ."
+        "Either one mature A2 prototype survives plausibility and standalone tests, or an honest early rejection is recorded"
       ],
       "tool_hints": [
         "features_custom",
         "features_dataset",
-        "features_catalog",
         "backtests_strategy",
         "backtests_runs",
-        "backtests_analysis",
         "research_record"
       ],
       "policy_tags": [
         "prototyping",
-        "gated"
+        "gated_branch"
       ],
       "depends_on": [
         "stage_7"
       ],
       "required": false,
       "parallelizable": false,
-      "gate_hint": "Выполняется только если на stage_7 выбрана ветка A2_iv_acceleration.",
+      "gate_hint": "A2_iv_acceleration was selected as the next branch",
       "raw_stage_ref": "stage_8"
     },
     {
       "stage_id": "stage_9",
-      "title": "B. Прототипирование A3_broader_cl_transition",
-      "objective": "Проверить, даёт ли более широкий класс classifier transitions новый specialist-layer.",
+      "title": "A3_broader_cl_transition: прототип и standalone-тест",
+      "objective": "Test whether a broader class of classifier transitions produces a viable specialist layer through transition features and base-absent surface evaluation.",
       "actions": [
-        "Построить transition features.",
-        "Сгруппировать переходы по смыслу.",
-        "Проверить на base_absent surface.",
-        "Построить максимум 2 strict prototypes.",
-        "Провести standalone backtest каждого прототипа."
+        "Build transition features from broader classifier set",
+        "Group transitions by semantic meaning",
+        "Evaluate on base-absent surface",
+        "Build max 2 strict prototypes",
+        "Run standalone backtests on surviving prototypes"
       ],
       "success_criteria": [
-        "Есть либо один зрелый A3 prototype с plausibility_ok и standalone_ok, либо честный ранний отказ."
+        "Either one mature A3 prototype survives plausibility and standalone tests, or an honest early rejection is recorded"
       ],
       "tool_hints": [
         "features_custom",
         "features_dataset",
-        "features_catalog",
         "backtests_strategy",
         "backtests_runs",
-        "backtests_analysis",
         "research_record"
       ],
       "policy_tags": [
         "prototyping",
-        "gated"
+        "gated_branch"
       ],
       "depends_on": [
         "stage_7"
       ],
       "required": false,
       "parallelizable": false,
-      "gate_hint": "Выполняется только если на stage_7 выбрана ветка A3_broader_cl_transition.",
+      "gate_hint": "A3_broader_cl_transition was selected as the next branch",
       "raw_stage_ref": "stage_9"
     },
     {
       "stage_id": "stage_10",
-      "title": "Контроль запрета на medium-friction wave",
-      "objective": "Верифицировать, что условия для открытия Wave B не выполнены, и зафиксировать статус запрета.",
+      "title": "Контроль запрета на medium-friction wave B",
+      "objective": "Enforce the hard gate: wave B (cross-symbol, model-backed routing, hybrids) is forbidden until both low-friction branches are fully closed without a promoted candidate.",
       "actions": [
-        "Проверить: A1 закрыт окончательно — да/нет.",
-        "Проверить: выбранная ветка A2/A3 закрыта окончательно — да/нет.",
-        "Проверить: есть ли promoted candidate по итогам обеих low-friction веток.",
-        "Если promoted candidate есть — Wave B запрещён, зафиксировать.",
-        "Если ни одного promoted candidate — разрешить Wave B в следующем плане (v4).",
-        "Записать контрольную таблицу в research_record."
+        "Verify A1 is definitively closed",
+        "Verify the selected next branch (A2 or A3) is definitively closed",
+        "Confirm wave B has NOT been opened prematurely",
+        "Record gate status in research_record"
       ],
       "success_criteria": [
-        "Контрольная таблица заполнена: A1 закрыт, A2/A3 закрыта, Wave B статус определён."
+        "All three gate conditions are verified and recorded: A1 closed, A2/A3 closed, wave B not opened"
       ],
       "tool_hints": [
         "research_record",
@@ -346,34 +330,34 @@
       ],
       "policy_tags": [
         "gate",
-        "control"
+        "discipline"
       ],
       "depends_on": [
-        "stage_6"
+        "stage_6",
+        "stage_8",
+        "stage_9"
       ],
       "required": true,
       "parallelizable": false,
-      "gate_hint": "Если A1 promoted — Wave B автоматически запрещён в этом цикле.",
+      "gate_hint": "",
       "raw_stage_ref": "stage_10"
     },
     {
       "stage_id": "stage_11",
       "title": "Финальный отчёт агента",
-      "objective": "Составить обязательный итоговый отчёт по plan_v3 в строгом порядке: v2 пробелы → закрытие A1 → природа A1 → выбор следующей ветки → результат ветки → главный итог → рекомендации для v4.",
+      "objective": "Produce the mandatory structured final report covering v2 gaps, A1 closure verdict, next-branch results, overall v3 outcome, and concrete v4 recommendations.",
       "actions": [
-        "Описать, что именно было недоделано в v2.",
-        "Описать, как был закрыт A1: forensic, stability, integration, ownership.",
-        "Ответить: был ли A1 настоящим новым additive layer.",
-        "Описать, какая следующая ветка была выбрана и почему.",
-        "Описать, что показала выбранная ветка.",
-        "Сформулировать главный итог plan_v3.",
-        "Сформулировать рекомендации для plan_v4.",
-        "Записать полный отчёт в research_record.",
-        "Отправить уведомление оператору."
+        "Document what was unfinished in v2",
+        "Document how A1 was closed and whether it was a genuine additive layer",
+        "Document which next branch was chosen and why",
+        "Document what that branch showed",
+        "State the main v3 outcome",
+        "Provide concrete v4 recommendations"
       ],
       "success_criteria": [
-        "Полный отчёт записан в research memory по обязательной структуре.",
-        "Оператор уведомлён о завершении plan_v3."
+        "Final report follows the mandatory 7-section structure",
+        "All branch decisions are recorded with rationale",
+        "v4 recommendations are concrete and actionable"
       ],
       "tool_hints": [
         "research_record",
@@ -394,8 +378,8 @@
     }
   ],
   "warnings": [
-    "Plan v2 был выполнен только частично: отсутствуют window stability, condition stability, strict/permissive integration, ownership, cannibalization proof и walk-forward.",
-    "Единственное содержательное наследие v2 — A1_high_iv_long_v1; все остальные ветки не доведены до конца."
+    "Plan v2 was only partially executed — the full acceptance chain (stability, integration, ownership, walk-forward) was never completed",
+    "Only one substantive v2 artefact survives: A1_high_iv_long_v1"
   ],
   "parse_confidence": 0.95
 }

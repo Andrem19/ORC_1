@@ -1,13 +1,12 @@
 {
   "source_file": "raw_plans/plan_v10.md",
   "source_hash": "cee9cc01154021ea83e17fd744fe59593037d39a81537ac1a284ed1fb2d81c9b",
-  "compiled_at": "2026-04-10T17:10:16.031691+00:00",
+  "compiled_at": "2026-04-11T11:03:23.954731+00:00",
   "sequence_id": "compiled_plan_v10",
   "compile_status": "compiled",
   "warnings": [
-    "Plan is in Russian; all objective/action text preserved in original language for semantic fidelity",
-    "Stages 9–10 contain gated optional branches that may be skipped entirely",
     "Auto-added research_record for stage_2: every non-trivial stage needs documentation capability.",
+    "Auto-added research_record for stage_3: every non-trivial stage needs documentation capability.",
     "Auto-added research_record for stage_5: every non-trivial stage needs documentation capability.",
     "Auto-added research_record for stage_6: every non-trivial stage needs documentation capability.",
     "Auto-added research_record for stage_7: every non-trivial stage needs documentation capability.",

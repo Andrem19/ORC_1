@@ -1,6 +1,6 @@
 {
   "plan_id": "compiled_plan_v2_batch_1",
-  "goal": "Найти один или несколько ортогональных specialist-сигналов или conditioning-слоёв, которые работают там, где база active-signal-v1@1 не торгует, и доказанно приносят новые входы, а не скрытый дубляж.",
+  "goal": "Find one or more new orthogonal specialist signals or conditioning layers that work where active-signal-v1@1 is absent, prove their additive value, and avoid repeating v1's single-filter event-entry mistakes.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -9,21 +9,21 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "База active-signal-v1@1 immutable — не ретюнить, не менять пороги, часы, дни, исполнение.",
-    "Сырые event-entry конструкции (один event + один фильтр) запрещены — H1/H2 тупик.",
-    "Каждый кандидат сначала проходит complement-first режим: вход только на base_absent anchor-барах.",
-    "Single-filter entry запрещён — минимум три логических слоя (новый слой + подтверждение режима + ограничитель плотности).",
-    "Model-first запрещён до завершения Wave A (low-friction).",
-    "Кандидат отклоняется, если strict additive слабый, а permissive сильный — признак скрытого каннибализма."
+    "Base active-signal-v1@1 is immutable: no retuning of hours, days, thresholds, or execution rules.",
+    "Raw single-filter event-entry constructions (H1/H2 style) are permanently banned.",
+    "Every new candidate must first pass complement-first mode before any other evaluation.",
+    "Model-first approaches are forbidden until the low-friction Wave A is fully exhausted.",
+    "Each prototype must have at least three logical layers: new information layer, regime/state confirmation, and entry-density limiter.",
+    "A candidate whose profit vanishes under strict-additive mode is rejected regardless of permissive-integrated performance."
   ],
   "slices": [
     {
       "slice_id": "compiled_plan_v2_stage_1",
-      "title": "Постмортем plan_v1 и фиксация новых правил",
-      "hypothesis": "Record a structured postmortem of plan_v1 and fix immutable v2 rules so the agent does not repeat the same failure under a different name.",
-      "objective": "Record a structured postmortem of plan_v1 and fix immutable v2 rules so the agent does not repeat the same failure under a different name.",
+      "title": "Postmortem plan_v1 and fix new rules",
+      "hypothesis": "Record the specific lessons from the failed v1 cycle so the agent does not repeat the same mistakes under different names, and codify the invariant rules for v2.",
+      "objective": "Record the specific lessons from the failed v1 cycle so the agent does not repeat the same mistakes under different names, and codify the invariant rules for v2.",
       "success_criteria": [
-        "Explicit postmortem recorded and agent understands v2 is a different class of research, not a retry of raw ideas."
+        "Explicit postmortem is recorded and the agent understands v2 is a different research class, not a retry of the same raw ideas."
       ],
       "allowed_tools": [
         "research_project",
@@ -32,11 +32,12 @@
         "research_search"
       ],
       "evidence_requirements": [
-        "Explicit postmortem recorded and agent understands v2 is a different class of research, not a retry of raw ideas."
+        "Explicit postmortem is recorded and the agent understands v2 is a different research class, not a retry of the same raw ideas."
       ],
       "policy_tags": [
         "setup",
-        "cheap_first"
+        "cheap_first",
+        "discipline"
       ],
       "max_turns": 24,
       "max_tool_calls": 24,
@@ -63,25 +64,23 @@
     },
     {
       "slice_id": "compiled_plan_v2_stage_2",
-      "title": "Построение base-absent research surface",
-      "hypothesis": "Build an anchor-level table mapping where the base trades and where it is absent, then characterize the base_absent surface to find directional sub-spaces.",
-      "objective": "Build an anchor-level table mapping where the base trades and where it is absent, then characterize the base_absent surface to find directional sub-spaces.",
+      "title": "Build base-absent research surface",
+      "hypothesis": "Construct an anchor-level map that labels every 1h bar as base-long-fired, base-short-fired, or base-absent, then identify subspaces where the base is silent but the market has directional opportunity.",
+      "objective": "Construct an anchor-level map that labels every 1h bar as base-long-fired, base-short-fired, or base-absent, then identify subspaces where the base is silent but the market has directional opportunity.",
       "success_criteria": [
-        "Map of missing regimes exists specifically on the surface where the base is absent."
+        "A map of missing regimes exists specifically on the surface where the base does not participate."
       ],
       "allowed_tools": [
         "experiments_run",
         "experiments_read",
-        "features_catalog",
-        "datasets",
-        "events",
         "research_record",
         "research_map"
       ],
       "evidence_requirements": [
-        "Map of missing regimes exists specifically on the surface where the base is absent."
+        "A map of missing regimes exists specifically on the surface where the base does not participate."
       ],
       "policy_tags": [
+        "research",
         "data_readiness",
         "cheap_first"
       ],
@@ -112,26 +111,26 @@
     },
     {
       "slice_id": "compiled_plan_v2_stage_3",
-      "title": "Wave A — low-friction новые слои на уже доступных данных",
+      "title": "Wave A — low-friction new layers on already available data",
       "hypothesis": "Select hypothesis families that can be built without heavy external infrastructure, using already available 1h data and minimal new custom features.",
       "objective": "Select hypothesis families that can be built without heavy external infrastructure, using already available 1h data and minimal new custom features.",
       "success_criteria": [
-        "Small high-quality list of Wave A hypotheses exists, all data-ready or nearly data-ready."
+        "A small but high-quality list of Wave A hypotheses exists, all data-ready or nearly data-ready."
       ],
       "allowed_tools": [
         "features_catalog",
-        "features_custom",
+        "features_dataset",
         "events",
         "research_record",
-        "research_map",
-        "research_search"
+        "research_map"
       ],
       "evidence_requirements": [
-        "Small high-quality list of Wave A hypotheses exists, all data-ready or nearly data-ready."
+        "A small but high-quality list of Wave A hypotheses exists, all data-ready or nearly data-ready."
       ],
       "policy_tags": [
-        "feature_contract",
-        "cheap_first"
+        "hypothesis_design",
+        "cheap_first",
+        "discipline"
       ],
       "max_turns": 24,
       "max_tool_calls": 24,
@@ -167,6 +166,6 @@
   "source_compile_report_path": "",
   "sequence_batch_index": 1,
   "status": "draft",
-  "created_at": "2026-04-10T16:54:19.873553+00:00",
-  "updated_at": "2026-04-10T16:54:19.873555+00:00"
+  "created_at": "2026-04-11T10:47:21.716060+00:00",
+  "updated_at": "2026-04-11T10:47:21.716071+00:00"
 }

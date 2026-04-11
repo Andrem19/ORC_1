@@ -2,7 +2,7 @@
   "source_file": "raw_plans/plan_v12.md",
   "source_hash": "530689a3be45494539fade665e51f6e03e4c9d75b79f43e541e3059184176e85",
   "source_title": "План дальнейших исследований для v12",
-  "goal": "Final qualification of the microstructure route into one of three honest statuses: confirmed true overlay, confirmed replacement layer, or watchlist/reject against immutable base active-signal-v1@1.",
+  "goal": "Final qualification of the microstructure-route into one of three honest statuses: confirmed true overlay, confirmed replacement layer, or watchlist/reject.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -11,31 +11,30 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "Never modify the immutable base snapshot active-signal-v1@1.",
-    "All key comparisons must use active-signal-v1@1 as the sole decision reference; @3 is auxiliary only.",
-    "Overlay and replacement tracks must never be mixed in the same narrative or run.",
-    "Every threshold must have documented provenance: quantile rule or selection-OOS search with frozen lockbox. No hand-tuned magic numbers.",
-    "All comparisons must be same-window: base @1, variant, and combined run on identical time windows.",
-    "Simple rules (bucket, threshold, quantile) must be evaluated before any model-based approach.",
-    "Short-only, long-only, and combined side splits must all be evaluated independently.",
-    "Old routes (IV, breadth, path-asymmetry, regime-disagreement, directional classification on old universe) are closed and must not be reopened.",
-    "No new data families or macro universe until microstructure qualification is complete."
+    "All comparisons must use active-signal-v1@1 as the sole decision reference; @3 is auxiliary only.",
+    "Overlay and replacement tracks must never be mixed in the same narrative or snapshot.",
+    "Every threshold must have documented provenance: quantile-based or selection-OOS with frozen lockbox.",
+    "All key comparisons must occur on the same window (same-window truth only).",
+    "Simple rules (bucket, threshold, quantile) must be tested before any model-based approach.",
+    "No re-opening of old routes: IV, breadth, path-asymmetry, regime-disagreement, or old-universe classification.",
+    "No new data families or data-universe expansion until microstructure qualification is complete.",
+    "Cannot claim microstructure-result as overlay unless signal IDs, entry timing, and base logic are preserved with microstructure applied only as veto/filter.",
+    "Cannot claim result as replacement unless compared as a separate snapshot against @1 on the same window."
   ],
   "stages": [
     {
       "stage_id": "stage_1",
-      "title": "Freeze terminology and correction log",
-      "objective": "Establish a clean v12 research project with corrected terminology, immutable reference lock, and structured open-items register so that overlay and replacement are never confused again.",
+      "title": "Freeze терминологии и correction log",
+      "objective": "Establish a clean v12 project with corrected terminology and immutable reference, ensuring overlay and replacement are never conflated.",
       "actions": [
         "Open a new research_project for v12.",
-        "Record correction in research_record: v11 downgraded to watchlist, v10 mischaracterized as model-based veto overlay (actually rule-based replacement candidate).",
+        "Record via research_record: v11 downgraded to watchlist; v10 mischaracterized as model-based veto overlay (actually rule-based replacement candidate).",
         "Lock immutable reference: snapshot_id=active-signal-v1, version=1, symbol=BTCUSDT, anchor=1h, execution=5m.",
         "Create research_map axes: track, side, route_type, threshold_origin, comparison_window, final_decision.",
-        "Create open-items register covering: true_overlay_track, replacement_track, threshold_provenance, same_window_ref1_runs, short_long_combined_split, cannibalization_audit, model_need_assessment, final_v12_verdict."
+        "Create open-items register: true_overlay_track, replacement_track, threshold_provenance, same_window_ref1_runs, short_long_combined_split, cannibalization_audit, model_need_assessment, final_v12_verdict."
       ],
       "success_criteria": [
-        "Clean v12 project exists with corrected terminology and locked baseline reference.",
-        "Research map axes created and open-items register populated."
+        "Clean v12 project exists with corrected terminology and full open-items register."
       ],
       "tool_hints": [
         "research_project",
@@ -43,7 +42,8 @@
         "research_map"
       ],
       "policy_tags": [
-        "setup"
+        "setup",
+        "cheap_first"
       ],
       "depends_on": [],
       "required": true,
@@ -54,24 +54,25 @@
     {
       "stage_id": "stage_2",
       "title": "Rebuild exact base @1 comparison frame",
-      "objective": "Produce one canonical lockbox reference run of the immutable base snapshot @1 with full trade-level detail, serving as the sole comparison baseline for all v12 work.",
+      "objective": "Reconstruct the canonical base @1 run on the exact lockbox window used in v10/v11 to serve as the sole reference for all v12 comparisons.",
       "actions": [
-        "Load exact base snapshot active-signal-v1@1.",
-        "Identify and fix the exact lockbox window used in v10/v11.",
-        "Run immutable base @1 on that lockbox window as a standalone backtest.",
-        "Extract and persist: trades list, timestamps, side split, PnL, profit factor, drawdown, win rate.",
-        "Save this as the single canonical base_ref1_lockbox_run for v12."
+        "Retrieve exact base snapshot active-signal-v1@1.",
+        "Identify and freeze the exact lockbox window used in v10/v11.",
+        "Run immutable base @1 on that window.",
+        "Persist full detail: trades list, timestamps, side split, PnL, PF, DD, win rate.",
+        "Save this run as the single canonical base_ref1_lockbox_run for v12."
       ],
       "success_criteria": [
-        "One canonical base_ref1_lockbox_run exists with complete trade-level metrics."
+        "One canonical base_ref1_lockbox_run exists with complete trade-level detail."
       ],
       "tool_hints": [
         "backtests_strategy",
-        "backtests_plan",
-        "backtests_runs"
+        "backtests_runs",
+        "research_record"
       ],
       "policy_tags": [
-        "baseline"
+        "reference_setup",
+        "same_window_truth"
       ],
       "depends_on": [
         "stage_1"
@@ -84,25 +85,23 @@
     {
       "stage_id": "stage_3",
       "title": "Threshold provenance and selection discipline",
-      "objective": "Replace hand-tuned thresholds with a principled selection procedure, producing up to 3 frozen threshold sets with documented provenance before any lockbox rerun.",
+      "objective": "Convert hand-tuned thresholds into a principled selection procedure with documented provenance for each candidate.",
       "actions": [
-        "Define candidate threshold families for cf_micro_imbalance_1h: quantile-based, fixed numeric, symmetric, asymmetric.",
-        "Split data into threshold selection window and lockbox verification window.",
-        "On selection window, choose at most 3 candidate threshold sets: conservative, balanced, aggressive.",
-        "Freeze all threshold sets before any lockbox rerun.",
-        "Document provenance of every threshold in research_record."
+        "Define candidate threshold families for cf_micro_imbalance_1h: quantile-based long/short cutoffs, fixed numeric cutoffs, symmetric and asymmetric cutoffs.",
+        "Separate windows: threshold selection window vs lockbox verification window.",
+        "Select at most 3 candidate threshold sets on selection window: conservative, balanced, aggressive.",
+        "Freeze all thresholds before any lockbox rerun.",
+        "Document the provenance of every threshold."
       ],
       "success_criteria": [
-        "Frozen threshold sets with documented provenance exist.",
-        "No threshold lacks an explainable origin."
+        "Frozen threshold sets with full provenance documentation exist."
       ],
       "tool_hints": [
-        "features_custom",
         "features_analytics",
         "research_record"
       ],
       "policy_tags": [
-        "setup",
+        "threshold_provenance",
         "cheap_first"
       ],
       "depends_on": [
@@ -116,22 +115,24 @@
     {
       "stage_id": "stage_4",
       "title": "Build true overlay implementation over @1",
-      "objective": "Construct true overlay variants where microstructure acts only as a causal allow/block gate on top of the base @1 signals, preserving signal IDs and entry timing with zero retroactive replacement.",
+      "objective": "Construct true overlay snapshots where microstructure acts only as a veto/filter gate without altering base signal IDs or entry logic.",
       "actions": [
-        "Build true overlay variant: base signal IDs and entry logic preserved, microstructure applied only as allow/block gate at decision moment.",
-        "Create separate snapshots for short-only overlay, long-only overlay, and combined overlay.",
-        "Validate at snapshot assembly level: signal IDs base preserved, entry timing preserved, trade blocked only at decision moment, no retroactive replacement.",
+        "Build true overlay variant: base signal IDs and entry logic preserved; microstructure applied only as allow/block gate.",
+        "Create three separate overlays: short-only, long-only, combined.",
+        "Validate at snapshot level: signal IDs preserved, entry timing preserved, trade blocked only at decision moment, no retroactive replacement.",
         "Save three separate overlay snapshots."
       ],
       "success_criteria": [
-        "Three honest true-overlay snapshots exist with causal blocking verified and no replacement logic."
+        "Three true-overlay snapshots exist with causal blocking verified and zero replacement."
       ],
       "tool_hints": [
         "backtests_strategy",
-        "backtests_strategy_validate"
+        "backtests_strategy_validate",
+        "features_custom"
       ],
       "policy_tags": [
-        "overlay_track"
+        "overlay_track",
+        "snapshot_construction"
       ],
       "depends_on": [
         "stage_2",
@@ -145,14 +146,14 @@
     {
       "stage_id": "stage_5",
       "title": "Simple-rule overlay tests on selection window",
-      "objective": "Run true overlay variants on the selection window across all threshold sets and side modes to determine whether overlay has any signal before committing to lockbox runs.",
+      "objective": "Determine whether true overlay shows any meaningful signal on the selection window before committing to lockbox runs.",
       "actions": [
-        "For each frozen threshold set, run on selection window: short-only, long-only, and combined true overlay.",
-        "Compute per variant: delta PnL vs base, delta PF, delta DD, removed trades, removed winners, removed losers, veto precision.",
-        "Apply promotion rule: advance only variants with meaningful delta that do not collapse coverage or remove too many winners."
+        "For each frozen threshold set, run on selection window: short-only true overlay, long-only true overlay, combined true overlay.",
+        "Compute: delta PnL vs base, delta PF vs base, delta DD vs base, removed trades, removed winners, removed losers, veto precision.",
+        "Promote to lockbox only variants with meaningful delta, low winner removal, and no coverage collapse."
       ],
       "success_criteria": [
-        "Shortlist of true-overlay candidates promoted for lockbox testing exists."
+        "Shortlist of true-overlay candidates promoted to lockbox testing."
       ],
       "tool_hints": [
         "backtests_plan",
@@ -161,55 +162,59 @@
       ],
       "policy_tags": [
         "overlay_track",
-        "cheap_first"
+        "cheap_first",
+        "selection_window"
       ],
       "depends_on": [
         "stage_4"
       ],
       "required": true,
-      "parallelizable": true,
+      "parallelizable": false,
       "gate_hint": "",
       "raw_stage_ref": "stage_5"
     },
     {
       "stage_id": "stage_6",
       "title": "True overlay lockbox test against base @1",
-      "objective": "Run surviving true-overlay candidates on the frozen lockbox window against base @1 to obtain a definitive verdict on whether microstructure works as a true overlay.",
+      "objective": "Obtain the definitive answer on whether true overlay works on the same lockbox window as the canonical base @1.",
       "actions": [
-        "For each surviving true-overlay candidate, run on the same lockbox window: base @1 alone, base @1 + short-only overlay, base @1 + long-only overlay, base @1 + combined overlay.",
-        "Compute per run: trades, PnL, PF, DD, win rate, removed trades, removed winners, removed losers, ownership of improvement."
+        "For each surviving true-overlay candidate, run on the same lockbox window: base @1, base @1 + short-only overlay, base @1 + long-only overlay, base @1 + combined overlay.",
+        "Compute: trades, PnL, PF, DD, win rate, removed trades, removed winners, removed losers, ownership of improvement.",
+        "Record final verdict per variant."
       ],
       "success_criteria": [
-        "Final verdict on true-overlay track obtained: confirmed, weak, or rejected."
+        "Final verdict on true-overlay track with full same-window comparison against base @1."
       ],
       "tool_hints": [
-        "backtests_plan",
         "backtests_runs",
-        "backtests_analysis"
+        "backtests_analysis",
+        "research_record"
       ],
       "policy_tags": [
         "overlay_track",
-        "lockbox"
+        "lockbox",
+        "same_window_truth"
       ],
       "depends_on": [
         "stage_5"
       ],
       "required": true,
-      "parallelizable": true,
+      "parallelizable": false,
       "gate_hint": "",
       "raw_stage_ref": "stage_6"
     },
     {
       "stage_id": "stage_7",
       "title": "Honest replacement track vs base @1",
-      "objective": "If overlay is weak or impossible, test microstructure as an honest replacement signal layer — a new snapshot compared head-to-head against base @1, with no overlay claims.",
+      "objective": "If overlay is weak or impossible, test microstructure as an honest replacement-layer — new signal layer compared head-to-head against base @1.",
       "actions": [
-        "Build separate replacement snapshots: short-only, long-only, combined.",
-        "For each, document: exact signal logic, threshold logic, difference from base, explicit declaration of no overlay claim.",
-        "Run all replacement variants against base @1 on the same lockbox window."
+        "Build replacement snapshots: short-only, long-only, combined — each with own signal logic, threshold logic, and documented difference from base.",
+        "Explicitly label each as replacement (no overlay claim).",
+        "Run all replacement variants against base @1 on the same lockbox window.",
+        "Record: trades, PnL delta, PF delta, DD delta, overlap with base, better_than_ref1 flag."
       ],
       "success_criteria": [
-        "Final verdict on replacement track obtained: confirmed, weak, or rejected."
+        "Final verdict on replacement track with honest head-to-head comparison."
       ],
       "tool_hints": [
         "backtests_strategy",
@@ -218,37 +223,38 @@
         "backtests_analysis"
       ],
       "policy_tags": [
-        "replacement_track"
+        "replacement_track",
+        "lockbox",
+        "same_window_truth"
       ],
       "depends_on": [
-        "stage_2",
+        "stage_6",
         "stage_3"
       ],
       "required": true,
-      "parallelizable": true,
-      "gate_hint": "Replacement track can proceed in parallel with overlay track (stages 4-6) once stages 2 and 3 are complete, but should be deprioritized if overlay track succeeds.",
+      "parallelizable": false,
+      "gate_hint": "Runs regardless of overlay outcome; both tracks must complete for full qualification.",
       "raw_stage_ref": "stage_7"
     },
     {
       "stage_id": "stage_8",
       "title": "Cannibalization, ownership and regime analysis",
-      "objective": "Audit all surviving variants for cannibalization: whether improvement comes from removing bad trades or damaging profitable clusters, and identify regime-dependent behavior.",
+      "objective": "Evaluate whether surviving variants improve via useful trade removal rather than coverage profile change or profitable cluster damage.",
       "actions": [
-        "For all surviving variants from overlay and replacement tracks compute: removed losers share, removed winners share, PnL of removed trades.",
-        "Identify: strongest improved regime, weakest affected regime, weak-window repair, profitable cluster damage, side asymmetry.",
-        "Answer whether improvement stems from removing bad trades or from wholesale signal coverage change.",
-        "Check whether important regimes are degraded."
+        "For all surviving overlay and replacement variants compute: removed losers share, removed winners share, PnL of removed trades, strongest/weakest improved regime, weak-window repair, profitable cluster damage, side asymmetry.",
+        "Answer: does improvement come from removing bad trades, or from changing signal coverage profile?",
+        "Check regime behavior degradation in important modes."
       ],
       "success_criteria": [
-        "Ownership/cannibalization map exists for all viable variants."
+        "Ownership/cannibalization map across all viable variants with regime-level detail."
       ],
       "tool_hints": [
         "backtests_analysis",
-        "features_analytics",
-        "research_record"
+        "backtests_conditions"
       ],
       "policy_tags": [
-        "analysis"
+        "diagnostics",
+        "cannibalization_audit"
       ],
       "depends_on": [
         "stage_6",
@@ -262,10 +268,11 @@
     {
       "stage_id": "stage_9",
       "title": "Does model layer add anything?",
-      "objective": "Determine whether ML models (logistic, small CatBoost) provide meaningful improvement over simple microstructure rules, using fixed windows and labels without wide HPO.",
+      "objective": "Determine whether ML models provide meaningful improvement over simple microstructure rules.",
       "actions": [
-        "For the best surviving route, compare: simple bucket rule, threshold rule, logistic baseline, small CatBoost.",
-        "Compare only on fixed windows and fixed labels, no wide hyperparameter search."
+        "For the best surviving route compare: simple bucket rule, threshold rule, logistic baseline, small CatBoost.",
+        "Compare only on fixed windows and fixed labels — no wide HPO.",
+        "Record selection quality, lockbox quality, extra value vs threshold, complexity-worth-it verdict."
       ],
       "success_criteria": [
         "Clear verdict: simple_rule_enough, model_adds_value, or model_not_worth_complexity."
@@ -273,10 +280,12 @@
       "tool_hints": [
         "models_train",
         "models_compare",
-        "models_registry"
+        "backtests_runs",
+        "research_record"
       ],
       "policy_tags": [
-        "model_assessment"
+        "model_assessment",
+        "cheap_first"
       ],
       "depends_on": [
         "stage_8"
@@ -289,41 +298,43 @@
     {
       "stage_id": "stage_10",
       "title": "Optional gate: early-cut or directional scout",
-      "objective": "Conditionally unlock at most one follow-on branch only if v12 has already confirmed a route — early-cut for confirmed overlay, or directional scout for confirmed replacement.",
+      "objective": "Conditionally open at most one further development branch only if v12 has already confirmed a viable route.",
       "actions": [
-        "Evaluate early-cut gate condition: true overlay confirmed or strong watchlist with early post-entry micro behavior visible.",
-        "Evaluate directional scout gate condition: replacement confirmed or strong watchlist with monotonicity and regime coherence.",
-        "Open at most one branch if conditions met; lock both if neither is met."
+        "Evaluate early-cut gate: open only if true overlay confirmed/strong watchlist and losers are detectable by early post-entry micro behavior.",
+        "Evaluate directional scout gate: open only if replacement confirmed/strong watchlist, monotonicity and regime behavior coherent, and signal works as entry timing layer.",
+        "Open at most one branch; lock the other."
       ],
       "success_criteria": [
-        "Lock/unlock decision for further development is documented."
+        "Lock/unlock decision recorded for each conditional branch."
       ],
       "tool_hints": [
         "research_record",
         "research_map"
       ],
       "policy_tags": [
-        "gate"
+        "gate",
+        "optional"
       ],
       "depends_on": [
         "stage_9"
       ],
       "required": false,
       "parallelizable": false,
-      "gate_hint": "Early-cut opens only if true overlay confirmed with recognizable early post-entry micro behavior. Directional scout opens only if replacement confirmed with monotonic regime coherence and entry-timing signal. Maximum one branch opened.",
+      "gate_hint": "Early-cut gate opens only if true overlay confirmed with detectable post-entry micro behavior. Directional scout gate opens only if replacement confirmed with coherent monotonicity and regime behavior. At most one branch may be opened.",
       "raw_stage_ref": "stage_10"
     },
     {
       "stage_id": "stage_11",
-      "title": "Final verdict on v12",
-      "objective": "Classify the microstructure route into one of four honest terminal statuses and record the final decision with clear next steps.",
+      "title": "Финальный вердикт по v12",
+      "objective": "Deliver honest final classification of the microstructure-route into one of four statuses with clear next step.",
       "actions": [
-        "Aggregate evidence from all overlay, replacement, cannibalization, and model assessment stages.",
-        "Assign one of: CONFIRMED TRUE OVERLAY, CONFIRMED REPLACEMENT, WATCHLIST, or REJECTED.",
-        "Record final route classification and next step in research_record."
+        "Aggregate all evidence from overlay track, replacement track, cannibalization audit, and model assessment.",
+        "Classify into one of: CONFIRMED TRUE OVERLAY, CONFIRMED REPLACEMENT, WATCHLIST, or REJECTED.",
+        "Record final verdict in research_record and update research_map.",
+        "Define clear next step for the chosen status."
       ],
       "success_criteria": [
-        "Final route classification assigned with documented rationale and clear next step."
+        "Final route classification recorded with documented evidence chain and unambiguous next step."
       ],
       "tool_hints": [
         "research_record",
@@ -331,7 +342,8 @@
         "notify_send"
       ],
       "policy_tags": [
-        "finalization"
+        "finalization",
+        "verdict"
       ],
       "depends_on": [
         "stage_9",
@@ -344,8 +356,9 @@
     }
   ],
   "warnings": [
-    "v11 result was downgraded to watchlist; v10 result was mischaracterized as model-based veto overlay but was actually a rule-based microstructure replacement candidate.",
-    "Thresholds -0.155 and 0.164 from v11 appear hand-tuned without documented provenance."
+    "v11 result was DOWNGRADED TO WATCHLIST — thresholds -0.155 and 0.164 are hand-tuned with undocumented provenance.",
+    "v10 result was mischaracterized as model-based veto overlay when it was actually a rule-based replacement candidate.",
+    "The two branches (overlay vs replacement) are strictly separate; one may confirm while the other fails."
   ],
   "parse_confidence": 0.95
 }

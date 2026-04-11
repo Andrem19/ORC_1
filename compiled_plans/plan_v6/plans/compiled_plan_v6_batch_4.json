@@ -1,6 +1,6 @@
 {
   "plan_id": "compiled_plan_v6_batch_4",
-  "goal": "Найти и проверить новые cross-symbol directional custom features, обучить на них CatBoost long/short классификаторы, верифицировать на selection OOS и lockbox OOS, и сравнить с базой active-signal-v1@1 через matched OOS comparison.",
+  "goal": "Найти и проверить новые cross-symbol directional custom features, обучить на них CatBoost long/short classifiers, и доказать их additive value поверх active-signal-v1@1 через matched OOS comparison.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -9,27 +9,29 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "База active-signal-v1@1 — immutable reference. Запрещено менять базу, подбирать ей часы/дни/пороги/исполнение.",
-    "Запрещено обучать модель на данных, которые потом используются как финальный OOS.",
-    "Запрещено выбирать feature set, target, threshold или архитектуру по lockbox-окну.",
-    "Улучшение — только если прошёл matched OOS comparison с базой на том же окне.",
-    "Используется classification (directional barrier-based long/short labels), а не regression на future PnL.",
-    "Нужен новый информационный слой (cross-symbol leadership/breadth), а не вариации старых IV-фичей.",
-    "Отдельные long и short модели. Общая multiclass или router-модель запрещены на старте v6.",
-    "Максимум 3–4 сильных feature families, не широкий зоопарк.",
-    "Компактный disciplined HPO grid: depth 4/6/8, lr 0.03/0.05, moderate regularization, 2–3 seeds.",
-    "Допустимые горизонты: 12h, 18h. Допустимые barrier schemes: balanced, conservative.",
-    "Purge gap между train и более поздними окнами — не меньше 24h.",
-    "Thresholds замораживаются до открытия lockbox."
+    "База active-signal-v1@1 — immutable reference. Запрещено менять базу, подбирать ей параметры, обучать на финальном OOS.",
+    "Выбор feature set, target, threshold или архитектуры по lockbox-окну запрещён. Lockbox только проверяет frozen choice.",
+    "Улучшением считается только matched OOS comparison с базой на том же окне.",
+    "v5 regression route формально закрыт. v6 использует только classification (long/short labels).",
+    "Новый информационный слой обязателен — недостаточно переставлять старые IV/classifier features.",
+    "Сначала отдельные long и short classifiers (M1, M2). Router-модель запрещена до подтверждения обеих.",
+    "base-absent surface для discovery, matched OOS для финальной правды.",
+    "Не более 3–4 сильных feature families. Без широкой feature inflation.",
+    "Компактный disciplined HPO: depth {4,6,8}, lr {0.03,0.05}, moderate regularization, 2–3 seeds.",
+    "Purge gap между train и later windows — не менее 24h.",
+    "Горизонты только 12h и 18h. Barrier schemes только balanced и conservative."
   ],
   "slices": [
     {
       "slice_id": "compiled_plan_v6_stage_10",
       "title": "Финальный вердикт по v6",
-      "hypothesis": "Сформулировать единый итог v6: Success (есть promoted candidate), Partial (watchlist без полноценного add-on), или Failed (ни одна модель не прошла clean OOS и strict additive).",
-      "objective": "Сформулировать единый итог v6: Success (есть promoted candidate), Partial (watchlist без полноценного add-on), или Failed (ни одна модель не прошла clean OOS и strict additive).",
+      "hypothesis": "Агрегировать все результаты v6, определить итог (Success / Partial / Failed), записать финальный отчет с выводами по v1-v6 и рекомендациями.",
+      "objective": "Агрегировать все результаты v6, определить итог (Success / Partial / Failed), записать финальный отчет с выводами по v1-v6 и рекомендациями.",
       "success_criteria": [
-        "Есть единый итог по v6 с финальным отчётом, итоговой таблицей v1-v6 и планом дальнейших действий."
+        "Единый итог v6 определён (Success / Partial / Failed)",
+        "Финальный отчет написан с таблицей v1-v6",
+        "Все terminal decisions зафиксированы",
+        "Рекомендации на следующий цикл записаны"
       ],
       "allowed_tools": [
         "research_record",
@@ -37,10 +39,14 @@
         "notify_send"
       ],
       "evidence_requirements": [
-        "Есть единый итог по v6 с финальным отчётом, итоговой таблицей v1-v6 и планом дальнейших действий."
+        "Единый итог v6 определён (Success / Partial / Failed)",
+        "Финальный отчет написан с таблицей v1-v6",
+        "Все terminal decisions зафиксированы",
+        "Рекомендации на следующий цикл записаны"
       ],
       "policy_tags": [
-        "finalization"
+        "finalization",
+        "reporting"
       ],
       "max_turns": 24,
       "max_tool_calls": 24,
@@ -76,6 +82,6 @@
   "source_compile_report_path": "",
   "sequence_batch_index": 4,
   "status": "draft",
-  "created_at": "2026-04-10T17:02:22.767359+00:00",
-  "updated_at": "2026-04-10T17:02:22.767360+00:00"
+  "created_at": "2026-04-11T10:54:10.388446+00:00",
+  "updated_at": "2026-04-11T10:54:10.388447+00:00"
 }

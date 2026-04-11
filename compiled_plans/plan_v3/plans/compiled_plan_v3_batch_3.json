@@ -1,6 +1,6 @@
 {
   "plan_id": "compiled_plan_v3_batch_3",
-  "goal": "Завершить незакрытую ветку A1 через полный acceptance chain, затем при необходимости исследовать ровно одну следующую low-friction ветку, не допуская преждевременного расширения поиска.",
+  "goal": "Close the unfinished A1 branch from v2 to a final PROMOTE/REJECT verdict, and only if A1 fails open exactly one next low-friction candidate through the full acceptance chain.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -9,42 +9,41 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "active-signal-v1@1 — immutable reference; запрещено менять базу, подбирать ей часы/дни/пороги/исполнение.",
-    "Любое улучшение обязано пройти через strict additive integration, permissive integration, ownership и cannibalization proof.",
-    "Одновременно открыта максимум одна low-friction ветка (A1 → затем A2 или A3, но не обе).",
-    "Wave B (medium-friction) запрещена, пока обе low-friction ветки не закрыты без promoted candidate.",
-    "Если candidate перестаёт быть положительным после удаления одного сильного куска истории — это не mainline-quality add-on.",
-    "Финальное решение по каждой ветке: PROMOTE / WATCHLIST / REJECT — без исключений."
+    "active-signal-v1@1 is immutable: never retune its hours, days, thresholds, or execution parameters",
+    "Any candidate must pass strict-additive, permissive-integration, ownership, and cannibalization proof before promotion",
+    "No medium-friction wave B until both low-friction branches (A1 + one of A2/A3) are fully closed with no promoted candidate",
+    "Only one active low-friction branch may be investigated at a time",
+    "Maximum 3-4 features per prototype; maximum 2-3 prototypes per branch",
+    "If a candidate loses positivity after removing its strongest historical segment, it is not mainline-quality"
   ],
   "slices": [
     {
       "slice_id": "compiled_plan_v3_stage_7",
-      "title": "Открыть ровно одну следующую low-friction ветку (только если A1 не promoted)",
-      "hypothesis": "Выбрать ровно одну следующую ветку (A2_iv_acceleration или A3_broader_cl_transition) и подготовить её к чистому тесту, не расползаясь в широкий поиск.",
-      "objective": "Выбрать ровно одну следующую ветку (A2_iv_acceleration или A3_broader_cl_transition) и подготовить её к чистому тесту, не расползаясь в широкий поиск.",
+      "title": "Выбор ровно одной следующей low-friction ветки (если A1 не promoted)",
+      "hypothesis": "If A1 was not promoted, select exactly one next low-friction branch (A2_iv_acceleration preferred, then A3_broader_cl_transition) and prepare its hypothesis and feature contracts.",
+      "objective": "If A1 was not promoted, select exactly one next low-friction branch (A2_iv_acceleration preferred, then A3_broader_cl_transition) and prepare its hypothesis and feature contracts.",
       "success_criteria": [
-        "Выбрана только одна следующая ветка с обоснованием why_not_alternative.",
-        "Feature contract и hypothesis contract готовы."
+        "Exactly one next branch is selected with documented rationale",
+        "Feature and hypothesis contracts are ready for clean testing"
       ],
       "allowed_tools": [
-        "research_record",
-        "research_map",
         "features_catalog",
         "features_custom",
-        "backtests_strategy"
+        "research_record",
+        "research_map"
       ],
       "evidence_requirements": [
-        "Выбрана только одна следующая ветка с обоснованием why_not_alternative.",
-        "Feature contract и hypothesis contract готовы."
+        "Exactly one next branch is selected with documented rationale",
+        "Feature and hypothesis contracts are ready for clean testing"
       ],
       "policy_tags": [
-        "branch_selection",
-        "gated",
+        "gated_branch",
+        "cheap_first",
         "optional_candidate"
       ],
       "max_turns": 24,
       "max_tool_calls": 24,
-      "max_expensive_calls": 3,
+      "max_expensive_calls": 2,
       "parallel_slot": 1,
       "budget_scale_applied": 6,
       "depends_on": [
@@ -69,27 +68,25 @@
     },
     {
       "slice_id": "compiled_plan_v3_stage_8",
-      "title": "A. Прототипирование A2_iv_acceleration",
-      "hypothesis": "Проверить, даёт ли динамика IV новый specialist-layer через компактный набор признаков и строгие прототипы.",
-      "objective": "Проверить, даёт ли динамика IV новый specialist-layer через компактный набор признаков и строгие прототипы.",
+      "title": "A2_iv_acceleration: прототип и standalone-тест",
+      "hypothesis": "Test whether IV dynamics produce a viable specialist layer by building a compact feature set and running it through plausibility and standalone checks on the base-absent surface.",
+      "objective": "Test whether IV dynamics produce a viable specialist layer by building a compact feature set and running it through plausibility and standalone checks on the base-absent surface.",
       "success_criteria": [
-        "Есть либо один зрелый A2 prototype с plausibility_ok и standalone_ok, либо честный ранний отказ."
+        "Either one mature A2 prototype survives plausibility and standalone tests, or an honest early rejection is recorded"
       ],
       "allowed_tools": [
         "features_custom",
         "features_dataset",
-        "features_catalog",
         "backtests_strategy",
         "backtests_runs",
-        "backtests_analysis",
         "research_record"
       ],
       "evidence_requirements": [
-        "Есть либо один зрелый A2 prototype с plausibility_ok и standalone_ok, либо честный ранний отказ."
+        "Either one mature A2 prototype survives plausibility and standalone tests, or an honest early rejection is recorded"
       ],
       "policy_tags": [
         "prototyping",
-        "gated",
+        "gated_branch",
         "optional_candidate"
       ],
       "max_turns": 24,
@@ -119,27 +116,25 @@
     },
     {
       "slice_id": "compiled_plan_v3_stage_9",
-      "title": "B. Прототипирование A3_broader_cl_transition",
-      "hypothesis": "Проверить, даёт ли более широкий класс classifier transitions новый specialist-layer.",
-      "objective": "Проверить, даёт ли более широкий класс classifier transitions новый specialist-layer.",
+      "title": "A3_broader_cl_transition: прототип и standalone-тест",
+      "hypothesis": "Test whether a broader class of classifier transitions produces a viable specialist layer through transition features and base-absent surface evaluation.",
+      "objective": "Test whether a broader class of classifier transitions produces a viable specialist layer through transition features and base-absent surface evaluation.",
       "success_criteria": [
-        "Есть либо один зрелый A3 prototype с plausibility_ok и standalone_ok, либо честный ранний отказ."
+        "Either one mature A3 prototype survives plausibility and standalone tests, or an honest early rejection is recorded"
       ],
       "allowed_tools": [
         "features_custom",
         "features_dataset",
-        "features_catalog",
         "backtests_strategy",
         "backtests_runs",
-        "backtests_analysis",
         "research_record"
       ],
       "evidence_requirements": [
-        "Есть либо один зрелый A3 prototype с plausibility_ok и standalone_ok, либо честный ранний отказ."
+        "Either one mature A3 prototype survives plausibility and standalone tests, or an honest early rejection is recorded"
       ],
       "policy_tags": [
         "prototyping",
-        "gated",
+        "gated_branch",
         "optional_candidate"
       ],
       "max_turns": 24,
@@ -176,6 +171,6 @@
   "source_compile_report_path": "",
   "sequence_batch_index": 3,
   "status": "draft",
-  "created_at": "2026-04-10T16:56:15.057278+00:00",
-  "updated_at": "2026-04-10T16:56:15.057280+00:00"
+  "created_at": "2026-04-11T10:49:08.828953+00:00",
+  "updated_at": "2026-04-11T10:49:08.828957+00:00"
 }

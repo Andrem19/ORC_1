@@ -1,6 +1,6 @@
 {
   "plan_id": "compiled_plan_v10_batch_2",
-  "goal": "Validate whether the microstructure feature family (primarily cf_micro_imbalance_1h) provides a real overlay alpha on top of the immutable base via honest lockbox comparison.",
+  "goal": "Честно доказать или опровергнуть, что microstructure-family (прежде всего cf_micro_imbalance_1h) даёт реальный overlay alpha поверх immutable base active-signal-v1.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -9,39 +9,39 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "Base active-signal-v1@1 is immutable — never modify snapshot, thresholds, hours, days, execution, or feature set",
-    "Only microstructure_proxies family is active in v10; all other families are locked",
-    "Lockbox overlay comparison (base vs base+overlay on the same window) is the sole valid truth test",
-    "Overlay-first: prove veto-overlay before attempting early-cut or directional scout",
-    "Simpler before smarter: single-feature bucket/threshold rules before logistic before CatBoost",
-    "Short-first priority: short veto models before long veto models",
-    "Label quality over model sophistication — noisy labels kill any model",
-    "Forbidden: net_pnl>0 as sole veto label; re-opening closed directions (leadership, breadth, path-asymmetry, regime-disagreement, event-only overlays, trade-quality without new information layer, derivatives without real OI/liquidation/basis data)",
-    "Nothing is declared an improvement unless it passes matched OOS comparison against the base on the same lockbox window"
+    "active-signal-v1@1 — immutable reference, менять базу запрещено",
+    "любое улучшение обязано пройти matched OOS lockbox comparison против базы на том же окне",
+    "активна только одна data family: microstructure_proxies, все остальные locked",
+    "feature selection / threshold / архитектура не подбираются по lockbox-окну",
+    "simple baselines проверяются до сложных моделей (simpler before smarter)",
+    "short side проверяется первой (short-first priority)",
+    "veto-overlay route обязателен; early-cut и directional scout открываются только через gate",
+    "запрещены: net_pnl>0 как единственный veto label, regression на future PnL, повторное открытие закрытых routes (leadership, breadth, path-asymmetry, regime-disagreement, event-only, trade-quality без нового слоя)",
+    "microstructure должен пройти тест почти сам по себе, без подмешивания старых feature packs"
   ],
   "slices": [
     {
       "slice_id": "compiled_plan_v10_stage_4",
       "title": "Freeze improved veto labels",
-      "hypothesis": "Перейти от шумного label к более осмысленным veto targets и заморозить их до начала training.",
-      "objective": "Перейти от шумного label к более осмысленным veto targets и заморозить их до начала training.",
+      "hypothesis": "Определить и заморозить осмысленные veto label families (bad_trade_pnl, fragile_trade_mae, bad_trade_composite) с вариантами balanced/conservative до начала обучения.",
+      "objective": "Определить и заморозить осмысленные veto label families (bad_trade_pnl, fragile_trade_mae, bad_trade_composite) с вариантами balanced/conservative до начала обучения.",
       "success_criteria": [
-        "Все 6 label вариантов формально определены и задокументированы",
-        "Label freeze зафиксирован в research record",
-        "Запрет на post-freeze изменения установлен"
+        "Все 6 label variants определены и задокументированы",
+        "Определение плохого trade, ambiguous cases, пороги material harm зафиксированы для каждого",
+        "Labels заморожены — изменения запрещены"
       ],
       "allowed_tools": [
-        "research_record",
-        "models_dataset"
+        "models_dataset",
+        "research_record"
       ],
       "evidence_requirements": [
-        "Все 6 label вариантов формально определены и задокументированы",
-        "Label freeze зафиксирован в research record",
-        "Запрет на post-freeze изменения установлен"
+        "Все 6 label variants определены и задокументированы",
+        "Определение плохого trade, ambiguous cases, пороги material harm зафиксированы для каждого",
+        "Labels заморожены — изменения запрещены"
       ],
       "policy_tags": [
         "feature_contract",
-        "cheap_first"
+        "setup"
       ],
       "max_turns": 24,
       "max_tool_calls": 24,
@@ -74,26 +74,25 @@
       "hypothesis": "Проверить на selection OOS, нужен ли вообще сложный model layer сверх cf_micro_imbalance_1h, сравнив bucket veto, threshold veto, logistic и small CatBoost.",
       "objective": "Проверить на selection OOS, нужен ли вообще сложный model layer сверх cf_micro_imbalance_1h, сравнив bucket veto, threshold veto, logistic и small CatBoost.",
       "success_criteria": [
-        "Все 4 baseline (A–D) построены на selection OOS для обеих сторон",
-        "Таблица сравнения заполнена",
-        "Принято решение о том, нужна ли модель сложнее single-feature rule"
+        "Все 4 baseline оценены на selection OOS",
+        "Метрики delta_pnl, delta_pf, delta_dd, removed_trades, false_veto_rate посчитаны",
+        "Принято решение, достаточен ли простой baseline или нужен CatBoost"
       ],
       "allowed_tools": [
-        "models_dataset",
         "models_train",
+        "models_dataset",
+        "models_compare",
         "models_registry",
-        "backtests_runs",
         "research_record"
       ],
       "evidence_requirements": [
-        "Все 4 baseline (A–D) построены на selection OOS для обеих сторон",
-        "Таблица сравнения заполнена",
-        "Принято решение о том, нужна ли модель сложнее single-feature rule"
+        "Все 4 baseline оценены на selection OOS",
+        "Метрики delta_pnl, delta_pf, delta_dd, removed_trades, false_veto_rate посчитаны",
+        "Принято решение, достаточен ли простой baseline или нужен CatBoost"
       ],
       "policy_tags": [
         "modeling",
-        "cheap_first",
-        "short_first"
+        "cheap_first"
       ],
       "max_turns": 36,
       "max_tool_calls": 30,
@@ -101,6 +100,7 @@
       "parallel_slot": 1,
       "budget_scale_applied": 6,
       "depends_on": [
+        "compiled_plan_v10_stage_2",
         "compiled_plan_v10_stage_4"
       ],
       "status": "pending",
@@ -123,23 +123,24 @@
     {
       "slice_id": "compiled_plan_v10_stage_6",
       "title": "Short-first veto models",
-      "hypothesis": "Обучить и оценить short veto models на frozen labels — наиболее перспективную сторону из v9.",
-      "objective": "Обучить и оценить short veto models на frozen labels — наиболее перспективную сторону из v9.",
+      "hypothesis": "Обучить short veto models на frozen labels (pnl, fragile, composite) и выбрать лучший short route по selection economics.",
+      "objective": "Обучить short veto models на frozen labels (pnl, fragile, composite) и выбрать лучший short route по selection economics.",
       "success_criteria": [
-        "Short veto models обучены по всем 3 label families",
-        "Лучший short route выбран по economic effect на selection OOS",
-        "Результаты зафиксированы в registry"
+        "Short veto models обучены для трёх label families",
+        "Лучший short route выбран по совокупности val/test AUC, precision, economic effect",
+        "Принято решение о продвижении в lockbox"
       ],
       "allowed_tools": [
-        "models_dataset",
         "models_train",
+        "models_dataset",
+        "models_compare",
         "models_registry",
         "research_record"
       ],
       "evidence_requirements": [
-        "Short veto models обучены по всем 3 label families",
-        "Лучший short route выбран по economic effect на selection OOS",
-        "Результаты зафиксированы в registry"
+        "Short veto models обучены для трёх label families",
+        "Лучший short route выбран по совокупности val/test AUC, precision, economic effect",
+        "Принято решение о продвижении в lockbox"
       ],
       "policy_tags": [
         "modeling",
@@ -179,6 +180,6 @@
   "source_compile_report_path": "",
   "sequence_batch_index": 2,
   "status": "draft",
-  "created_at": "2026-04-10T17:10:16.031619+00:00",
-  "updated_at": "2026-04-10T17:10:16.031621+00:00"
+  "created_at": "2026-04-11T11:03:23.954505+00:00",
+  "updated_at": "2026-04-11T11:03:23.954507+00:00"
 }

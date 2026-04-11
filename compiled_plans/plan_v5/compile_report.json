@@ -8,11 +8,13 @@
   "stage_count": 10,
   "compiled_plan_count": 4,
   "warnings": [
-    "Полный текст raw_plans/plan_v5.md не был передан в full_text; парсинг основан на candidate_stages и global_sections.",
-    "Optional catboost-router (m3) упомянут в контексте, но не выделен в отдельный stage — может быть включён в stage_6 если потребуется.",
     "Auto-added research_record for stage_3: every non-trivial stage needs documentation capability.",
+    "Auto-added research_record for stage_4: every non-trivial stage needs documentation capability.",
+    "Auto-added research_record for stage_5: every non-trivial stage needs documentation capability.",
+    "Auto-added research_record for stage_6: every non-trivial stage needs documentation capability.",
+    "Auto-added research_record for stage_7: every non-trivial stage needs documentation capability.",
     "Auto-added research_record for stage_8: every non-trivial stage needs documentation capability."
   ],
   "errors": [],
-  "compiled_at": "2026-04-10T17:00:11.747062+00:00"
+  "compiled_at": "2026-04-11T10:51:59.004181+00:00"
 }

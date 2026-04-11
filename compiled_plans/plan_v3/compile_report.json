@@ -8,9 +8,9 @@
   "stage_count": 11,
   "compiled_plan_count": 4,
   "warnings": [
-    "Plan v2 был выполнен только частично: отсутствуют window stability, condition stability, strict/permissive integration, ownership, cannibalization proof и walk-forward.",
-    "Единственное содержательное наследие v2 — A1_high_iv_long_v1; все остальные ветки не доведены до конца."
+    "Plan v2 was only partially executed — the full acceptance chain (stability, integration, ownership, walk-forward) was never completed",
+    "Only one substantive v2 artefact survives: A1_high_iv_long_v1"
   ],
   "errors": [],
-  "compiled_at": "2026-04-10T16:56:15.057309+00:00"
+  "compiled_at": "2026-04-11T10:49:08.828990+00:00"
 }

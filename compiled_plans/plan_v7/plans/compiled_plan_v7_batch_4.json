@@ -1,6 +1,6 @@
 {
   "plan_id": "compiled_plan_v7_batch_4",
-  "goal": "Довести до честного решения: может ли новый directional feature layer + CatBoost classification дать additive long и/или short sleeve поверх active-signal-v1@1 при корректных labels, полных sides/horizons и не обрезанном feature layer.",
+  "goal": "Довести до честного решения: может ли новый directional feature layer + CatBoost classification дать additive long/short sleeve поверх active-signal-v1@1 при корректных labels, полных sides и horizons.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -9,28 +9,80 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "active-signal-v1@1 — immutable reference; запрещено менять базу, подбирать ей часы/дни/пороги/исолнение",
-    "запрещено объявлять улучшением всё, что не прошло matched OOS comparison с базой на том же окне",
-    "запрещено возвращаться к regression-предсказанию future PnL",
-    "запрещено возвращаться к IV-family как самостоятельному directional layer",
-    "net_pnl>0 больше не используется как primary label scheme",
-    "labels frozen после stage_2 до конца selection-stage; дрейф запрещён",
-    "short-first приоритет: сначала short 18h и short 12h, потом new long",
-    "только компактные feature packs — критический directional core, не весь зоопарк",
-    "lockbox untouched до финальной оценки; selection OOS для всех промежуточных решений",
-    "не обучать multiclass model; не строить router до первого standalone sleeve прошедшего OOS"
+    "База active-signal-v1@1 immutable — не менять, не подбирать часы/дни/пороги/исолнение.",
+    "Не выбирать feature set, label scheme, horizon, threshold или архитектуру по lockbox-окну.",
+    "Улучшением считается только matched OOS comparison с базой на том же окне.",
+    "Не возвращаться к regression-предсказанию future PnL.",
+    "Не возвращаться к IV-family как к самостоятельному directional layer.",
+    "net_pnl>0 больше не использовать как primary label scheme.",
+    "Не обучать multiclass model и не строить router до прохождения хотя бы одного standalone sleeve через OOS.",
+    "Labels frozen до training и не меняются до конца selection-stage.",
+    "Выбор pack и threshold — только по selection OOS; lockbox untouched.",
+    "Short-first приоритет: short 18h → short 12h → new long tests."
   ],
   "slices": [
     {
+      "slice_id": "compiled_plan_v7_stage_9",
+      "title": "Matched OOS comparison против базы",
+      "hypothesis": "Запустить lockbox OOS backtests для каждого sleeve и сравнить с базой active-signal-v1@1 на том же окне — главный критерий additive value.",
+      "objective": "Запустить lockbox OOS backtests для каждого sleeve и сравнить с базой active-signal-v1@1 на том же окне — главный критерий additive value.",
+      "success_criteria": [
+        "Lockbox OOS runs завершены для всех sleeves и базы.",
+        "Matched comparison таблица заполнена.",
+        "Окно идентично для sleeve и base."
+      ],
+      "allowed_tools": [
+        "backtests_plan",
+        "backtests_runs",
+        "backtests_analysis",
+        "backtests_strategy",
+        "research_record"
+      ],
+      "evidence_requirements": [
+        "Lockbox OOS runs завершены для всех sleeves и базы.",
+        "Matched comparison таблица заполнена.",
+        "Окно идентично для sleeve и base."
+      ],
+      "policy_tags": [
+        "lockbox",
+        "matched_oos",
+        "strict_comparison"
+      ],
+      "max_turns": 48,
+      "max_tool_calls": 36,
+      "max_expensive_calls": 12,
+      "parallel_slot": 1,
+      "budget_scale_applied": 6,
+      "depends_on": [
+        "compiled_plan_v7_stage_8"
+      ],
+      "status": "pending",
+      "turn_count": 0,
+      "tool_call_count": 0,
+      "expensive_call_count": 0,
+      "assigned_worker_id": null,
+      "last_checkpoint_turn_id": "",
+      "last_checkpoint_summary": "",
+      "last_checkpoint_status": "",
+      "final_report_turn_id": "",
+      "last_error": "",
+      "last_summary": "",
+      "active_operation_ref": "",
+      "active_operation_status": "",
+      "active_operation_arguments": {},
+      "artifacts": [],
+      "facts": {}
+    },
+    {
       "slice_id": "compiled_plan_v7_stage_10",
       "title": "Ownership, cannibalization и proof of new entries",
-      "hypothesis": "Доказать что модель добавляет genuinely new profitable trades, а не просто заменяет базовые; проверить overlap, cannibalization и ownership.",
-      "objective": "Доказать что модель добавляет genuinely new profitable trades, а не просто заменяет базовые; проверить overlap, cannibalization и ownership.",
+      "hypothesis": "Доказать, что model sleeve добавляет новые прибыльные сделки, а не просто каннибализирует base strategy.",
+      "objective": "Доказать, что model sleeve добавляет новые прибыльные сделки, а не просто каннибализирует base strategy.",
       "success_criteria": [
-        "Overlap rate измерен для каждого candidate",
-        "PnL от genuinely new trades положителен",
-        "Ownership diagnostic подтверждает что model добавляет value а не каннибализирует базу",
-        "Final decision (accept/reject) задокументирован для каждого sleeve"
+        "overlap_rate рассчитан для каждого sleeve.",
+        "truly_new_trades > 0 и pnl_of_new_trades > 0.",
+        "ownership_positive определён.",
+        "final_decision (accept/reject) зафиксирован."
       ],
       "allowed_tools": [
         "backtests_analysis",
@@ -38,14 +90,14 @@
         "research_record"
       ],
       "evidence_requirements": [
-        "Overlap rate измерен для каждого candidate",
-        "PnL от genuinely new trades положителен",
-        "Ownership diagnostic подтверждает что model добавляет value а не каннибализирует базу",
-        "Final decision (accept/reject) задокументирован для каждого sleeve"
+        "overlap_rate рассчитан для каждого sleeve.",
+        "truly_new_trades > 0 и pnl_of_new_trades > 0.",
+        "ownership_positive определён.",
+        "final_decision (accept/reject) зафиксирован."
       ],
       "policy_tags": [
-        "ownership_proof",
-        "integration_gate",
+        "ownership",
+        "additive_proof",
         "final_decision"
       ],
       "max_turns": 24,
@@ -76,33 +128,35 @@
     {
       "slice_id": "compiled_plan_v7_stage_11",
       "title": "Финальный вердикт по v7",
-      "hypothesis": "Подвести итог v7: terminal verdict по model route (classification), каждому sleeve и recommended next direction.",
-      "objective": "Подвести итог v7: terminal verdict по model route (classification), каждому sleeve и recommended next direction.",
+      "hypothesis": "Вынести итоговый вердикт по model route, classification route и всем открытым вопросам v7; записать complete closure report.",
+      "objective": "Вынести итоговый вердикт по model route, classification route и всем открытым вопросам v7; записать complete closure report.",
       "success_criteria": [
-        "Terminal verdict по model route (classification) получен",
-        "Каждый sleeve имеет accept/reject с обоснованием",
-        "Операционный чек-лист пройден полностью",
-        "Финальный отчёт записан в research_record"
+        "Все open items из stage_1 закрыты.",
+        "model_route_verdict записан (продолжать/остановить/pivot).",
+        "classification_route получил terminal verdict.",
+        "Финальный отчёт по v7 написан.",
+        "Операционный чек-лист пройден полностью."
       ],
       "allowed_tools": [
         "research_record",
         "research_map",
-        "backtests_runs",
         "research_project"
       ],
       "evidence_requirements": [
-        "Terminal verdict по model route (classification) получен",
-        "Каждый sleeve имеет accept/reject с обоснованием",
-        "Операционный чек-лист пройден полностью",
-        "Финальный отчёт записан в research_record"
+        "Все open items из stage_1 закрыты.",
+        "model_route_verdict записан (продолжать/остановить/pivot).",
+        "classification_route получил terminal verdict.",
+        "Финальный отчёт по v7 написан.",
+        "Операционный чек-лист пройден полностью."
       ],
       "policy_tags": [
-        "final_verdict",
-        "closing"
+        "finalization",
+        "verdict",
+        "report"
       ],
       "max_turns": 24,
       "max_tool_calls": 24,
-      "max_expensive_calls": 3,
+      "max_expensive_calls": 2,
       "parallel_slot": 1,
       "budget_scale_applied": 6,
       "depends_on": [
@@ -134,6 +188,6 @@
   "source_compile_report_path": "",
   "sequence_batch_index": 4,
   "status": "draft",
-  "created_at": "2026-04-10T17:04:14.014127+00:00",
-  "updated_at": "2026-04-10T17:04:14.014128+00:00"
+  "created_at": "2026-04-11T10:56:27.522015+00:00",
+  "updated_at": "2026-04-11T10:56:27.522016+00:00"
 }

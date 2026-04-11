@@ -132,15 +132,19 @@ class TestPlannerToExecutionSingleBatch:
         raw = _semantic_response(stages=[_stage("stage_1", tool_hints=["backtesting"])])
         svc = _make_service(raw)
         plan = _create_plan(svc)
-        tools = plan.slices[0].allowed_tools
-        assert "backtests_runs" in tools
-        assert "backtests_analysis" in tools
+        # backtesting (6 tools, mixed exploration/construction) gets split into 2 sub-slices
+        assert len(plan.slices) == 2
+        all_tools = [t for s in plan.slices for t in s.allowed_tools]
+        assert "backtests_runs" in all_tools
+        assert "backtests_analysis" in all_tools
 
     def test_research_record_auto_appended(self):
         raw = _semantic_response(stages=[_stage("stage_1", tool_hints=["backtesting"])])
         svc = _make_service(raw)
         plan = _create_plan(svc)
+        # Both sub-slices have research_record
         assert "research_record" in plan.slices[0].allowed_tools
+        assert "research_record" in plan.slices[1].allowed_tools
 
     def test_budget_class_from_keywords(self):
         raw = _semantic_response(

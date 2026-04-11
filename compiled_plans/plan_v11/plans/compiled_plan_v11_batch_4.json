@@ -1,6 +1,6 @@
 {
   "plan_id": "compiled_plan_v11_batch_4",
-  "goal": "Forensic audit of v10 microstructure overlay: verify reproducibility, detect leakage, confirm same-window improvement, and deliver a final CONFIRMED / DOWNGRADED / REJECTED verdict.",
+  "goal": "Conduct a rigorous forensic audit of the v10 microstructure overlay result to confirm, downgrade, or reject it as a genuine improvement over the immutable baseline.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -9,39 +9,40 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "Immutable reference is active-signal-v1@1 — never modify or re-tune the base.",
-    "No new features, no new directional scouts, no early-cut, no label changes allowed.",
-    "All comparisons must use identical train / selection-OOS / lockbox windows.",
-    "Short-only, long-only, and combined veto must be tested in separate independent runs — never aggregated.",
-    "Rule-based (threshold / bucket) overlay must be validated before any model-backed overlay.",
-    "PROMOTE verdict only after every forensic block passes; any confirmed leakage triggers REJECTED.",
-    "No mixing of reproduction checks, leakage checks, and new ideas in the same run."
+    "v11 is audit-only: no new features, no new directional scouts, no early-cut, no label changes.",
+    "Immutable reference is active-signal-v1@1 — never modify the baseline.",
+    "All comparisons must use the same lockbox window for base and overlay.",
+    "Short-only, long-only, and combined veto must be tested as separate runs — never aggregated into a single story.",
+    "Leakage, reference, window, and snapshot audits must complete before any interpretive conclusion.",
+    "Simple rule-based overlay must be validated before model-backed overlay.",
+    "PROMOTE status is only valid if v10 survives the entire forensic cycle."
   ],
   "slices": [
     {
       "slice_id": "compiled_plan_v11_stage_10",
       "title": "Negative controls and robustness",
-      "hypothesis": "Stress-test the overlay result with placebo thresholds, perturbations, and time-slice splits to rule out accidental fit.",
-      "objective": "Stress-test the overlay result with placebo thresholds, perturbations, and time-slice splits to rule out accidental fit.",
+      "hypothesis": "Stress-test the overlay result with placebo thresholds, perturbations, time-slice splits, and cross-side misapplication to rule out random-artifact fit.",
+      "objective": "Stress-test the overlay result with placebo thresholds, perturbations, time-slice splits, and cross-side misapplication to rule out random-artifact fit.",
       "success_criteria": [
-        "Robustness verdict per test: result is stable, fragile, or artifact-driven."
+        "Robustness verdict per test: result is stable across perturbations, or fragile with specific break-points documented."
       ],
       "allowed_tools": [
-        "backtests_runs",
         "backtests_studies",
-        "backtests_strategy",
+        "backtests_runs",
+        "backtests_analysis",
         "research_record"
       ],
       "evidence_requirements": [
-        "Robustness verdict per test: result is stable, fragile, or artifact-driven."
+        "Robustness verdict per test: result is stable across perturbations, or fragile with specific break-points documented."
       ],
       "policy_tags": [
         "robustness",
-        "expensive"
+        "negative_controls",
+        "stress_test"
       ],
-      "max_turns": 48,
-      "max_tool_calls": 36,
-      "max_expensive_calls": 12,
+      "max_turns": 24,
+      "max_tool_calls": 24,
+      "max_expensive_calls": 3,
       "parallel_slot": 1,
       "budget_scale_applied": 6,
       "depends_on": [
@@ -66,11 +67,12 @@
     },
     {
       "slice_id": "compiled_plan_v11_stage_11",
-      "title": "Финальный вердикт по v11",
-      "hypothesis": "Synthesize all audit findings into a single forensic verdict on the v10 microstructure overlay.",
-      "objective": "Synthesize all audit findings into a single forensic verdict on the v10 microstructure overlay.",
+      "title": "Final v11 forensic verdict",
+      "hypothesis": "Render the final forensic verdict on the v10 microstructure overlay: CONFIRMED, DOWNGRADED TO WATCHLIST, or REJECTED.",
+      "objective": "Render the final forensic verdict on the v10 microstructure overlay: CONFIRMED, DOWNGRADED TO WATCHLIST, or REJECTED.",
       "success_criteria": [
-        "Final forensic verdict recorded: CONFIRMED, DOWNGRADED TO WATCHLIST, or REJECTED with full justification."
+        "Final forensic verdict recorded with full justification chain.",
+        "All open-items from stage_1 resolved."
       ],
       "allowed_tools": [
         "research_record",
@@ -78,10 +80,13 @@
         "notify_send"
       ],
       "evidence_requirements": [
-        "Final forensic verdict recorded: CONFIRMED, DOWNGRADED TO WATCHLIST, or REJECTED with full justification."
+        "Final forensic verdict recorded with full justification chain.",
+        "All open-items from stage_1 resolved."
       ],
       "policy_tags": [
-        "finalization"
+        "verdict",
+        "finalization",
+        "promotion_gate"
       ],
       "max_turns": 24,
       "max_tool_calls": 24,
@@ -89,7 +94,6 @@
       "parallel_slot": 1,
       "budget_scale_applied": 6,
       "depends_on": [
-        "compiled_plan_v11_stage_6",
         "compiled_plan_v11_stage_9",
         "compiled_plan_v11_stage_10"
       ],
@@ -119,6 +123,6 @@
   "source_compile_report_path": "",
   "sequence_batch_index": 4,
   "status": "draft",
-  "created_at": "2026-04-10T17:12:37.124172+00:00",
-  "updated_at": "2026-04-10T17:12:37.124173+00:00"
+  "created_at": "2026-04-11T11:05:11.914133+00:00",
+  "updated_at": "2026-04-11T11:05:11.914136+00:00"
 }

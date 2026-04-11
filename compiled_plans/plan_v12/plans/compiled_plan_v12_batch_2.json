@@ -1,6 +1,6 @@
 {
   "plan_id": "compiled_plan_v12_batch_2",
-  "goal": "Final qualification of the microstructure route into one of three honest statuses: confirmed true overlay, confirmed replacement layer, or watchlist/reject against immutable base active-signal-v1@1.",
+  "goal": "Final qualification of the microstructure-route into one of three honest statuses: confirmed true overlay, confirmed replacement layer, or watchlist/reject.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -9,35 +9,37 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "Never modify the immutable base snapshot active-signal-v1@1.",
-    "All key comparisons must use active-signal-v1@1 as the sole decision reference; @3 is auxiliary only.",
-    "Overlay and replacement tracks must never be mixed in the same narrative or run.",
-    "Every threshold must have documented provenance: quantile rule or selection-OOS search with frozen lockbox. No hand-tuned magic numbers.",
-    "All comparisons must be same-window: base @1, variant, and combined run on identical time windows.",
-    "Simple rules (bucket, threshold, quantile) must be evaluated before any model-based approach.",
-    "Short-only, long-only, and combined side splits must all be evaluated independently.",
-    "Old routes (IV, breadth, path-asymmetry, regime-disagreement, directional classification on old universe) are closed and must not be reopened.",
-    "No new data families or macro universe until microstructure qualification is complete."
+    "All comparisons must use active-signal-v1@1 as the sole decision reference; @3 is auxiliary only.",
+    "Overlay and replacement tracks must never be mixed in the same narrative or snapshot.",
+    "Every threshold must have documented provenance: quantile-based or selection-OOS with frozen lockbox.",
+    "All key comparisons must occur on the same window (same-window truth only).",
+    "Simple rules (bucket, threshold, quantile) must be tested before any model-based approach.",
+    "No re-opening of old routes: IV, breadth, path-asymmetry, regime-disagreement, or old-universe classification.",
+    "No new data families or data-universe expansion until microstructure qualification is complete.",
+    "Cannot claim microstructure-result as overlay unless signal IDs, entry timing, and base logic are preserved with microstructure applied only as veto/filter.",
+    "Cannot claim result as replacement unless compared as a separate snapshot against @1 on the same window."
   ],
   "slices": [
     {
       "slice_id": "compiled_plan_v12_stage_4",
       "title": "Build true overlay implementation over @1",
-      "hypothesis": "Construct true overlay variants where microstructure acts only as a causal allow/block gate on top of the base @1 signals, preserving signal IDs and entry timing with zero retroactive replacement.",
-      "objective": "Construct true overlay variants where microstructure acts only as a causal allow/block gate on top of the base @1 signals, preserving signal IDs and entry timing with zero retroactive replacement.",
+      "hypothesis": "Construct true overlay snapshots where microstructure acts only as a veto/filter gate without altering base signal IDs or entry logic.",
+      "objective": "Construct true overlay snapshots where microstructure acts only as a veto/filter gate without altering base signal IDs or entry logic.",
       "success_criteria": [
-        "Three honest true-overlay snapshots exist with causal blocking verified and no replacement logic."
+        "Three true-overlay snapshots exist with causal blocking verified and zero replacement."
       ],
       "allowed_tools": [
         "backtests_strategy",
         "backtests_strategy_validate",
+        "features_custom",
         "research_record"
       ],
       "evidence_requirements": [
-        "Three honest true-overlay snapshots exist with causal blocking verified and no replacement logic."
+        "Three true-overlay snapshots exist with causal blocking verified and zero replacement."
       ],
       "policy_tags": [
-        "overlay_track"
+        "overlay_track",
+        "snapshot_construction"
       ],
       "max_turns": 36,
       "max_tool_calls": 30,
@@ -68,10 +70,10 @@
     {
       "slice_id": "compiled_plan_v12_stage_5",
       "title": "Simple-rule overlay tests on selection window",
-      "hypothesis": "Run true overlay variants on the selection window across all threshold sets and side modes to determine whether overlay has any signal before committing to lockbox runs.",
-      "objective": "Run true overlay variants on the selection window across all threshold sets and side modes to determine whether overlay has any signal before committing to lockbox runs.",
+      "hypothesis": "Determine whether true overlay shows any meaningful signal on the selection window before committing to lockbox runs.",
+      "objective": "Determine whether true overlay shows any meaningful signal on the selection window before committing to lockbox runs.",
       "success_criteria": [
-        "Shortlist of true-overlay candidates promoted for lockbox testing exists."
+        "Shortlist of true-overlay candidates promoted to lockbox testing."
       ],
       "allowed_tools": [
         "backtests_plan",
@@ -80,16 +82,17 @@
         "research_record"
       ],
       "evidence_requirements": [
-        "Shortlist of true-overlay candidates promoted for lockbox testing exists."
+        "Shortlist of true-overlay candidates promoted to lockbox testing."
       ],
       "policy_tags": [
         "overlay_track",
-        "cheap_first"
+        "cheap_first",
+        "selection_window"
       ],
       "max_turns": 48,
       "max_tool_calls": 36,
       "max_expensive_calls": 12,
-      "parallel_slot": 2,
+      "parallel_slot": 1,
       "budget_scale_applied": 6,
       "depends_on": [
         "compiled_plan_v12_stage_4"
@@ -114,28 +117,28 @@
     {
       "slice_id": "compiled_plan_v12_stage_6",
       "title": "True overlay lockbox test against base @1",
-      "hypothesis": "Run surviving true-overlay candidates on the frozen lockbox window against base @1 to obtain a definitive verdict on whether microstructure works as a true overlay.",
-      "objective": "Run surviving true-overlay candidates on the frozen lockbox window against base @1 to obtain a definitive verdict on whether microstructure works as a true overlay.",
+      "hypothesis": "Obtain the definitive answer on whether true overlay works on the same lockbox window as the canonical base @1.",
+      "objective": "Obtain the definitive answer on whether true overlay works on the same lockbox window as the canonical base @1.",
       "success_criteria": [
-        "Final verdict on true-overlay track obtained: confirmed, weak, or rejected."
+        "Final verdict on true-overlay track with full same-window comparison against base @1."
       ],
       "allowed_tools": [
-        "backtests_plan",
         "backtests_runs",
         "backtests_analysis",
         "research_record"
       ],
       "evidence_requirements": [
-        "Final verdict on true-overlay track obtained: confirmed, weak, or rejected."
+        "Final verdict on true-overlay track with full same-window comparison against base @1."
       ],
       "policy_tags": [
         "overlay_track",
-        "lockbox"
+        "lockbox",
+        "same_window_truth"
       ],
-      "max_turns": 48,
-      "max_tool_calls": 36,
-      "max_expensive_calls": 12,
-      "parallel_slot": 3,
+      "max_turns": 24,
+      "max_tool_calls": 24,
+      "max_expensive_calls": 3,
+      "parallel_slot": 1,
       "budget_scale_applied": 6,
       "depends_on": [
         "compiled_plan_v12_stage_5"
@@ -166,6 +169,6 @@
   "source_compile_report_path": "",
   "sequence_batch_index": 2,
   "status": "draft",
-  "created_at": "2026-04-10T17:14:26.697533+00:00",
-  "updated_at": "2026-04-10T17:14:26.697535+00:00"
+  "created_at": "2026-04-11T11:07:02.822661+00:00",
+  "updated_at": "2026-04-11T11:07:02.822663+00:00"
 }

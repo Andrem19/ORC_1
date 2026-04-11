@@ -1,6 +1,6 @@
 {
   "plan_id": "compiled_plan_v4_batch_1",
-  "goal": "Close all outstanding branches from v3, complete the low-friction wave with a final verdict, then conditionally explore weak-window repair and medium-friction branches under strict gate discipline.",
+  "goal": "Close all open branches from v3 through disciplined terminal decisions, then attempt weak-window targeted repair on the immutable base before considering any higher-friction exploration.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -9,22 +9,23 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "active-signal-v1@1 is immutable — never modify the base snapshot.",
-    "Rejected branches must not be reopened: H1_post_funding_long, H2_expiry_lead_lag, A1_high_iv_long_v1, A1b_high_iv_momentum, A4_wed_afternoon.",
-    "Static high-IV regime is a volatility regime descriptor, not a directional signal.",
-    "Every branch must reach a terminal decision (promoted / rejected / formally-skipped) before any downstream gate unlocks.",
-    "Do not confuse a data task with a research result — feature materialization ≠ hypothesis validation.",
-    "Medium-friction wave is locked until every low-friction branch is closed and weak-window repair is completed."
+    "active-signal-v1@1 is immutable reference — never modify the base snapshot.",
+    "Previously rejected branches (H1_post_funding_long, H2_expiry_lead_lag, A1_high_iv_long_v1, A1b_high_iv_momentum, A4_wed_afternoon) must not be reopened.",
+    "Static high-IV regime is a volatility mode, not a directional signal — do not reinterpret as alpha.",
+    "Every hypothesis branch must reach a terminal decision (promoted or rejected) before the plan can advance past its wave.",
+    "Medium-friction wave is locked until low-friction wave is fully exhausted with recorded final verdict and no promoted candidate.",
+    "Maximum 2 weak pockets may be selected for specialist repair.",
+    "Separate data tasks from research results — never conflate them."
   ],
   "slices": [
     {
       "slice_id": "compiled_plan_v4_stage_1",
       "title": "Полный closure-audit по прошлым планам",
-      "hypothesis": "Create a unified open-items register of all unresolved work from prior plan versions before starting new research.",
-      "objective": "Create a unified open-items register of all unresolved work from prior plan versions before starting new research.",
+      "hypothesis": "Open a new v4 research project and compile a unified register of all unresolved items from prior plan cycles.",
+      "objective": "Open a new v4 research project and compile a unified register of all unresolved items from prior plan cycles.",
       "success_criteria": [
-        "A single open-items register exists and is recorded in project memory.",
-        "The immutable reference snapshot is formally recorded."
+        "A single open-items register exists.",
+        "The immutable reference is formally recorded in the project."
       ],
       "allowed_tools": [
         "research_project",
@@ -32,8 +33,8 @@
         "research_map"
       ],
       "evidence_requirements": [
-        "A single open-items register exists and is recorded in project memory.",
-        "The immutable reference snapshot is formally recorded."
+        "A single open-items register exists.",
+        "The immutable reference is formally recorded in the project."
       ],
       "policy_tags": [
         "setup",
@@ -65,17 +66,17 @@
     {
       "slice_id": "compiled_plan_v4_stage_2",
       "title": "Формально закрыть все незавершенные документы и memory-nodes прошлых планов",
-      "hypothesis": "Eliminate organizational debt by attaching terminal status to every dangling branch from v3.",
-      "objective": "Eliminate organizational debt by attaching terminal status to every dangling branch from v3.",
+      "hypothesis": "Eliminate all organizational debt by giving every hanging branch from previous plans a terminal status before new research begins.",
+      "objective": "Eliminate all organizational debt by giving every hanging branch from previous plans a terminal status before new research begins.",
       "success_criteria": [
-        "No branch in research memory lacks a terminal node (promoted / rejected / skipped)."
+        "No branch in research memory lacks a terminal status (promoted or rejected)."
       ],
       "allowed_tools": [
         "research_record",
         "research_search"
       ],
       "evidence_requirements": [
-        "No branch in research memory lacks a terminal node (promoted / rejected / skipped)."
+        "No branch in research memory lacks a terminal status (promoted or rejected)."
       ],
       "policy_tags": [
         "cleanup",
@@ -109,29 +110,24 @@
     {
       "slice_id": "compiled_plan_v4_stage_3",
       "title": "Полностью закрыть ветку A2_iv_acceleration",
-      "hypothesis": "Drive the main unfinished branch from v3 (A2 IV acceleration) to a definitive terminal decision through a full acceptance chain.",
-      "objective": "Drive the main unfinished branch from v3 (A2 IV acceleration) to a definitive terminal decision through a full acceptance chain.",
+      "hypothesis": "Drive the primary unfinished branch A2 from v3 to a definitive terminal decision through the full feature-to-backtest chain.",
+      "objective": "Drive the primary unfinished branch A2 from v3 to a definitive terminal decision through the full feature-to-backtest chain.",
       "success_criteria": [
-        "A2_iv_acceleration has a terminal decision (promoted or rejected).",
-        "Standalone and integration results are recorded.",
-        "Stability verdict is documented."
+        "A2 has a terminal decision: promoted or rejected with documented reason."
       ],
       "allowed_tools": [
         "features_custom",
         "features_dataset",
-        "backtests_strategy",
         "backtests_runs",
         "backtests_analysis",
         "research_record"
       ],
       "evidence_requirements": [
-        "A2_iv_acceleration has a terminal decision (promoted or rejected).",
-        "Standalone and integration results are recorded.",
-        "Stability verdict is documented."
+        "A2 has a terminal decision: promoted or rejected with documented reason."
       ],
       "policy_tags": [
-        "low_friction",
-        "acceptance_chain"
+        "research",
+        "full_chain"
       ],
       "max_turns": 24,
       "max_tool_calls": 24,
@@ -167,6 +163,6 @@
   "source_compile_report_path": "",
   "sequence_batch_index": 1,
   "status": "draft",
-  "created_at": "2026-04-10T16:57:59.712464+00:00",
-  "updated_at": "2026-04-10T16:57:59.712466+00:00"
+  "created_at": "2026-04-11T10:50:40.016980+00:00",
+  "updated_at": "2026-04-11T10:50:40.016989+00:00"
 }

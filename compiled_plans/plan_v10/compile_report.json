@@ -8,9 +8,8 @@
   "stage_count": 11,
   "compiled_plan_count": 4,
   "warnings": [
-    "Plan is in Russian; all objective/action text preserved in original language for semantic fidelity",
-    "Stages 9–10 contain gated optional branches that may be skipped entirely",
     "Auto-added research_record for stage_2: every non-trivial stage needs documentation capability.",
+    "Auto-added research_record for stage_3: every non-trivial stage needs documentation capability.",
     "Auto-added research_record for stage_5: every non-trivial stage needs documentation capability.",
     "Auto-added research_record for stage_6: every non-trivial stage needs documentation capability.",
     "Auto-added research_record for stage_7: every non-trivial stage needs documentation capability.",
@@ -18,5 +17,5 @@
     "Auto-added research_record for stage_10: every non-trivial stage needs documentation capability."
   ],
   "errors": [],
-  "compiled_at": "2026-04-10T17:10:16.031691+00:00"
+  "compiled_at": "2026-04-11T11:03:23.954731+00:00"
 }

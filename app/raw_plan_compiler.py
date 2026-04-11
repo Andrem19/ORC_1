@@ -68,6 +68,26 @@ _BUDGET_PRESETS = {
     "default": (6, 5, 1),
 }
 
+_TOOL_SPLIT_THRESHOLD = 5
+
+_EXPLORATION_TOOLS: frozenset[str] = frozenset({
+    "datasets", "datasets_preview", "features_catalog", "features_analytics",
+    "events", "research_search", "research_project", "research_map",
+    "models_registry", "models_compare", "backtests_plan", "backtests_analysis",
+    "backtests_conditions", "experiments_inspect", "experiments_read",
+    "experiments_registry_inspect", "gold_collection",
+})
+
+_CONSTRUCTION_TOOLS: frozenset[str] = frozenset({
+    "datasets_sync", "features_dataset", "features_custom", "features_cleanup",
+    "events_sync", "models_dataset", "models_train", "models_to_feature",
+    "backtests_strategy", "backtests_strategy_validate", "backtests_runs",
+    "backtests_studies", "backtests_walkforward", "notify_send",
+    "experiments_run",
+})
+
+_BOTH_PHASE_TOOLS: frozenset[str] = frozenset({"research_record"})
+
 
 def compile_semantic_raw_plan(
     document: RawPlanDocument,
@@ -79,7 +99,7 @@ def compile_semantic_raw_plan(
     sequence_id = f"compiled_{Path(document.source_file).stem}"
     plans: list[ExecutionPlan] = []
     warnings = list(document.parser_warnings) + list(semantic_plan.warnings)
-    stages = list(semantic_plan.stages)
+    stages = _expand_stages(list(semantic_plan.stages))
     for batch_index in range(0, len(stages), 3):
         batch = stages[batch_index: batch_index + 3]
         plan_id = f"{sequence_id}_batch_{len(plans) + 1}"
@@ -221,6 +241,76 @@ def _reconcile_stage_allowed_tools(*, stage: SemanticStage, allowed_tools: list[
         f"Auto-added research_record for {stage.stage_id}: every non-trivial stage needs documentation capability."
     )
     return normalized, warnings
+
+
+def _classify_split_tools(allowed_tools: list[str]) -> tuple[list[str], list[str]] | None:
+    if len(allowed_tools) <= _TOOL_SPLIT_THRESHOLD:
+        return None
+    exploration = [t for t in allowed_tools if t in _EXPLORATION_TOOLS]
+    construction = [t for t in allowed_tools if t in _CONSTRUCTION_TOOLS]
+    both = [t for t in allowed_tools if t in _BOTH_PHASE_TOOLS]
+    if not exploration or not construction:
+        return None
+    exploration = both + exploration
+    construction = both + construction
+    return (exploration, construction)
+
+
+def _maybe_split_stage(stage: SemanticStage) -> list[SemanticStage]:
+    allowed_tools = _infer_allowed_tools(stage)
+    split = _classify_split_tools(allowed_tools)
+    if split is None:
+        return [stage]
+    exploration_tools, construction_tools = split
+    part1 = SemanticStage(
+        stage_id=f"{stage.stage_id}_part1",
+        title=f"{stage.title} (exploration)",
+        objective=stage.objective,
+        actions=list(stage.actions),
+        success_criteria=list(stage.success_criteria) + ["Exploration phase complete"],
+        tool_hints=exploration_tools,
+        policy_tags=list(stage.policy_tags),
+        depends_on=list(stage.depends_on),
+        required=stage.required,
+        parallelizable=False,
+        gate_hint=stage.gate_hint,
+        raw_stage_ref=stage.raw_stage_ref,
+    )
+    part2 = SemanticStage(
+        stage_id=f"{stage.stage_id}_part2",
+        title=f"{stage.title} (construction)",
+        objective=stage.objective,
+        actions=list(stage.actions),
+        success_criteria=list(stage.success_criteria),
+        tool_hints=construction_tools,
+        policy_tags=list(stage.policy_tags),
+        depends_on=[f"{stage.stage_id}_part1"],
+        required=stage.required,
+        parallelizable=False,
+        gate_hint="",
+        raw_stage_ref=stage.raw_stage_ref,
+    )
+    return [part1, part2]
+
+
+def _expand_stages(stages: list[SemanticStage]) -> list[SemanticStage]:
+    expanded: list[SemanticStage] = []
+    split_ids: set[str] = set()
+    for stage in stages:
+        parts = _maybe_split_stage(stage)
+        if len(parts) > 1:
+            split_ids.add(stage.stage_id)
+        expanded.extend(parts)
+    if not split_ids:
+        return expanded
+    for stage in expanded:
+        if not stage.depends_on:
+            continue
+        stage.depends_on = [
+            f"{dep}_part2" if dep in split_ids else dep
+            for dep in stage.depends_on
+        ]
+    return expanded
 
 
 def _stage_requires_research_record(stage: SemanticStage) -> bool:

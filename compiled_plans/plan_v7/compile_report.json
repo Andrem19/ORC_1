@@ -5,16 +5,20 @@
   "compile_status": "compiled",
   "parser_confidence": 0.95,
   "semantic_method": "llm",
-  "stage_count": 11,
+  "stage_count": 12,
   "compiled_plan_count": 4,
   "warnings": [
+    "Plan is written in Russian; stage titles and objectives preserved in original language for fidelity.",
+    "Weak-window models M4/M5 are gated optional branches — not promoted unless base directional models show weak but substantive signal.",
+    "v6 left drift between planned barrier labels and actually used net_pnl>0 — v7 must enforce strict label discipline.",
     "Auto-added research_record for stage_3: every non-trivial stage needs documentation capability.",
-    "Auto-added research_record for stage_4: every non-trivial stage needs documentation capability.",
     "Auto-added research_record for stage_5: every non-trivial stage needs documentation capability.",
     "Auto-added research_record for stage_6: every non-trivial stage needs documentation capability.",
+    "Auto-added research_record for stage_6b: every non-trivial stage needs documentation capability.",
     "Auto-added research_record for stage_7: every non-trivial stage needs documentation capability.",
-    "Auto-added research_record for stage_8: every non-trivial stage needs documentation capability."
+    "Auto-added research_record for stage_8: every non-trivial stage needs documentation capability.",
+    "Auto-added research_record for stage_9: every non-trivial stage needs documentation capability."
   ],
   "errors": [],
-  "compiled_at": "2026-04-10T17:04:14.014135+00:00"
+  "compiled_at": "2026-04-11T10:56:27.522026+00:00"
 }
