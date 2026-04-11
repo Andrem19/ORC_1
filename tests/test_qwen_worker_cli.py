@@ -71,3 +71,38 @@ def test_qwen_worker_build_command_supports_exclude_tools_in_direct_mode(monkeyp
     excluded = command[command.index("--exclude-tools") + 1]
     assert "read_file" in excluded
     assert "research_project" in excluded
+
+
+def test_qwen_worker_build_command_can_disable_tool_use_per_call(monkeypatch) -> None:
+    adapter = QwenWorkerCli(cli_path="/bin/echo", allow_tool_use=True)
+    monkeypatch.setattr(adapter, "_resolve_cli_path", lambda: "/bin/echo")
+
+    command = adapter._build_command("prompt", allow_tool_use=False)
+
+    assert "--yolo" not in command
+    assert "-e" in command
+    assert "none" in command
+
+
+def test_qwen_tool_registry_preflight_caches_visible_tools(monkeypatch) -> None:
+    adapter = QwenWorkerCli(cli_path="/bin/echo", allow_tool_use=True)
+    monkeypatch.setattr(adapter, "_resolve_cli_path", lambda: "/bin/echo")
+    calls = {"count": 0}
+
+    def _fake_invoke(*args, **kwargs):  # type: ignore[no-untyped-def]
+        del args, kwargs
+        calls["count"] += 1
+        return SimpleNamespace(
+            raw_output='{"visible_tools":["mcp__dev_space1__research_record","research_map"]}',
+            success=True,
+        )
+
+    monkeypatch.setattr(adapter, "invoke", _fake_invoke)
+
+    first = adapter.preflight_tool_registry(required_tools=["research_record"])
+    second = adapter.preflight_tool_registry(required_tools=["research_record"])
+
+    assert first["available"] is True
+    assert "research_record" in first["visible_tools"]
+    assert calls["count"] == 1
+    assert second == first

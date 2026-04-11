@@ -180,5 +180,5 @@ translation_fallback_2 = "claude_cli"   # "" to disable
 # LM Studio — shared connection for worker API and optional translation
 [lmstudio]
 base_url = "http://localhost:1234"
-model = "openai/gpt-oss-20b"  # must match model id from /v1/models; empty = use currently loaded
+model = "qwen/qwen3.5-35b-a3b"  # must match model id from /v1/models; empty = use currently loaded
 reasoning_effort = "none"   # "none" disables thinking mode for fast responses; "low"/"medium"/"high" enables it

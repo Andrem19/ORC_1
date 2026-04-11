@@ -48,6 +48,7 @@ class DirectSliceExecutor:
         direct_config: Any,
         worker_system_prompt: str = "",
         invoker: Any = invoke_adapter_with_retries,
+        provider_name: str = "",
     ) -> None:
         self.adapter = adapter
         self.artifact_store = artifact_store
@@ -55,6 +56,7 @@ class DirectSliceExecutor:
         self.direct_config = direct_config
         self.worker_system_prompt = worker_system_prompt
         self.invoker = invoker
+        self.provider_name = str(provider_name or "").strip()
 
     async def execute(
         self,
@@ -68,9 +70,16 @@ class DirectSliceExecutor:
         checkpoint_summary: str,
         extra_prompt_section: str = "",
         on_tool_progress: Any = None,
+        attempt_label: str = "direct",
+        adapter_invoke_kwargs: dict[str, Any] | None = None,
     ) -> DirectExecutionResult:
         allowed_tools = _allowed_tools(slice_obj.allowed_tools)
-        attempt_id = f"direct_{slice_obj.slice_id}_{slice_obj.turn_count + 1}"
+        attempt_id = f"{attempt_label}_{slice_obj.slice_id}_{slice_obj.turn_count + 1}"
+        provider = _resolve_provider_name(
+            adapter=self.adapter,
+            explicit_provider=self.provider_name,
+            configured_provider=str(getattr(self.direct_config, "provider", "") or ""),
+        )
         prompt = build_direct_slice_prompt(
             plan_id=plan_id,
             slice_payload=asdict(slice_obj),
@@ -83,13 +92,14 @@ class DirectSliceExecutor:
             max_expensive_tool_calls=min(int(slice_obj.max_expensive_calls or 0), int(self.direct_config.max_expensive_tool_calls_per_slice or 0)),
             worker_system_prompt=self.worker_system_prompt,
             required_output_facts=required_output_facts,
+            provider=provider,
         )
         if extra_prompt_section:
             prompt = prompt + "\n\n" + extra_prompt_section + "\n"
-        provider = str(getattr(self.direct_config, "provider", "") or self.adapter.name())
         transcript: list[dict[str, Any]] = []
         tool_call_count = 0
         expensive_count = 0
+        invoke_kwargs = dict(adapter_invoke_kwargs or {})
         in_flight_path = self.artifact_store.save_direct_attempt(
             plan_id=plan_id,
             slice_id=slice_obj.slice_id,
@@ -219,6 +229,7 @@ class DirectSliceExecutor:
                 plan_id=plan_id,
                 slice_id=slice_obj.slice_id,
                 exclude_tools=list(getattr(self.direct_config, "safe_exclude_tools", []) or []),
+                **invoke_kwargs,
             )
         artifact_path = self.artifact_store.save_direct_attempt(
             plan_id=plan_id,
@@ -300,7 +311,11 @@ class DirectSliceExecutor:
                 "plan_id": plan_id,
                 "slice_id": slice_obj.slice_id,
                 "error": error,
-                "provider": str(getattr(self.direct_config, "provider", "") or self.adapter.name()),
+                "provider": _resolve_provider_name(
+                    adapter=self.adapter,
+                    explicit_provider=self.provider_name,
+                    configured_provider=str(getattr(self.direct_config, "provider", "") or ""),
+                ),
                 "runtime": "direct_execution",
             },
             source="direct_runtime",
@@ -310,6 +325,19 @@ class DirectSliceExecutor:
 def _allowed_tools(slice_tools: list[str]) -> set[str]:
     allowed = {str(item).strip() for item in slice_tools if str(item).strip()}
     return allowed or set(DEFAULT_DEV_SPACE1_TOOLS)
+
+
+def _resolve_provider_name(*, adapter: BaseAdapter, explicit_provider: str, configured_provider: str) -> str:
+    if explicit_provider:
+        return explicit_provider
+    adapter_name = str(adapter.name() or "").strip().lower()
+    if adapter_name == "qwen_worker_cli":
+        return "qwen_cli"
+    if adapter_name == "claude_worker_cli":
+        return "claude_cli"
+    if adapter_name == "lmstudio_worker_api":
+        return "lmstudio"
+    return str(configured_provider or adapter.name()).strip()
 
 
 __all__ = ["DirectExecutionResult", "DirectSliceExecutor"]

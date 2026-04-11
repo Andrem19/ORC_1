@@ -20,6 +20,7 @@ def build_direct_slice_prompt(
     max_expensive_tool_calls: int,
     worker_system_prompt: str = "",
     required_output_facts: list[str] | None = None,
+    provider: str = "",
 ) -> str:
     lines: list[str] = []
     if worker_system_prompt.strip():
@@ -83,10 +84,14 @@ def build_direct_slice_prompt(
     if recent_turn_summaries:
         lines.extend(["", "Recent direct attempts:"])
         lines.extend(f"- {item}" for item in recent_turn_summaries[-6:])
-    if known_facts:
+    compact_known_facts = _compact_known_facts(
+        known_facts=known_facts,
+        dependency_ids=[str(item).strip() for item in slice_payload.get("depends_on", []) or [] if str(item).strip()],
+    )
+    if compact_known_facts:
         lines.extend(["", "Known facts:"])
-        for key in sorted(known_facts)[:100]:
-            value = str(known_facts[key])
+        for key, raw_value in compact_known_facts:
+            value = str(raw_value)
             if len(value) > 260:
                 value = value[:257] + "..."
             lines.append(f"- {key} = {value}")
@@ -99,6 +104,13 @@ def build_direct_slice_prompt(
                 "- For research short-list slices, final_report.facts must carry active research project id, short-list family names, and created hypothesis node refs.",
             ]
         )
+    lines.extend(
+        [
+            "",
+            "Contract footer:",
+        ]
+    )
+    lines.extend(f"- {item}" for item in _model_contract_footer(provider=provider))
     lines.extend(
         [
             "",
@@ -159,11 +171,17 @@ def _tool_contract_hints(*, allowed_tools: list[str], known_facts: dict[str, Any
             "Call experiments_inspect(view='list') first to see available jobs, then retry with a specific job_id."
         )
     if any(t in allowed for t in ("backtests_conditions", "backtests_analysis", "backtests_runs")):
-        hints.append(
-            "backtests_conditions and backtests_analysis require snapshot_id resolved from "
-            "backtests_strategy(action='inspect', view='detail', snapshot_id='active-signal-v1', version='1'). "
-            "Always look up snapshot_id before calling these tools."
-        )
+        if "backtests_strategy" in allowed:
+            hints.append(
+                "backtests_conditions and backtests_analysis require snapshot_id resolved from "
+                "backtests_strategy(action='inspect', view='detail', snapshot_id='active-signal-v1', version='1'). "
+                "Always look up snapshot_id before calling these tools."
+            )
+        else:
+            hints.append(
+                "backtests_conditions and backtests_analysis require a real snapshot_id from known facts or prior allowed-tool evidence. "
+                "Do not invent unapproved snapshot lookup steps when the slice does not allow them."
+            )
     return hints
 
 
@@ -175,6 +193,47 @@ def _first_fact_value(known_facts: dict[str, Any], *, suffix: str) -> str:
                 return ", ".join(str(item) for item in value)
             return str(value)
     return ""
+
+
+def _compact_known_facts(
+    *,
+    known_facts: dict[str, Any],
+    dependency_ids: list[str],
+    limit: int = 24,
+) -> list[tuple[str, Any]]:
+    dependency_set = {str(item).strip() for item in dependency_ids if str(item).strip()}
+    preferred: list[tuple[str, Any]] = []
+    secondary: list[tuple[str, Any]] = []
+    seen_keys: set[str] = set()
+    for raw_key in sorted(known_facts):
+        display_key = _compact_fact_key(raw_key)
+        if display_key in seen_keys:
+            continue
+        seen_keys.add(display_key)
+        bucket = preferred if str(raw_key).split(".", 1)[0] in dependency_set else secondary
+        bucket.append((display_key, known_facts[raw_key]))
+    return (preferred + secondary)[:limit]
+
+
+def _compact_fact_key(raw_key: str) -> str:
+    parts = [segment for segment in str(raw_key or "").split(".") if segment]
+    if len(parts) <= 2:
+        return str(raw_key)
+    return f"{parts[0]}.{parts[-1]}"
+
+
+def _model_contract_footer(*, provider: str) -> list[str]:
+    provider_name = str(provider or "").strip().lower()
+    if provider_name in {"lmstudio", "qwen_cli"}:
+        return [
+            "Success means `final_report` only.",
+            "A `checkpoint` with `status=complete` is fallback-compatible only when evidence is complete and downstream facts are satisfied.",
+            "A partial checkpoint triggers one bounded repair or fallback; it is not terminal success.",
+        ]
+    return [
+        "Success means `final_report` only.",
+        "Do not treat partial progress as terminal success.",
+    ]
 
 
 __all__ = ["build_direct_slice_prompt"]

@@ -8,6 +8,7 @@ Supports both synchronous invoke() and async start()/check() modes.
 from __future__ import annotations
 
 import fcntl
+import json
 import logging
 import os
 from pathlib import Path
@@ -62,6 +63,7 @@ class QwenWorkerCli(BaseAdapter):
         self.allow_tool_use = allow_tool_use
         self._resolved_cli_path: str | None = None
         self._resolved_env_path_prefix = ""
+        self._tool_registry_cache: dict[tuple[str, ...], dict[str, Any]] = {}
 
     def name(self) -> str:
         return "qwen_worker_cli"
@@ -71,9 +73,10 @@ class QwenWorkerCli(BaseAdapter):
 
     def _build_command(self, prompt: str, **kwargs: Any) -> list[str]:
         cmd = [self._resolve_cli_path() or self.cli_path]
+        allow_tool_use = bool(kwargs.get("allow_tool_use", self.allow_tool_use))
         runtime_exclude = _dedupe_preserve_order(kwargs.get("exclude_tools", []) or [])
         excluded_tools = _dedupe_preserve_order([*_BROKER_SAFE_EXCLUDED_TOOLS, *self.exclude_tools, *runtime_exclude])
-        if self.allow_tool_use:
+        if allow_tool_use:
             cmd.append("--yolo")
             if excluded_tools:
                 cmd.extend(["--exclude-tools", ",".join(excluded_tools)])
@@ -87,6 +90,41 @@ class QwenWorkerCli(BaseAdapter):
         cmd.extend(["-p", prompt])
         cmd.extend(self.extra_flags)
         return cmd
+
+    def preflight_tool_registry(self, *, required_tools: list[str]) -> dict[str, Any]:
+        normalized_required = tuple(sorted({str(item).strip() for item in required_tools if str(item).strip()}))
+        cached = self._tool_registry_cache.get(normalized_required)
+        if cached is not None:
+            return dict(cached)
+        if not self._resolve_cli_path():
+            result = {
+                "available": False,
+                "visible_tools": [],
+                "missing_required_tools": list(normalized_required),
+                "reason": "qwen_cli_unavailable",
+            }
+            self._tool_registry_cache[normalized_required] = dict(result)
+            return result
+        response = self.invoke(
+            (
+                "Return only JSON with shape "
+                '{"visible_tools":["tool_a","tool_b"]}'
+                " listing the exact currently visible tool names. "
+                "Do not call any tool. Do not explain."
+            ),
+            timeout=20,
+            allow_tool_use=False,
+        )
+        visible_tools = _extract_visible_tools(response.raw_output)
+        missing = [name for name in normalized_required if name not in visible_tools]
+        result = {
+            "available": not missing,
+            "visible_tools": sorted(visible_tools),
+            "missing_required_tools": missing,
+            "reason": "" if not missing else "missing:" + ",".join(missing),
+        }
+        self._tool_registry_cache[normalized_required] = dict(result)
+        return result
 
     def invoke(self, prompt: str, timeout: int = 300, **kwargs: Any) -> AdapterResponse:
         """Call Qwen Code CLI with a prompt and return the output (blocking)."""
@@ -381,3 +419,32 @@ def _append_limited(existing: str, fragment: str, limit: int) -> str:
     if len(combined) <= limit:
         return combined
     return combined[-limit:]
+
+
+def _extract_visible_tools(raw_output: str) -> set[str]:
+    text = str(raw_output or "").strip()
+    if not text:
+        return set()
+    if text.startswith("```"):
+        lines = text.splitlines()
+        if lines and lines[0].startswith("```"):
+            lines = lines[1:]
+        if lines and lines[-1].startswith("```"):
+            lines = lines[:-1]
+        text = "\n".join(lines).strip()
+    try:
+        payload = json.loads(text)
+    except json.JSONDecodeError:
+        return set()
+    values = payload.get("visible_tools") if isinstance(payload, dict) else []
+    if not isinstance(values, list):
+        return set()
+    normalized: set[str] = set()
+    for item in values:
+        name = str(item or "").strip()
+        if not name:
+            continue
+        if name.startswith("mcp__dev_space1__"):
+            name = name.split("mcp__dev_space1__", 1)[1]
+        normalized.add(name)
+    return normalized

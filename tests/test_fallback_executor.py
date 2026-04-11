@@ -44,11 +44,16 @@ def _success_result(provider: str = "primary") -> DirectExecutionResult:
             action_id="act_1",
             action_type="final_report",
             summary="Done",
+            verdict="SUCCESS",
+            evidence_refs=["node_1"],
+            facts={"research.project_id": "proj_1"},
+            confidence=0.8,
         ),
         artifact_path="/tmp/artifact.json",
         raw_output='{"type":"final_report","summary":"Done"}',
         provider=provider,
         duration_ms=100,
+        tool_call_count=2,
     )
 
 
@@ -78,6 +83,38 @@ def _blocked_checkpoint_result(provider: str = "primary", reason: str = "direct_
         provider=provider,
         duration_ms=50,
         error=reason,
+    )
+
+
+def _partial_checkpoint_result(provider: str = "primary", summary: str = "need one more step") -> DirectExecutionResult:
+    return DirectExecutionResult(
+        action=WorkerAction(
+            action_id="act_partial",
+            action_type="checkpoint",
+            status="partial",
+            summary=summary,
+        ),
+        artifact_path="/tmp/artifact.json",
+        raw_output=f'{{"type":"checkpoint","status":"partial","summary":"{summary}"}}',
+        provider=provider,
+        duration_ms=50,
+    )
+
+
+def _complete_checkpoint_result(provider: str = "primary") -> DirectExecutionResult:
+    return DirectExecutionResult(
+        action=WorkerAction(
+            action_id="act_complete",
+            action_type="checkpoint",
+            status="complete",
+            summary="Evidence is complete",
+            facts={"research.project_id": "proj_1"},
+            evidence_refs=["node_1"],
+        ),
+        artifact_path="/tmp/artifact.json",
+        raw_output='{"type":"checkpoint","status":"complete","summary":"Evidence is complete"}',
+        provider=provider,
+        duration_ms=50,
     )
 
 
@@ -202,6 +239,9 @@ def test_fallback_1_succeeds_after_primary_fails() -> None:
     assert attempts[0].provider == "qwen_cli"
     assert attempts[0].attempt_index == 1
     assert len(ct.artifact_store.saved) == 1
+    assert ct.artifact_store.saved[0]["raw_output_excerpt"].startswith("{")
+    assert ct.artifact_store.saved[0]["adapter_name"] == "qwen_worker_cli"
+    assert ct.artifact_store.saved[0]["terminal_action_type"] == "final_report"
 
 
 def test_fallback_2_succeeds_after_both_fail() -> None:
@@ -415,3 +455,286 @@ def test_fallback_triggers_on_stalled_watchdog_checkpoint() -> None:
     assert result.action is not None
     assert result.action.action_type == "final_report"
     assert result.provider == "claude_cli"
+
+
+def test_checkpoint_complete_counts_as_success_without_claude() -> None:
+    ct = _ChainTest(
+        fallback_providers=["claude_cli"],
+        primary_results=[_complete_checkpoint_result()],
+        adapter_map={"claude_cli": _FakeAdapter("claude_worker_cli")},
+    )
+
+    result, attempts = asyncio.run(ct.fb.execute_with_fallback(
+        plan_id="plan_1",
+        slice_obj=_make_slice(),
+        baseline_bootstrap={},
+        known_facts={},
+        required_output_facts=["research.project_id"],
+        recent_turn_summaries=[],
+        checkpoint_summary="",
+    ))
+
+    assert result.action is not None
+    assert result.action.action_type == "checkpoint"
+    assert result.action.status == "complete"
+    assert attempts == []
+
+
+def test_checkpoint_partial_still_falls_back() -> None:
+    ct = _ChainTest(
+        fallback_providers=["claude_cli"],
+        primary_results=[_partial_checkpoint_result()],
+        fallback_results_map={"claude_worker_cli": [_success_result(provider="claude_cli")]},
+        adapter_map={"claude_cli": _FakeAdapter("claude_worker_cli")},
+    )
+
+    result, attempts = asyncio.run(ct.fb.execute_with_fallback(
+        plan_id="plan_1",
+        slice_obj=_make_slice(),
+        baseline_bootstrap={},
+        known_facts={},
+        required_output_facts=["research.project_id"],
+        recent_turn_summaries=[],
+        checkpoint_summary="",
+    ))
+
+    assert result.provider == "claude_cli"
+    assert len(attempts) == 1
+
+
+def test_tool_not_in_allowlist_gets_one_repair_before_next_provider() -> None:
+    ct = _ChainTest(
+        fallback_providers=["qwen_cli", "claude_cli"],
+        primary_results=[_fail_result(error="timeout")],
+        fallback_results_map={
+            "qwen_worker_cli": [
+                _fail_result(
+                    provider="qwen_cli",
+                    error="direct_output_parse_failed:tool_not_in_allowlist:backtests_strategy",
+                ),
+                _success_result(provider="qwen_cli"),
+            ],
+            "claude_worker_cli": [_success_result(provider="claude_cli")],
+        },
+        adapter_map={
+            "qwen_cli": _FakeAdapter("qwen_worker_cli"),
+            "claude_cli": _FakeAdapter("claude_worker_cli"),
+        },
+    )
+
+    result, attempts = asyncio.run(ct.fb.execute_with_fallback(
+        plan_id="plan_1",
+        slice_obj=_make_slice(allowed_tools=["backtests_runs"]),
+        baseline_bootstrap={},
+        known_facts={},
+        required_output_facts=[],
+        recent_turn_summaries=[],
+        checkpoint_summary="",
+    ))
+
+    qwen_ex = ct.fallback_executors["qwen_worker_cli"]
+    assert result.provider == "qwen_cli"
+    assert len(attempts) == 1
+    assert len(qwen_ex.calls) == 2
+    assert "Contract Repair" in qwen_ex.calls[1]["extra_prompt_section"]
+    assert "backtests_runs" in qwen_ex.calls[1]["extra_prompt_section"]
+    assert "backtests_strategy" not in qwen_ex.calls[1]["extra_prompt_section"]
+
+
+# ---------------------------------------------------------------------------
+# Quality gate tests – ensure low-quality final_reports trigger fallback
+# ---------------------------------------------------------------------------
+
+
+def _low_quality_result(
+    *,
+    provider: str = "primary",
+    verdict: str = "SUCCESS",
+    confidence: float = 0.8,
+    tool_call_count: int = 2,
+    evidence_refs: list[str] | None = None,
+    facts: dict[str, Any] | None = None,
+) -> DirectExecutionResult:
+    """Build a final_report result with individually controllable quality knobs."""
+    return DirectExecutionResult(
+        action=WorkerAction(
+            action_id="act_lq",
+            action_type="final_report",
+            summary="Low quality result",
+            verdict=verdict,
+            confidence=confidence,
+            evidence_refs=evidence_refs if evidence_refs is not None else ["node_1"],
+            facts=facts if facts is not None else {"research.project_id": "proj_1"},
+        ),
+        artifact_path="/tmp/artifact.json",
+        raw_output='{"type":"final_report","summary":"Low quality"}',
+        provider=provider,
+        duration_ms=100,
+        tool_call_count=tool_call_count,
+    )
+
+
+def test_zero_tool_calls_triggers_fallback() -> None:
+    """final_report with 0 tool calls is a hallucinated result — must fall back."""
+    ct = _ChainTest(
+        fallback_providers=["qwen_cli"],
+        primary_results=[_low_quality_result(tool_call_count=0)],
+        fallback_results_map={"qwen_worker_cli": [_success_result(provider="qwen_cli")]},
+        adapter_map={"qwen_cli": _FakeAdapter("qwen_worker_cli")},
+    )
+
+    result, attempts = asyncio.run(ct.fb.execute_with_fallback(
+        plan_id="plan_1",
+        slice_obj=_make_slice(),
+        baseline_bootstrap={},
+        known_facts={},
+        required_output_facts=[],
+        recent_turn_summaries=[],
+        checkpoint_summary="",
+    ))
+
+    assert len(attempts) == 1, "Zero tool calls should trigger fallback"
+    assert result.provider == "qwen_cli"
+    assert result.tool_call_count == 2  # fallback result
+
+
+def test_incomplete_verdict_triggers_fallback() -> None:
+    """final_report with verdict=INCOMPLETE should fall back."""
+    ct = _ChainTest(
+        fallback_providers=["qwen_cli"],
+        primary_results=[_low_quality_result(verdict="INCOMPLETE")],
+        fallback_results_map={"qwen_worker_cli": [_success_result(provider="qwen_cli")]},
+        adapter_map={"qwen_cli": _FakeAdapter("qwen_worker_cli")},
+    )
+
+    result, attempts = asyncio.run(ct.fb.execute_with_fallback(
+        plan_id="plan_1",
+        slice_obj=_make_slice(),
+        baseline_bootstrap={},
+        known_facts={},
+        required_output_facts=[],
+        recent_turn_summaries=[],
+        checkpoint_summary="",
+    ))
+
+    assert len(attempts) == 1
+    assert result.provider == "qwen_cli"
+
+
+def test_low_confidence_triggers_fallback() -> None:
+    """final_report with confidence 0.4 (< 0.5 threshold) should fall back."""
+    ct = _ChainTest(
+        fallback_providers=["qwen_cli"],
+        primary_results=[_low_quality_result(confidence=0.4)],
+        fallback_results_map={"qwen_worker_cli": [_success_result(provider="qwen_cli")]},
+        adapter_map={"qwen_cli": _FakeAdapter("qwen_worker_cli")},
+    )
+
+    result, attempts = asyncio.run(ct.fb.execute_with_fallback(
+        plan_id="plan_1",
+        slice_obj=_make_slice(),
+        baseline_bootstrap={},
+        known_facts={},
+        required_output_facts=[],
+        recent_turn_summaries=[],
+        checkpoint_summary="",
+    ))
+
+    assert len(attempts) == 1
+    assert result.provider == "qwen_cli"
+
+
+def test_empty_evidence_refs_triggers_fallback() -> None:
+    """final_report with no evidence_refs should fall back."""
+    ct = _ChainTest(
+        fallback_providers=["qwen_cli"],
+        primary_results=[_low_quality_result(evidence_refs=[])],
+        fallback_results_map={"qwen_worker_cli": [_success_result(provider="qwen_cli")]},
+        adapter_map={"qwen_cli": _FakeAdapter("qwen_worker_cli")},
+    )
+
+    result, attempts = asyncio.run(ct.fb.execute_with_fallback(
+        plan_id="plan_1",
+        slice_obj=_make_slice(),
+        baseline_bootstrap={},
+        known_facts={},
+        required_output_facts=[],
+        recent_turn_summaries=[],
+        checkpoint_summary="",
+    ))
+
+    assert len(attempts) == 1
+    assert result.provider == "qwen_cli"
+
+
+def test_missing_required_facts_triggers_fallback() -> None:
+    """final_report missing a required_output_fact should fall back."""
+    ct = _ChainTest(
+        fallback_providers=["qwen_cli"],
+        primary_results=[_low_quality_result(facts={})],  # missing research.project_id
+        fallback_results_map={"qwen_worker_cli": [_success_result(provider="qwen_cli")]},
+        adapter_map={"qwen_cli": _FakeAdapter("qwen_worker_cli")},
+    )
+
+    result, attempts = asyncio.run(ct.fb.execute_with_fallback(
+        plan_id="plan_1",
+        slice_obj=_make_slice(),
+        baseline_bootstrap={},
+        known_facts={},
+        required_output_facts=["research.project_id"],
+        recent_turn_summaries=[],
+        checkpoint_summary="",
+    ))
+
+    assert len(attempts) == 1
+    assert result.provider == "qwen_cli"
+
+
+def test_high_quality_final_report_passes_gate() -> None:
+    """A final_report with good verdict, confidence, tools, evidence, and facts should pass."""
+    ct = _ChainTest(
+        fallback_providers=["qwen_cli"],
+        primary_results=[_success_result()],
+        adapter_map={"qwen_cli": _FakeAdapter("qwen_worker_cli")},
+    )
+
+    result, attempts = asyncio.run(ct.fb.execute_with_fallback(
+        plan_id="plan_1",
+        slice_obj=_make_slice(),
+        baseline_bootstrap={},
+        known_facts={},
+        required_output_facts=[],
+        recent_turn_summaries=[],
+        checkpoint_summary="",
+    ))
+
+    assert result.action is not None
+    assert result.action.action_type == "final_report"
+    assert len(attempts) == 0, "High quality result should NOT trigger fallback"
+
+
+def test_all_quality_failures_exhaust_fallbacks() -> None:
+    """When every provider returns low-quality final_reports, the last result is returned."""
+    ct = _ChainTest(
+        fallback_providers=["qwen_cli"],
+        primary_results=[_low_quality_result(tool_call_count=0)],
+        fallback_results_map={
+            "qwen_worker_cli": [_low_quality_result(provider="qwen_cli", confidence=0.3)],
+        },
+        adapter_map={"qwen_cli": _FakeAdapter("qwen_worker_cli")},
+    )
+
+    result, attempts = asyncio.run(ct.fb.execute_with_fallback(
+        plan_id="plan_1",
+        slice_obj=_make_slice(),
+        baseline_bootstrap={},
+        known_facts={},
+        required_output_facts=[],
+        recent_turn_summaries=[],
+        checkpoint_summary="",
+    ))
+
+    assert len(attempts) == 1
+    # Last fallback result is returned even though it failed the quality gate
+    assert result.action is not None
+    assert result.action.confidence == 0.3

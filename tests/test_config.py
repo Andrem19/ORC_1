@@ -20,6 +20,9 @@ def test_default_config():
     assert cfg.direct_execution.max_attempts_per_slice == 2
     assert cfg.direct_execution.max_tool_calls_per_slice == 24
     assert cfg.direct_execution.max_expensive_tool_calls_per_slice == 6
+    assert cfg.direct_execution.contract_guardrails_enabled is True
+    assert cfg.direct_execution.parse_repair_attempts == 1
+    assert cfg.direct_execution.qwen_tool_registry_preflight is True
 
 
 def test_config_from_dict():

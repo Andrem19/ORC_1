@@ -16,6 +16,11 @@ from urllib.parse import urlparse
 from app.adapters.base import AdapterResponse
 from app.adapters.lmstudio_worker_api import LmStudioWorkerApi
 from app.runtime_incidents import LocalIncidentStore
+from app.services.direct_execution.lmstudio_finalization import (
+    build_backtests_budget_salvage_report,
+    build_catalog_only_final_report,
+    build_research_budget_salvage_report,
+)
 from app.services.direct_execution.mcp_client import DirectMcpClient, _to_jsonable
 from app.services.direct_execution.research_handles import (
     ResearchHandleState,
@@ -91,6 +96,10 @@ class LmStudioToolLoop:
                 tools = await asyncio.wait_for(self._openai_tool_schemas(), timeout=self.first_action_timeout_seconds)
                 if on_progress is not None:
                     on_progress("tool_schema_ready", {"tool_count": len(tools)})
+                    on_progress(
+                        "schema_fetch",
+                        {"elapsed_ms": int((time.monotonic() - started) * 1000), "tool_count": len(tools), "fallback": False},
+                    )
             except Exception as exc:
                 self.incident_store.record(
                     summary="Direct schema fetch failed; using fallback tool schemas",
@@ -106,10 +115,17 @@ class LmStudioToolLoop:
                 tools = self._fallback_tool_schemas()
                 if on_progress is not None:
                     on_progress("tool_schema_fallback", {"tool_count": len(tools)})
+                    on_progress(
+                        "schema_fetch",
+                        {"elapsed_ms": int((time.monotonic() - started) * 1000), "tool_count": len(tools), "fallback": True},
+                    )
             messages: list[dict[str, Any]] = [
                 {
                     "role": "system",
-                    "content": "You are a direct execution agent. Use tools when needed, then return the terminal JSON requested by the user.",
+                    "content": (
+                        "You are a direct execution agent. "
+                        + self._build_first_action_guide()
+                    ),
                 },
                 {"role": "user", "content": prompt},
             ]
@@ -122,13 +138,31 @@ class LmStudioToolLoop:
             contract_error_streak = 0
             handle_state = ResearchHandleState()
             deadline = time.monotonic() + max(1, int(timeout_seconds or 1))
+            timing_marks: dict[str, int] = {"schema_fetch": int((time.monotonic() - started) * 1000)}
             while time.monotonic() < deadline:
                 idle_budget = self.first_action_timeout_seconds if tool_call_count == 0 else self.stalled_action_timeout_seconds
                 response = await self._chat(messages=messages, tools=tools, timeout=max(1, min(int(deadline - time.monotonic()), idle_budget)))
                 transcript.append({"kind": "assistant_response", "payload": response})
+                if "first_model_token" not in timing_marks:
+                    timing_marks["first_model_token"] = int((time.monotonic() - started) * 1000)
+                    if on_progress is not None:
+                        on_progress("first_model_token", {"elapsed_ms": timing_marks["first_model_token"]})
                 if on_progress is not None:
                     on_progress("assistant_response", {"transcript_len": len(transcript)})
                 if response.get("error"):
+                    salvage_raw = self._maybe_auto_finalize_after_stall(transcript)
+                    if salvage_raw is not None:
+                        return LmStudioToolLoopResult(
+                            response=AdapterResponse(
+                                success=True,
+                                raw_output=salvage_raw,
+                                duration_seconds=time.monotonic() - started,
+                                metadata={"timings_ms": timing_marks},
+                            ),
+                            transcript=transcript,
+                            tool_call_count=tool_call_count,
+                            expensive_tool_call_count=expensive_count,
+                        )
                     reason_code = "direct_model_stalled_before_first_action" if tool_call_count == 0 else "direct_model_stalled_between_actions"
                     summary = (
                         f"Direct model stalled before producing the first action for slice '{self.slice_title or slice_id}'."
@@ -140,6 +174,7 @@ class LmStudioToolLoop:
                             success=True,
                             raw_output=build_watchdog_checkpoint(summary=summary, reason_code=reason_code),
                             duration_seconds=time.monotonic() - started,
+                            metadata={"timings_ms": timing_marks},
                         ),
                         transcript=transcript,
                         tool_call_count=tool_call_count,
@@ -331,6 +366,10 @@ class LmStudioToolLoop:
                         )
                     else:
                         if preflight.charge_budget:
+                            if "first_tool_call" not in timing_marks:
+                                timing_marks["first_tool_call"] = int((time.monotonic() - started) * 1000)
+                                if on_progress is not None:
+                                    on_progress("first_tool_call", {"elapsed_ms": timing_marks["first_tool_call"], "tool_name": tool_name})
                             tool_call_count += 1
                             if tool_name in EXPENSIVE_DIRECT_TOOLS:
                                 expensive_count += 1
@@ -423,14 +462,15 @@ class LmStudioToolLoop:
                         )
                         return LmStudioToolLoopResult(
                             response=AdapterResponse(
-                                success=True,
-                                raw_output=build_auto_final_report(
-                                    arguments=effective_arguments,
-                                    result_payload=result_payload,
-                                    success_criteria=self.success_criteria,
+                                    success=True,
+                                    raw_output=build_auto_final_report(
+                                        arguments=effective_arguments,
+                                        result_payload=result_payload,
+                                        success_criteria=self.success_criteria,
+                                    ),
+                                    duration_seconds=time.monotonic() - started,
+                                    metadata={"timings_ms": timing_marks},
                                 ),
-                                duration_seconds=time.monotonic() - started,
-                            ),
                             transcript=transcript,
                             tool_call_count=tool_call_count,
                             expensive_tool_call_count=expensive_count,
@@ -455,8 +495,16 @@ class LmStudioToolLoop:
                         return LmStudioToolLoopResult(
                             response=AdapterResponse(
                                 success=True,
-                                raw_output=self._build_catalog_only_final_report(transcript),
+                                raw_output=build_catalog_only_final_report(
+                                    transcript=transcript,
+                                    success_criteria=self.success_criteria,
+                                    required_output_facts=self.required_output_facts,
+                                ) or build_watchdog_checkpoint(
+                                    summary="Strict evidence gate rejected catalog-only auto-finalization.",
+                                    reason_code="direct_contract_blocker",
+                                ),
                                 duration_seconds=time.monotonic() - started,
+                                metadata={"timings_ms": timing_marks},
                             ),
                             transcript=transcript,
                             tool_call_count=tool_call_count,
@@ -486,6 +534,7 @@ class LmStudioToolLoop:
                                 success=True,
                                 raw_output=build_semantic_loop_abort(summary=summary),
                                 duration_seconds=time.monotonic() - started,
+                                metadata={"timings_ms": timing_marks},
                             ),
                             transcript=transcript,
                             tool_call_count=tool_call_count,
@@ -517,6 +566,7 @@ class LmStudioToolLoop:
                     ),
                     timed_out=True,
                     duration_seconds=time.monotonic() - started,
+                    metadata={"timings_ms": timing_marks},
                 ),
                 transcript=transcript,
                 tool_call_count=tool_call_count,
@@ -544,139 +594,42 @@ class LmStudioToolLoop:
             return False
         return True
 
-    def _build_catalog_only_final_report(self, transcript: list[dict[str, Any]]) -> str:
-        scopes: set[str] = set()
-        timeframes: set[str] = set()
-        for entry in transcript:
-            if entry.get("kind") != "tool_result" or entry.get("tool") != "features_catalog":
-                continue
-            args = entry.get("arguments") if isinstance(entry.get("arguments"), dict) else {}
-            scope = str(args.get("scope") or "").strip()
-            timeframe = str(args.get("timeframe") or "").strip()
-            if scope:
-                scopes.add(scope)
-            if timeframe:
-                timeframes.add(timeframe)
-        findings: list[str] = []
-        if scopes:
-            findings.append(f"Catalog scopes inspected: {', '.join(sorted(scopes))}.")
-        if timeframes:
-            findings.append(f"Timeframes inspected: {', '.join(sorted(timeframes))}.")
-        for criterion in self.success_criteria[:2]:
-            text = str(criterion or "").strip()
-            if text:
-                findings.append(f"Contract coverage addressed: {text}")
-        if not findings:
-            findings.append("Feature catalog inspection completed for contract drafting.")
-        payload = {
-            "type": "final_report",
-            "summary": "Feature catalog inspection completed; data/feature contract drafted for shortlisted hypotheses.",
-            "verdict": "COMPLETE",
-            "findings": findings,
-            "facts": {
-                "execution.kind": "direct",
-                "features_catalog.scopes": sorted(scopes),
-                "features_catalog.timeframes": sorted(timeframes),
-            },
-            "evidence_refs": [],
-            "confidence": 0.76,
-        }
-        return "```json\n" + json.dumps(payload, ensure_ascii=False) + "\n```"
+    def _build_first_action_guide(self) -> str:
+        tools = ", ".join(sorted(self.allowed_tools)[:8]) or "no tools"
+        first_criterion = str(self.success_criteria[0] or "").strip() if self.success_criteria else ""
+        guide = f"First action guide: use the minimum useful step from allowed tools [{tools}]."
+        if first_criterion:
+            guide += f" Prioritize evidence for: {first_criterion}."
+        guide += " Success means a final_report only."
+        return guide
+
+    def _maybe_auto_finalize_after_stall(self, transcript: list[dict[str, Any]]) -> str | None:
+        if self.allowed_tools == {"features_catalog"}:
+            return build_catalog_only_final_report(
+                transcript=transcript,
+                success_criteria=self.success_criteria,
+                required_output_facts=self.required_output_facts,
+            )
+        research = self._build_research_budget_salvage_report(transcript)
+        if research is not None:
+            return research
+        return self._build_backtests_budget_salvage_report(transcript)
 
     def _build_backtests_budget_salvage_report(self, transcript: list[dict[str, Any]]) -> str | None:
-        if not self.allowed_tools or not self.allowed_tools.issubset({"backtests_conditions", "backtests_analysis", "backtests_runs", "backtests_plan"}):
-            return None
-        successful: list[dict[str, Any]] = []
-        for entry in transcript:
-            if entry.get("kind") != "tool_result":
-                continue
-            payload = entry.get("payload") if isinstance(entry.get("payload"), dict) else {}
-            if payload.get("error") or payload.get("ok") is False:
-                continue
-            structured = {}
-            raw_payload = payload.get("payload")
-            if isinstance(raw_payload, dict):
-                structured = raw_payload.get("structuredContent") if isinstance(raw_payload.get("structuredContent"), dict) else {}
-            if str(structured.get("status") or "").strip().lower() == "error":
-                continue
-            successful.append(entry)
-        if len(successful) < 2:
-            return None
-        tools_seen = sorted({str(item.get("tool") or "").strip() for item in successful if str(item.get("tool") or "").strip()})
-        findings = [
-            f"Collected successful backtest diagnostics signals before budget exhaustion using tools: {', '.join(tools_seen)}.",
-            "Budget cap hit after producing enough intermediate evidence to continue the cycle with summarized conclusions.",
-        ]
-        if self.success_criteria:
-            findings.append(f"Success criterion targeted: {self.success_criteria[0]}")
-        payload = {
-            "type": "final_report",
-            "summary": "Expensive-tool budget exhausted after successful diagnostics sampling; synthesized final report from collected backtest evidence.",
-            "verdict": "COMPLETE",
-            "findings": findings,
-            "facts": {
-                "execution.kind": "direct",
-                "direct.auto_finalized_from_expensive_budget_salvage": True,
-                "backtests.successful_tool_count": len(successful),
-                "backtests.tools_seen": tools_seen,
-            },
-            "evidence_refs": [],
-            "confidence": 0.65,
-        }
-        return "```json\n" + json.dumps(payload, ensure_ascii=False) + "\n```"
+        return build_backtests_budget_salvage_report(
+            transcript=transcript,
+            allowed_tools=self.allowed_tools,
+            success_criteria=self.success_criteria,
+            required_output_facts=self.required_output_facts,
+        )
 
     def _build_research_budget_salvage_report(self, transcript: list[dict[str, Any]]) -> str | None:
-        if not self.allowed_tools or not self.allowed_tools.issubset({"research_map", "research_search", "research_record"}):
-            return None
-        project_id = ""
-        shortlist: list[str] = []
-        seen_shortlist: set[str] = set()
-        for entry in transcript:
-            if entry.get("kind") != "tool_result":
-                continue
-            payload = entry.get("payload") if isinstance(entry.get("payload"), dict) else {}
-            if payload.get("error") or payload.get("ok") is False:
-                return None
-            args = entry.get("arguments") if isinstance(entry.get("arguments"), dict) else {}
-            pid = str(args.get("project_id") or "").strip()
-            if pid and not project_id:
-                project_id = pid
-            if entry.get("tool") == "research_search":
-                query = str(args.get("query") or "").strip()
-                if query and query not in seen_shortlist:
-                    seen_shortlist.add(query)
-                    shortlist.append(query)
-            if entry.get("tool") == "research_record":
-                record = args.get("record") if isinstance(args.get("record"), dict) else {}
-                title = str(record.get("title") or "").strip()
-                if title and title not in seen_shortlist:
-                    seen_shortlist.add(title)
-                    shortlist.append(title)
-        if not project_id:
-            return None
-        if not shortlist:
-            return None
-        findings = [
-            "Research transcript was successfully executed with no tool errors before budget exhaustion.",
-            f"Recovered shortlist candidates: {', '.join(shortlist[:8])}.",
-        ]
-        if self.success_criteria:
-            findings.append(f"Success criterion targeted: {self.success_criteria[0]}")
-        payload = {
-            "type": "final_report",
-            "summary": "Budget exhausted after successful research exploration; synthesized final report from collected transcript evidence.",
-            "verdict": "COMPLETE",
-            "findings": findings,
-            "facts": {
-                "execution.kind": "direct",
-                "research.project_id": project_id,
-                "research.shortlist_families": shortlist[:20],
-                "direct.auto_finalized_from_budget_salvage": True,
-            },
-            "evidence_refs": [],
-            "confidence": 0.68,
-        }
-        return "```json\n" + json.dumps(payload, ensure_ascii=False) + "\n```"
+        return build_research_budget_salvage_report(
+            transcript=transcript,
+            allowed_tools=self.allowed_tools,
+            success_criteria=self.success_criteria,
+            required_output_facts=self.required_output_facts,
+        )
 
     async def _openai_tool_schemas(self) -> list[dict[str, Any]]:
         mcp_tools = await self.mcp_client.list_tools()
@@ -800,6 +753,9 @@ def _is_contract_issue_payload(result_payload: dict[str, Any]) -> bool:
             "unknown research project",
         )
     )
+
+
+    
 
 
 __all__ = ["LmStudioToolLoop", "LmStudioToolLoopResult"]

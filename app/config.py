@@ -114,6 +114,9 @@ class DirectExecutionConfig:
     stalled_action_timeout_seconds: int = 60
     retry_budget: int = 1
     incident_on_unclear_contract: bool = True
+    contract_guardrails_enabled: bool = True
+    parse_repair_attempts: int = 1
+    qwen_tool_registry_preflight: bool = True
     safe_exclude_tools: list[str] = field(default_factory=lambda: [
         "run_shell_command",
         "read_file",
