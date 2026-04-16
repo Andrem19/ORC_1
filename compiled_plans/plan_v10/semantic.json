@@ -2,7 +2,7 @@
   "source_file": "raw_plans/plan_v10.md",
   "source_hash": "cee9cc01154021ea83e17fd744fe59593037d39a81537ac1a284ed1fb2d81c9b",
   "source_title": "План дальнейших исследований для v10",
-  "goal": "Честно доказать или опровергнуть, что microstructure-family (прежде всего cf_micro_imbalance_1h) даёт реальный overlay alpha поверх immutable base active-signal-v1.",
+  "goal": "Validate whether the microstructure feature family (primarily cf_micro_imbalance_1h) provides a genuine overlay alpha over the immutable base through a disciplined veto-first, lockbox-verified pipeline.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -11,42 +11,42 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "active-signal-v1@1 — immutable reference, менять базу запрещено",
-    "любое улучшение обязано пройти matched OOS lockbox comparison против базы на том же окне",
-    "активна только одна data family: microstructure_proxies, все остальные locked",
-    "feature selection / threshold / архитектура не подбираются по lockbox-окну",
-    "simple baselines проверяются до сложных моделей (simpler before smarter)",
-    "short side проверяется первой (short-first priority)",
-    "veto-overlay route обязателен; early-cut и directional scout открываются только через gate",
-    "запрещены: net_pnl>0 как единственный veto label, regression на future PnL, повторное открытие закрытых routes (leadership, breadth, path-asymmetry, regime-disagreement, event-only, trade-quality без нового слоя)",
-    "microstructure должен пройти тест почти сам по себе, без подмешивания старых feature packs"
+    "Immutable base active-signal-v1@1 must never be modified or re-tuned",
+    "Only microstructure_proxies family is active; all other feature families are locked",
+    "Do not reopen closed directions: leadership/breadth as directional edge, path-asymmetry, regime-disagreement, event-only overlays, trade-quality overlays without new information layer, derivatives positioning without real OI/liquidation/basis data",
+    "Lockbox overlay comparison (base vs base+overlay on same window) is mandatory before any strong conclusion",
+    "Simpler methods must be tested before complex models (bucket rule → threshold → logistic → CatBoost)",
+    "Short side is tested before long side at every stage",
+    "Veto overlay must be proven before early-cut or directional scout routes are unlocked",
+    "net_pnl > 0 must not be used as veto label — too noisy",
+    "Feature set limited to micro-core + minimal context support; no re-injection of old large feature packs",
+    "No feature/label/threshold selection on lockbox window; lockbox is truth-only"
   ],
   "stages": [
     {
       "stage_id": "stage_1",
-      "title": "Closure-audit v9 и статус-коррекция",
-      "objective": "Формально закрыть v9 со статусом signal-discovered-route-unproven, открыть проект v10 и завести research map оси.",
+      "title": "Closure-audit v9 and status correction",
+      "objective": "Formally close v9 with honest status, open v10 project, register immutable baseline reference, and set up research map axes and open-items tracker.",
       "actions": [
-        "Открыть новый research_project для v10",
-        "Записать в research_record: что дал v9, что не доказал, почему статус — signal discovered route unproven",
-        "Зафиксировать immutable reference (snapshot_id, version, symbol, anchor, execution)",
-        "Завести research_map оси: route, side, feature_group, label_family, model_stage, final_decision",
-        "Создать open-items register: micro_core_materialization, augmented_trade_atlas, simple_baselines, veto_short_v10, veto_long_v10, lockbox_overlay_test, earlycut_gate, directional_scout_gate, final_v10_verdict"
+        "Open new research_project for v10",
+        "Record v9 achievements and unproven claims in research_memory with corrected status 'signal discovered, route unproven'",
+        "Lock immutable reference: snapshot_id=active-signal-v1, version=1, symbol=BTCUSDT, anchor=1h, execution=5m",
+        "Initialize research_map axes: route, side, feature_group, label_family, model_stage, final_decision",
+        "Create open-items register covering all v10 work items"
       ],
       "success_criteria": [
-        "Clean project v10 создан",
-        "Статус v9 исправлен на signal discovered route unproven",
-        "Research map оси заведены",
-        "Open-items register зафиксирован"
+        "Clean v10 project exists with corrected v9 status",
+        "Research map axes initialized",
+        "Open-items register created with all tracked items"
       ],
       "tool_hints": [
         "research_project",
-        "research_record",
+        "research_memory",
         "research_map"
       ],
       "policy_tags": [
         "setup",
-        "cheap_first"
+        "mandatory_first"
       ],
       "depends_on": [],
       "required": true,
@@ -56,22 +56,23 @@
     },
     {
       "stage_id": "stage_2",
-      "title": "Завершить materialization и dataset hardening для micro-core",
-      "objective": "Убедиться, что все 7 microstructure features стабильно materialized, без leakage, и зафиксировать один рабочий dataset version для v10.",
+      "title": "Materialization and dataset hardening for micro-core",
+      "objective": "Eliminate technical debt around 7 microstructure features by verifying stable materialization, correct 5m→1h alignment, absence of future leakage, and locking one working dataset version for v10.",
       "actions": [
-        "Проверить, что все 7 microstructure features опубликованы и стабильно materialized",
-        "Проверить: full coverage, warmup behavior, null-rates, alignment 5m→1h, absence of future leakage",
-        "Зафиксировать один рабочий dataset version для v10",
-        "Если materialization нестабильна — починить pipeline до расширения family"
+        "Verify all 7 microstructure features are published and stably materialized",
+        "Check full coverage, warmup behavior, null-rates, 5m→1h alignment, and absence of future leakage",
+        "Freeze one working dataset version for v10",
+        "If materialization is unstable, fix pipeline before expanding family"
       ],
       "success_criteria": [
-        "Все 7 features: published=true, materialized=true, warmup_ok, null_rate_ok, alignment_ok, leakage_ok",
-        "Один зафиксированный dataset version"
+        "All 7 features pass: published, materialized, warmup_ok, null_rate_ok, alignment_ok, leakage_ok",
+        "Single dataset version locked for v10"
       ],
       "tool_hints": [
         "features_custom",
         "features_dataset",
-        "features_catalog"
+        "features_catalog",
+        "features_analytics"
       ],
       "policy_tags": [
         "data_readiness",
@@ -88,27 +89,26 @@
     {
       "stage_id": "stage_3",
       "title": "Augmented trade atlas with micro-core",
-      "objective": "Обогатить trade atlas базы micro-features и выявить, где сигнал сильнее всего и как его правильно использовать.",
+      "objective": "Enrich base trade atlas with microstructure features at entry time, build analytical cuts (long/short, winners/losers, stop-loss clusters, worst-decile, weak-window, time-limit), and identify 3–5 strongest empirical patterns.",
       "actions": [
-        "Обогатить trade atlas базы micro-features на entry time и first 1h after entry (causal для post-entry routes)",
-        "Построить разрезы: long vs short, winners vs losers, stop-loss cluster, worst-decile, weak-window, time-limit trades",
-        "Проверить monotonicity для cf_micro_imbalance_1h, side asymmetry, сравнить short vs long veto силу",
-        "Сохранить 3–5 сильных эмпирических паттернов"
+        "Enrich trade atlas with micro-features at entry time and optionally first 1h after entry (causal only)",
+        "Build cuts: long vs short, winners vs losers, stop-loss cluster, worst-decile, weak-window, time-limit trades",
+        "Check monotonicity for cf_micro_imbalance_1h, side asymmetry, and whether signal is stronger on short veto",
+        "Save 3–5 strongest empirical patterns"
       ],
       "success_criteria": [
-        "Trade atlas обогащён micro-features",
-        "Разрезы по side, outcome, trade-type построены",
-        "Monotonicity и side asymmetry для cf_micro_imbalance_1h проверены",
-        "3–5 сильных паттернов зафиксированы"
+        "Trade atlas enriched with micro-core features",
+        "Key cuts analyzed with documented monotonicity and asymmetry findings",
+        "3–5 strongest empirical patterns recorded"
       ],
       "tool_hints": [
-        "features_dataset",
+        "features_analytics",
         "backtests_analysis",
-        "backtests_strategy"
+        "research_memory"
       ],
       "policy_tags": [
         "analysis",
-        "cheap_first"
+        "exploration"
       ],
       "depends_on": [
         "stage_2"
@@ -121,24 +121,26 @@
     {
       "stage_id": "stage_4",
       "title": "Freeze improved veto labels",
-      "objective": "Определить и заморозить осмысленные veto label families (bad_trade_pnl, fragile_trade_mae, bad_trade_composite) с вариантами balanced/conservative до начала обучения.",
+      "objective": "Define and freeze six meaningful veto label variants across three families (pnl, fragile_mae, composite) with balanced/conservative modes, locking definitions before any training begins.",
       "actions": [
-        "Определить и заморозить label definitions: bad_trade_pnl_balanced, bad_trade_pnl_conservative, fragile_trade_mae_balanced, fragile_trade_mae_conservative, bad_trade_composite_balanced, bad_trade_composite_conservative",
-        "Для каждого label зафиксировать: определение плохого trade, ambiguous cases, порог material harm",
-        "Запретить изменения labels после начала training"
+        "Define bad_trade_pnl_balanced and bad_trade_pnl_conservative labels",
+        "Define fragile_trade_mae_balanced and fragile_trade_mae_conservative labels",
+        "Define bad_trade_composite_balanced and bad_trade_composite_conservative labels",
+        "For each label document: what counts as bad trade, ambiguous cases, material harm threshold",
+        "Lock all label definitions — prohibit changes after training starts"
       ],
       "success_criteria": [
-        "Все 6 label variants определены и задокументированы",
-        "Определение плохого trade, ambiguous cases, пороги material harm зафиксированы для каждого",
-        "Labels заморожены — изменения запрещены"
+        "Six label variants frozen with documented definitions",
+        "No net_pnl>0 used as veto label",
+        "Label lock enforced going forward"
       ],
       "tool_hints": [
-        "models_dataset",
-        "research_record"
+        "research_memory",
+        "research_map"
       ],
       "policy_tags": [
-        "feature_contract",
-        "setup"
+        "label_contract",
+        "freeze"
       ],
       "depends_on": [
         "stage_3"
@@ -151,31 +153,33 @@
     {
       "stage_id": "stage_5",
       "title": "Simple baselines before CatBoost",
-      "objective": "Проверить на selection OOS, нужен ли вообще сложный model layer сверх cf_micro_imbalance_1h, сравнив bucket veto, threshold veto, logistic и small CatBoost.",
+      "objective": "Test whether a complex model layer is even needed by comparing four increasingly sophisticated baselines (bucket veto, threshold veto, logistic, small CatBoost) on selection OOS using micro-core features.",
       "actions": [
-        "Baseline A: bucket veto — удалять сделки из worst micro-imbalance bucket",
-        "Baseline B: threshold veto — удалять сделки при crossing fixed threshold по cf_micro_imbalance_1h",
-        "Baseline C: logistic micro-core — лёгкая модель на 3–5 micro-features",
-        "Baseline D: small CatBoost micro-core — небольшой depth, без широкого HPO",
-        "Сравнить каждый baseline по: selection delta PnL, delta PF, delta DD, removed trades, false veto rate"
+        "Baseline A: single-feature bucket veto — remove trades from worst micro-imbalance bucket",
+        "Baseline B: single-feature threshold veto — remove trades crossing fixed threshold on cf_micro_imbalance_1h",
+        "Baseline C: logistic regression on 3–5 micro-core features",
+        "Baseline D: small CatBoost on micro-core with limited depth, no wide HPO",
+        "Compare each baseline on selection delta PnL, delta PF, delta DD, removed trades, false veto rate"
       ],
       "success_criteria": [
-        "Все 4 baseline оценены на selection OOS",
-        "Метрики delta_pnl, delta_pf, delta_dd, removed_trades, false_veto_rate посчитаны",
-        "Принято решение, достаточен ли простой baseline или нужен CatBoost"
+        "All four baselines evaluated on selection OOS",
+        "Clear ranking of baseline methods documented",
+        "Decision recorded on whether CatBoost complexity is justified"
       ],
       "tool_hints": [
         "models_train",
-        "models_dataset",
         "models_compare",
-        "models_registry"
+        "models_dataset",
+        "backtests_analysis",
+        "research_memory"
       ],
       "policy_tags": [
         "modeling",
-        "cheap_first"
+        "cheap_first",
+        "simpler_before_smarter"
       ],
       "depends_on": [
-        "stage_2",
+        "stage_3",
         "stage_4"
       ],
       "required": true,
@@ -186,27 +190,29 @@
     {
       "stage_id": "stage_6",
       "title": "Short-first veto models",
-      "objective": "Обучить short veto models на frozen labels (pnl, fragile, composite) и выбрать лучший short route по selection economics.",
+      "objective": "Train short-side veto models on frozen labels using micro-core and minimal context, selecting the best short route by selection economics rather than AUC alone.",
       "actions": [
-        "Обучить short veto models на frozen labels: short-pnl, short-fragile, short-composite",
-        "Использовать только micro-core и минимальный context-support",
-        "Не делать широкий HPO",
-        "Выбрать лучший short route по selection economics, а не только по AUC"
+        "Train short veto models on labels: short-pnl, short-fragile, short-composite",
+        "Use only micro-core features plus minimal context support",
+        "Avoid wide HPO — keep model simple",
+        "Select best short route by selection economic effect (delta PnL, PF, DD) not just AUC"
       ],
       "success_criteria": [
-        "Short veto models обучены для трёх label families",
-        "Лучший short route выбран по совокупности val/test AUC, precision, economic effect",
-        "Принято решение о продвижении в lockbox"
+        "Short veto models trained across three label families",
+        "Best short route identified by selection economics",
+        "Model promoted to lockbox candidate or documented why not"
       ],
       "tool_hints": [
         "models_train",
-        "models_dataset",
         "models_compare",
-        "models_registry"
+        "models_dataset",
+        "models_registry",
+        "research_memory"
       ],
       "policy_tags": [
         "modeling",
-        "short_first"
+        "short_first",
+        "veto"
       ],
       "depends_on": [
         "stage_5"
@@ -219,28 +225,29 @@
     {
       "stage_id": "stage_7",
       "title": "Long veto models",
-      "objective": "Обучить long veto models на frozen labels и сравнить с short side; не продвигать, если заметно слабее без компенсации по economics.",
+      "objective": "Train long-side veto models on frozen labels and compare against short-side results; do not promote long route if it remains noticeably weaker without economic compensation.",
       "actions": [
-        "Обучить long veto models на frozen labels: long-pnl, long-fragile, long-composite",
-        "Сравнить их с short side по тем же метрикам",
-        "Не продвигать long route дальше, если он заметно слабее short без компенсации по economics"
+        "Train long veto models on labels: long-pnl, long-fragile, long-composite",
+        "Compare long models against short-side results",
+        "Do not promote long route further if noticeably weaker than short without economic compensation"
       ],
       "success_criteria": [
-        "Long veto models обучены для трёх label families",
-        "Сравнение long vs short проведено",
-        "Принято решение, продвигать ли long route в lockbox"
+        "Long veto models trained across three label families",
+        "Long vs short comparison documented",
+        "Decision recorded on whether long route advances to lockbox"
       ],
       "tool_hints": [
         "models_train",
-        "models_dataset",
         "models_compare",
-        "models_registry"
+        "models_dataset",
+        "models_registry",
+        "research_memory"
       ],
       "policy_tags": [
-        "modeling"
+        "modeling",
+        "veto"
       ],
       "depends_on": [
-        "stage_5",
         "stage_6"
       ],
       "required": true,
@@ -251,27 +258,29 @@
     {
       "stage_id": "stage_8",
       "title": "Lockbox overlay test against immutable base",
-      "objective": "Доказать или опровергнуть microstructure overlay на реальном lockbox OOS: сравнить immutable base против base+short veto, base+long veto, base+combined veto.",
+      "objective": "Run the decisive lockbox comparison: immutable base vs base+overlay for each surviving veto model, measuring delta PnL, PF, DD, removed-trade quality, weak-window repair, and ownership.",
       "actions": [
-        "Для best surviving models: freeze thresholds on selection OOS",
-        "Построить snapshot / overlay workflow",
-        "Прогнать: immutable base, base + short veto, base + long veto, base + combined veto (если обе стороны живы)",
-        "Посчитать: delta PnL, delta PF, delta DD, removed trades, PnL removed trades, share of removed winners, weak-window repair, ownership"
+        "Freeze thresholds on selection OOS for best surviving models",
+        "Build snapshot/overlay workflow",
+        "Run: immutable base, base+short veto, base+long veto, base+combined veto (if both sides alive)",
+        "Compute: delta PnL, delta PF, delta DD, removed trades, PnL of removed trades, share of removed winners, weak-window repair, ownership"
       ],
       "success_criteria": [
-        "Lockbox overlay test проведён для всех surviving models",
-        "Delta PnL, PF, DD, removed trades, PnL removed, winner share, weak-window repair, ownership посчитаны",
-        "Есть честное сравнение base vs overlay на lockbox"
+        "Lockbox comparison completed for all surviving overlay configurations",
+        "Delta metrics computed for PnL, PF, DD, removed trades, winner share, weak-window repair, ownership",
+        "Clear lockbox pass/fail determination for each overlay"
       ],
       "tool_hints": [
         "backtests_runs",
         "backtests_strategy",
         "backtests_analysis",
-        "backtests_plan"
+        "backtests_plan",
+        "research_memory"
       ],
       "policy_tags": [
         "backtesting",
-        "validation"
+        "lockbox",
+        "truth_test"
       ],
       "depends_on": [
         "stage_6",
@@ -285,89 +294,95 @@
     {
       "stage_id": "stage_9",
       "title": "Gate for early-cut and directional scout",
-      "objective": "Решить на основе lockbox результатов, открывать ли early-cut или directional scout route; открыть максимум одну ветку.",
+      "objective": "Evaluate whether lockbox results justify unlocking at most one optional route (early-cut or directional scout) based on strict criteria; keep both locked if evidence is insufficient.",
       "actions": [
-        "Early-cut gate: открыть только если veto route живой и losers распознаются по раннему micro-behavior",
-        "Directional scout gate: открыть только если micro-core показывает устойчивую monotonicity, veto overlay дал хотя бы watchlist-quality result, и есть reason для entry timing signal",
-        "Открыть максимум одну из двух веток"
+        "Evaluate early-cut gate: veto route alive AND losers recognized by early micro-behavior",
+        "Evaluate directional scout gate: monotonicity confirmed, veto overlay at least watchlist-quality, feature shows entry-timing potential",
+        "Open at most one of the two routes",
+        "Record unlock decision with justification"
       ],
       "success_criteria": [
-        "Решение по каждому gate задокументировано (opened/locked, why)",
-        "Максимум одна optional ветка открыта"
+        "Gate evaluation completed for both routes",
+        "At most one route opened with documented justification",
+        "Gate decision recorded in research_map"
       ],
       "tool_hints": [
-        "backtests_strategy",
-        "research_record"
+        "research_memory",
+        "research_map"
       ],
       "policy_tags": [
-        "validation",
-        "gate"
+        "gate",
+        "decision_point"
       ],
       "depends_on": [
         "stage_8"
       ],
-      "required": false,
+      "required": true,
       "parallelizable": false,
-      "gate_hint": "veto overlay lockbox должен показать хотя бы watchlist-quality result; без этого optional routes не открываются",
+      "gate_hint": "Neither route may open if lockbox overlay did not reach at least watchlist quality",
       "raw_stage_ref": "stage_9"
     },
     {
       "stage_id": "stage_10",
       "title": "Optional route execution",
-      "objective": "Провести только ту optional ветку (early-cut или directional scout), которая действительно заслужила открытие через gate.",
+      "objective": "Execute only the route that genuinely earned opening — either early-cut (post-entry micro-features + minimal model) or directional scout (simple rule first, then small model) — and test against base on lockbox.",
       "actions": [
-        "Если открыт early_cut: build post-entry micro-features, train minimal model, test against base on lockbox",
-        "Если открыт directional_scout: test simple microstructure direction rule first, then small model, compare standalone and strict additive vs base"
+        "If early_cut opened: build post-entry micro-features, train minimal model, test against base on lockbox",
+        "If directional_scout opened: test simple microstructure direction rule first, then small model, compare standalone and strict additive",
+        "If neither opened: skip this stage entirely"
       ],
       "success_criteria": [
-        "Optional route выполнен и оценён на selection OOS и lockbox",
-        "Delta vs base посчитана",
-        "Final decision по optional route принят"
+        "Opened route executed with selection and lockbox quality checks",
+        "Delta vs base assessed for meaningfulness",
+        "Final decision recorded for the route"
       ],
       "tool_hints": [
         "models_train",
+        "models_compare",
         "backtests_runs",
         "backtests_analysis",
-        "models_to_feature"
+        "features_custom",
+        "research_memory"
       ],
       "policy_tags": [
-        "modeling",
-        "experiments"
+        "optional",
+        "gated_branch"
       ],
       "depends_on": [
         "stage_9"
       ],
       "required": false,
       "parallelizable": false,
-      "gate_hint": "Зависит от gate stage_9: ни одна ветка не открывается, если gate не пройден",
+      "gate_hint": "Only executes if stage_9 opened at least one route; skipped entirely if both routes remain locked",
       "raw_stage_ref": "stage_10"
     },
     {
       "stage_id": "stage_11",
-      "title": "Финальный вердикт по v10",
-      "objective": "Получить честное решение по microstructure family: Success (working overlay), Partial (watchlist-quality), или Failed.",
+      "title": "Final v10 verdict",
+      "objective": "Deliver an honest terminal verdict on the microstructure family: PROMOTE if working overlay proven, WATCHLIST if partial result, REJECT if lockbox failed — with clear next steps.",
       "actions": [
-        "Свести все результаты: baselines, veto models, lockbox overlay, optional routes",
-        "Классифицировать исход: Success (хотя бы один working overlay route), Partial (watchlist-quality без полноценного add-on), Failed (microstructure не пережила честный lockbox test)",
-        "Зафиксировать final route classification и понятный next step",
-        "Записать вердикт в research_record и обновить research_map"
+        "Aggregate all stage results into final assessment",
+        "Classify microstructure family outcome: Success (working overlay), Partial (watchlist-quality only), or Failed (lockbox rejected)",
+        "Record final route classification and next step in research_memory and research_map",
+        "Close v10 open-items register"
       ],
       "success_criteria": [
-        "Final route classification определён (Success / Partial / Failed)",
-        "Понятный next step зафиксирован",
-        "Все результаты сведены и задокументированы"
+        "Final route classification assigned (PROMOTE / WATCHLIST / REJECT)",
+        "Clear next step defined and documented"
       ],
       "tool_hints": [
-        "research_record",
+        "research_memory",
         "research_map",
         "notify_send"
       ],
       "policy_tags": [
-        "finalization"
+        "finalization",
+        "verdict"
       ],
       "depends_on": [
         "stage_8",
-        "stage_10"
+        "stage_9",
+        "stage_10_part2"
       ],
       "required": true,
       "parallelizable": false,
@@ -375,6 +390,10 @@
       "raw_stage_ref": "stage_11"
     }
   ],
-  "warnings": [],
+  "warnings": [
+    "Plan is entirely in Russian; all objectives translated to English for semantic draft",
+    "Stages 9 (gate) and 10 (optional route) are gated branches that may produce no further work",
+    "v9 status was 'PROMISING SIGNAL DISCOVERED' not 'SUCCESS' — this plan inherits unproven microstructure signal"
+  ],
   "parse_confidence": 0.95
 }

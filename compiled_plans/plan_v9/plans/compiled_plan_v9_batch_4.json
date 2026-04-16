@@ -1,6 +1,6 @@
 {
   "plan_id": "compiled_plan_v9_batch_4",
-  "goal": "Найти новый data universe, который добавляет реальную информацию сверх текущего OHLCV+IV+classifier+breadth+event space, и проверить его как overlay/veto route на immutable базе active-signal-v1@1.",
+  "goal": "Определить, содержит ли новый data universe (derivatives positioning / pressure) реальный информационный сигнал сверх текущего OHLCV + IV + classifier + breadth + event space, и может ли он стать основой для overlay route против immutable базы.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -9,112 +9,75 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "База active-signal-v1@1 — immutable reference. Запрещено менять, подбирать часы/дни/пороги/исполнение.",
-    "Запрещено выбирать feature set, label scheme, horizon, threshold или архитектуру по lockbox-окну.",
-    "Любое улучшение должно пройти matched OOS comparison против базы на том же окне.",
-    "Raw event entries, static IV, IV dynamics, classifier transitions, regression на future PnL, full-surface directional classification, trade-quality overlays — окончательно закрыты на текущем universe.",
-    "Новый data universe обязателен: нельзя пытаться докрутить старые модели на старых данных.",
-    "Primary family — одна, fallback — одна. Идти строго по очереди, не паралельно.",
-    "Сначала information-content triage, потом модели. Без bucket sanity модель не строится.",
-    "Overlay-first, direction-second. Direction labels запрещены без overlay evidence.",
-    "Не строить больше 12 features в первой волне для любой family.",
-    "Freeze rules: family choice freeze before modeling, feature set freeze before training, threshold freeze before lockbox.",
-    "Purge gap минимум 24h для trade/holding tasks.",
-    "Максимум одна дополнительная route (early-cut ИЛИ extension), не обе.",
-    "Не обучать direction models без overlay evidence. Не обучать router."
+    "active-signal-v1@1 — immutable reference; запрещено менять базу, подбирать ей параметры, заново открывать closed routes",
+    "запрещено: full-surface directional classification на старом data universe; trade-quality overlays без нового информационного слоя; regression на future PnL; feature/label/threshold/architecture selection по lockbox-окну",
+    "любое улучшение должно пройти matched OOS comparison против базы на том же окне",
+    "max 12 features в первой волне для primary family",
+    "direction labels запрещены до overlay evidence",
+    "максимум одна дополнительная route (early-cut ИЛИ extension, не обе)",
+    "freeze rules: family choice freeze → feature set freeze → threshold freeze before lockbox",
+    "purge gap минимум 24h для trade/holding tasks"
   ],
   "slices": [
     {
-      "slice_id": "compiled_plan_v9_stage_9_part2",
-      "title": "Optional route execution (early-cut или extension) (construction)",
-      "hypothesis": "Выполнить обучение и lockbox-тест для единственной дополнительной route, которая заслужила открытие.",
-      "objective": "Выполнить обучение и lockbox-тест для единственной дополнительной route, которая заслужила открытие.",
+      "slice_id": "compiled_plan_v9_stage_10_part1",
+      "title": "Fallback family triage (только если primary family fail) (exploration)",
+      "hypothesis": "Если primary family провалилась — провести минимальный triage fallback family: availability, 4-6 core features, atlas augmentation, one veto plausibility model.",
+      "objective": "Если primary family провалилась — провести минимальный triage fallback family: availability, 4-6 core features, atlas augmentation, one veto plausibility model.",
       "success_criteria": [
-        "Optional route model обучена",
-        "Lockbox comparison завершён",
-        "Delta vs base meaningful оценён",
-        "Final decision: adopt или reject"
-      ],
-      "allowed_tools": [
-        "research_record",
-        "models_dataset",
-        "models_train",
-        "backtests_runs"
-      ],
-      "evidence_requirements": [
-        "Optional route model обучена",
-        "Lockbox comparison завершён",
-        "Delta vs base meaningful оценён",
-        "Final decision: adopt или reject"
-      ],
-      "policy_tags": [
-        "modeling",
-        "conditional",
-        "optional_candidate"
-      ],
-      "max_turns": 24,
-      "max_tool_calls": 24,
-      "max_expensive_calls": 3,
-      "parallel_slot": 1,
-      "budget_scale_applied": 6,
-      "depends_on": [
-        "compiled_plan_v9_stage_9_part1"
-      ],
-      "status": "pending",
-      "turn_count": 0,
-      "tool_call_count": 0,
-      "expensive_call_count": 0,
-      "assigned_worker_id": null,
-      "last_checkpoint_turn_id": "",
-      "last_checkpoint_summary": "",
-      "last_checkpoint_status": "",
-      "final_report_turn_id": "",
-      "last_error": "",
-      "last_summary": "",
-      "active_operation_ref": "",
-      "active_operation_status": "",
-      "active_operation_arguments": {},
-      "artifacts": [],
-      "facts": {}
-    },
-    {
-      "slice_id": "compiled_plan_v9_stage_10",
-      "title": "Fallback family triage (только если primary family fail)",
-      "hypothesis": "Провести минимальный triage fallback family без полного стека, если primary family провалилась.",
-      "objective": "Провести минимальный triage fallback family без полного стека, если primary family провалилась.",
-      "success_criteria": [
-        "Fallback family availability подтверждена",
-        "4–6 core features materialized",
-        "One veto plausibility model обучена",
-        "Результат записан в research_record"
+        "Fallback family triage завершён",
+        "Есть вердикт: fallback值得 дальнейшего изучения или нет",
+        "Exploration phase complete"
       ],
       "allowed_tools": [
         "datasets",
-        "features_custom",
-        "features_dataset",
-        "models_train",
-        "research_record"
+        "research_memory"
       ],
       "evidence_requirements": [
-        "Fallback family availability подтверждена",
-        "4–6 core features materialized",
-        "One veto plausibility model обучена",
-        "Результат записан в research_record"
+        "Fallback family triage завершён",
+        "Есть вердикт: fallback值得 дальнейшего изучения или нет",
+        "Exploration phase complete"
       ],
       "policy_tags": [
         "fallback",
         "triage",
+        "conditional",
         "optional_candidate"
       ],
-      "max_turns": 24,
-      "max_tool_calls": 24,
-      "max_expensive_calls": 2,
+      "max_turns": 36,
+      "max_tool_calls": 30,
+      "max_expensive_calls": 6,
       "parallel_slot": 1,
+      "runtime_profile": "generic_mutation",
+      "required_prerequisite_facts": null,
+      "required_output_facts": [],
+      "finalization_mode": "none",
+      "dependency_unblock_mode": "accepted_only",
+      "watchlist_allows_unblock": false,
+      "requires_mutating_evidence": false,
+      "requires_persisted_artifact": false,
+      "requires_live_handle_validation": false,
+      "acceptance_contract": {
+        "kind": "feature_contract_exploration",
+        "mode": "strict",
+        "required_subjects": "none",
+        "required_predicates": [],
+        "mcp_proof_calls": [],
+        "forbid_contradictions": [],
+        "allow_advisory_unblock": false,
+        "acceptance_requirements": {
+          "slice_id": "compiled_plan_v9_stage_10_part1",
+          "contract_kind": "feature_contract_exploration"
+        }
+      },
+      "acceptance_proof": {},
+      "acceptance_blockers": [],
       "budget_scale_applied": 6,
       "depends_on": [
-        "compiled_plan_v9_stage_7"
+        "compiled_plan_v9_stage_3"
       ],
       "status": "pending",
+      "acceptance_state": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
       "expensive_call_count": 0,
@@ -125,33 +88,138 @@
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
+      "dependency_blocker_slice_id": "",
+      "dependency_blocker_reason_code": "",
+      "dependency_blocker_class": "",
+      "blocked_retry_count": 0,
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
+      "gate_hint": "Only executes if primary family failed (stages 6-7 did not produce passing veto overlay)",
       "artifacts": [],
-      "facts": {}
+      "facts": {},
+      "verdict": ""
+    },
+    {
+      "slice_id": "compiled_plan_v9_stage_10_part2",
+      "title": "Fallback family triage (только если primary family fail) (construction)",
+      "hypothesis": "Если primary family провалилась — провести минимальный triage fallback family: availability, 4-6 core features, atlas augmentation, one veto plausibility model.",
+      "objective": "Если primary family провалилась — провести минимальный triage fallback family: availability, 4-6 core features, atlas augmentation, one veto plausibility model.",
+      "success_criteria": [
+        "Fallback family triage завершён",
+        "Есть вердикт: fallback值得 дальнейшего изучения или нет"
+      ],
+      "allowed_tools": [
+        "features_custom",
+        "features_dataset",
+        "features_analytics",
+        "models_dataset",
+        "models_train",
+        "research_memory"
+      ],
+      "evidence_requirements": [
+        "Fallback family triage завершён",
+        "Есть вердикт: fallback值得 дальнейшего изучения или нет"
+      ],
+      "policy_tags": [
+        "fallback",
+        "triage",
+        "conditional",
+        "optional_candidate"
+      ],
+      "max_turns": 36,
+      "max_tool_calls": 30,
+      "max_expensive_calls": 6,
+      "parallel_slot": 1,
+      "runtime_profile": "generic_mutation",
+      "required_prerequisite_facts": null,
+      "required_output_facts": [],
+      "finalization_mode": "none",
+      "dependency_unblock_mode": "accepted_only",
+      "watchlist_allows_unblock": false,
+      "requires_mutating_evidence": false,
+      "requires_persisted_artifact": false,
+      "requires_live_handle_validation": false,
+      "acceptance_contract": {
+        "kind": "model_training",
+        "mode": "strict",
+        "required_subjects": "dataset_and_model_version",
+        "required_predicates": [
+          "model_dataset_proof_pass",
+          "model_registry_proof_pass"
+        ],
+        "mcp_proof_calls": [
+          {
+            "tool": "models_dataset",
+            "arguments": {
+              "action": "inspect",
+              "view": "acceptance_proof"
+            }
+          },
+          {
+            "tool": "models_registry",
+            "arguments": {
+              "action": "inspect",
+              "view": "acceptance_proof"
+            }
+          }
+        ],
+        "forbid_contradictions": [],
+        "allow_advisory_unblock": false,
+        "acceptance_requirements": {
+          "slice_id": "compiled_plan_v9_stage_10_part2",
+          "contract_kind": "model_training"
+        }
+      },
+      "acceptance_proof": {},
+      "acceptance_blockers": [],
+      "budget_scale_applied": 6,
+      "depends_on": [
+        "compiled_plan_v9_stage_10_part1"
+      ],
+      "status": "pending",
+      "acceptance_state": "pending",
+      "turn_count": 0,
+      "tool_call_count": 0,
+      "expensive_call_count": 0,
+      "assigned_worker_id": null,
+      "last_checkpoint_turn_id": "",
+      "last_checkpoint_summary": "",
+      "last_checkpoint_status": "",
+      "final_report_turn_id": "",
+      "last_error": "",
+      "last_summary": "",
+      "dependency_blocker_slice_id": "",
+      "dependency_blocker_reason_code": "",
+      "dependency_blocker_class": "",
+      "blocked_retry_count": 0,
+      "active_operation_ref": "",
+      "active_operation_status": "",
+      "active_operation_arguments": {},
+      "gate_hint": "Only executes if primary family failed (stages 6-7 did not produce passing veto overlay)",
+      "artifacts": [],
+      "facts": {},
+      "verdict": ""
     },
     {
       "slice_id": "compiled_plan_v9_stage_11",
       "title": "Финальный вердикт по v9",
-      "hypothesis": "Получить честную квалификацию результата v9: SUCCESS, PARTIAL или FAILED, и зафиксировать next step.",
-      "objective": "Получить честную квалификацию результата v9: SUCCESS, PARTIAL или FAILED, и зафиксировать next step.",
+      "hypothesis": "Получить честную классификацию результата v9: SUCCESS (рабочий overlay), PARTIAL (watchlist-quality), FAILED (новый universe не дал устойчивого улучшения).",
+      "objective": "Получить честную классификацию результата v9: SUCCESS (рабочий overlay), PARTIAL (watchlist-quality), FAILED (новый universe не дал устойчивого улучшения).",
       "success_criteria": [
-        "Final route classification определён: SUCCESS, PARTIAL или FAILED",
-        "Понятный next step описан",
-        "Все open items закрыты",
-        "Итоговая таблица заполнена"
+        "Final route classification определён (SUCCESS / PARTIAL / FAILED)",
+        "Понятный next step documented",
+        "Все open-items закрыты"
       ],
       "allowed_tools": [
-        "research_record",
+        "research_memory",
         "research_map",
-        "notify_send"
+        "backtests_analysis"
       ],
       "evidence_requirements": [
-        "Final route classification определён: SUCCESS, PARTIAL или FAILED",
-        "Понятный next step описан",
-        "Все open items закрыты",
-        "Итоговая таблица заполнена"
+        "Final route classification определён (SUCCESS / PARTIAL / FAILED)",
+        "Понятный next step documented",
+        "Все open-items закрыты"
       ],
       "policy_tags": [
         "finalization",
@@ -159,16 +227,42 @@
       ],
       "max_turns": 24,
       "max_tool_calls": 24,
-      "max_expensive_calls": 2,
+      "max_expensive_calls": 3,
       "parallel_slot": 1,
+      "runtime_profile": "generic_mutation",
+      "required_prerequisite_facts": null,
+      "required_output_facts": [],
+      "finalization_mode": "none",
+      "dependency_unblock_mode": "accepted_only",
+      "watchlist_allows_unblock": false,
+      "requires_mutating_evidence": false,
+      "requires_persisted_artifact": false,
+      "requires_live_handle_validation": false,
+      "acceptance_contract": {
+        "kind": "generic_read_strict",
+        "mode": "strict",
+        "required_subjects": "none",
+        "required_predicates": [
+          "domain_tool_evidence_present"
+        ],
+        "mcp_proof_calls": [],
+        "forbid_contradictions": [],
+        "allow_advisory_unblock": false,
+        "acceptance_requirements": {
+          "slice_id": "compiled_plan_v9_stage_11",
+          "contract_kind": "generic_read_strict"
+        }
+      },
+      "acceptance_proof": {},
+      "acceptance_blockers": [],
       "budget_scale_applied": 6,
       "depends_on": [
         "compiled_plan_v9_stage_7",
-        "compiled_plan_v9_stage_8",
-        "compiled_plan_v9_stage_9_part2",
-        "compiled_plan_v9_stage_10"
+        "compiled_plan_v9_stage_9",
+        "compiled_plan_v9_stage_10_part2"
       ],
       "status": "pending",
+      "acceptance_state": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
       "expensive_call_count": 0,
@@ -179,13 +273,20 @@
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
+      "dependency_blocker_slice_id": "",
+      "dependency_blocker_reason_code": "",
+      "dependency_blocker_class": "",
+      "blocked_retry_count": 0,
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
+      "gate_hint": "",
       "artifacts": [],
-      "facts": {}
+      "facts": {},
+      "verdict": ""
     }
   ],
+  "mcp_catalog_hash": "c306b4054eaf8f466a7e29182863da4e7cd0610551ef83a0611c515c84aa415b",
   "plan_source_kind": "compiled_raw",
   "source_sequence_id": "compiled_plan_v9",
   "source_raw_plan": "raw_plans/plan_v9.md",
@@ -194,6 +295,7 @@
   "source_compile_report_path": "",
   "sequence_batch_index": 4,
   "status": "draft",
-  "created_at": "2026-04-11T11:01:31.894584+00:00",
-  "updated_at": "2026-04-11T11:01:31.894587+00:00"
+  "last_error": "",
+  "created_at": "2026-04-15T18:46:17.064846+00:00",
+  "updated_at": "2026-04-15T18:46:17.064847+00:00"
 }

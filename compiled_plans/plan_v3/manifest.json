@@ -1,12 +1,17 @@
 {
   "source_file": "raw_plans/plan_v3.md",
   "source_hash": "5ae5c7f47d6dba65f942f9d6e3ca35863e78662922e4f57baf2e51b68788d8eb",
-  "compiled_at": "2026-04-11T10:49:08.828990+00:00",
+  "compiled_at": "2026-04-15T18:37:31.795589+00:00",
   "sequence_id": "compiled_plan_v3",
   "compile_status": "compiled",
   "warnings": [
-    "Plan v2 was only partially executed — the full acceptance chain (stability, integration, ownership, walk-forward) was never completed",
-    "Only one substantive v2 artefact survives: A1_high_iv_long_v1"
+    "Stages 7A and 7B are mutually exclusive branches gated on A1 not being promoted and the respective branch being selected",
+    "Stage 8 (medium-friction gate) is a policy checkpoint with no computational actions",
+    "Auto-added research_memory for stage_3: every non-trivial stage needs documentation capability.",
+    "Auto-added research_memory for stage_4: every non-trivial stage needs documentation capability.",
+    "Auto-added research_memory for stage_5: every non-trivial stage needs documentation capability.",
+    "Auto-added research_memory for stage_8: every non-trivial stage needs documentation capability.",
+    "Auto-added research_memory for stage_9: every non-trivial stage needs documentation capability."
   ],
   "semantic_method": "llm",
   "semantic_path": "semantic.json",
@@ -16,5 +21,6 @@
     "plans/compiled_plan_v3_batch_2.json",
     "plans/compiled_plan_v3_batch_3.json",
     "plans/compiled_plan_v3_batch_4.json"
-  ]
+  ],
+  "mcp_catalog_hash": "c306b4054eaf8f466a7e29182863da4e7cd0610551ef83a0611c515c84aa415b"
 }

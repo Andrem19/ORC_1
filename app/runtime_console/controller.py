@@ -4,6 +4,7 @@ Direct Rich runtime controller.
 
 from __future__ import annotations
 
+import re
 import threading
 import time
 from typing import Any
@@ -308,8 +309,13 @@ class ConsoleRuntimeController:
     def _get_trail_label(self, sequence_id: str) -> str:
         if sequence_id in self._trail_seq_labels:
             return self._trail_seq_labels[sequence_id]
-        self._trail_seq_counter += 1
-        label = f"v{self._trail_seq_counter}"
+        # Extract real version from sequence_id like "compiled_plan_v2"
+        match = re.search(r"_v(\d+)", sequence_id)
+        if match:
+            label = f"v{match.group(1)}"
+        else:
+            self._trail_seq_counter += 1
+            label = f"v{self._trail_seq_counter}"
         self._trail_seq_labels[sequence_id] = label
         return label
 

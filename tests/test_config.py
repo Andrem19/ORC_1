@@ -221,3 +221,40 @@ def test_config_rejects_invalid_plan_source():
         assert "Invalid plan_source" in str(exc)
     else:
         raise AssertionError("Expected ValueError for invalid plan_source")
+
+
+def test_config_sequence_report_defaults():
+    cfg = OrchestratorConfig()
+    assert cfg.sequence_report.provider == "claude_cli"
+    assert cfg.sequence_report.model == "opus"
+    assert cfg.sequence_report.timeout_seconds == 120
+    assert cfg.sequence_report.retry_attempts == 2
+    assert cfg.sequence_report.retry_backoff_seconds == 0.5
+
+
+def test_config_sequence_report_from_dict():
+    data = {
+        "sequence_report": {
+            "provider": "lmstudio",
+            "model": "qwen-test",
+            "timeout_seconds": 60,
+            "retry_attempts": 3,
+        },
+    }
+    cfg = load_config_from_dict(data)
+    assert cfg.sequence_report.provider == "lmstudio"
+    assert cfg.sequence_report.model == "qwen-test"
+    assert cfg.sequence_report.timeout_seconds == 60
+    assert cfg.sequence_report.retry_attempts == 3
+    assert cfg.sequence_report.retry_backoff_seconds == 0.5  # default
+
+
+def test_config_sequence_report_ignores_unknown_keys():
+    data = {
+        "sequence_report": {
+            "provider": "claude_cli",
+            "unknown_key": "ignored",
+        },
+    }
+    cfg = load_config_from_dict(data)
+    assert cfg.sequence_report.provider == "claude_cli"

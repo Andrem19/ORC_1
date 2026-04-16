@@ -1,6 +1,6 @@
 {
   "plan_id": "compiled_plan_v10_batch_2",
-  "goal": "Честно доказать или опровергнуть, что microstructure-family (прежде всего cf_micro_imbalance_1h) даёт реальный overlay alpha поверх immutable base active-signal-v1.",
+  "goal": "Validate whether the microstructure feature family (primarily cf_micro_imbalance_1h) provides a genuine overlay alpha over the immutable base through a disciplined veto-first, lockbox-verified pipeline.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -9,49 +9,85 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "active-signal-v1@1 — immutable reference, менять базу запрещено",
-    "любое улучшение обязано пройти matched OOS lockbox comparison против базы на том же окне",
-    "активна только одна data family: microstructure_proxies, все остальные locked",
-    "feature selection / threshold / архитектура не подбираются по lockbox-окну",
-    "simple baselines проверяются до сложных моделей (simpler before smarter)",
-    "short side проверяется первой (short-first priority)",
-    "veto-overlay route обязателен; early-cut и directional scout открываются только через gate",
-    "запрещены: net_pnl>0 как единственный veto label, regression на future PnL, повторное открытие закрытых routes (leadership, breadth, path-asymmetry, regime-disagreement, event-only, trade-quality без нового слоя)",
-    "microstructure должен пройти тест почти сам по себе, без подмешивания старых feature packs"
+    "Immutable base active-signal-v1@1 must never be modified or re-tuned",
+    "Only microstructure_proxies family is active; all other feature families are locked",
+    "Do not reopen closed directions: leadership/breadth as directional edge, path-asymmetry, regime-disagreement, event-only overlays, trade-quality overlays without new information layer, derivatives positioning without real OI/liquidation/basis data",
+    "Lockbox overlay comparison (base vs base+overlay on same window) is mandatory before any strong conclusion",
+    "Simpler methods must be tested before complex models (bucket rule → threshold → logistic → CatBoost)",
+    "Short side is tested before long side at every stage",
+    "Veto overlay must be proven before early-cut or directional scout routes are unlocked",
+    "net_pnl > 0 must not be used as veto label — too noisy",
+    "Feature set limited to micro-core + minimal context support; no re-injection of old large feature packs",
+    "No feature/label/threshold selection on lockbox window; lockbox is truth-only"
   ],
   "slices": [
     {
       "slice_id": "compiled_plan_v10_stage_4",
       "title": "Freeze improved veto labels",
-      "hypothesis": "Определить и заморозить осмысленные veto label families (bad_trade_pnl, fragile_trade_mae, bad_trade_composite) с вариантами balanced/conservative до начала обучения.",
-      "objective": "Определить и заморозить осмысленные veto label families (bad_trade_pnl, fragile_trade_mae, bad_trade_composite) с вариантами balanced/conservative до начала обучения.",
+      "hypothesis": "Define and freeze six meaningful veto label variants across three families (pnl, fragile_mae, composite) with balanced/conservative modes, locking definitions before any training begins.",
+      "objective": "Define and freeze six meaningful veto label variants across three families (pnl, fragile_mae, composite) with balanced/conservative modes, locking definitions before any training begins.",
       "success_criteria": [
-        "Все 6 label variants определены и задокументированы",
-        "Определение плохого trade, ambiguous cases, пороги material harm зафиксированы для каждого",
-        "Labels заморожены — изменения запрещены"
+        "Six label variants frozen with documented definitions",
+        "No net_pnl>0 used as veto label",
+        "Label lock enforced going forward"
       ],
       "allowed_tools": [
-        "models_dataset",
-        "research_record"
+        "research_memory",
+        "research_map"
       ],
       "evidence_requirements": [
-        "Все 6 label variants определены и задокументированы",
-        "Определение плохого trade, ambiguous cases, пороги material harm зафиксированы для каждого",
-        "Labels заморожены — изменения запрещены"
+        "Six label variants frozen with documented definitions",
+        "No net_pnl>0 used as veto label",
+        "Label lock enforced going forward"
       ],
       "policy_tags": [
-        "feature_contract",
-        "setup"
+        "label_contract",
+        "freeze"
       ],
       "max_turns": 24,
       "max_tool_calls": 24,
-      "max_expensive_calls": 2,
+      "max_expensive_calls": 1,
       "parallel_slot": 1,
+      "runtime_profile": "write_result",
+      "required_prerequisite_facts": null,
+      "required_output_facts": [],
+      "finalization_mode": "none",
+      "dependency_unblock_mode": "accepted_only",
+      "watchlist_allows_unblock": false,
+      "requires_mutating_evidence": true,
+      "requires_persisted_artifact": false,
+      "requires_live_handle_validation": false,
+      "acceptance_contract": {
+        "kind": "write_result",
+        "mode": "strict",
+        "required_subjects": "persisted_research_node",
+        "required_predicates": [
+          "mutating_tool_call_present",
+          "research_node_proof_pass"
+        ],
+        "mcp_proof_calls": [
+          {
+            "tool": "research_memory",
+            "arguments": {
+              "action": "prove"
+            }
+          }
+        ],
+        "forbid_contradictions": [],
+        "allow_advisory_unblock": false,
+        "acceptance_requirements": {
+          "slice_id": "compiled_plan_v10_stage_4",
+          "contract_kind": "write_result"
+        }
+      },
+      "acceptance_proof": {},
+      "acceptance_blockers": [],
       "budget_scale_applied": 6,
       "depends_on": [
         "compiled_plan_v10_stage_3"
       ],
       "status": "pending",
+      "acceptance_state": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
       "expensive_call_count": 0,
@@ -62,48 +98,98 @@
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
+      "dependency_blocker_slice_id": "",
+      "dependency_blocker_reason_code": "",
+      "dependency_blocker_class": "",
+      "blocked_retry_count": 0,
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
+      "gate_hint": "",
       "artifacts": [],
-      "facts": {}
+      "facts": {},
+      "verdict": ""
     },
     {
       "slice_id": "compiled_plan_v10_stage_5",
       "title": "Simple baselines before CatBoost",
-      "hypothesis": "Проверить на selection OOS, нужен ли вообще сложный model layer сверх cf_micro_imbalance_1h, сравнив bucket veto, threshold veto, logistic и small CatBoost.",
-      "objective": "Проверить на selection OOS, нужен ли вообще сложный model layer сверх cf_micro_imbalance_1h, сравнив bucket veto, threshold veto, logistic и small CatBoost.",
+      "hypothesis": "Test whether a complex model layer is even needed by comparing four increasingly sophisticated baselines (bucket veto, threshold veto, logistic, small CatBoost) on selection OOS using micro-core features.",
+      "objective": "Test whether a complex model layer is even needed by comparing four increasingly sophisticated baselines (bucket veto, threshold veto, logistic, small CatBoost) on selection OOS using micro-core features.",
       "success_criteria": [
-        "Все 4 baseline оценены на selection OOS",
-        "Метрики delta_pnl, delta_pf, delta_dd, removed_trades, false_veto_rate посчитаны",
-        "Принято решение, достаточен ли простой baseline или нужен CatBoost"
+        "All four baselines evaluated on selection OOS",
+        "Clear ranking of baseline methods documented",
+        "Decision recorded on whether CatBoost complexity is justified"
       ],
       "allowed_tools": [
         "models_train",
-        "models_dataset",
         "models_compare",
-        "models_registry",
-        "research_record"
+        "models_dataset",
+        "backtests_analysis",
+        "research_memory"
       ],
       "evidence_requirements": [
-        "Все 4 baseline оценены на selection OOS",
-        "Метрики delta_pnl, delta_pf, delta_dd, removed_trades, false_veto_rate посчитаны",
-        "Принято решение, достаточен ли простой baseline или нужен CatBoost"
+        "All four baselines evaluated on selection OOS",
+        "Clear ranking of baseline methods documented",
+        "Decision recorded on whether CatBoost complexity is justified"
       ],
       "policy_tags": [
         "modeling",
-        "cheap_first"
+        "cheap_first",
+        "simpler_before_smarter"
       ],
       "max_turns": 36,
       "max_tool_calls": 30,
       "max_expensive_calls": 6,
       "parallel_slot": 1,
+      "runtime_profile": "generic_mutation",
+      "required_prerequisite_facts": null,
+      "required_output_facts": [],
+      "finalization_mode": "none",
+      "dependency_unblock_mode": "accepted_only",
+      "watchlist_allows_unblock": false,
+      "requires_mutating_evidence": false,
+      "requires_persisted_artifact": false,
+      "requires_live_handle_validation": false,
+      "acceptance_contract": {
+        "kind": "model_training",
+        "mode": "strict",
+        "required_subjects": "dataset_and_model_version",
+        "required_predicates": [
+          "model_dataset_proof_pass",
+          "model_registry_proof_pass"
+        ],
+        "mcp_proof_calls": [
+          {
+            "tool": "models_dataset",
+            "arguments": {
+              "action": "inspect",
+              "view": "acceptance_proof"
+            }
+          },
+          {
+            "tool": "models_registry",
+            "arguments": {
+              "action": "inspect",
+              "view": "acceptance_proof"
+            }
+          }
+        ],
+        "forbid_contradictions": [],
+        "allow_advisory_unblock": false,
+        "acceptance_requirements": {
+          "slice_id": "compiled_plan_v10_stage_5",
+          "contract_kind": "model_training"
+        }
+      },
+      "acceptance_proof": {},
+      "acceptance_blockers": [],
       "budget_scale_applied": 6,
       "depends_on": [
-        "compiled_plan_v10_stage_2",
+        "compiled_plan_v10_stage_3",
         "compiled_plan_v10_stage_4"
       ],
       "status": "pending",
+      "acceptance_state": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
       "expensive_call_count": 0,
@@ -114,47 +200,97 @@
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
+      "dependency_blocker_slice_id": "",
+      "dependency_blocker_reason_code": "",
+      "dependency_blocker_class": "",
+      "blocked_retry_count": 0,
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
+      "gate_hint": "",
       "artifacts": [],
-      "facts": {}
+      "facts": {},
+      "verdict": ""
     },
     {
       "slice_id": "compiled_plan_v10_stage_6",
       "title": "Short-first veto models",
-      "hypothesis": "Обучить short veto models на frozen labels (pnl, fragile, composite) и выбрать лучший short route по selection economics.",
-      "objective": "Обучить short veto models на frozen labels (pnl, fragile, composite) и выбрать лучший short route по selection economics.",
+      "hypothesis": "Train short-side veto models on frozen labels using micro-core and minimal context, selecting the best short route by selection economics rather than AUC alone.",
+      "objective": "Train short-side veto models on frozen labels using micro-core and minimal context, selecting the best short route by selection economics rather than AUC alone.",
       "success_criteria": [
-        "Short veto models обучены для трёх label families",
-        "Лучший short route выбран по совокупности val/test AUC, precision, economic effect",
-        "Принято решение о продвижении в lockbox"
+        "Short veto models trained across three label families",
+        "Best short route identified by selection economics",
+        "Model promoted to lockbox candidate or documented why not"
       ],
       "allowed_tools": [
         "models_train",
-        "models_dataset",
         "models_compare",
+        "models_dataset",
         "models_registry",
-        "research_record"
+        "research_memory"
       ],
       "evidence_requirements": [
-        "Short veto models обучены для трёх label families",
-        "Лучший short route выбран по совокупности val/test AUC, precision, economic effect",
-        "Принято решение о продвижении в lockbox"
+        "Short veto models trained across three label families",
+        "Best short route identified by selection economics",
+        "Model promoted to lockbox candidate or documented why not"
       ],
       "policy_tags": [
         "modeling",
-        "short_first"
+        "short_first",
+        "veto"
       ],
       "max_turns": 36,
       "max_tool_calls": 30,
       "max_expensive_calls": 6,
       "parallel_slot": 1,
+      "runtime_profile": "generic_mutation",
+      "required_prerequisite_facts": null,
+      "required_output_facts": [],
+      "finalization_mode": "none",
+      "dependency_unblock_mode": "accepted_only",
+      "watchlist_allows_unblock": false,
+      "requires_mutating_evidence": false,
+      "requires_persisted_artifact": false,
+      "requires_live_handle_validation": false,
+      "acceptance_contract": {
+        "kind": "model_training",
+        "mode": "strict",
+        "required_subjects": "dataset_and_model_version",
+        "required_predicates": [
+          "model_dataset_proof_pass",
+          "model_registry_proof_pass"
+        ],
+        "mcp_proof_calls": [
+          {
+            "tool": "models_dataset",
+            "arguments": {
+              "action": "inspect",
+              "view": "acceptance_proof"
+            }
+          },
+          {
+            "tool": "models_registry",
+            "arguments": {
+              "action": "inspect",
+              "view": "acceptance_proof"
+            }
+          }
+        ],
+        "forbid_contradictions": [],
+        "allow_advisory_unblock": false,
+        "acceptance_requirements": {
+          "slice_id": "compiled_plan_v10_stage_6",
+          "contract_kind": "model_training"
+        }
+      },
+      "acceptance_proof": {},
+      "acceptance_blockers": [],
       "budget_scale_applied": 6,
       "depends_on": [
         "compiled_plan_v10_stage_5"
       ],
       "status": "pending",
+      "acceptance_state": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
       "expensive_call_count": 0,
@@ -165,13 +301,20 @@
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
+      "dependency_blocker_slice_id": "",
+      "dependency_blocker_reason_code": "",
+      "dependency_blocker_class": "",
+      "blocked_retry_count": 0,
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
+      "gate_hint": "",
       "artifacts": [],
-      "facts": {}
+      "facts": {},
+      "verdict": ""
     }
   ],
+  "mcp_catalog_hash": "c306b4054eaf8f466a7e29182863da4e7cd0610551ef83a0611c515c84aa415b",
   "plan_source_kind": "compiled_raw",
   "source_sequence_id": "compiled_plan_v10",
   "source_raw_plan": "raw_plans/plan_v10.md",
@@ -180,6 +323,7 @@
   "source_compile_report_path": "",
   "sequence_batch_index": 2,
   "status": "draft",
-  "created_at": "2026-04-11T11:03:23.954505+00:00",
-  "updated_at": "2026-04-11T11:03:23.954507+00:00"
+  "last_error": "",
+  "created_at": "2026-04-15T18:47:58.336577+00:00",
+  "updated_at": "2026-04-15T18:47:58.336579+00:00"
 }

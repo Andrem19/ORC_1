@@ -1,13 +1,14 @@
 {
   "source_file": "raw_plans/plan_v4.md",
   "source_hash": "5f893e59f6395c11f80524bf4a5f550955fa6484442db247b274c0c80d75cd4b",
-  "compiled_at": "2026-04-11T10:50:40.017728+00:00",
+  "compiled_at": "2026-04-15T18:38:47.063607+00:00",
   "sequence_id": "compiled_plan_v4",
   "compile_status": "compiled",
   "warnings": [
-    "Plan source is in Russian; stage titles and objectives are translated/paraphrased.",
-    "Stage 3 raw markdown references sub-steps (feature contract, materialization, plausibility, prototypes, acceptance chain) but actions_hint is empty — sub-steps were inferred from section titles.",
-    "Stage 8 has no explicit objective or success criteria in source; inferred from raw_markdown context."
+    "Stage 3 (A2_iv_acceleration) sub-steps are detailed in section titles only; actions were inferred from section headings.",
+    "Stage 4 (A3_broader_cl_transition) is gated on A2 not being promoted.",
+    "Stage 7 (medium-friction wave) has an explicit 5-condition unlock gate.",
+    "Stage 8 has no explicit objective or success criteria in source; inferred from context."
   ],
   "semantic_method": "llm",
   "semantic_path": "semantic.json",
@@ -16,5 +17,6 @@
     "plans/compiled_plan_v4_batch_1.json",
     "plans/compiled_plan_v4_batch_2.json",
     "plans/compiled_plan_v4_batch_3.json"
-  ]
+  ],
+  "mcp_catalog_hash": "c306b4054eaf8f466a7e29182863da4e7cd0610551ef83a0611c515c84aa415b"
 }

@@ -11,7 +11,9 @@ from app.services.direct_execution.lmstudio_tool_loop import (
     LmStudioToolLoop,
     _is_contract_issue_payload,
 )
+from app.services.direct_execution.issue_classification import classify_issue_payload
 from app.services.direct_execution.service import _SOFT_ABORT_REASON_CODES
+from tests.mcp_catalog_fixtures import make_catalog_snapshot
 
 
 # ---------------------------------------------------------------------------
@@ -46,6 +48,21 @@ def test_is_contract_issue_payload_returns_false_for_clean_payload() -> None:
 def test_is_contract_issue_payload_returns_false_for_budget_error() -> None:
     payload = {"error": "direct_expensive_tool_budget_exhausted", "max_expensive_tool_calls": 3}
     assert _is_contract_issue_payload(payload) is False
+
+
+def test_issue_classifier_marks_agent_contract_misuse_as_contract() -> None:
+    payload = {
+        "ok": False,
+        "payload": {
+            "content": [{"type": "text", "text": '{"error": {"code": "agent_contract_misuse"}}'}]
+        },
+    }
+    assert classify_issue_payload(payload) == "contract_misuse"
+
+
+def test_issue_classifier_marks_tools_unavailable_as_infra() -> None:
+    payload = {"error": "dev_space1_tools_unavailable"}
+    assert classify_issue_payload(payload) == "infra_unavailable"
 
 
 # ---------------------------------------------------------------------------
@@ -86,10 +103,11 @@ def _make_tool_loop() -> LmStudioToolLoop:
     incident_store = MagicMock()
     incident_store.record = MagicMock()
 
-    return LmStudioToolLoop(
+    loop = LmStudioToolLoop(
         adapter=adapter,
         mcp_client=mcp_client,
         incident_store=incident_store,
+        catalog_snapshot=make_catalog_snapshot(),
         allowed_tools={"research_map"},
         slice_title="test-slice",
         success_criteria=[],
@@ -99,7 +117,14 @@ def _make_tool_loop() -> LmStudioToolLoop:
         safe_exclude_tools=set(),
         first_action_timeout_seconds=10,
         stalled_action_timeout_seconds=10,
+        zero_tool_retries=0,
+        first_turn_tool_choice="auto",
     )
+    # Pre-flight health check must be mocked since no real LM Studio server
+    # is running during tests.
+    loop._connection_pool.warm_up = MagicMock(return_value=True)
+    loop._connection_pool.health_check = MagicMock(return_value=True)
+    return loop
 
 
 def _tool_call_response(tool_name: str, call_id: str, arguments: dict) -> dict:
@@ -289,6 +314,7 @@ def test_catalog_only_slice_auto_finalizes_after_repeated_successful_reads() -> 
         adapter=adapter,
         mcp_client=mcp_client,
         incident_store=incident_store,
+        catalog_snapshot=make_catalog_snapshot(),
         allowed_tools={"features_catalog"},
         slice_title="catalog-contract-slice",
         success_criteria=["Each hypothesis has a clean data and feature contract."],
@@ -298,7 +324,11 @@ def test_catalog_only_slice_auto_finalizes_after_repeated_successful_reads() -> 
         safe_exclude_tools=set(),
         first_action_timeout_seconds=10,
         stalled_action_timeout_seconds=10,
+        zero_tool_retries=0,
+        first_turn_tool_choice="auto",
     )
+    loop._connection_pool.warm_up = MagicMock(return_value=True)
+    loop._connection_pool.health_check = MagicMock(return_value=True)
 
     call_seq = [
         _tool_call_response("features_catalog", "c1", {"scope": "available"}),
@@ -352,6 +382,7 @@ def test_research_budget_salvage_auto_finalizes_from_successful_transcript() -> 
         adapter=adapter,
         mcp_client=mcp_client,
         incident_store=incident_store,
+        catalog_snapshot=make_catalog_snapshot(),
         allowed_tools={"research_search", "research_map"},
         slice_title="research-slice",
         success_criteria=["Wave-1 shortlist exists"],
@@ -361,7 +392,11 @@ def test_research_budget_salvage_auto_finalizes_from_successful_transcript() -> 
         safe_exclude_tools=set(),
         first_action_timeout_seconds=10,
         stalled_action_timeout_seconds=10,
+        zero_tool_retries=0,
+        first_turn_tool_choice="auto",
     )
+    loop._connection_pool.warm_up = MagicMock(return_value=True)
+    loop._connection_pool.health_check = MagicMock(return_value=True)
 
     call_seq = [
         _tool_call_response("research_search", "c1", {"project_id": "proj_1", "query": "BTCUSDT"}),
@@ -385,7 +420,7 @@ def test_research_budget_salvage_auto_finalizes_from_successful_transcript() -> 
     raw = asyncio.run(_run())
     assert "\"type\": \"final_report\"" in raw
     assert "\"research.project_id\": \"proj_1\"" in raw
-    assert "\"research.shortlist_families\"" in raw
+    assert "direct.auto_finalized_from_budget_salvage" in raw
 
 
 def test_expensive_budget_salvage_auto_finalizes_from_backtests_transcript() -> None:
@@ -415,6 +450,7 @@ def test_expensive_budget_salvage_auto_finalizes_from_backtests_transcript() -> 
         adapter=adapter,
         mcp_client=mcp_client,
         incident_store=incident_store,
+        catalog_snapshot=make_catalog_snapshot(),
         allowed_tools={"backtests_conditions", "backtests_analysis"},
         slice_title="expensive-slice",
         success_criteria=["Standalone and integrated quality evidence exists"],
@@ -424,12 +460,16 @@ def test_expensive_budget_salvage_auto_finalizes_from_backtests_transcript() -> 
         safe_exclude_tools=set(),
         first_action_timeout_seconds=10,
         stalled_action_timeout_seconds=10,
+        zero_tool_retries=0,
+        first_turn_tool_choice="auto",
     )
+    loop._connection_pool.warm_up = MagicMock(return_value=True)
+    loop._connection_pool.health_check = MagicMock(return_value=True)
 
     call_seq = [
-        _tool_call_response("backtests_conditions", "c1", {"action": "list"}),
-        _tool_call_response("backtests_conditions", "c2", {"action": "list"}),
-        _tool_call_response("backtests_conditions", "c3", {"action": "list"}),
+        _tool_call_response("backtests_conditions", "c1", {"action": "run"}),
+        _tool_call_response("backtests_conditions", "c2", {"action": "run"}),
+        _tool_call_response("backtests_conditions", "c3", {"action": "run"}),
     ]
     idx = 0
 
@@ -451,7 +491,7 @@ def test_expensive_budget_salvage_auto_finalizes_from_backtests_transcript() -> 
     assert "direct.auto_finalized_from_expensive_budget_salvage" in raw
 
 
-def test_schema_fetch_failure_uses_fallback_schemas_instead_of_blocking() -> None:
+def test_startup_snapshot_path_does_not_fetch_live_schemas_per_slice() -> None:
     loop = _make_tool_loop()
     loop.mcp_client.list_tools = AsyncMock(side_effect=TimeoutError("schema timeout"))
 
@@ -476,5 +516,6 @@ def test_schema_fetch_failure_uses_fallback_schemas_instead_of_blocking() -> Non
         return result.response.raw_output or ""
 
     raw = asyncio.run(_run())
+    loop.mcp_client.list_tools.assert_not_called()
     assert "direct_model_stalled_before_first_action" not in raw
     assert "\"type\":\"final_report\"" in raw

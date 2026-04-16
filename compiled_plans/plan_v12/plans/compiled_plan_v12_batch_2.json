@@ -1,6 +1,6 @@
 {
   "plan_id": "compiled_plan_v12_batch_2",
-  "goal": "Final qualification of the microstructure-route into one of three honest statuses: confirmed true overlay, confirmed replacement layer, or watchlist/reject.",
+  "goal": "Классифицировать microstructure-сигнал в один из трёх честных статусов: confirmed true overlay, confirmed replacement layer, или watchlist/reject — через строгие parallel-free track-ветки поверх immutable reference active-signal-v1@1.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -9,48 +9,94 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "All comparisons must use active-signal-v1@1 as the sole decision reference; @3 is auxiliary only.",
-    "Overlay and replacement tracks must never be mixed in the same narrative or snapshot.",
-    "Every threshold must have documented provenance: quantile-based or selection-OOS with frozen lockbox.",
-    "All key comparisons must occur on the same window (same-window truth only).",
-    "Simple rules (bucket, threshold, quantile) must be tested before any model-based approach.",
-    "No re-opening of old routes: IV, breadth, path-asymmetry, regime-disagreement, or old-universe classification.",
-    "No new data families or data-universe expansion until microstructure qualification is complete.",
-    "Cannot claim microstructure-result as overlay unless signal IDs, entry timing, and base logic are preserved with microstructure applied only as veto/filter.",
-    "Cannot claim result as replacement unless compared as a separate snapshot against @1 on the same window."
+    "Immutable reference active-signal-v1@1: never modify, never retune, never change its hours/days/thresholds/execution.",
+    "All key decisions use only @1 as base reference; @3 is auxiliary comparison only, never a decision base.",
+    "Overlay and replacement are separate products: never mix them in the same narrative or run.",
+    "Simple rules first: bucket → threshold → quantile before any logistic or CatBoost.",
+    "Every threshold must have documented provenance: quantile rule or selection-OOS search with frozen lockbox.",
+    "Same-window truth: every critical comparison must run on the identical evaluation window.",
+    "No new data families, model families, or macro routes until microstructure qualification is complete.",
+    "Short/long/combined must all be tested explicitly; no short-only conclusions.",
+    "No opening new research directions until v12 reaches final verdict."
   ],
   "slices": [
     {
       "slice_id": "compiled_plan_v12_stage_4",
       "title": "Build true overlay implementation over @1",
-      "hypothesis": "Construct true overlay snapshots where microstructure acts only as a veto/filter gate without altering base signal IDs or entry logic.",
-      "objective": "Construct true overlay snapshots where microstructure acts only as a veto/filter gate without altering base signal IDs or entry logic.",
+      "hypothesis": "Construct true overlay variants where microstructure acts only as allow/block gate on base @1 signals — base signal IDs and entry logic are preserved, no retroactive replacement.",
+      "objective": "Construct true overlay variants where microstructure acts only as allow/block gate on base @1 signals — base signal IDs and entry logic are preserved, no retroactive replacement.",
       "success_criteria": [
-        "Three true-overlay snapshots exist with causal blocking verified and zero replacement."
+        "Three true-overlay snapshots exist (short, long, combined).",
+        "Each passes validation: base_signal_ids_preserved, causal_blocking_ok, replacement_absent."
       ],
       "allowed_tools": [
         "backtests_strategy",
         "backtests_strategy_validate",
         "features_custom",
-        "research_record"
+        "research_memory"
       ],
       "evidence_requirements": [
-        "Three true-overlay snapshots exist with causal blocking verified and zero replacement."
+        "Three true-overlay snapshots exist (short, long, combined).",
+        "Each passes validation: base_signal_ids_preserved, causal_blocking_ok, replacement_absent."
       ],
       "policy_tags": [
         "overlay_track",
-        "snapshot_construction"
+        "overlay_not_replacement"
       ],
       "max_turns": 36,
       "max_tool_calls": 30,
       "max_expensive_calls": 6,
       "parallel_slot": 1,
+      "runtime_profile": "generic_mutation",
+      "required_prerequisite_facts": null,
+      "required_output_facts": [],
+      "finalization_mode": "none",
+      "dependency_unblock_mode": "accepted_only",
+      "watchlist_allows_unblock": false,
+      "requires_mutating_evidence": false,
+      "requires_persisted_artifact": false,
+      "requires_live_handle_validation": false,
+      "acceptance_contract": {
+        "kind": "feature_contract_construction",
+        "mode": "strict",
+        "required_subjects": "published_feature_and_dataset_if_required",
+        "required_predicates": [
+          "feature_subject_present",
+          "feature_proof_pass"
+        ],
+        "mcp_proof_calls": [
+          {
+            "tool": "features_custom",
+            "arguments": {
+              "action": "inspect",
+              "view": "acceptance_proof"
+            }
+          },
+          {
+            "tool": "features_dataset",
+            "arguments": {
+              "action": "inspect",
+              "view": "acceptance_proof"
+            }
+          }
+        ],
+        "forbid_contradictions": [],
+        "allow_advisory_unblock": false,
+        "acceptance_requirements": {
+          "slice_id": "compiled_plan_v12_stage_4",
+          "contract_kind": "feature_contract_construction",
+          "require_dataset_activation": false
+        }
+      },
+      "acceptance_proof": {},
+      "acceptance_blockers": [],
       "budget_scale_applied": 6,
       "depends_on": [
         "compiled_plan_v12_stage_2",
         "compiled_plan_v12_stage_3"
       ],
       "status": "pending",
+      "acceptance_state": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
       "expensive_call_count": 0,
@@ -61,43 +107,85 @@
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
+      "dependency_blocker_slice_id": "",
+      "dependency_blocker_reason_code": "",
+      "dependency_blocker_class": "",
+      "blocked_retry_count": 0,
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
+      "gate_hint": "",
       "artifacts": [],
-      "facts": {}
+      "facts": {},
+      "verdict": ""
     },
     {
       "slice_id": "compiled_plan_v12_stage_5",
       "title": "Simple-rule overlay tests on selection window",
-      "hypothesis": "Determine whether true overlay shows any meaningful signal on the selection window before committing to lockbox runs.",
-      "objective": "Determine whether true overlay shows any meaningful signal on the selection window before committing to lockbox runs.",
+      "hypothesis": "Run each frozen threshold set against the selection window for all three overlay variants to determine whether true overlay shows any signal before committing to lockbox testing.",
+      "objective": "Run each frozen threshold set against the selection window for all three overlay variants to determine whether true overlay shows any signal before committing to lockbox testing.",
       "success_criteria": [
-        "Shortlist of true-overlay candidates promoted to lockbox testing."
+        "Shortlist of true-overlay candidates promoted to lockbox testing.",
+        "Each candidate has full selection-window metrics documented."
       ],
       "allowed_tools": [
-        "backtests_plan",
         "backtests_runs",
         "backtests_analysis",
-        "research_record"
+        "research_memory"
       ],
       "evidence_requirements": [
-        "Shortlist of true-overlay candidates promoted to lockbox testing."
+        "Shortlist of true-overlay candidates promoted to lockbox testing.",
+        "Each candidate has full selection-window metrics documented."
       ],
       "policy_tags": [
         "overlay_track",
-        "cheap_first",
-        "selection_window"
+        "simple_rules_first",
+        "cheap_first"
       ],
       "max_turns": 48,
       "max_tool_calls": 36,
       "max_expensive_calls": 12,
-      "parallel_slot": 1,
+      "parallel_slot": 2,
+      "runtime_profile": "generic_mutation",
+      "required_prerequisite_facts": null,
+      "required_output_facts": [],
+      "finalization_mode": "none",
+      "dependency_unblock_mode": "accepted_only",
+      "watchlist_allows_unblock": false,
+      "requires_mutating_evidence": false,
+      "requires_persisted_artifact": false,
+      "requires_live_handle_validation": false,
+      "acceptance_contract": {
+        "kind": "research_shortlist_write",
+        "mode": "strict",
+        "required_subjects": "persisted_research_node",
+        "required_predicates": [
+          "mutating_tool_call_present",
+          "research_node_proof_pass"
+        ],
+        "mcp_proof_calls": [
+          {
+            "tool": "research_memory",
+            "arguments": {
+              "action": "prove"
+            }
+          }
+        ],
+        "forbid_contradictions": [],
+        "allow_advisory_unblock": false,
+        "acceptance_requirements": {
+          "slice_id": "compiled_plan_v12_stage_5",
+          "contract_kind": "research_shortlist_write"
+        }
+      },
+      "acceptance_proof": {},
+      "acceptance_blockers": [],
       "budget_scale_applied": 6,
       "depends_on": [
         "compiled_plan_v12_stage_4"
       ],
       "status": "pending",
+      "acceptance_state": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
       "expensive_call_count": 0,
@@ -108,42 +196,78 @@
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
+      "dependency_blocker_slice_id": "",
+      "dependency_blocker_reason_code": "",
+      "dependency_blocker_class": "",
+      "blocked_retry_count": 0,
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
+      "gate_hint": "",
       "artifacts": [],
-      "facts": {}
+      "facts": {},
+      "verdict": ""
     },
     {
       "slice_id": "compiled_plan_v12_stage_6",
       "title": "True overlay lockbox test against base @1",
-      "hypothesis": "Obtain the definitive answer on whether true overlay works on the same lockbox window as the canonical base @1.",
-      "objective": "Obtain the definitive answer on whether true overlay works on the same lockbox window as the canonical base @1.",
+      "hypothesis": "Run surviving true-overlay candidates on the exact same lockbox window against base @1 to get the definitive answer on whether microstructure works as a real overlay.",
+      "objective": "Run surviving true-overlay candidates on the exact same lockbox window against base @1 to get the definitive answer on whether microstructure works as a real overlay.",
       "success_criteria": [
-        "Final verdict on true-overlay track with full same-window comparison against base @1."
+        "Final verdict on true-overlay track: confirmed, watchlist, or rejected.",
+        "Full lockbox comparison table against base @1 documented."
       ],
       "allowed_tools": [
         "backtests_runs",
         "backtests_analysis",
-        "research_record"
+        "backtests_plan",
+        "research_memory"
       ],
       "evidence_requirements": [
-        "Final verdict on true-overlay track with full same-window comparison against base @1."
+        "Final verdict on true-overlay track: confirmed, watchlist, or rejected.",
+        "Full lockbox comparison table against base @1 documented."
       ],
       "policy_tags": [
         "overlay_track",
         "lockbox",
         "same_window_truth"
       ],
-      "max_turns": 24,
-      "max_tool_calls": 24,
-      "max_expensive_calls": 3,
-      "parallel_slot": 1,
+      "max_turns": 48,
+      "max_tool_calls": 36,
+      "max_expensive_calls": 12,
+      "parallel_slot": 3,
+      "runtime_profile": "generic_mutation",
+      "required_prerequisite_facts": null,
+      "required_output_facts": [],
+      "finalization_mode": "none",
+      "dependency_unblock_mode": "accepted_only",
+      "watchlist_allows_unblock": false,
+      "requires_mutating_evidence": false,
+      "requires_persisted_artifact": false,
+      "requires_live_handle_validation": false,
+      "acceptance_contract": {
+        "kind": "generic_read_strict",
+        "mode": "strict",
+        "required_subjects": "none",
+        "required_predicates": [
+          "domain_tool_evidence_present"
+        ],
+        "mcp_proof_calls": [],
+        "forbid_contradictions": [],
+        "allow_advisory_unblock": false,
+        "acceptance_requirements": {
+          "slice_id": "compiled_plan_v12_stage_6",
+          "contract_kind": "generic_read_strict"
+        }
+      },
+      "acceptance_proof": {},
+      "acceptance_blockers": [],
       "budget_scale_applied": 6,
       "depends_on": [
         "compiled_plan_v12_stage_5"
       ],
       "status": "pending",
+      "acceptance_state": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
       "expensive_call_count": 0,
@@ -154,13 +278,20 @@
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
+      "dependency_blocker_slice_id": "",
+      "dependency_blocker_reason_code": "",
+      "dependency_blocker_class": "",
+      "blocked_retry_count": 0,
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
+      "gate_hint": "",
       "artifacts": [],
-      "facts": {}
+      "facts": {},
+      "verdict": ""
     }
   ],
+  "mcp_catalog_hash": "c306b4054eaf8f466a7e29182863da4e7cd0610551ef83a0611c515c84aa415b",
   "plan_source_kind": "compiled_raw",
   "source_sequence_id": "compiled_plan_v12",
   "source_raw_plan": "raw_plans/plan_v12.md",
@@ -169,6 +300,7 @@
   "source_compile_report_path": "",
   "sequence_batch_index": 2,
   "status": "draft",
-  "created_at": "2026-04-11T11:07:02.822661+00:00",
-  "updated_at": "2026-04-11T11:07:02.822663+00:00"
+  "last_error": "",
+  "created_at": "2026-04-15T18:51:23.501657+00:00",
+  "updated_at": "2026-04-15T18:51:23.501659+00:00"
 }

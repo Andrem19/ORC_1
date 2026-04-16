@@ -1,12 +1,12 @@
 {
   "source_file": "raw_plans/plan_v1.md",
   "source_hash": "43d2b6894f2df1d1a134b3898365b01fbb80ef52bf06871fa29b69a5201facae",
-  "compiled_at": "2026-04-11T10:45:01.661427+00:00",
+  "compiled_at": "2026-04-15T18:34:05.729090+00:00",
   "sequence_id": "compiled_plan_v1",
   "compile_status": "compiled",
   "warnings": [
-    "Парсер не извлёк полный текст плана (full_text пуст); семантика восстановлена из candidate_stages и global_sections.",
-    "Этап 9 (stage_10) не содержит explicit objective, actions и success_criteria — они выведены из контекста раздела решений."
+    "Этап 9 (финальный отбор) не содержит явных actions в исходном плане — actions и критерии выведены из контекста решений PROMOTE/WATCHLIST/REJECT.",
+    "Этап 8 (walk-forward) содержит только цель и критерий завершения, без детальных actions — заполнено из общих указаний о walk-forward как обязательной поздней стадии."
   ],
   "semantic_method": "llm",
   "semantic_path": "semantic.json",
@@ -16,5 +16,6 @@
     "plans/compiled_plan_v1_batch_2.json",
     "plans/compiled_plan_v1_batch_3.json",
     "plans/compiled_plan_v1_batch_4.json"
-  ]
+  ],
+  "mcp_catalog_hash": "c306b4054eaf8f466a7e29182863da4e7cd0610551ef83a0611c515c84aa415b"
 }

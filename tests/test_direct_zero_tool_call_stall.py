@@ -5,6 +5,7 @@ from unittest.mock import MagicMock
 
 from app.execution_models import BaselineRef, ExecutionPlan, PlanSlice, WorkerAction, make_id
 from app.services.direct_execution.service import DirectExecutionService
+from tests.mcp_catalog_fixtures import make_catalog_snapshot
 
 
 def _make_plan_with_slice(turn_count: int = 0, tool_call_count: int = 0) -> tuple[ExecutionPlan, PlanSlice]:
@@ -85,6 +86,7 @@ def _make_service() -> DirectExecutionService:
     orch.artifact_store = MagicMock()
     orch.notification_service = MagicMock()
     orch.process_registry = MagicMock()
+    orch.mcp_catalog_snapshot = make_catalog_snapshot()
     return DirectExecutionService(orch)
 
 

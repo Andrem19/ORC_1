@@ -1,16 +1,15 @@
 {
   "source_file": "raw_plans/plan_v5.md",
   "source_hash": "c21a9aced25f3fb034b4f6b839bf8ec6d7705db97fd2ea5ba66ef82f7f09f5f4",
-  "compiled_at": "2026-04-11T10:51:59.004181+00:00",
+  "compiled_at": "2026-04-15T18:40:09.616328+00:00",
   "sequence_id": "compiled_plan_v5",
   "compile_status": "compiled",
   "warnings": [
-    "Auto-added research_record for stage_3: every non-trivial stage needs documentation capability.",
-    "Auto-added research_record for stage_4: every non-trivial stage needs documentation capability.",
-    "Auto-added research_record for stage_5: every non-trivial stage needs documentation capability.",
-    "Auto-added research_record for stage_6: every non-trivial stage needs documentation capability.",
-    "Auto-added research_record for stage_7: every non-trivial stage needs documentation capability.",
-    "Auto-added research_record for stage_8: every non-trivial stage needs documentation capability."
+    "Auto-added research_memory for stage_3: every non-trivial stage needs documentation capability.",
+    "Auto-added research_memory for stage_5: every non-trivial stage needs documentation capability.",
+    "Auto-added research_memory for stage_6: every non-trivial stage needs documentation capability.",
+    "Auto-added research_memory for stage_7: every non-trivial stage needs documentation capability.",
+    "Auto-added research_memory for stage_8: every non-trivial stage needs documentation capability."
   ],
   "semantic_method": "llm",
   "semantic_path": "semantic.json",
@@ -20,5 +19,6 @@
     "plans/compiled_plan_v5_batch_2.json",
     "plans/compiled_plan_v5_batch_3.json",
     "plans/compiled_plan_v5_batch_4.json"
-  ]
+  ],
+  "mcp_catalog_hash": "c306b4054eaf8f466a7e29182863da4e7cd0610551ef83a0611c515c84aa415b"
 }

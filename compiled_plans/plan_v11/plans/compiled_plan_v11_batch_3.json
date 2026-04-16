@@ -1,6 +1,6 @@
 {
   "plan_id": "compiled_plan_v11_batch_3",
-  "goal": "Conduct a rigorous forensic audit of the v10 microstructure overlay result to confirm, downgrade, or reject it as a genuine improvement over the immutable baseline.",
+  "goal": "Rigorously audit v10's claimed microstructure overlay success through reproduction, leakage checks, reference/window integrity, matched reruns, cannibalization analysis, and a final confirmed/downgraded/rejected verdict.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -9,47 +9,93 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "v11 is audit-only: no new features, no new directional scouts, no early-cut, no label changes.",
-    "Immutable reference is active-signal-v1@1 — never modify the baseline.",
-    "All comparisons must use the same lockbox window for base and overlay.",
-    "Short-only, long-only, and combined veto must be tested as separate runs — never aggregated into a single story.",
-    "Leakage, reference, window, and snapshot audits must complete before any interpretive conclusion.",
-    "Simple rule-based overlay must be validated before model-backed overlay.",
-    "PROMOTE status is only valid if v10 survives the entire forensic cycle."
+    "v11 is audit-only: no new features, no new directional scouts, no label changes, no early-cut experiments",
+    "Immutable baseline reference is active-signal-v1@1 — never modify or re-tune it",
+    "All comparisons must use the exact same window (train / selection-OOS / lockbox) for base and overlay",
+    "Lockbox window must never be used to select thresholds or labels",
+    "Short-only, long-only, and combined veto must be tested as separate independent runs — identical deltas require explanation",
+    "Rule-based overlay must be tested before model-backed overlay",
+    "No parameter adjustments during reproduction; record outcome as-is",
+    "PROMOTE status only after full forensic cycle passes"
   ],
   "slices": [
     {
-      "slice_id": "compiled_plan_v11_stage_7",
-      "title": "Snapshot assembly audit",
-      "hypothesis": "Verify that the veto overlay was integrated causally — no retroactive trade blocking or mixed long/short logic.",
-      "objective": "Verify that the veto overlay was integrated causally — no retroactive trade blocking or mixed long/short logic.",
+      "slice_id": "compiled_plan_v11_stage_6",
+      "title": "Label leakage and shortcut audit",
+      "hypothesis": "Determine whether the suspiciously high veto model AUC/PR (~0.95) is explained by label-feature near-identity rather than genuine signal.",
+      "objective": "Determine whether the suspiciously high veto model AUC/PR (~0.95) is explained by label-feature near-identity rather than genuine signal.",
       "success_criteria": [
-        "Causal verdict per snapshot variant: decision timing OK, causal blocking OK, side isolation OK, no mixed logic."
+        "Label verdict: labels valid, labels too shortcut-prone, or labels invalid",
+        "Ablation results documented showing marginal contribution of key feature"
       ],
       "allowed_tools": [
-        "backtests_strategy",
-        "backtests_strategy_validate",
-        "backtests_runs",
-        "research_record"
+        "models_train",
+        "models_compare",
+        "features_analytics",
+        "models_dataset",
+        "research_memory"
       ],
       "evidence_requirements": [
-        "Causal verdict per snapshot variant: decision timing OK, causal blocking OK, side isolation OK, no mixed logic."
+        "Label verdict: labels valid, labels too shortcut-prone, or labels invalid",
+        "Ablation results documented showing marginal contribution of key feature"
       ],
       "policy_tags": [
         "audit",
-        "snapshot_assembly",
-        "causality"
+        "leakage",
+        "label_integrity"
       ],
-      "max_turns": 24,
-      "max_tool_calls": 24,
-      "max_expensive_calls": 3,
+      "max_turns": 36,
+      "max_tool_calls": 30,
+      "max_expensive_calls": 6,
       "parallel_slot": 1,
+      "runtime_profile": "generic_mutation",
+      "required_prerequisite_facts": null,
+      "required_output_facts": [],
+      "finalization_mode": "none",
+      "dependency_unblock_mode": "accepted_only",
+      "watchlist_allows_unblock": false,
+      "requires_mutating_evidence": false,
+      "requires_persisted_artifact": false,
+      "requires_live_handle_validation": false,
+      "acceptance_contract": {
+        "kind": "model_training",
+        "mode": "strict",
+        "required_subjects": "dataset_and_model_version",
+        "required_predicates": [
+          "model_dataset_proof_pass",
+          "model_registry_proof_pass"
+        ],
+        "mcp_proof_calls": [
+          {
+            "tool": "models_dataset",
+            "arguments": {
+              "action": "inspect",
+              "view": "acceptance_proof"
+            }
+          },
+          {
+            "tool": "models_registry",
+            "arguments": {
+              "action": "inspect",
+              "view": "acceptance_proof"
+            }
+          }
+        ],
+        "forbid_contradictions": [],
+        "allow_advisory_unblock": false,
+        "acceptance_requirements": {
+          "slice_id": "compiled_plan_v11_stage_6",
+          "contract_kind": "model_training"
+        }
+      },
+      "acceptance_proof": {},
+      "acceptance_blockers": [],
       "budget_scale_applied": 6,
       "depends_on": [
-        "compiled_plan_v11_stage_2",
         "compiled_plan_v11_stage_5"
       ],
       "status": "pending",
+      "acceptance_state": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
       "expensive_call_count": 0,
@@ -60,45 +106,157 @@
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
+      "dependency_blocker_slice_id": "",
+      "dependency_blocker_reason_code": "",
+      "dependency_blocker_class": "",
+      "blocked_retry_count": 0,
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
+      "gate_hint": "",
       "artifacts": [],
-      "facts": {}
+      "facts": {},
+      "verdict": ""
+    },
+    {
+      "slice_id": "compiled_plan_v11_stage_7",
+      "title": "Snapshot assembly audit",
+      "hypothesis": "Verify that the veto overlay snapshot assembly preserves causal order and does not retroactively block already-opened trades.",
+      "objective": "Verify that the veto overlay snapshot assembly preserves causal order and does not retroactively block already-opened trades.",
+      "success_criteria": [
+        "Per-variant causal verdict: decision_timing_ok, causal_blocking_ok, side_isolation_ok, mixed_logic_absent"
+      ],
+      "allowed_tools": [
+        "backtests_strategy",
+        "backtests_strategy_validate",
+        "research_memory"
+      ],
+      "evidence_requirements": [
+        "Per-variant causal verdict: decision_timing_ok, causal_blocking_ok, side_isolation_ok, mixed_logic_absent"
+      ],
+      "policy_tags": [
+        "audit",
+        "causality",
+        "snapshot_integrity"
+      ],
+      "max_turns": 36,
+      "max_tool_calls": 30,
+      "max_expensive_calls": 6,
+      "parallel_slot": 1,
+      "runtime_profile": "generic_mutation",
+      "required_prerequisite_facts": null,
+      "required_output_facts": [],
+      "finalization_mode": "none",
+      "dependency_unblock_mode": "accepted_only",
+      "watchlist_allows_unblock": false,
+      "requires_mutating_evidence": false,
+      "requires_persisted_artifact": false,
+      "requires_live_handle_validation": false,
+      "acceptance_contract": {
+        "kind": "generic_read_strict",
+        "mode": "strict",
+        "required_subjects": "none",
+        "required_predicates": [
+          "domain_tool_evidence_present"
+        ],
+        "mcp_proof_calls": [],
+        "forbid_contradictions": [],
+        "allow_advisory_unblock": false,
+        "acceptance_requirements": {
+          "slice_id": "compiled_plan_v11_stage_7",
+          "contract_kind": "generic_read_strict"
+        }
+      },
+      "acceptance_proof": {},
+      "acceptance_blockers": [],
+      "budget_scale_applied": 6,
+      "depends_on": [
+        "compiled_plan_v11_stage_6"
+      ],
+      "status": "pending",
+      "acceptance_state": "pending",
+      "turn_count": 0,
+      "tool_call_count": 0,
+      "expensive_call_count": 0,
+      "assigned_worker_id": null,
+      "last_checkpoint_turn_id": "",
+      "last_checkpoint_summary": "",
+      "last_checkpoint_status": "",
+      "final_report_turn_id": "",
+      "last_error": "",
+      "last_summary": "",
+      "dependency_blocker_slice_id": "",
+      "dependency_blocker_reason_code": "",
+      "dependency_blocker_class": "",
+      "blocked_retry_count": 0,
+      "active_operation_ref": "",
+      "active_operation_status": "",
+      "active_operation_arguments": {},
+      "gate_hint": "",
+      "artifacts": [],
+      "facts": {},
+      "verdict": ""
     },
     {
       "slice_id": "compiled_plan_v11_stage_8",
       "title": "Same-window matched reruns",
-      "hypothesis": "Run immutable base and all overlay variants on the identical lockbox window to produce an unambiguous comparison.",
-      "objective": "Run immutable base and all overlay variants on the identical lockbox window to produce an unambiguous comparison.",
+      "hypothesis": "Run immutable base and all overlay variants on the exact same lockbox window to produce an unambiguous head-to-head comparison.",
+      "objective": "Run immutable base and all overlay variants on the exact same lockbox window to produce an unambiguous head-to-head comparison.",
       "success_criteria": [
-        "Matched same-window comparison table with all four routes completed and metrics computed."
+        "Complete matched same-window comparison table with all four routes",
+        "All runs use identical lockbox window with no ambiguity"
       ],
       "allowed_tools": [
         "backtests_plan",
         "backtests_runs",
         "backtests_analysis",
-        "research_record"
+        "research_memory"
       ],
       "evidence_requirements": [
-        "Matched same-window comparison table with all four routes completed and metrics computed."
+        "Complete matched same-window comparison table with all four routes",
+        "All runs use identical lockbox window with no ambiguity"
       ],
       "policy_tags": [
-        "matched_rerun",
+        "comparison",
         "same_window",
-        "lockbox"
+        "matched_rerun"
       ],
-      "max_turns": 24,
-      "max_tool_calls": 24,
-      "max_expensive_calls": 3,
+      "max_turns": 48,
+      "max_tool_calls": 36,
+      "max_expensive_calls": 12,
       "parallel_slot": 1,
+      "runtime_profile": "generic_mutation",
+      "required_prerequisite_facts": null,
+      "required_output_facts": [],
+      "finalization_mode": "none",
+      "dependency_unblock_mode": "accepted_only",
+      "watchlist_allows_unblock": false,
+      "requires_mutating_evidence": false,
+      "requires_persisted_artifact": false,
+      "requires_live_handle_validation": false,
+      "acceptance_contract": {
+        "kind": "generic_read_strict",
+        "mode": "strict",
+        "required_subjects": "none",
+        "required_predicates": [
+          "domain_tool_evidence_present"
+        ],
+        "mcp_proof_calls": [],
+        "forbid_contradictions": [],
+        "allow_advisory_unblock": false,
+        "acceptance_requirements": {
+          "slice_id": "compiled_plan_v11_stage_8",
+          "contract_kind": "generic_read_strict"
+        }
+      },
+      "acceptance_proof": {},
+      "acceptance_blockers": [],
       "budget_scale_applied": 6,
       "depends_on": [
-        "compiled_plan_v11_stage_3",
-        "compiled_plan_v11_stage_4",
         "compiled_plan_v11_stage_7"
       ],
       "status": "pending",
+      "acceptance_state": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
       "expensive_call_count": 0,
@@ -109,58 +267,20 @@
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
+      "dependency_blocker_slice_id": "",
+      "dependency_blocker_reason_code": "",
+      "dependency_blocker_class": "",
+      "blocked_retry_count": 0,
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
+      "gate_hint": "",
       "artifacts": [],
-      "facts": {}
-    },
-    {
-      "slice_id": "compiled_plan_v11_stage_9",
-      "title": "Cannibalization and ownership audit",
-      "hypothesis": "Prove the overlay genuinely improves the system by removing bad trades, not by masking problems or destroying profitable coverage.",
-      "objective": "Prove the overlay genuinely improves the system by removing bad trades, not by masking problems or destroying profitable coverage.",
-      "success_criteria": [
-        "Ownership/cannibalization verdict per route with quantified removed-loser share, removed-winner share, and coverage-loss risk."
-      ],
-      "allowed_tools": [
-        "backtests_analysis",
-        "research_record"
-      ],
-      "evidence_requirements": [
-        "Ownership/cannibalization verdict per route with quantified removed-loser share, removed-winner share, and coverage-loss risk."
-      ],
-      "policy_tags": [
-        "audit",
-        "cannibalization",
-        "ownership"
-      ],
-      "max_turns": 24,
-      "max_tool_calls": 24,
-      "max_expensive_calls": 3,
-      "parallel_slot": 1,
-      "budget_scale_applied": 6,
-      "depends_on": [
-        "compiled_plan_v11_stage_8"
-      ],
-      "status": "pending",
-      "turn_count": 0,
-      "tool_call_count": 0,
-      "expensive_call_count": 0,
-      "assigned_worker_id": null,
-      "last_checkpoint_turn_id": "",
-      "last_checkpoint_summary": "",
-      "last_checkpoint_status": "",
-      "final_report_turn_id": "",
-      "last_error": "",
-      "last_summary": "",
-      "active_operation_ref": "",
-      "active_operation_status": "",
-      "active_operation_arguments": {},
-      "artifacts": [],
-      "facts": {}
+      "facts": {},
+      "verdict": ""
     }
   ],
+  "mcp_catalog_hash": "c306b4054eaf8f466a7e29182863da4e7cd0610551ef83a0611c515c84aa415b",
   "plan_source_kind": "compiled_raw",
   "source_sequence_id": "compiled_plan_v11",
   "source_raw_plan": "raw_plans/plan_v11.md",
@@ -169,6 +289,7 @@
   "source_compile_report_path": "",
   "sequence_batch_index": 3,
   "status": "draft",
-  "created_at": "2026-04-11T11:05:11.914093+00:00",
-  "updated_at": "2026-04-11T11:05:11.914096+00:00"
+  "last_error": "",
+  "created_at": "2026-04-15T18:49:12.870433+00:00",
+  "updated_at": "2026-04-15T18:49:12.870435+00:00"
 }

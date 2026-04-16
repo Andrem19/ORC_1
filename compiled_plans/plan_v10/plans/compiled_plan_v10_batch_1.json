@@ -1,6 +1,6 @@
 {
   "plan_id": "compiled_plan_v10_batch_1",
-  "goal": "Честно доказать или опровергнуть, что microstructure-family (прежде всего cf_micro_imbalance_1h) даёт реальный overlay alpha поверх immutable base active-signal-v1.",
+  "goal": "Validate whether the microstructure feature family (primarily cf_micro_imbalance_1h) provides a genuine overlay alpha over the immutable base through a disciplined veto-first, lockbox-verified pipeline.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -9,50 +9,89 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "active-signal-v1@1 — immutable reference, менять базу запрещено",
-    "любое улучшение обязано пройти matched OOS lockbox comparison против базы на том же окне",
-    "активна только одна data family: microstructure_proxies, все остальные locked",
-    "feature selection / threshold / архитектура не подбираются по lockbox-окну",
-    "simple baselines проверяются до сложных моделей (simpler before smarter)",
-    "short side проверяется первой (short-first priority)",
-    "veto-overlay route обязателен; early-cut и directional scout открываются только через gate",
-    "запрещены: net_pnl>0 как единственный veto label, regression на future PnL, повторное открытие закрытых routes (leadership, breadth, path-asymmetry, regime-disagreement, event-only, trade-quality без нового слоя)",
-    "microstructure должен пройти тест почти сам по себе, без подмешивания старых feature packs"
+    "Immutable base active-signal-v1@1 must never be modified or re-tuned",
+    "Only microstructure_proxies family is active; all other feature families are locked",
+    "Do not reopen closed directions: leadership/breadth as directional edge, path-asymmetry, regime-disagreement, event-only overlays, trade-quality overlays without new information layer, derivatives positioning without real OI/liquidation/basis data",
+    "Lockbox overlay comparison (base vs base+overlay on same window) is mandatory before any strong conclusion",
+    "Simpler methods must be tested before complex models (bucket rule → threshold → logistic → CatBoost)",
+    "Short side is tested before long side at every stage",
+    "Veto overlay must be proven before early-cut or directional scout routes are unlocked",
+    "net_pnl > 0 must not be used as veto label — too noisy",
+    "Feature set limited to micro-core + minimal context support; no re-injection of old large feature packs",
+    "No feature/label/threshold selection on lockbox window; lockbox is truth-only"
   ],
   "slices": [
     {
       "slice_id": "compiled_plan_v10_stage_1",
-      "title": "Closure-audit v9 и статус-коррекция",
-      "hypothesis": "Формально закрыть v9 со статусом signal-discovered-route-unproven, открыть проект v10 и завести research map оси.",
-      "objective": "Формально закрыть v9 со статусом signal-discovered-route-unproven, открыть проект v10 и завести research map оси.",
+      "title": "Closure-audit v9 and status correction",
+      "hypothesis": "Formally close v9 with honest status, open v10 project, register immutable baseline reference, and set up research map axes and open-items tracker.",
+      "objective": "Formally close v9 with honest status, open v10 project, register immutable baseline reference, and set up research map axes and open-items tracker.",
       "success_criteria": [
-        "Clean project v10 создан",
-        "Статус v9 исправлен на signal discovered route unproven",
-        "Research map оси заведены",
-        "Open-items register зафиксирован"
+        "Clean v10 project exists with corrected v9 status",
+        "Research map axes initialized",
+        "Open-items register created with all tracked items"
       ],
       "allowed_tools": [
         "research_project",
-        "research_record",
+        "research_memory",
         "research_map"
       ],
       "evidence_requirements": [
-        "Clean project v10 создан",
-        "Статус v9 исправлен на signal discovered route unproven",
-        "Research map оси заведены",
-        "Open-items register зафиксирован"
+        "Clean v10 project exists with corrected v9 status",
+        "Research map axes initialized",
+        "Open-items register created with all tracked items"
       ],
       "policy_tags": [
         "setup",
-        "cheap_first"
+        "mandatory_first"
       ],
       "max_turns": 24,
       "max_tool_calls": 24,
-      "max_expensive_calls": 2,
+      "max_expensive_calls": 1,
       "parallel_slot": 1,
+      "runtime_profile": "research_setup",
+      "required_prerequisite_facts": [],
+      "required_output_facts": [
+        "research.baseline_configured",
+        "research.atlas_defined",
+        "research.invariants_recorded",
+        "research.naming_recorded"
+      ],
+      "finalization_mode": "fact_based",
+      "dependency_unblock_mode": "accepted_only",
+      "watchlist_allows_unblock": false,
+      "requires_mutating_evidence": false,
+      "requires_persisted_artifact": false,
+      "requires_live_handle_validation": false,
+      "acceptance_contract": {
+        "kind": "research_setup",
+        "mode": "strict",
+        "required_subjects": "persisted_research_setup_nodes",
+        "required_predicates": [
+          "research_project_present",
+          "research_setup_facts_present"
+        ],
+        "mcp_proof_calls": [
+          {
+            "tool": "research_memory",
+            "arguments": {
+              "action": "prove"
+            }
+          }
+        ],
+        "forbid_contradictions": [],
+        "allow_advisory_unblock": false,
+        "acceptance_requirements": {
+          "slice_id": "compiled_plan_v10_stage_1",
+          "contract_kind": "research_setup"
+        }
+      },
+      "acceptance_proof": {},
+      "acceptance_blockers": [],
       "budget_scale_applied": 6,
       "depends_on": [],
       "status": "pending",
+      "acceptance_state": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
       "expensive_call_count": 0,
@@ -63,30 +102,37 @@
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
+      "dependency_blocker_slice_id": "",
+      "dependency_blocker_reason_code": "",
+      "dependency_blocker_class": "",
+      "blocked_retry_count": 0,
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
+      "gate_hint": "",
       "artifacts": [],
-      "facts": {}
+      "facts": {},
+      "verdict": ""
     },
     {
       "slice_id": "compiled_plan_v10_stage_2",
-      "title": "Завершить materialization и dataset hardening для micro-core",
-      "hypothesis": "Убедиться, что все 7 microstructure features стабильно materialized, без leakage, и зафиксировать один рабочий dataset version для v10.",
-      "objective": "Убедиться, что все 7 microstructure features стабильно materialized, без leakage, и зафиксировать один рабочий dataset version для v10.",
+      "title": "Materialization and dataset hardening for micro-core",
+      "hypothesis": "Eliminate technical debt around 7 microstructure features by verifying stable materialization, correct 5m→1h alignment, absence of future leakage, and locking one working dataset version for v10.",
+      "objective": "Eliminate technical debt around 7 microstructure features by verifying stable materialization, correct 5m→1h alignment, absence of future leakage, and locking one working dataset version for v10.",
       "success_criteria": [
-        "Все 7 features: published=true, materialized=true, warmup_ok, null_rate_ok, alignment_ok, leakage_ok",
-        "Один зафиксированный dataset version"
+        "All 7 features pass: published, materialized, warmup_ok, null_rate_ok, alignment_ok, leakage_ok",
+        "Single dataset version locked for v10"
       ],
       "allowed_tools": [
         "features_custom",
         "features_dataset",
         "features_catalog",
-        "research_record"
+        "features_analytics",
+        "research_memory"
       ],
       "evidence_requirements": [
-        "Все 7 features: published=true, materialized=true, warmup_ok, null_rate_ok, alignment_ok, leakage_ok",
-        "Один зафиксированный dataset version"
+        "All 7 features pass: published, materialized, warmup_ok, null_rate_ok, alignment_ok, leakage_ok",
+        "Single dataset version locked for v10"
       ],
       "policy_tags": [
         "data_readiness",
@@ -96,11 +142,60 @@
       "max_tool_calls": 30,
       "max_expensive_calls": 6,
       "parallel_slot": 1,
+      "runtime_profile": "generic_mutation",
+      "required_prerequisite_facts": [
+        "research.baseline_configured",
+        "research.atlas_defined",
+        "research.invariants_recorded",
+        "research.naming_recorded"
+      ],
+      "required_output_facts": [],
+      "finalization_mode": "none",
+      "dependency_unblock_mode": "accepted_only",
+      "watchlist_allows_unblock": false,
+      "requires_mutating_evidence": false,
+      "requires_persisted_artifact": false,
+      "requires_live_handle_validation": false,
+      "acceptance_contract": {
+        "kind": "feature_contract_construction",
+        "mode": "strict",
+        "required_subjects": "published_feature_and_dataset_if_required",
+        "required_predicates": [
+          "feature_subject_present",
+          "feature_proof_pass"
+        ],
+        "mcp_proof_calls": [
+          {
+            "tool": "features_custom",
+            "arguments": {
+              "action": "inspect",
+              "view": "acceptance_proof"
+            }
+          },
+          {
+            "tool": "features_dataset",
+            "arguments": {
+              "action": "inspect",
+              "view": "acceptance_proof"
+            }
+          }
+        ],
+        "forbid_contradictions": [],
+        "allow_advisory_unblock": false,
+        "acceptance_requirements": {
+          "slice_id": "compiled_plan_v10_stage_2",
+          "contract_kind": "feature_contract_construction",
+          "require_dataset_activation": false
+        }
+      },
+      "acceptance_proof": {},
+      "acceptance_blockers": [],
       "budget_scale_applied": 6,
       "depends_on": [
         "compiled_plan_v10_stage_1"
       ],
       "status": "pending",
+      "acceptance_state": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
       "expensive_call_count": 0,
@@ -111,48 +206,78 @@
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
+      "dependency_blocker_slice_id": "",
+      "dependency_blocker_reason_code": "",
+      "dependency_blocker_class": "",
+      "blocked_retry_count": 0,
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
+      "gate_hint": "",
       "artifacts": [],
-      "facts": {}
+      "facts": {},
+      "verdict": ""
     },
     {
       "slice_id": "compiled_plan_v10_stage_3",
       "title": "Augmented trade atlas with micro-core",
-      "hypothesis": "Обогатить trade atlas базы micro-features и выявить, где сигнал сильнее всего и как его правильно использовать.",
-      "objective": "Обогатить trade atlas базы micro-features и выявить, где сигнал сильнее всего и как его правильно использовать.",
+      "hypothesis": "Enrich base trade atlas with microstructure features at entry time, build analytical cuts (long/short, winners/losers, stop-loss clusters, worst-decile, weak-window, time-limit), and identify 3–5 strongest empirical patterns.",
+      "objective": "Enrich base trade atlas with microstructure features at entry time, build analytical cuts (long/short, winners/losers, stop-loss clusters, worst-decile, weak-window, time-limit), and identify 3–5 strongest empirical patterns.",
       "success_criteria": [
-        "Trade atlas обогащён micro-features",
-        "Разрезы по side, outcome, trade-type построены",
-        "Monotonicity и side asymmetry для cf_micro_imbalance_1h проверены",
-        "3–5 сильных паттернов зафиксированы"
+        "Trade atlas enriched with micro-core features",
+        "Key cuts analyzed with documented monotonicity and asymmetry findings",
+        "3–5 strongest empirical patterns recorded"
       ],
       "allowed_tools": [
-        "features_dataset",
+        "features_analytics",
         "backtests_analysis",
-        "backtests_strategy",
-        "research_record"
+        "research_memory"
       ],
       "evidence_requirements": [
-        "Trade atlas обогащён micro-features",
-        "Разрезы по side, outcome, trade-type построены",
-        "Monotonicity и side asymmetry для cf_micro_imbalance_1h проверены",
-        "3–5 сильных паттернов зафиксированы"
+        "Trade atlas enriched with micro-core features",
+        "Key cuts analyzed with documented monotonicity and asymmetry findings",
+        "3–5 strongest empirical patterns recorded"
       ],
       "policy_tags": [
         "analysis",
-        "cheap_first"
+        "exploration"
       ],
       "max_turns": 36,
       "max_tool_calls": 30,
       "max_expensive_calls": 6,
       "parallel_slot": 1,
+      "runtime_profile": "generic_mutation",
+      "required_prerequisite_facts": null,
+      "required_output_facts": [],
+      "finalization_mode": "none",
+      "dependency_unblock_mode": "accepted_only",
+      "watchlist_allows_unblock": false,
+      "requires_mutating_evidence": false,
+      "requires_persisted_artifact": false,
+      "requires_live_handle_validation": false,
+      "acceptance_contract": {
+        "kind": "generic_read_strict",
+        "mode": "strict",
+        "required_subjects": "none",
+        "required_predicates": [
+          "domain_tool_evidence_present"
+        ],
+        "mcp_proof_calls": [],
+        "forbid_contradictions": [],
+        "allow_advisory_unblock": false,
+        "acceptance_requirements": {
+          "slice_id": "compiled_plan_v10_stage_3",
+          "contract_kind": "generic_read_strict"
+        }
+      },
+      "acceptance_proof": {},
+      "acceptance_blockers": [],
       "budget_scale_applied": 6,
       "depends_on": [
         "compiled_plan_v10_stage_2"
       ],
       "status": "pending",
+      "acceptance_state": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
       "expensive_call_count": 0,
@@ -163,13 +288,20 @@
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
+      "dependency_blocker_slice_id": "",
+      "dependency_blocker_reason_code": "",
+      "dependency_blocker_class": "",
+      "blocked_retry_count": 0,
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
+      "gate_hint": "",
       "artifacts": [],
-      "facts": {}
+      "facts": {},
+      "verdict": ""
     }
   ],
+  "mcp_catalog_hash": "c306b4054eaf8f466a7e29182863da4e7cd0610551ef83a0611c515c84aa415b",
   "plan_source_kind": "compiled_raw",
   "source_sequence_id": "compiled_plan_v10",
   "source_raw_plan": "raw_plans/plan_v10.md",
@@ -178,6 +310,7 @@
   "source_compile_report_path": "",
   "sequence_batch_index": 1,
   "status": "draft",
-  "created_at": "2026-04-11T11:03:23.954439+00:00",
-  "updated_at": "2026-04-11T11:03:23.954455+00:00"
+  "last_error": "",
+  "created_at": "2026-04-15T18:47:58.336353+00:00",
+  "updated_at": "2026-04-15T18:47:58.336356+00:00"
 }

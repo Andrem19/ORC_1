@@ -2,7 +2,7 @@
   "source_file": "raw_plans/plan_v7.md",
   "source_hash": "50047c8ea7fe63bf16bf9495c6650924453fc99241a6855b73f138a0d41ba9eb",
   "source_title": "План дальнейших исследований для v7",
-  "goal": "Довести до честного решения: может ли новый directional feature layer + CatBoost classification дать additive long/short sleeve поверх active-signal-v1@1 при корректных labels, полных sides и horizons.",
+  "goal": "Довести до честного terminal verdict вопрос: может ли новый directional feature layer + CatBoost classification дать additive sleeve поверх active-signal-v1@1 при корректных labels, полном покрытии sides/horizons и минимальном feature core.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -11,44 +11,41 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "База active-signal-v1@1 immutable — не менять, не подбирать часы/дни/пороги/исолнение.",
-    "Не выбирать feature set, label scheme, horizon, threshold или архитектуру по lockbox-окну.",
-    "Улучшением считается только matched OOS comparison с базой на том же окне.",
-    "Не возвращаться к regression-предсказанию future PnL.",
-    "Не возвращаться к IV-family как к самостоятельному directional layer.",
-    "net_pnl>0 больше не использовать как primary label scheme.",
-    "Не обучать multiclass model и не строить router до прохождения хотя бы одного standalone sleeve через OOS.",
-    "Labels frozen до training и не меняются до конца selection-stage.",
-    "Выбор pack и threshold — только по selection OOS; lockbox untouched.",
-    "Short-first приоритет: short 18h → short 12h → new long tests."
+    "active-signal-v1@1 is immutable — never modify base snapshot, its hours, days, thresholds, execution, feature set, label scheme, horizon or architecture.",
+    "No improvement claim without matched OOS comparison against base on the same window.",
+    "Never return to PnL regression or IV-family as standalone directional layer.",
+    "Labels frozen after stage_2 — no drift permitted through selection-stage.",
+    "No multiclass models, no router, until at least one standalone sleeve passes lockbox OOS.",
+    "Short-first priority: short 18h and short 12h before any new long tests.",
+    "Lockbox window untouched until stage_9; all model/threshold choices made on selection OOS only.",
+    "Only compact directional feature packs — no broad feature brainstorming before core debts closed."
   ],
   "stages": [
     {
       "stage_id": "stage_1",
       "title": "Closure-audit v6 и фиксация инвариантов v7",
-      "objective": "Честно зафиксировать, что именно в v6 осталось недоделанным, открыть проект v7 и завести research map с осями и open-items register.",
+      "objective": "Honestly document what v6 left incomplete and lock immutable reference parameters before any new work begins.",
       "actions": [
-        "Открыть новый research_project для v7.",
-        "Записать в research_record: что в v6 закрыто, что pending, какие выводы окончательные.",
-        "Зафиксировать immutable reference: snapshot_id=active-signal-v1, version=1, symbol=BTCUSDT, anchor=1h, execution=5m.",
-        "В research_map завести оси: branch, feature_family, side, horizon, label_scheme, model_stage, final_decision.",
-        "Создать open-items register для: v6_short_12h, v6_short_18h, v6_long_18h, barrier_label_contract, critical_directional_core, matched_oos_with_base, final_model_route_verdict."
+        "Open a new research_project for v7.",
+        "Record in research_memory: what v6 closed, what remains pending, which conclusions are final.",
+        "Pin immutable baseline ref: snapshot_id=active-signal-v1, version=1, symbol=BTCUSDT, anchor=1h, execution=5m.",
+        "Define research_map atlas axes: branch, feature_family, side, horizon, label_scheme, model_stage, final_decision.",
+        "Create open-items register for: v6_short_12h, v6_short_18h, v6_long_18h, barrier_label_contract, critical_directional_core, matched_oos_with_base, final_model_route_verdict."
       ],
       "success_criteria": [
-        "project_id создан и зафиксирован.",
-        "v6 closure-audit node записан в research_record.",
-        "Open-items register содержит минимум 7 позиций.",
-        "Atlas dimensions определены в research_map."
+        "v7 project exists with unique project_id.",
+        "v6 closure audit node recorded in research_memory.",
+        "Atlas dimensions defined in research_map.",
+        "Open-items register contains all 7 required items."
       ],
       "tool_hints": [
         "research_project",
-        "research_record",
+        "research_memory",
         "research_map"
       ],
       "policy_tags": [
         "setup",
-        "cheap_first",
-        "foundation"
+        "cheap_first"
       ],
       "depends_on": [],
       "required": true,
@@ -59,100 +56,95 @@
     {
       "stage_id": "stage_2",
       "title": "Freeze barrier-label contract",
-      "objective": "Формально утвердить ровно два label schemes (balanced_barrier, conservative_barrier) для всех сторон и горизонтов и запретить изменения до конца selection-stage.",
+      "objective": "Eliminate the plan-vs-execution label drift from v6 by formally freezing exactly two label schemes for all sides and horizons.",
       "actions": [
-        "Утвердить два label schemes: balanced_barrier и conservative_barrier.",
-        "Для каждого horizon (12h, 18h) и каждой стороны (long_success, short_success) зафиксировать определения.",
-        "Описать: какое движение = успех, какой adverse move ломает идею, как учитываются издержки, как учитываются ambiguous cases.",
-        "Запретить любые изменения labels до конца selection-stage.",
-        "Записать frozen label contract в research_record."
+        "Approve exactly two label schemes: balanced_barrier and conservative_barrier.",
+        "For each horizon (12h, 18h) and each side (long_success, short_success) define: success movement threshold, adverse break threshold, cost accounting, ambiguous-case handling.",
+        "Record the complete label specification in research_memory.",
+        "Declare labels frozen — no changes allowed until selection-stage is complete."
       ],
       "success_criteria": [
-        "balanced_barrier определён для long и short на 12h и 18h.",
-        "conservative_barrier определён для long и short на 12h и 18h.",
-        "ambiguous case handling задокументирован.",
-        "net_pnl>0 scheme официально отвергнут."
+        "Both label schemes fully specified for all 4 side×horizon combinations.",
+        "net_pnl>0 explicitly excluded as primary label scheme.",
+        "Label contract recorded and marked frozen."
       ],
       "tool_hints": [
-        "research_record",
-        "models_dataset"
+        "research_memory",
+        "research_map"
       ],
       "policy_tags": [
         "contract",
-        "freeze",
-        "no_regression"
+        "immutable"
       ],
       "depends_on": [
         "stage_1"
       ],
       "required": true,
-      "parallelizable": true,
-      "gate_hint": "",
+      "parallelizable": false,
+      "gate_hint": "Cannot proceed to feature or modeling work without frozen labels.",
       "raw_stage_ref": "stage_2"
     },
     {
       "stage_id": "stage_3",
       "title": "Достроить critical directional core",
-      "objective": "Построить, валидировать и материализовать минимально необходимый набор directional features: short-first (приоритет), затем long support, затем context.",
+      "objective": "Build only the missing directional features essential for v7 verdict — short-deterioration group first, then long-recovery, then context.",
       "actions": [
-        "Short-first missing features: cf_failed_move_reject_6h, cf_rollover_before_daily, cf_fast_slow_regime_gap, cf_event_failure_combo.",
-        "Long support features: cf_failed_move_reclaim_6h, cf_reversal_quality_6h, cf_range_escape_quality_12h, cf_recovery_before_daily.",
-        "Context features: cf_expiry_leadership_conflict, cf_funding_breadth_conflict, cf_event_regime_asymmetry, cf_state_instability_score.",
-        "Для каждого feature: validate, publish, materialize, inspect coverage, проверить warmup, проверить causality."
+        "Build and validate short-first missing features: cf_failed_move_reject_6h, cf_rollover_before_daily, cf_fast_slow_regime_gap, cf_event_failure_combo.",
+        "Build and validate long support features: cf_failed_move_reclaim_6h, cf_reversal_quality_6h, cf_range_escape_quality_12h, cf_recovery_before_daily.",
+        "Build and validate context features: cf_expiry_leadership_conflict, cf_funding_breadth_conflict, cf_event_regime_asymmetry, cf_state_instability_score.",
+        "For each feature: validate, publish, materialize, check coverage, check warmup, verify causality.",
+        "Record results per feature in a tracking table with priority_group, validation status, materialization, coverage, warmup_ok."
       ],
       "success_criteria": [
-        "Все short-first missing features валидированы и опубликованы.",
-        "Все long support features валидированы и опубликованы.",
-        "Все context features валидированы и опубликованы.",
-        "Coverage и warmup issues ≤ 0 для критических features.",
-        "Материализованный feature dataset содержит весь core."
+        "All short-first priority features validated and published.",
+        "All long support features validated and published.",
+        "All context features validated and published.",
+        "No coverage or warmup issues on any included feature.",
+        "Total new features count and materialization status recorded."
       ],
       "tool_hints": [
         "features_custom",
-        "features_dataset",
         "features_catalog",
+        "features_dataset",
         "features_analytics"
       ],
       "policy_tags": [
-        "short_first",
-        "cheap_first",
-        "directional_core"
+        "feature_engineering",
+        "short_first"
       ],
       "depends_on": [
-        "stage_1"
+        "stage_2"
       ],
       "required": true,
-      "parallelizable": true,
+      "parallelizable": false,
       "gate_hint": "",
       "raw_stage_ref": "stage_3"
     },
     {
       "stage_id": "stage_4",
       "title": "Dataset split и modeling surfaces",
-      "objective": "После завершения core-features окончательно freeze modeling surfaces: frozen windows (train, selection OOS, lockbox OOS) и три поверхности (full, base_absent, weak_window).",
+      "objective": "Freeze train / selection-OOS / lockbox windows and prepare modeling surfaces after core features are finalized.",
       "actions": [
-        "Подтвердить frozen windows: train, selection OOS, lockbox OOS.",
-        "Подготовить поверхности: full_surface, base_absent_surface.",
-        "weak_window_surface — только если понадобится позже (gated).",
-        "Зафиксировать: выбор pack по selection OOS, выбор threshold по selection OOS, lockbox untouched.",
-        "Materialize training datasets через models_dataset contract."
+        "Confirm frozen windows: train, selection OOS, lockbox OOS.",
+        "Prepare three modeling surfaces: full_surface, base_absent_surface, weak_window_surface (deferred if not needed).",
+        "Build managed feature datasets for each surface.",
+        "Record that pack selection and threshold selection use selection OOS only; lockbox untouched."
       ],
       "success_criteria": [
-        "Frozen windows подтверждены и зафиксированы.",
-        "full_surface и base_absent_surface подготовлены.",
-        "Выбор pack и threshold ограничен selection OOS."
+        "Frozen windows confirmed and recorded.",
+        "At least full_surface and base_absent_surface datasets built.",
+        "Selection rule documented: all choices on selection OOS, lockbox sealed."
       ],
       "tool_hints": [
         "models_dataset",
-        "features_dataset",
-        "research_record"
+        "datasets",
+        "features_dataset"
       ],
       "policy_tags": [
-        "freeze",
-        "data_readiness"
+        "data_preparation",
+        "immutable"
       ],
       "depends_on": [
-        "stage_2",
         "stage_3"
       ],
       "required": true,
@@ -163,30 +155,29 @@
     {
       "stage_id": "stage_5",
       "title": "Short-first plausibility stage",
-      "objective": "Проверить short-side models M1_short_12h и M2_short_18h на plausibility: AUC, PR AUC, top-decile lift, economic sanity — всё на selection OOS.",
+      "objective": "Train and evaluate short-side models (M1_short_12h, M2_short_18h) on selection OOS to confirm directional plausibility before any long work.",
       "actions": [
-        "Обучить M1_short_cls_12h с short-first feature pack.",
-        "Обучить M2_short_cls_18h с short-first feature pack.",
-        "Проверить: ROC AUC, PR AUC, precision in top decile, lift vs base rate, calibration sanity.",
-        "Проверить economic plausibility: mean realized outcome top bucket, monotonicity across buckets.",
-        "По результатам решить — promote to full training или reject."
+        "Train M1_short_cls_12h with short-deterioration feature pack.",
+        "Train M2_short_cls_18h with short-deterioration feature pack.",
+        "Evaluate each on selection OOS: ROC AUC, PR AUC, precision in top decile, lift vs base rate, calibration sanity.",
+        "Check economic sanity: mean realized outcome in top bucket, monotonicity across buckets, no micro-sample-only edge.",
+        "Decide promote-to-full-training for each model."
       ],
       "success_criteria": [
-        "M1_short_12h обучена и оценена на selection OOS.",
-        "M2_short_18h обучена и оценена на selection OOS.",
-        "Для каждого: auc_ok, pr_ok, top_decile_ok, economic_plausibility_ok определены.",
-        "Promote/reject решение зафиксировано."
+        "M1_short_12h evaluated with AUC, PR, top-decile precision, economic plausibility.",
+        "M2_short_18h evaluated with same metrics.",
+        "Promotion decision recorded for each model."
       ],
       "tool_hints": [
         "models_train",
-        "models_compare",
         "models_registry",
-        "features_dataset"
+        "models_compare",
+        "features_analytics"
       ],
       "policy_tags": [
+        "modeling",
         "short_first",
-        "plausibility",
-        "selection_oos_only"
+        "cheap_first"
       ],
       "depends_on": [
         "stage_4"
@@ -199,29 +190,27 @@
     {
       "stage_id": "stage_6",
       "title": "Long 18h plausibility stage",
-      "objective": "Проверить long-side model M3_long_cls_18h на plausibility после завершения short-side evaluation, используя balanced_barrier и conservative_barrier.",
+      "objective": "Test long 18h with Leadership-Breadth, Path-Asymmetry, and Long-Recovery-Core packs — only after short side has been honestly evaluated.",
       "actions": [
-        "Обучить M3_long_cls_18h с packs: Leadership-Breadth, Path-Asymmetry, Long-Recovery-Core.",
-        "Протестировать с balanced_barrier и conservative_barrier labels.",
-        "Проверить: ROC AUC, PR AUC, precision in top decile, lift vs base rate, calibration sanity.",
-        "Проверить economic plausibility.",
-        "По результатам решить — promote to full training или reject."
+        "Train M3_long_cls_18h with balanced_barrier and conservative_barrier labels.",
+        "Use feature packs: Leadership-Breadth, Path-Asymmetry, Long-Recovery-Core.",
+        "Evaluate on selection OOS with same metric set as short models.",
+        "Decide promotion to full training."
       ],
       "success_criteria": [
-        "M3_long_18h обучена и оценена на selection OOS с обоими label schemes.",
-        "auc_ok, pr_ok, top_decile_ok, economic_plausibility_ok определены.",
-        "Promote/reject решение зафиксировано."
+        "M3_long_18h evaluated on both label schemes.",
+        "AUC, PR, top-decile, economic plausibility recorded.",
+        "Promotion decision recorded."
       ],
       "tool_hints": [
         "models_train",
-        "models_compare",
         "models_registry",
-        "features_dataset"
+        "models_compare",
+        "features_analytics"
       ],
       "policy_tags": [
-        "long_side",
-        "plausibility",
-        "selection_oos_only"
+        "modeling",
+        "long"
       ],
       "depends_on": [
         "stage_5"
@@ -232,55 +221,20 @@
       "raw_stage_ref": "stage_6"
     },
     {
-      "stage_id": "stage_6b",
-      "title": "Weak-window optional models (M4/M5)",
-      "objective": "Если базовые directional models показали слабый но содержательный signal — обучить M4_short_cls_weak_window и M5_long_cls_weak_window.",
-      "actions": [
-        "Проверить gate: хотя бы один из M1/M2/M3 показал слабый но содержательный signal на selection OOS.",
-        "Если gate пройден — подготовить weak_window_surface.",
-        "Обучить M4_short_cls_weak_window.",
-        "Обучить M5_long_cls_weak_window.",
-        "Оценить по тем же критериям plausibility."
-      ],
-      "success_criteria": [
-        "Gate проверен: базовые models показали слабый но содержательный signal.",
-        "M4 и M5 обучены (если gate пройден) или пропущены (если нет)."
-      ],
-      "tool_hints": [
-        "models_train",
-        "models_compare",
-        "models_registry"
-      ],
-      "policy_tags": [
-        "optional",
-        "gated",
-        "weak_window"
-      ],
-      "depends_on": [
-        "stage_5",
-        "stage_6"
-      ],
-      "required": false,
-      "parallelizable": false,
-      "gate_hint": "Базовые directional models (M1/M2/M3) показали слабый но содержательный signal на selection OOS — без этого M4/M5 не строятся.",
-      "raw_stage_ref": "stage_6"
-    },
-    {
       "stage_id": "stage_7",
       "title": "Full training и frozen model candidates",
-      "objective": "Обучить финальные модели для всех кандидатов, прошедших plausibility, и заморозить их для lockbox.",
+      "objective": "Retrain promoted models to final frozen state with locked hyperparameters for lockbox evaluation.",
       "actions": [
-        "Для каждого promoted candidate провести full training.",
-        "Заморозить params, best_iteration, feature pack.",
-        "Подтвердить selection OOS quality на финальной модели.",
-        "Зарегистрировать frozen model versions в models_registry."
+        "For each model promoted from plausibility stages: retrain with final hyperparameters.",
+        "Freeze model version in registry with best iteration recorded.",
+        "Verify selection OOS metrics hold after final training.",
+        "Mark each model as frozen_for_lockbox."
       ],
       "success_criteria": [
-        "Каждый promoted candidate обучен финально.",
-        "params_frozen=true, best_iteration зафиксирован.",
-        "selection_oos_ok подтверждён.",
-        "frozen_for_lockbox=true.",
-        "Model versions зарегистрированы."
+        "All promoted models frozen in model registry.",
+        "Parameters and best iteration recorded.",
+        "Selection OOS metrics confirmed.",
+        "Models ready for sleeve conversion."
       ],
       "tool_hints": [
         "models_train",
@@ -288,45 +242,41 @@
         "models_compare"
       ],
       "policy_tags": [
-        "freeze",
-        "full_training"
+        "modeling",
+        "immutable"
       ],
       "depends_on": [
         "stage_5",
         "stage_6"
       ],
       "required": true,
-      "parallelizable": false,
+      "parallelizable": true,
       "gate_hint": "",
       "raw_stage_ref": "stage_7"
     },
     {
       "stage_id": "stage_8",
       "title": "Превращение лучших моделей в tradeable sleeves",
-      "objective": "Перевести frozen model candidates в tradeable sleeves с frozen thresholds и publish как model-backed features.",
+      "objective": "Convert frozen models into tradeable sleeves with frozen thresholds ready for OOS backtest.",
       "actions": [
-        "Для каждой frozen модели определить threshold tiers.",
-        "Заморозить threshold до lockbox.",
-        "Оценить expected density.",
-        "Опубликовать model-backed custom features через models_to_feature.",
-        "Создать/обновить strategy snapshots для sleeves."
+        "For each frozen model, create a sleeve with threshold tier determined on selection OOS.",
+        "Freeze thresholds before any lockbox exposure.",
+        "Publish model-backed custom features if applicable.",
+        "Record expected signal density for each sleeve."
       ],
       "success_criteria": [
-        "sleeve_id определён для каждого promoted model.",
-        "threshold_frozen_before_lockbox=true.",
-        "expected_density оценён.",
-        "ready_for_oos_backtest=true.",
-        "Model-backed features опубликованы."
+        "Each promoted model has a sleeve_id with frozen threshold.",
+        "Thresholds set on selection OOS only.",
+        "Sleeves marked ready_for_oos_backtest."
       ],
       "tool_hints": [
         "models_to_feature",
-        "models_registry",
         "backtests_strategy",
-        "features_custom"
+        "models_registry"
       ],
       "policy_tags": [
-        "freeze",
-        "sleeve_creation"
+        "sleeve_creation",
+        "immutable"
       ],
       "depends_on": [
         "stage_7"
@@ -339,29 +289,26 @@
     {
       "stage_id": "stage_9",
       "title": "Matched OOS comparison против базы",
-      "objective": "Запустить lockbox OOS backtests для каждого sleeve и сравнить с базой active-signal-v1@1 на том же окне — главный критерий additive value.",
+      "objective": "Run lockbox OOS backtests for each sleeve and compare matched performance against the immutable base strategy.",
       "actions": [
-        "Запланировать backtests через backtests_plan с readiness checks.",
-        "Запустить matched OOS runs для каждого sleeve.",
-        "Запустить baseline run на том же lockbox окне.",
-        "Собрать метрики: PnL, trades, profit factor, max drawdown, avg/median trade.",
-        "Сравнить sleeve vs base на идентичном окне."
+        "Run lockbox OOS backtest for each sleeve.",
+        "Run matched base strategy backtest on the same lockbox window.",
+        "Compare: PnL, trade count, profit factor, max drawdown, avg trade, median trade.",
+        "Record all results in comparison table."
       ],
       "success_criteria": [
-        "Lockbox OOS runs завершены для всех sleeves и базы.",
-        "Matched comparison таблица заполнена.",
-        "Окно идентично для sleeve и base."
+        "Lockbox backtest completed for all sleeves.",
+        "Base comparison available on the same window.",
+        "Performance metrics recorded per sleeve and per base run."
       ],
       "tool_hints": [
-        "backtests_plan",
         "backtests_runs",
         "backtests_analysis",
         "backtests_strategy"
       ],
       "policy_tags": [
         "lockbox",
-        "matched_oos",
-        "strict_comparison"
+        "evaluation"
       ],
       "depends_on": [
         "stage_8"
@@ -374,30 +321,30 @@
     {
       "stage_id": "stage_10",
       "title": "Ownership, cannibalization и proof of new entries",
-      "objective": "Доказать, что model sleeve добавляет новые прибыльные сделки, а не просто каннибализирует base strategy.",
+      "objective": "Prove that each candidate sleeve adds genuinely new profitable trades rather than cannibalizing the base strategy.",
       "actions": [
-        "Рассчитать overlap rate между sleeve trades и base trades.",
-        "Посчитать truly_new_trades и replaced_base_trades.",
-        "Оценить PnL именно новых trades.",
-        "Проверить ownership_positive: new trades盈利.",
-        "Проверить weak_window repair (если applicable).",
-        "Зафиксировать final_decision для каждого sleeve."
+        "Measure overlap rate between sleeve trades and base trades.",
+        "Count truly new trades introduced by the sleeve.",
+        "Count base trades replaced/cannibalized.",
+        "Calculate PnL contribution of new trades only.",
+        "Check if weak-window repair is observed.",
+        "Record final per-candidate decision: accept or reject."
       ],
       "success_criteria": [
-        "overlap_rate рассчитан для каждого sleeve.",
-        "truly_new_trades > 0 и pnl_of_new_trades > 0.",
-        "ownership_positive определён.",
-        "final_decision (accept/reject) зафиксирован."
+        "Overlap rate computed for every candidate.",
+        "New-trade PnL contribution quantified.",
+        "Ownership_positive flag set per candidate.",
+        "Final accept/reject decision documented."
       ],
       "tool_hints": [
         "backtests_analysis",
         "backtests_runs",
-        "research_record"
+        "research_memory"
       ],
       "policy_tags": [
         "ownership",
-        "additive_proof",
-        "final_decision"
+        "lockbox",
+        "terminal_decision"
       ],
       "depends_on": [
         "stage_9"
@@ -410,32 +357,30 @@
     {
       "stage_id": "stage_11",
       "title": "Финальный вердикт по v7",
-      "objective": "Вынести итоговый вердикт по model route, classification route и всем открытым вопросам v7; записать complete closure report.",
+      "objective": "Write the terminal verdict on whether the classification + directional feature route produces an additive sleeve, and recommend the next research direction.",
       "actions": [
-        "Собрать итоги по всем axes: total_features_built, label_contract, models_trained.",
-        "Зафиксировать verdicts: short_12h, short_18h, long_18h, model_route.",
-        "Определить classification_route terminal verdict.",
-        "Записать final report в research_record.",
-        "Обновить research_map — все axes closed.",
-        "Определить next_recommended_direction.",
-        "Пройти операционный чек-лист."
+        "Summarize: total features built, label contract used, models trained.",
+        "Record verdicts: short_12h, short_18h, long_18h, model_route overall.",
+        "State classification route verdict: confirmed or rejected.",
+        "Confirm base strategy was never modified.",
+        "Write final v7 report in research_memory.",
+        "Update research_map with final decisions on all atlas axes.",
+        "Recommend next research direction."
       ],
       "success_criteria": [
-        "Все open items из stage_1 закрыты.",
-        "model_route_verdict записан (продолжать/остановить/pivot).",
-        "classification_route получил terminal verdict.",
-        "Финальный отчёт по v7 написан.",
-        "Операционный чек-лист пройден полностью."
+        "All open items from stage_1 resolved.",
+        "Terminal verdict recorded for model route.",
+        "Final v7 report persisted.",
+        "Operational checklist fully checked."
       ],
       "tool_hints": [
-        "research_record",
+        "research_memory",
         "research_map",
         "research_project"
       ],
       "policy_tags": [
         "finalization",
-        "verdict",
-        "report"
+        "terminal_decision"
       ],
       "depends_on": [
         "stage_10"
@@ -447,9 +392,8 @@
     }
   ],
   "warnings": [
-    "Plan is written in Russian; stage titles and objectives preserved in original language for fidelity.",
-    "Weak-window models M4/M5 are gated optional branches — not promoted unless base directional models show weak but substantive signal.",
-    "v6 left drift between planned barrier labels and actually used net_pnl>0 — v7 must enforce strict label discipline."
+    "Plan is in Russian; stage titles, objectives and actions translated/summarized for semantic clarity.",
+    "v6 left short side, 18h horizon, label contract and several feature families incomplete — v7 is a closure pass, not a new search."
   ],
   "parse_confidence": 0.95
 }

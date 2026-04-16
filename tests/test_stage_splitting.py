@@ -10,11 +10,17 @@ from app.raw_plan_compiler import (
     compile_semantic_raw_plan,
 )
 from app.raw_plan_models import RawPlanDocument, SemanticRawPlan, SemanticStage
+from app.services.mcp_catalog.classifier import build_family_tool_map
+from tests.mcp_catalog_fixtures import make_catalog_snapshot
 
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
+_SNAPSHOT = make_catalog_snapshot()
+_TOOL_SET = _SNAPSHOT.tool_name_set()
+_FAMILY_MAP = build_family_tool_map(_SNAPSHOT)
 
 
 def _document() -> RawPlanDocument:
@@ -83,20 +89,20 @@ def _big_stage(stage_id: str = "stage_3", **overrides) -> SemanticStage:
 class TestClassifySplitTools:
     def test_returns_none_below_threshold(self) -> None:
         tools = ["research_project", "research_map", "research_record"]
-        assert _classify_split_tools(tools) is None
+        assert _classify_split_tools(tools, catalog_snapshot=_SNAPSHOT) is None
 
     def test_returns_none_at_exact_threshold(self) -> None:
         tools = ["research_project", "research_map", "research_record", "datasets", "features_catalog"]
-        assert _classify_split_tools(tools) is None
+        assert _classify_split_tools(tools, catalog_snapshot=_SNAPSHOT) is None
 
     def test_returns_none_all_exploration(self) -> None:
         tools = ["datasets", "features_catalog", "events", "research_project", "research_map", "features_analytics"]
-        assert _classify_split_tools(tools) is None
+        assert _classify_split_tools(tools, catalog_snapshot=_SNAPSHOT) is None
 
     def test_returns_none_all_construction(self) -> None:
         tools = ["features_dataset", "features_custom", "events_sync", "models_dataset",
                  "backtests_strategy", "backtests_runs"]
-        assert _classify_split_tools(tools) is None
+        assert _classify_split_tools(tools, catalog_snapshot=_SNAPSHOT) is None
 
     def test_splits_mixed_tools(self) -> None:
         tools = [
@@ -104,7 +110,7 @@ class TestClassifySplitTools:
             "features_dataset", "features_custom", "events_sync",  # construction
             "research_record",  # both
         ]
-        result = _classify_split_tools(tools)
+        result = _classify_split_tools(tools, catalog_snapshot=_SNAPSHOT)
         assert result is not None
         exploration, construction = result
         assert "research_record" in exploration
@@ -120,7 +126,7 @@ class TestClassifySplitTools:
             "features_dataset", "features_custom", "features_analytics",
             "events", "events_sync", "models_dataset", "research_record",
         ]
-        result = _classify_split_tools(tools)
+        result = _classify_split_tools(tools, catalog_snapshot=_SNAPSHOT)
         assert result is not None
         exploration, construction = result
         assert len(exploration) >= 4
@@ -137,42 +143,42 @@ class TestClassifySplitTools:
 class TestMaybeSplitStage:
     def test_returns_single_for_small_stage(self) -> None:
         stage = _stage(tool_hints=["research_memory"])  # 4 tools
-        result = _maybe_split_stage(stage)
+        result = _maybe_split_stage(stage, catalog_snapshot=_SNAPSHOT, tool_name_set=_TOOL_SET, family_map=_FAMILY_MAP)
         assert len(result) == 1
         assert result[0].stage_id == "stage_test"
 
     def test_returns_single_for_exploration_only(self) -> None:
         stage = _stage(tool_hints=["datasets", "datasets_preview", "features_catalog",
                                    "events", "research_project", "research_map"])
-        result = _maybe_split_stage(stage)
+        result = _maybe_split_stage(stage, catalog_snapshot=_SNAPSHOT, tool_name_set=_TOOL_SET, family_map=_FAMILY_MAP)
         assert len(result) == 1
 
     def test_splits_big_stage_into_two(self) -> None:
         stage = _big_stage()
-        result = _maybe_split_stage(stage)
+        result = _maybe_split_stage(stage, catalog_snapshot=_SNAPSHOT, tool_name_set=_TOOL_SET, family_map=_FAMILY_MAP)
         assert len(result) == 2
         assert result[0].stage_id == "stage_3_part1"
         assert result[1].stage_id == "stage_3_part2"
 
     def test_part1_keeps_original_depends_on(self) -> None:
         stage = _big_stage(depends_on=["stage_2"])
-        result = _maybe_split_stage(stage)
+        result = _maybe_split_stage(stage, catalog_snapshot=_SNAPSHOT, tool_name_set=_TOOL_SET, family_map=_FAMILY_MAP)
         assert result[0].depends_on == ["stage_2"]
 
     def test_part2_depends_on_part1(self) -> None:
         stage = _big_stage()
-        result = _maybe_split_stage(stage)
+        result = _maybe_split_stage(stage, catalog_snapshot=_SNAPSHOT, tool_name_set=_TOOL_SET, family_map=_FAMILY_MAP)
         assert result[1].depends_on == ["stage_3_part1"]
 
     def test_sub_stages_not_parallelizable(self) -> None:
         stage = _big_stage(parallelizable=True)
-        result = _maybe_split_stage(stage)
+        result = _maybe_split_stage(stage, catalog_snapshot=_SNAPSHOT, tool_name_set=_TOOL_SET, family_map=_FAMILY_MAP)
         assert result[0].parallelizable is False
         assert result[1].parallelizable is False
 
     def test_part1_gets_exploration_tools(self) -> None:
         stage = _big_stage()
-        result = _maybe_split_stage(stage)
+        result = _maybe_split_stage(stage, catalog_snapshot=_SNAPSHOT, tool_name_set=_TOOL_SET, family_map=_FAMILY_MAP)
         part1_tools = result[0].tool_hints
         assert "datasets" in part1_tools
         assert "features_catalog" in part1_tools
@@ -184,7 +190,7 @@ class TestMaybeSplitStage:
 
     def test_part2_gets_construction_tools(self) -> None:
         stage = _big_stage()
-        result = _maybe_split_stage(stage)
+        result = _maybe_split_stage(stage, catalog_snapshot=_SNAPSHOT, tool_name_set=_TOOL_SET, family_map=_FAMILY_MAP)
         part2_tools = result[1].tool_hints
         assert "features_dataset" in part2_tools
         assert "features_custom" in part2_tools
@@ -196,19 +202,19 @@ class TestMaybeSplitStage:
 
     def test_part1_has_extra_success_criterion(self) -> None:
         stage = _big_stage()
-        result = _maybe_split_stage(stage)
+        result = _maybe_split_stage(stage, catalog_snapshot=_SNAPSHOT, tool_name_set=_TOOL_SET, family_map=_FAMILY_MAP)
         assert "Exploration phase complete" in result[0].success_criteria
         assert "Exploration phase complete" not in result[1].success_criteria
 
     def test_titles_indicate_phase(self) -> None:
         stage = _big_stage()
-        result = _maybe_split_stage(stage)
+        result = _maybe_split_stage(stage, catalog_snapshot=_SNAPSHOT, tool_name_set=_TOOL_SET, family_map=_FAMILY_MAP)
         assert "(exploration)" in result[0].title
         assert "(construction)" in result[1].title
 
     def test_inherits_objective_and_actions(self) -> None:
         stage = _big_stage()
-        result = _maybe_split_stage(stage)
+        result = _maybe_split_stage(stage, catalog_snapshot=_SNAPSHOT, tool_name_set=_TOOL_SET, family_map=_FAMILY_MAP)
         assert result[0].objective == stage.objective
         assert result[1].objective == stage.objective
         assert result[0].actions == stage.actions
@@ -227,7 +233,7 @@ class TestExpandStages:
             _stage(stage_id="s2", tool_hints=["feature_contract"]),  # 4 tools
             _stage(stage_id="s3", tool_hints=["finalization"]),      # 3 tools
         ]
-        result = _expand_stages(stages)
+        result = _expand_stages(stages, catalog_snapshot=_SNAPSHOT, tool_name_set=_TOOL_SET, family_map=_FAMILY_MAP)
         assert len(result) == 3
         assert [s.stage_id for s in result] == ["s1", "s2", "s3"]
 
@@ -238,7 +244,7 @@ class TestExpandStages:
             _big_stage(stage_id="s3", depends_on=["s2"]),
             _stage(stage_id="s4", tool_hints=["analysis"], depends_on=["s3"]),
         ]
-        result = _expand_stages(stages)
+        result = _expand_stages(stages, catalog_snapshot=_SNAPSHOT, tool_name_set=_TOOL_SET, family_map=_FAMILY_MAP)
         assert len(result) == 5
         ids = [s.stage_id for s in result]
         assert "s3_part1" in ids
@@ -251,7 +257,7 @@ class TestExpandStages:
             _big_stage(stage_id="s3", depends_on=["s2"]),
             _stage(stage_id="s4", tool_hints=["analysis"], depends_on=["s3"]),
         ]
-        result = _expand_stages(stages)
+        result = _expand_stages(stages, catalog_snapshot=_SNAPSHOT, tool_name_set=_TOOL_SET, family_map=_FAMILY_MAP)
         s4 = next(s for s in result if s.stage_id == "s4")
         assert s4.depends_on == ["s3_part2"]
 
@@ -260,7 +266,7 @@ class TestExpandStages:
             _stage(stage_id="s1", tool_hints=["research_memory"]),
             _big_stage(stage_id="s3", depends_on=["s1"]),
         ]
-        result = _expand_stages(stages)
+        result = _expand_stages(stages, catalog_snapshot=_SNAPSHOT, tool_name_set=_TOOL_SET, family_map=_FAMILY_MAP)
         part1 = next(s for s in result if s.stage_id == "s3_part1")
         assert part1.depends_on == ["s1"]
 
@@ -268,7 +274,7 @@ class TestExpandStages:
         stages = [
             _big_stage(stage_id="s3", depends_on=["s1"]),
         ]
-        result = _expand_stages(stages)
+        result = _expand_stages(stages, catalog_snapshot=_SNAPSHOT, tool_name_set=_TOOL_SET, family_map=_FAMILY_MAP)
         part2 = next(s for s in result if s.stage_id == "s3_part2")
         assert part2.depends_on == ["s3_part1"]
 
@@ -277,7 +283,7 @@ class TestExpandStages:
             _stage(stage_id="s1", tool_hints=["research_memory"]),
             _stage(stage_id="s2", tool_hints=["analysis"], depends_on=["s1"]),
         ]
-        result = _expand_stages(stages)
+        result = _expand_stages(stages, catalog_snapshot=_SNAPSHOT, tool_name_set=_TOOL_SET, family_map=_FAMILY_MAP)
         s2 = next(s for s in result if s.stage_id == "s2")
         assert s2.depends_on == ["s1"]  # unchanged
 
@@ -331,23 +337,43 @@ class TestCompileWithSplitting:
         )
 
     def test_stage_count_includes_sub_stages(self) -> None:
-        seq = compile_semantic_raw_plan(_document(), self._semantic_with_big_stage(), semantic_method="llm")
+        seq = compile_semantic_raw_plan(
+            _document(),
+            self._semantic_with_big_stage(),
+            semantic_method="llm",
+            catalog_snapshot=_SNAPSHOT,
+        )
         # 4 original stages → stage_3 splits → 5 compiled stages
         assert seq.report.stage_count == 5
 
     def test_produces_correct_batch_count(self) -> None:
-        seq = compile_semantic_raw_plan(_document(), self._semantic_with_big_stage(), semantic_method="llm")
+        seq = compile_semantic_raw_plan(
+            _document(),
+            self._semantic_with_big_stage(),
+            semantic_method="llm",
+            catalog_snapshot=_SNAPSHOT,
+        )
         # 5 stages → batches of 3: [1,2,3a] [3b,4]
         assert seq.report.compiled_plan_count == 2
 
     def test_slice_ids_include_part1_part2(self) -> None:
-        seq = compile_semantic_raw_plan(_document(), self._semantic_with_big_stage(), semantic_method="llm")
+        seq = compile_semantic_raw_plan(
+            _document(),
+            self._semantic_with_big_stage(),
+            semantic_method="llm",
+            catalog_snapshot=_SNAPSHOT,
+        )
         all_ids = [s.slice_id for p in seq.plans for s in p.slices]
         assert "compiled_plan_v1_stage_3_part1" in all_ids
         assert "compiled_plan_v1_stage_3_part2" in all_ids
 
     def test_part1_has_exploration_tools(self) -> None:
-        seq = compile_semantic_raw_plan(_document(), self._semantic_with_big_stage(), semantic_method="llm")
+        seq = compile_semantic_raw_plan(
+            _document(),
+            self._semantic_with_big_stage(),
+            semantic_method="llm",
+            catalog_snapshot=_SNAPSHOT,
+        )
         all_slices = [s for p in seq.plans for s in p.slices]
         part1 = next(s for s in all_slices if s.slice_id.endswith("stage_3_part1"))
         assert "datasets" in part1.allowed_tools
@@ -356,7 +382,12 @@ class TestCompileWithSplitting:
         assert "features_dataset" not in part1.allowed_tools
 
     def test_part2_has_construction_tools(self) -> None:
-        seq = compile_semantic_raw_plan(_document(), self._semantic_with_big_stage(), semantic_method="llm")
+        seq = compile_semantic_raw_plan(
+            _document(),
+            self._semantic_with_big_stage(),
+            semantic_method="llm",
+            catalog_snapshot=_SNAPSHOT,
+        )
         all_slices = [s for p in seq.plans for s in p.slices]
         part2 = next(s for s in all_slices if s.slice_id.endswith("stage_3_part2"))
         assert "features_dataset" in part2.allowed_tools
@@ -365,7 +396,12 @@ class TestCompileWithSplitting:
         assert "datasets" not in part2.allowed_tools
 
     def test_dependency_wiring(self) -> None:
-        seq = compile_semantic_raw_plan(_document(), self._semantic_with_big_stage(), semantic_method="llm")
+        seq = compile_semantic_raw_plan(
+            _document(),
+            self._semantic_with_big_stage(),
+            semantic_method="llm",
+            catalog_snapshot=_SNAPSHOT,
+        )
         all_slices = [s for p in seq.plans for s in p.slices]
         part1 = next(s for s in all_slices if s.slice_id.endswith("stage_3_part1"))
         part2 = next(s for s in all_slices if s.slice_id.endswith("stage_3_part2"))
@@ -379,7 +415,12 @@ class TestCompileWithSplitting:
         assert "compiled_plan_v1_stage_3_part2" in stage4.depends_on
 
     def test_budget_normalization_applied(self) -> None:
-        seq = compile_semantic_raw_plan(_document(), self._semantic_with_big_stage(), semantic_method="llm")
+        seq = compile_semantic_raw_plan(
+            _document(),
+            self._semantic_with_big_stage(),
+            semantic_method="llm",
+            catalog_snapshot=_SNAPSHOT,
+        )
         all_slices = [s for p in seq.plans for s in p.slices]
         part1 = next(s for s in all_slices if s.slice_id.endswith("stage_3_part1"))
         assert part1.budget_scale_applied == 6
@@ -423,7 +464,12 @@ class TestCompileWithSplitting:
                 ),
             ],
         )
-        seq = compile_semantic_raw_plan(_document(), semantic, semantic_method="llm")
+        seq = compile_semantic_raw_plan(
+            _document(),
+            semantic,
+            semantic_method="llm",
+            catalog_snapshot=_SNAPSHOT,
+        )
         assert seq.report.stage_count == 3
         all_ids = [s.slice_id for p in seq.plans for s in p.slices]
         assert not any("_part1" in sid for sid in all_ids)

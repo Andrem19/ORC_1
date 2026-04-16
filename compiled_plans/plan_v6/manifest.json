@@ -1,18 +1,19 @@
 {
   "source_file": "raw_plans/plan_v6.md",
   "source_hash": "8b5e129c4e5aa98a65f5ad5ec0bd7c7510586b6b9e9f606f9a7a7baa30ff4de6",
-  "compiled_at": "2026-04-11T10:54:10.388452+00:00",
+  "compiled_at": "2026-04-15T18:41:50.653676+00:00",
   "sequence_id": "compiled_plan_v6",
   "compile_status": "compiled",
   "warnings": [
-    "План написан на русском — все objective и action описания переведены в семантическую форму без потери смысла.",
-    "Auto-added research_record for stage_2: every non-trivial stage needs documentation capability.",
-    "Auto-added research_record for stage_3: every non-trivial stage needs documentation capability.",
-    "Auto-added research_record for stage_4: every non-trivial stage needs documentation capability.",
-    "Auto-added research_record for stage_5: every non-trivial stage needs documentation capability.",
-    "Auto-added research_record for stage_6: every non-trivial stage needs documentation capability.",
-    "Auto-added research_record for stage_7: every non-trivial stage needs documentation capability.",
-    "Auto-added research_record for stage_8: every non-trivial stage needs documentation capability."
+    "Plan requires cross-symbol data (ETHUSDT, possibly SOLUSDT/BNBUSDT) on 1h — availability not guaranteed.",
+    "Pack 3 (regime-disagreement) and Pack 4 (hybrid-event) are secondary; may be dropped if plausibility check fails.",
+    "M3/M4 weak-window models gated behind M1/M2 showing specific weak pockets — marked optional.",
+    "Auto-added research_memory for stage_2: every non-trivial stage needs documentation capability.",
+    "Auto-added research_memory for stage_3: every non-trivial stage needs documentation capability.",
+    "Auto-added research_memory for stage_5: every non-trivial stage needs documentation capability.",
+    "Auto-added research_memory for stage_6: every non-trivial stage needs documentation capability.",
+    "Auto-added research_memory for stage_7: every non-trivial stage needs documentation capability.",
+    "Auto-added research_memory for stage_8: every non-trivial stage needs documentation capability."
   ],
   "semantic_method": "llm",
   "semantic_path": "semantic.json",
@@ -22,5 +23,6 @@
     "plans/compiled_plan_v6_batch_2.json",
     "plans/compiled_plan_v6_batch_3.json",
     "plans/compiled_plan_v6_batch_4.json"
-  ]
+  ],
+  "mcp_catalog_hash": "c306b4054eaf8f466a7e29182863da4e7cd0610551ef83a0611c515c84aa415b"
 }

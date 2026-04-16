@@ -18,6 +18,7 @@ from app.execution_models import ExecutionPlan
 from app.planner_semantic_parsing import parse_planner_semantic_output
 from app.planner_semantic_prompts import build_planner_semantic_prompt
 from app.raw_plan_compiler import compile_semantic_raw_plan
+from app.services.mcp_catalog.models import McpCatalogSnapshot
 from app.services.direct_execution.invocation import AdapterInvocationCancelled, AdapterInvocationError, invoke_adapter_with_retries
 
 
@@ -41,6 +42,7 @@ class PlannerDecisionService:
         operator_directives: str = "",
         observer: Any | None = None,
         invoker: Any = invoke_adapter_with_retries,
+        catalog_snapshot: McpCatalogSnapshot | None = None,
     ) -> None:
         self.adapter = adapter
         self.artifact_store = artifact_store
@@ -51,6 +53,7 @@ class PlannerDecisionService:
         self.observer = observer
         self.invoker = invoker
         self._pending_plans: list[ExecutionPlan] = []
+        self.catalog_snapshot = catalog_snapshot
 
     async def create_plan(
         self,
@@ -110,6 +113,7 @@ class PlannerDecisionService:
             semantic_plan,
             semantic_method="planner_llm",
             plan_source_kind="planner",
+            catalog_snapshot=self.catalog_snapshot,
         )
         if not sequence.plans:
             raise PlannerDecisionError("planner_compilation_produced_no_plans")

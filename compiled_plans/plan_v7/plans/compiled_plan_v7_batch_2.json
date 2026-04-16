@@ -1,6 +1,6 @@
 {
   "plan_id": "compiled_plan_v7_batch_2",
-  "goal": "Довести до честного решения: может ли новый directional feature layer + CatBoost classification дать additive long/short sleeve поверх active-signal-v1@1 при корректных labels, полных sides и horizons.",
+  "goal": "Довести до честного terminal verdict вопрос: может ли новый directional feature layer + CatBoost classification дать additive sleeve поверх active-signal-v1@1 при корректных labels, полном покрытии sides/horizons и минимальном feature core.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -9,52 +9,75 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "База active-signal-v1@1 immutable — не менять, не подбирать часы/дни/пороги/исолнение.",
-    "Не выбирать feature set, label scheme, horizon, threshold или архитектуру по lockbox-окну.",
-    "Улучшением считается только matched OOS comparison с базой на том же окне.",
-    "Не возвращаться к regression-предсказанию future PnL.",
-    "Не возвращаться к IV-family как к самостоятельному directional layer.",
-    "net_pnl>0 больше не использовать как primary label scheme.",
-    "Не обучать multiclass model и не строить router до прохождения хотя бы одного standalone sleeve через OOS.",
-    "Labels frozen до training и не меняются до конца selection-stage.",
-    "Выбор pack и threshold — только по selection OOS; lockbox untouched.",
-    "Short-first приоритет: short 18h → short 12h → new long tests."
+    "active-signal-v1@1 is immutable — never modify base snapshot, its hours, days, thresholds, execution, feature set, label scheme, horizon or architecture.",
+    "No improvement claim without matched OOS comparison against base on the same window.",
+    "Never return to PnL regression or IV-family as standalone directional layer.",
+    "Labels frozen after stage_2 — no drift permitted through selection-stage.",
+    "No multiclass models, no router, until at least one standalone sleeve passes lockbox OOS.",
+    "Short-first priority: short 18h and short 12h before any new long tests.",
+    "Lockbox window untouched until stage_9; all model/threshold choices made on selection OOS only.",
+    "Only compact directional feature packs — no broad feature brainstorming before core debts closed."
   ],
   "slices": [
     {
       "slice_id": "compiled_plan_v7_stage_4",
       "title": "Dataset split и modeling surfaces",
-      "hypothesis": "После завершения core-features окончательно freeze modeling surfaces: frozen windows (train, selection OOS, lockbox OOS) и три поверхности (full, base_absent, weak_window).",
-      "objective": "После завершения core-features окончательно freeze modeling surfaces: frozen windows (train, selection OOS, lockbox OOS) и три поверхности (full, base_absent, weak_window).",
+      "hypothesis": "Freeze train / selection-OOS / lockbox windows and prepare modeling surfaces after core features are finalized.",
+      "objective": "Freeze train / selection-OOS / lockbox windows and prepare modeling surfaces after core features are finalized.",
       "success_criteria": [
-        "Frozen windows подтверждены и зафиксированы.",
-        "full_surface и base_absent_surface подготовлены.",
-        "Выбор pack и threshold ограничен selection OOS."
+        "Frozen windows confirmed and recorded.",
+        "At least full_surface and base_absent_surface datasets built.",
+        "Selection rule documented: all choices on selection OOS, lockbox sealed."
       ],
       "allowed_tools": [
         "models_dataset",
+        "datasets",
         "features_dataset",
-        "research_record"
+        "research_memory"
       ],
       "evidence_requirements": [
-        "Frozen windows подтверждены и зафиксированы.",
-        "full_surface и base_absent_surface подготовлены.",
-        "Выбор pack и threshold ограничен selection OOS."
+        "Frozen windows confirmed and recorded.",
+        "At least full_surface and base_absent_surface datasets built.",
+        "Selection rule documented: all choices on selection OOS, lockbox sealed."
       ],
       "policy_tags": [
-        "freeze",
-        "data_readiness"
+        "data_preparation",
+        "immutable"
       ],
       "max_turns": 24,
       "max_tool_calls": 24,
       "max_expensive_calls": 2,
       "parallel_slot": 1,
+      "runtime_profile": "generic_mutation",
+      "required_prerequisite_facts": null,
+      "required_output_facts": [],
+      "finalization_mode": "none",
+      "dependency_unblock_mode": "accepted_only",
+      "watchlist_allows_unblock": false,
+      "requires_mutating_evidence": false,
+      "requires_persisted_artifact": false,
+      "requires_live_handle_validation": false,
+      "acceptance_contract": {
+        "kind": "feature_contract_exploration",
+        "mode": "strict",
+        "required_subjects": "none",
+        "required_predicates": [],
+        "mcp_proof_calls": [],
+        "forbid_contradictions": [],
+        "allow_advisory_unblock": false,
+        "acceptance_requirements": {
+          "slice_id": "compiled_plan_v7_stage_4",
+          "contract_kind": "feature_contract_exploration"
+        }
+      },
+      "acceptance_proof": {},
+      "acceptance_blockers": [],
       "budget_scale_applied": 6,
       "depends_on": [
-        "compiled_plan_v7_stage_2",
         "compiled_plan_v7_stage_3"
       ],
       "status": "pending",
+      "acceptance_state": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
       "expensive_call_count": 0,
@@ -65,50 +88,97 @@
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
+      "dependency_blocker_slice_id": "",
+      "dependency_blocker_reason_code": "",
+      "dependency_blocker_class": "",
+      "blocked_retry_count": 0,
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
+      "gate_hint": "",
       "artifacts": [],
-      "facts": {}
+      "facts": {},
+      "verdict": ""
     },
     {
       "slice_id": "compiled_plan_v7_stage_5",
       "title": "Short-first plausibility stage",
-      "hypothesis": "Проверить short-side models M1_short_12h и M2_short_18h на plausibility: AUC, PR AUC, top-decile lift, economic sanity — всё на selection OOS.",
-      "objective": "Проверить short-side models M1_short_12h и M2_short_18h на plausibility: AUC, PR AUC, top-decile lift, economic sanity — всё на selection OOS.",
+      "hypothesis": "Train and evaluate short-side models (M1_short_12h, M2_short_18h) on selection OOS to confirm directional plausibility before any long work.",
+      "objective": "Train and evaluate short-side models (M1_short_12h, M2_short_18h) on selection OOS to confirm directional plausibility before any long work.",
       "success_criteria": [
-        "M1_short_12h обучена и оценена на selection OOS.",
-        "M2_short_18h обучена и оценена на selection OOS.",
-        "Для каждого: auc_ok, pr_ok, top_decile_ok, economic_plausibility_ok определены.",
-        "Promote/reject решение зафиксировано."
+        "M1_short_12h evaluated with AUC, PR, top-decile precision, economic plausibility.",
+        "M2_short_18h evaluated with same metrics.",
+        "Promotion decision recorded for each model."
       ],
       "allowed_tools": [
         "models_train",
-        "models_compare",
         "models_registry",
-        "features_dataset",
-        "research_record"
+        "models_compare",
+        "features_analytics",
+        "research_memory"
       ],
       "evidence_requirements": [
-        "M1_short_12h обучена и оценена на selection OOS.",
-        "M2_short_18h обучена и оценена на selection OOS.",
-        "Для каждого: auc_ok, pr_ok, top_decile_ok, economic_plausibility_ok определены.",
-        "Promote/reject решение зафиксировано."
+        "M1_short_12h evaluated with AUC, PR, top-decile precision, economic plausibility.",
+        "M2_short_18h evaluated with same metrics.",
+        "Promotion decision recorded for each model."
       ],
       "policy_tags": [
+        "modeling",
         "short_first",
-        "plausibility",
-        "selection_oos_only"
+        "cheap_first"
       ],
       "max_turns": 36,
       "max_tool_calls": 30,
       "max_expensive_calls": 6,
       "parallel_slot": 1,
+      "runtime_profile": "generic_mutation",
+      "required_prerequisite_facts": null,
+      "required_output_facts": [],
+      "finalization_mode": "none",
+      "dependency_unblock_mode": "accepted_only",
+      "watchlist_allows_unblock": false,
+      "requires_mutating_evidence": false,
+      "requires_persisted_artifact": false,
+      "requires_live_handle_validation": false,
+      "acceptance_contract": {
+        "kind": "model_training",
+        "mode": "strict",
+        "required_subjects": "dataset_and_model_version",
+        "required_predicates": [
+          "model_dataset_proof_pass",
+          "model_registry_proof_pass"
+        ],
+        "mcp_proof_calls": [
+          {
+            "tool": "models_dataset",
+            "arguments": {
+              "action": "inspect",
+              "view": "acceptance_proof"
+            }
+          },
+          {
+            "tool": "models_registry",
+            "arguments": {
+              "action": "inspect",
+              "view": "acceptance_proof"
+            }
+          }
+        ],
+        "forbid_contradictions": [],
+        "allow_advisory_unblock": false,
+        "acceptance_requirements": {
+          "slice_id": "compiled_plan_v7_stage_5",
+          "contract_kind": "model_training"
+        }
+      },
+      "acceptance_proof": {},
+      "acceptance_blockers": [],
       "budget_scale_applied": 6,
       "depends_on": [
         "compiled_plan_v7_stage_4"
       ],
       "status": "pending",
+      "acceptance_state": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
       "expensive_call_count": 0,
@@ -119,48 +189,96 @@
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
+      "dependency_blocker_slice_id": "",
+      "dependency_blocker_reason_code": "",
+      "dependency_blocker_class": "",
+      "blocked_retry_count": 0,
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
+      "gate_hint": "",
       "artifacts": [],
-      "facts": {}
+      "facts": {},
+      "verdict": ""
     },
     {
       "slice_id": "compiled_plan_v7_stage_6",
       "title": "Long 18h plausibility stage",
-      "hypothesis": "Проверить long-side model M3_long_cls_18h на plausibility после завершения short-side evaluation, используя balanced_barrier и conservative_barrier.",
-      "objective": "Проверить long-side model M3_long_cls_18h на plausibility после завершения short-side evaluation, используя balanced_barrier и conservative_barrier.",
+      "hypothesis": "Test long 18h with Leadership-Breadth, Path-Asymmetry, and Long-Recovery-Core packs — only after short side has been honestly evaluated.",
+      "objective": "Test long 18h with Leadership-Breadth, Path-Asymmetry, and Long-Recovery-Core packs — only after short side has been honestly evaluated.",
       "success_criteria": [
-        "M3_long_18h обучена и оценена на selection OOS с обоими label schemes.",
-        "auc_ok, pr_ok, top_decile_ok, economic_plausibility_ok определены.",
-        "Promote/reject решение зафиксировано."
+        "M3_long_18h evaluated on both label schemes.",
+        "AUC, PR, top-decile, economic plausibility recorded.",
+        "Promotion decision recorded."
       ],
       "allowed_tools": [
         "models_train",
-        "models_compare",
         "models_registry",
-        "features_dataset",
-        "research_record"
+        "models_compare",
+        "features_analytics",
+        "research_memory"
       ],
       "evidence_requirements": [
-        "M3_long_18h обучена и оценена на selection OOS с обоими label schemes.",
-        "auc_ok, pr_ok, top_decile_ok, economic_plausibility_ok определены.",
-        "Promote/reject решение зафиксировано."
+        "M3_long_18h evaluated on both label schemes.",
+        "AUC, PR, top-decile, economic plausibility recorded.",
+        "Promotion decision recorded."
       ],
       "policy_tags": [
-        "long_side",
-        "plausibility",
-        "selection_oos_only"
+        "modeling",
+        "long"
       ],
       "max_turns": 36,
       "max_tool_calls": 30,
       "max_expensive_calls": 6,
       "parallel_slot": 1,
+      "runtime_profile": "generic_mutation",
+      "required_prerequisite_facts": null,
+      "required_output_facts": [],
+      "finalization_mode": "none",
+      "dependency_unblock_mode": "accepted_only",
+      "watchlist_allows_unblock": false,
+      "requires_mutating_evidence": false,
+      "requires_persisted_artifact": false,
+      "requires_live_handle_validation": false,
+      "acceptance_contract": {
+        "kind": "model_training",
+        "mode": "strict",
+        "required_subjects": "dataset_and_model_version",
+        "required_predicates": [
+          "model_dataset_proof_pass",
+          "model_registry_proof_pass"
+        ],
+        "mcp_proof_calls": [
+          {
+            "tool": "models_dataset",
+            "arguments": {
+              "action": "inspect",
+              "view": "acceptance_proof"
+            }
+          },
+          {
+            "tool": "models_registry",
+            "arguments": {
+              "action": "inspect",
+              "view": "acceptance_proof"
+            }
+          }
+        ],
+        "forbid_contradictions": [],
+        "allow_advisory_unblock": false,
+        "acceptance_requirements": {
+          "slice_id": "compiled_plan_v7_stage_6",
+          "contract_kind": "model_training"
+        }
+      },
+      "acceptance_proof": {},
+      "acceptance_blockers": [],
       "budget_scale_applied": 6,
       "depends_on": [
         "compiled_plan_v7_stage_5"
       ],
       "status": "pending",
+      "acceptance_state": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
       "expensive_call_count": 0,
@@ -171,13 +289,20 @@
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
+      "dependency_blocker_slice_id": "",
+      "dependency_blocker_reason_code": "",
+      "dependency_blocker_class": "",
+      "blocked_retry_count": 0,
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
+      "gate_hint": "",
       "artifacts": [],
-      "facts": {}
+      "facts": {},
+      "verdict": ""
     }
   ],
+  "mcp_catalog_hash": "c306b4054eaf8f466a7e29182863da4e7cd0610551ef83a0611c515c84aa415b",
   "plan_source_kind": "compiled_raw",
   "source_sequence_id": "compiled_plan_v7",
   "source_raw_plan": "raw_plans/plan_v7.md",
@@ -186,6 +311,7 @@
   "source_compile_report_path": "",
   "sequence_batch_index": 2,
   "status": "draft",
-  "created_at": "2026-04-11T10:56:27.521733+00:00",
-  "updated_at": "2026-04-11T10:56:27.521734+00:00"
+  "last_error": "",
+  "created_at": "2026-04-15T18:43:07.767242+00:00",
+  "updated_at": "2026-04-15T18:43:07.767244+00:00"
 }

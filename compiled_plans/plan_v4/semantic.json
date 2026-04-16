@@ -2,7 +2,7 @@
   "source_file": "raw_plans/plan_v4.md",
   "source_hash": "5f893e59f6395c11f80524bf4a5f550955fa6484442db247b274c0c80d75cd4b",
   "source_title": "План дальнейших исследований для v4",
-  "goal": "Close all open branches from v3 through disciplined terminal decisions, then attempt weak-window targeted repair on the immutable base before considering any higher-friction exploration.",
+  "goal": "Close all v3 loose ends, exhaust low-friction signal space, attempt targeted weak-window repair, and conditionally evaluate medium-friction branches.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -11,34 +11,35 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "active-signal-v1@1 is immutable reference — never modify the base snapshot.",
-    "Previously rejected branches (H1_post_funding_long, H2_expiry_lead_lag, A1_high_iv_long_v1, A1b_high_iv_momentum, A4_wed_afternoon) must not be reopened.",
-    "Static high-IV regime is a volatility mode, not a directional signal — do not reinterpret as alpha.",
-    "Every hypothesis branch must reach a terminal decision (promoted or rejected) before the plan can advance past its wave.",
-    "Medium-friction wave is locked until low-friction wave is fully exhausted with recorded final verdict and no promoted candidate.",
+    "active-signal-v1@1 is immutable and must never be modified.",
+    "Previously rejected branches (H1_post_funding_long, H2_expiry_lead_lag, A1_high_iv_long_v1, A1b_high_iv_momentum, A4_wed_afternoon) must NOT be reopened.",
+    "Static high-IV regime is a volatility regime, not a directional signal — do not reuse as direction.",
+    "Medium-friction wave is locked until low-friction wave, weak-window repair, and all prior stages have terminal decisions.",
     "Maximum 2 weak pockets may be selected for specialist repair.",
-    "Separate data tasks from research results — never conflate them."
+    "Every branch must reach a terminal decision (promoted, rejected, or formally skipped) before proceeding.",
+    "Do not confuse data tasks with research results."
   ],
   "stages": [
     {
       "stage_id": "stage_1",
       "title": "Полный closure-audit по прошлым планам",
-      "objective": "Open a new v4 research project and compile a unified register of all unresolved items from prior plan cycles.",
+      "objective": "Create a unified registry of all unresolved items from previous plan iterations and establish the v4 research project foundation.",
       "actions": [
         "Open a new research_project for v4.",
-        "Record the closure-audit as a research_record.",
-        "Fix the immutable reference (active-signal-v1@1).",
-        "Define research_map axes for the v4 program.",
-        "Compile a unified open-items register of all outstanding debts."
+        "Record a closure-audit documenting all incomplete items from v1–v3.",
+        "Record the immutable reference (active-signal-v1@1) in project memory.",
+        "Define research_map axes for v4.",
+        "Compile a single open-items register covering all outstanding debts."
       ],
       "success_criteria": [
-        "A single open-items register exists.",
-        "The immutable reference is formally recorded in the project."
+        "A unified open-items register exists.",
+        "The immutable reference is recorded.",
+        "Research project, atlas, and closure-audit are all created."
       ],
       "tool_hints": [
         "research_project",
-        "research_record",
-        "research_map"
+        "research_map",
+        "research_memory"
       ],
       "policy_tags": [
         "setup",
@@ -53,23 +54,25 @@
     {
       "stage_id": "stage_2",
       "title": "Формально закрыть все незавершенные документы и memory-nodes прошлых планов",
-      "objective": "Eliminate all organizational debt by giving every hanging branch from previous plans a terminal status before new research begins.",
+      "objective": "Eliminate all organizational debt from prior plans by creating terminal nodes for every unfinished branch.",
       "actions": [
-        "Create a terminal result node for v3 branch A1.",
-        "Verify that all previously rejected branches have terminal nodes (H1, H2, A1b, A4).",
-        "Create a research_record: v3_final_report summarizing all v3 outcomes.",
-        "Update registry statuses for every branch.",
-        "Confirm no branch remains without a terminal node."
+        "Create a terminal result node for A1_high_iv_long_v1 from v3.",
+        "Verify and confirm rejected status for A1b_high_iv_momentum and A4_wed_afternoon.",
+        "Verify and confirm rejected status for H1_post_funding_long and H2_expiry_lead_lag.",
+        "Create a v3_final_report research_record summarizing all outcomes.",
+        "Update all registry statuses to reflect terminal decisions.",
+        "Confirm no branch exists without a terminal node."
       ],
       "success_criteria": [
-        "No branch in research memory lacks a terminal status (promoted or rejected)."
+        "No research memory branch remains without a terminal status.",
+        "All v1–v3 branches have explicit terminal nodes (promoted, rejected, or skipped)."
       ],
       "tool_hints": [
-        "research_record",
-        "research_search"
+        "research_memory",
+        "research_map"
       ],
       "policy_tags": [
-        "cleanup",
+        "housekeeping",
         "cheap_first"
       ],
       "depends_on": [
@@ -83,27 +86,31 @@
     {
       "stage_id": "stage_3",
       "title": "Полностью закрыть ветку A2_iv_acceleration",
-      "objective": "Drive the primary unfinished branch A2 from v3 to a definitive terminal decision through the full feature-to-backtest chain.",
+      "objective": "Drive the A2 IV-acceleration branch to a definitive terminal decision through a full feature-contract → materialization → plausibility → prototype → acceptance chain.",
       "actions": [
-        "Define the feature contract for iv_delta_1h (custom feature specification).",
-        "Materialize the feature dataset.",
-        "Run plausibility checks on a base-absent surface.",
-        "Build strict standalone prototypes (A2_v2 and A2_v3 variants).",
-        "Run the full acceptance chain: standalone backtest → stability analysis → integration test."
+        "Define feature contract for cf_iv_delta_1h custom feature.",
+        "Materialize the custom feature and verify data readiness.",
+        "Run plausibility check on base-absent surface.",
+        "Build strict standalone prototypes (a2_v2, a2_v3).",
+        "Run stability analysis on all prototypes.",
+        "Run integration test against active-signal-v1.",
+        "Record terminal decision (promoted or rejected)."
       ],
       "success_criteria": [
-        "A2 has a terminal decision: promoted or rejected with documented reason."
+        "A2_iv_acceleration has a terminal decision.",
+        "Both standalone and integration results are recorded."
       ],
       "tool_hints": [
         "features_custom",
-        "features_dataset",
+        "features_analytics",
+        "backtests_strategy",
         "backtests_runs",
         "backtests_analysis",
-        "research_record"
+        "research_memory"
       ],
       "policy_tags": [
-        "research",
-        "full_chain"
+        "core_research",
+        "acceptance_chain"
       ],
       "depends_on": [
         "stage_2"
@@ -115,59 +122,62 @@
     },
     {
       "stage_id": "stage_4",
-      "title": "Полностью закрыть A3_broader_cl_transition (только если A2 не promoted)",
-      "objective": "Only if A2 was not promoted, bring the backup branch A3 to a terminal decision so no half-alive branches remain.",
+      "title": "Только если A2 не promoted — полностью закрыть A3_broader_cl_transition",
+      "objective": "If A2 was not promoted, drive the A3 broader CL-transition branch to a terminal decision so no branch remains half-alive.",
       "actions": [
-        "Define transition feature contract for broader CL transition signals.",
-        "Group transitions by economic meaning.",
-        "Run plausibility checks on base-absent surface.",
-        "Build strict prototypes for selected transition groups.",
-        "Run full acceptance chain: standalone backtest → stability → integration."
+        "Define transition feature contract for A3 candidate.",
+        "Group transitions by semantic meaning.",
+        "Run plausibility check on base-absent surface.",
+        "Build strict standalone prototypes.",
+        "Run full acceptance chain (standalone, stability, integration).",
+        "Record terminal decision (promoted or rejected)."
       ],
       "success_criteria": [
-        "A3 has a terminal decision: promoted or rejected with documented reason."
+        "A3_broader_cl_transition has a terminal decision."
       ],
       "tool_hints": [
         "features_custom",
-        "features_dataset",
+        "features_analytics",
+        "backtests_strategy",
         "backtests_runs",
         "backtests_analysis",
-        "research_record"
+        "research_memory"
       ],
       "policy_tags": [
-        "research",
-        "conditional",
-        "full_chain"
+        "core_research",
+        "acceptance_chain",
+        "gated"
       ],
       "depends_on": [
         "stage_3"
       ],
       "required": false,
       "parallelizable": false,
-      "gate_hint": "Execute only if A2_iv_acceleration was NOT promoted in stage_3. If A2 was promoted, formally skip this stage with a research_record noting A3 is unnecessary.",
+      "gate_hint": "Only executes if A2_iv_acceleration was NOT promoted. If A2 is promoted, skip this stage entirely.",
       "raw_stage_ref": "stage_4"
     },
     {
       "stage_id": "stage_5",
       "title": "Общий вердикт по low-friction wave",
-      "objective": "Produce a single binding final verdict on whether the low-friction candidate space has been exhausted.",
+      "objective": "Produce a final binding verdict on whether low-friction signal space is exhausted or contains viable candidates.",
       "actions": [
-        "Compare all surviving candidates (A2, optionally A3) against the immutable base.",
-        "Classify each candidate as mainline quality, specialist watchlist, or reject.",
-        "Accept exactly one of three outcomes: (a) a candidate is promoted, (b) no candidate promoted but watchlist recorded, or (c) low-friction space exhausted with nothing to promote.",
-        "Record the final low-friction verdict as a research_record."
+        "Compare all low-friction candidates (A2, A3 if run) against the immutable base.",
+        "Classify each candidate as mainline quality, specialist watchlist, or rejected.",
+        "Adopt one of three outcomes: (a) promoted candidate, (b) specialist watchlist, or (c) low-friction space exhausted.",
+        "Record the final verdict in research memory."
       ],
       "success_criteria": [
-        "A single, unambiguous low_friction_final verdict is recorded."
+        "A single binding final verdict on low-friction wave exists.",
+        "Every candidate has an explicit classification."
       ],
       "tool_hints": [
+        "research_memory",
         "backtests_strategy",
-        "backtests_runs",
-        "research_record"
+        "research_map"
       ],
       "policy_tags": [
-        "decision",
-        "synthesis"
+        "decision_point",
+        "gate"
       ],
       "depends_on": [
         "stage_3",
@@ -180,28 +190,31 @@
     },
     {
       "stage_id": "stage_6",
-      "title": "Weak-window repair specialists",
-      "objective": "Determine whether targeted specialist features can repair the weakest performance pockets of the immutable base.",
+      "title": "Новая программа v4 — weak-window repair specialists",
+      "objective": "Identify the weakest performance windows of the immutable base and build targeted specialist hypotheses to repair them.",
       "actions": [
-        "Build a weakness atlas of the immutable base (identify worst-performing time windows and conditional pockets).",
+        "Build a weakness atlas for the immutable base using diagnostic analysis.",
         "Select at most 2 weak pockets from the atlas.",
-        "For each weak pocket, formulate one specialist hypothesis targeting that pocket.",
-        "For each specialist, execute a shortened but honest acceptance chain: feature contract → standalone backtest → stability check."
+        "For each weak pocket, formulate one specialist hypothesis.",
+        "For each specialist, run a shortened but honest acceptance chain (feature contract, prototype, plausibility, standalone, integration).",
+        "Record verdict for each specialist hypothesis."
       ],
       "success_criteria": [
-        "Answer recorded: can targeted repair produce anything useful beyond the base, or is the base already optimal within low-friction scope?"
+        "There is a clear answer on whether targeted repair can produce something useful.",
+        "Each specialist hypothesis has a recorded verdict."
       ],
       "tool_hints": [
         "backtests_analysis",
-        "features_custom",
-        "features_dataset",
-        "backtests_runs",
         "backtests_strategy",
-        "research_record"
+        "backtests_runs",
+        "features_custom",
+        "features_analytics",
+        "research_memory"
       ],
       "policy_tags": [
-        "research",
-        "targeted"
+        "core_research",
+        "acceptance_chain",
+        "bounded"
       ],
       "depends_on": [
         "stage_5"
@@ -213,58 +226,61 @@
     },
     {
       "stage_id": "stage_7",
-      "title": "Решение по medium-friction wave",
-      "objective": "Decide whether to unlock medium-friction exploration (B1: cross-symbol leadership, B2: model-backed IV-routing) only after all lower-friction work is conclusively finished.",
+      "title": "Только после этого — решение по medium-friction wave",
+      "objective": "Conditionally evaluate whether medium-friction branches (B1: cross-symbol leadership, B2: model-backed IV routing) should be unlocked.",
       "actions": [
-        "Verify all unlock conditions simultaneously: A2 terminal decision recorded, A3 closed or formally skipped, low-friction final verdict recorded, weak-window repair program completed, and no promoted candidate exists.",
-        "If unlock is granted: scope and begin B1 (cross-symbol leadership) and B2 (model-backed IV-routing/compression) branches.",
-        "If unlock is denied: record the decision and rationale."
+        "Verify all 5 unlock conditions are met: (1) A2 terminal, (2) A3 terminal or skipped, (3) low-friction verdict recorded, (4) weak-window repair completed, (5) no promoted candidate.",
+        "If unlock granted, evaluate B1 cross-symbol leadership branch.",
+        "If unlock granted, evaluate B2 model-backed IV-routing / compression branch.",
+        "Record lock/unlock decision and rationale."
       ],
       "success_criteria": [
-        "A clear lock or unlock decision for medium-friction wave is recorded with rationale."
+        "A clear lock or unlock decision is recorded.",
+        "If unlocked, initial scoping of B1 and B2 is complete."
       ],
       "tool_hints": [
-        "features_custom",
-        "models_dataset",
-        "models_train",
+        "research_memory",
         "backtests_runs",
-        "research_record"
+        "models_train",
+        "datasets",
+        "research_map"
       ],
       "policy_tags": [
-        "research",
+        "gated",
+        "high_friction",
         "conditional"
       ],
       "depends_on": [
-        "stage_5",
-        "stage_6_part2"
+        "stage_6"
       ],
       "required": false,
       "parallelizable": false,
-      "gate_hint": "Unlock requires ALL of: (1) A2 has terminal decision, (2) A3 closed or formally skipped, (3) low-friction final verdict recorded, (4) weak-window repair program completed, (5) no promoted candidate. If any promoted candidate exists from earlier stages, this stage is skipped entirely.",
+      "gate_hint": "All 5 conditions must be simultaneously true: (1) A2 has terminal decision, (2) A3 has terminal decision or is formally skipped, (3) low-friction final verdict is recorded, (4) weak-window repair program is completed, (5) no candidate was promoted. If any condition fails, this stage is locked.",
       "raw_stage_ref": "stage_7"
     },
     {
       "stage_id": "stage_8",
       "title": "Финальный отчет по v4",
-      "objective": "Write a comprehensive final report for the entire v4 research cycle, summarizing all decisions, terminal outcomes, and next-step recommendations.",
+      "objective": "Produce a comprehensive final report summarizing all v4 research outcomes, decisions, and recommendations.",
       "actions": [
-        "Compile all terminal decisions from stages 2–7 into a single coherent narrative.",
-        "Record the v4 final report as a research_record.",
-        "Update the research_map with final axis positions.",
-        "If any promoted candidate exists, document the path to integration.",
-        "If nothing was promoted, document the rationale and recommended next cycle direction."
+        "Compile all stage results into a unified v4 final report.",
+        "Record the report as a research_memory entry.",
+        "Document terminal decisions for every investigated branch.",
+        "State recommendations for any future research directions.",
+        "Send notification of plan completion."
       ],
       "success_criteria": [
-        "A complete v4 final report is recorded in research memory with all terminal decisions, verdicts, and forward recommendations."
+        "A complete v4 final report exists covering all stages.",
+        "All branches have documented terminal outcomes."
       ],
       "tool_hints": [
-        "research_record",
+        "research_memory",
         "research_map",
         "notify_send"
       ],
       "policy_tags": [
         "finalization",
-        "documentation"
+        "reporting"
       ],
       "depends_on": [
         "stage_7"
@@ -276,9 +292,10 @@
     }
   ],
   "warnings": [
-    "Plan source is in Russian; stage titles and objectives are translated/paraphrased.",
-    "Stage 3 raw markdown references sub-steps (feature contract, materialization, plausibility, prototypes, acceptance chain) but actions_hint is empty — sub-steps were inferred from section titles.",
-    "Stage 8 has no explicit objective or success criteria in source; inferred from raw_markdown context."
+    "Stage 3 (A2_iv_acceleration) sub-steps are detailed in section titles only; actions were inferred from section headings.",
+    "Stage 4 (A3_broader_cl_transition) is gated on A2 not being promoted.",
+    "Stage 7 (medium-friction wave) has an explicit 5-condition unlock gate.",
+    "Stage 8 has no explicit objective or success criteria in source; inferred from context."
   ],
   "parse_confidence": 0.8999999999999999
 }

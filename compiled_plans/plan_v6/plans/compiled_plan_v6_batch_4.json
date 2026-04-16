@@ -1,6 +1,6 @@
 {
   "plan_id": "compiled_plan_v6_batch_4",
-  "goal": "Найти и проверить новые cross-symbol directional custom features, обучить на них CatBoost long/short classifiers, и доказать их additive value поверх active-signal-v1@1 через matched OOS comparison.",
+  "goal": "Найти и проверить новые cross-symbol directional custom features, обучить на них CatBoost long/short classification models, и доказать их additive value поверх active-signal-v1@1 через matched OOS comparison.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -9,54 +9,80 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "База active-signal-v1@1 — immutable reference. Запрещено менять базу, подбирать ей параметры, обучать на финальном OOS.",
-    "Выбор feature set, target, threshold или архитектуры по lockbox-окну запрещён. Lockbox только проверяет frozen choice.",
-    "Улучшением считается только matched OOS comparison с базой на том же окне.",
-    "v5 regression route формально закрыт. v6 использует только classification (long/short labels).",
-    "Новый информационный слой обязателен — недостаточно переставлять старые IV/classifier features.",
-    "Сначала отдельные long и short classifiers (M1, M2). Router-модель запрещена до подтверждения обеих.",
-    "base-absent surface для discovery, matched OOS для финальной правды.",
-    "Не более 3–4 сильных feature families. Без широкой feature inflation.",
-    "Компактный disciplined HPO: depth {4,6,8}, lr {0.03,0.05}, moderate regularization, 2–3 seeds.",
-    "Purge gap между train и later windows — не менее 24h.",
-    "Горизонты только 12h и 18h. Barrier schemes только balanced и conservative."
+    "База active-signal-v1@1 — immutable reference. Запрещено менять базу, подбирать ей параметры, или обучать на данных, используемых как финальный OOS.",
+    "Никакого regression на future PnL — только directional barrier-based long/short classification labels.",
+    "Новый информационный слой обязателен: cross-symbol leadership/breadth — главный приоритет; недостаточно переставлять старые IV/classifier features.",
+    "Отдельные long и short classifiers (M1_long_cls, M2_short_cls). Общая multiclass модель запрещена на старте.",
+    "Train / selection OOS / lockbox OOS frozen до обучения. Purge gap ≥ 24h.",
+    "Label design: только горизонты 12h и 18h, схемы balanced и conservative. Не более двух вариантов. Выбор label по lockbox запрещён.",
+    "Thresholds frozen до открытия lockbox. Selection выбирает; lockbox только проверяет.",
+    "Feature families: максимум 3–4 сильных (leadership-breadth, path-asymmetry, regime-disagreement, hybrid-event). Не делать широкую feature inflation.",
+    "CatBoost HPO: depth {4,6,8}, learning_rate {0.03,0.05}, moderate regularization, 2–3 seeds. Early stopping обязателен.",
+    "Финальная правда — только matched OOS comparison с базой на том же окне через strict additive, permissive, ownership, cannibalization.",
+    "Router-модель запрещена на старте v6. Разрешается только если M1 и M2 обе показали meaningful OOS value."
   ],
   "slices": [
     {
       "slice_id": "compiled_plan_v6_stage_10",
       "title": "Финальный вердикт по v6",
-      "hypothesis": "Агрегировать все результаты v6, определить итог (Success / Partial / Failed), записать финальный отчет с выводами по v1-v6 и рекомендациями.",
-      "objective": "Агрегировать все результаты v6, определить итог (Success / Partial / Failed), записать финальный отчет с выводами по v1-v6 и рекомендациями.",
+      "hypothesis": "Сформировать единый итог v6: исход Success (≥1 promoted candidate), Partial (watchlist), или Failed (ни одна модель не прошла), записать итоговую таблицу v1–v6 и рекомендации для следующего цикла.",
+      "objective": "Сформировать единый итог v6: исход Success (≥1 promoted candidate), Partial (watchlist), или Failed (ни одна модель не прошла), записать итоговую таблицу v1–v6 и рекомендации для следующего цикла.",
       "success_criteria": [
-        "Единый итог v6 определён (Success / Partial / Failed)",
-        "Финальный отчет написан с таблицей v1-v6",
-        "Все terminal decisions зафиксированы",
-        "Рекомендации на следующий цикл записаны"
+        "Единый итог v6 сформулирован.",
+        "Итоговая таблица v1–v6 заполнена.",
+        "Рекомендации для следующего цикла записаны.",
+        "Финальный отчёт записан в research_memory."
       ],
       "allowed_tools": [
-        "research_record",
+        "research_memory",
         "research_map",
         "notify_send"
       ],
       "evidence_requirements": [
-        "Единый итог v6 определён (Success / Partial / Failed)",
-        "Финальный отчет написан с таблицей v1-v6",
-        "Все terminal decisions зафиксированы",
-        "Рекомендации на следующий цикл записаны"
+        "Единый итог v6 сформулирован.",
+        "Итоговая таблица v1–v6 заполнена.",
+        "Рекомендации для следующего цикла записаны.",
+        "Финальный отчёт записан в research_memory."
       ],
       "policy_tags": [
-        "finalization",
-        "reporting"
+        "finalization"
       ],
       "max_turns": 24,
       "max_tool_calls": 24,
-      "max_expensive_calls": 2,
+      "max_expensive_calls": 1,
       "parallel_slot": 1,
+      "runtime_profile": "generic_mutation",
+      "required_prerequisite_facts": null,
+      "required_output_facts": [],
+      "finalization_mode": "none",
+      "dependency_unblock_mode": "accepted_only",
+      "watchlist_allows_unblock": false,
+      "requires_mutating_evidence": false,
+      "requires_persisted_artifact": false,
+      "requires_live_handle_validation": false,
+      "acceptance_contract": {
+        "kind": "generic_read_strict",
+        "mode": "strict",
+        "required_subjects": "none",
+        "required_predicates": [
+          "domain_tool_evidence_present"
+        ],
+        "mcp_proof_calls": [],
+        "forbid_contradictions": [],
+        "allow_advisory_unblock": false,
+        "acceptance_requirements": {
+          "slice_id": "compiled_plan_v6_stage_10",
+          "contract_kind": "generic_read_strict"
+        }
+      },
+      "acceptance_proof": {},
+      "acceptance_blockers": [],
       "budget_scale_applied": 6,
       "depends_on": [
         "compiled_plan_v6_stage_9"
       ],
       "status": "pending",
+      "acceptance_state": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
       "expensive_call_count": 0,
@@ -67,13 +93,20 @@
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
+      "dependency_blocker_slice_id": "",
+      "dependency_blocker_reason_code": "",
+      "dependency_blocker_class": "",
+      "blocked_retry_count": 0,
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
+      "gate_hint": "",
       "artifacts": [],
-      "facts": {}
+      "facts": {},
+      "verdict": ""
     }
   ],
+  "mcp_catalog_hash": "c306b4054eaf8f466a7e29182863da4e7cd0610551ef83a0611c515c84aa415b",
   "plan_source_kind": "compiled_raw",
   "source_sequence_id": "compiled_plan_v6",
   "source_raw_plan": "raw_plans/plan_v6.md",
@@ -82,6 +115,7 @@
   "source_compile_report_path": "",
   "sequence_batch_index": 4,
   "status": "draft",
-  "created_at": "2026-04-11T10:54:10.388446+00:00",
-  "updated_at": "2026-04-11T10:54:10.388447+00:00"
+  "last_error": "",
+  "created_at": "2026-04-15T18:41:50.653656+00:00",
+  "updated_at": "2026-04-15T18:41:50.653658+00:00"
 }

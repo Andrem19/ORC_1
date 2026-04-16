@@ -1,6 +1,6 @@
 {
   "plan_id": "compiled_plan_v1_batch_3",
-  "goal": "Найти один или несколько новых ортогональных сигналов, которые проходят standalone → stability → integration → cannibalization проверку и дают чистый прирост поверх неизменной базы active-signal-v1@1.",
+  "goal": "Найти один или несколько новых ортогональных сигналов, которые дают самостоятельную информативность, проходят проверку на устойчивость и при интеграции с active-signal-v1@1 улучшают общий результат без разрушения качества.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -9,46 +9,88 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "База active-signal-v1@1 остается неизменной на протяжении всего цикла; тюнинг её старых правил, порогов, часов, дней и косметических вариаций запрещён.",
-    "Новый сигнал должен использовать новый класс информации, новый gating, новый missing-regime слой или новую логику входа — не перестановку старых шаблонов.",
-    "Каннибализм недопустим: новый сигнал не должен преимущественно входить там же, где база, и перехватывать уже хорошие сделки.",
-    "Acceptance-воронка обязательна: standalone → stability → integration → cannibalization → final report. Пропуск шагов запрещён.",
-    "Каждая гипотеза должна иметь записанное обоснование, почему она новая относительно базы и истории v1–v12.",
-    "Отрицательные результаты фиксируются в research_record так же обязательно, как и положительные.",
-    "Walk-forward обязателен для всех финалистов перед принятием решения о продвижении."
+    "База active-signal-v1@1 неизменна на протяжении всего цикла — никакого тюнинга порогов, часов, дней или косметических вариаций старых правил.",
+    "Новый сигнал обязан использовать новый класс информации или новый способ маршрутизации — не перестановку hour/dow/cl_*/rsi/iv_est шаблонов базы.",
+    "Каннибализм недопустим: новый сигнал должен расширять покрытие, а не перехватывать сделки базы.",
+    "Любая гипотеза проходит строго через воронку: standalone → stability → integration → cannibalization → final report.",
+    "Отрицательные результаты фиксируются в research_memory — повтор закрытых идей запрещён.",
+    "Model-backed признаки допускаются только с честным train/validation/test split без leakage в OOS."
   ],
   "slices": [
     {
       "slice_id": "compiled_plan_v1_stage_6",
       "title": "Stability и condition analysis",
-      "hypothesis": "Отсеять красивые, но локальные эффекты; оставить только сигналы, которые устойчивы при разбиении истории или честно доказали полезность как specialist signal для отдельного missing regime.",
-      "objective": "Отсеять красивые, но локальные эффекты; оставить только сигналы, которые устойчивы при разбиении истории или честно доказали полезность как specialist signal для отдельного missing regime.",
+      "hypothesis": "Отсеять красивые, но локальные эффекты — оставить только сигналы, которые не ломаются при разбиении истории или честно доказали полезность как specialist signal для отдельного missing regime.",
+      "objective": "Отсеять красивые, но локальные эффекты — оставить только сигналы, которые не ломаются при разбиении истории или честно доказали полезность как specialist signal для отдельного missing regime.",
       "success_criteria": [
-        "Остаются только сигналы, устойчивые широко, или specialist signals с доказанной полезностью для отдельного missing regime.",
-        "Condition analysis завершён для всех финалистов."
+        "Остаются только сигналы, которые либо устойчивы широко, либо честно доказали полезность как specialist signal для отдельного missing regime."
       ],
       "allowed_tools": [
         "backtests_conditions",
         "backtests_analysis",
-        "research_record"
+        "backtests_runs",
+        "research_memory"
       ],
       "evidence_requirements": [
-        "Остаются только сигналы, устойчивые широко, или specialist signals с доказанной полезностью для отдельного missing regime.",
-        "Condition analysis завершён для всех финалистов."
+        "Остаются только сигналы, которые либо устойчивы широко, либо честно доказали полезность как specialist signal для отдельного missing regime."
       ],
       "policy_tags": [
-        "analysis",
-        "backtesting"
+        "stability",
+        "expensive"
       ],
-      "max_turns": 24,
-      "max_tool_calls": 24,
-      "max_expensive_calls": 3,
+      "max_turns": 48,
+      "max_tool_calls": 36,
+      "max_expensive_calls": 12,
       "parallel_slot": 1,
+      "runtime_profile": "backtests_stability_analysis",
+      "required_prerequisite_facts": null,
+      "required_output_facts": [],
+      "finalization_mode": "none",
+      "dependency_unblock_mode": "accepted_only",
+      "watchlist_allows_unblock": false,
+      "requires_mutating_evidence": false,
+      "requires_persisted_artifact": false,
+      "requires_live_handle_validation": false,
+      "acceptance_contract": {
+        "kind": "condition_stability_analysis",
+        "mode": "strict",
+        "required_subjects": "each_referenced_run",
+        "required_predicates": [
+          "run_set_non_empty",
+          "each_run_proof_pass"
+        ],
+        "mcp_proof_calls": [
+          {
+            "tool": "backtests_runs",
+            "arguments": {
+              "action": "inspect",
+              "view": "acceptance_proof"
+            }
+          }
+        ],
+        "forbid_contradictions": [
+          "no saved/active runs",
+          "cannot evaluate",
+          "lack standalone backtest runs",
+          "no standalone backtest"
+        ],
+        "allow_advisory_unblock": false,
+        "acceptance_requirements": {
+          "slice_id": "compiled_plan_v1_stage_6",
+          "contract_kind": "condition_stability_analysis",
+          "requires_completed": true,
+          "requires_persisted_artifacts": true,
+          "requires_metrics": true
+        }
+      },
+      "acceptance_proof": {},
+      "acceptance_blockers": [],
       "budget_scale_applied": 6,
       "depends_on": [
         "compiled_plan_v1_stage_5"
       ],
       "status": "pending",
+      "acceptance_state": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
       "expensive_call_count": 0,
@@ -59,45 +101,92 @@
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
+      "dependency_blocker_slice_id": "",
+      "dependency_blocker_reason_code": "",
+      "dependency_blocker_class": "",
+      "blocked_retry_count": 0,
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
+      "gate_hint": "",
       "artifacts": [],
-      "facts": {}
+      "facts": {},
+      "verdict": ""
     },
     {
       "slice_id": "compiled_plan_v1_stage_7",
       "title": "Интеграция с active-signal-v1@1",
-      "hypothesis": "Проверить реальную ценность каждого surviving candidate поверх неизменной базы, а не абстрактную standalone-силу.",
-      "objective": "Проверить реальную ценность каждого surviving candidate поверх неизменной базы, а не абстрактную standalone-силу.",
+      "hypothesis": "Проверить реальную ценность каждого surviving candidate поверх неизменной базы через интеграционные прогоны.",
+      "objective": "Проверить реальную ценность каждого surviving candidate поверх неизменной базы через интеграционные прогоны.",
       "success_criteria": [
-        "Полная интеграционная картина для каждого прошедшего standalone кандидата.",
-        "Каждый кандидат имеет ясный вердикт: promote, revise или reject."
+        "Есть полная интеграционная картина для каждого прошедшего standalone кандидат."
       ],
       "allowed_tools": [
         "backtests_runs",
-        "backtests_plan",
+        "backtests_analysis",
         "backtests_strategy",
-        "research_record"
+        "research_memory"
       ],
       "evidence_requirements": [
-        "Полная интеграционная картина для каждого прошедшего standalone кандидата.",
-        "Каждый кандидат имеет ясный вердикт: promote, revise или reject."
+        "Есть полная интеграционная картина для каждого прошедшего standalone кандидат."
       ],
       "policy_tags": [
-        "modeling",
-        "backtesting",
-        "integration"
+        "integration",
+        "expensive"
       ],
-      "max_turns": 24,
-      "max_tool_calls": 24,
-      "max_expensive_calls": 3,
+      "max_turns": 48,
+      "max_tool_calls": 36,
+      "max_expensive_calls": 12,
       "parallel_slot": 2,
+      "runtime_profile": "backtests_integration_analysis",
+      "required_prerequisite_facts": null,
+      "required_output_facts": [],
+      "finalization_mode": "none",
+      "dependency_unblock_mode": "accepted_only",
+      "watchlist_allows_unblock": false,
+      "requires_mutating_evidence": false,
+      "requires_persisted_artifact": false,
+      "requires_live_handle_validation": false,
+      "acceptance_contract": {
+        "kind": "integration_backtest",
+        "mode": "strict",
+        "required_subjects": "each_referenced_run",
+        "required_predicates": [
+          "run_set_non_empty",
+          "each_run_proof_pass"
+        ],
+        "mcp_proof_calls": [
+          {
+            "tool": "backtests_runs",
+            "arguments": {
+              "action": "inspect",
+              "view": "acceptance_proof"
+            }
+          }
+        ],
+        "forbid_contradictions": [
+          "no saved/active runs",
+          "cannot evaluate",
+          "lack standalone backtest runs",
+          "no standalone backtest"
+        ],
+        "allow_advisory_unblock": false,
+        "acceptance_requirements": {
+          "slice_id": "compiled_plan_v1_stage_7",
+          "contract_kind": "integration_backtest",
+          "requires_completed": true,
+          "requires_persisted_artifacts": true,
+          "requires_metrics": true
+        }
+      },
+      "acceptance_proof": {},
+      "acceptance_blockers": [],
       "budget_scale_applied": 6,
       "depends_on": [
         "compiled_plan_v1_stage_6"
       ],
       "status": "pending",
+      "acceptance_state": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
       "expensive_call_count": 0,
@@ -108,43 +197,91 @@
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
+      "dependency_blocker_slice_id": "",
+      "dependency_blocker_reason_code": "",
+      "dependency_blocker_class": "",
+      "blocked_retry_count": 0,
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
+      "gate_hint": "",
       "artifacts": [],
-      "facts": {}
+      "facts": {},
+      "verdict": ""
     },
     {
       "slice_id": "compiled_plan_v1_stage_8",
       "title": "Cannibalization, ownership и new-entry proof",
-      "hypothesis": "Доказать, что новый сигнал добавляет реально новые входы и расширяет покрытие, а не паразитирует на базе.",
-      "objective": "Доказать, что новый сигнал добавляет реально новые входы и расширяет покрытие, а не паразитирует на базе.",
+      "hypothesis": "Доказать, что новый сигнал добавляет реально новые входы, а не паразитирует на базе, через overlap-анализ и ownership-разбор.",
+      "objective": "Доказать, что новый сигнал добавляет реально новые входы, а не паразитирует на базе, через overlap-анализ и ownership-разбор.",
       "success_criteria": [
-        "Прямое доказательство: кто реально расширяет систему.",
-        "Cannibalism verdict определён для каждого кандидата."
+        "Есть прямое доказательство того, что финалист реально расширяет систему, а не перехватывает сделки базы."
       ],
       "allowed_tools": [
         "backtests_analysis",
-        "research_record"
+        "backtests_runs",
+        "research_memory"
       ],
       "evidence_requirements": [
-        "Прямое доказательство: кто реально расширяет систему.",
-        "Cannibalism verdict определён для каждого кандидата."
+        "Есть прямое доказательство того, что финалист реально расширяет систему, а не перехватывает сделки базы."
       ],
       "policy_tags": [
-        "analysis",
         "integration",
-        "critical_gate"
+        "gate"
       ],
-      "max_turns": 24,
-      "max_tool_calls": 24,
-      "max_expensive_calls": 3,
+      "max_turns": 48,
+      "max_tool_calls": 36,
+      "max_expensive_calls": 12,
       "parallel_slot": 3,
+      "runtime_profile": "backtests_integration_analysis",
+      "required_prerequisite_facts": null,
+      "required_output_facts": [],
+      "finalization_mode": "none",
+      "dependency_unblock_mode": "accepted_only",
+      "watchlist_allows_unblock": false,
+      "requires_mutating_evidence": false,
+      "requires_persisted_artifact": false,
+      "requires_live_handle_validation": false,
+      "acceptance_contract": {
+        "kind": "integration_backtest",
+        "mode": "strict",
+        "required_subjects": "each_referenced_run",
+        "required_predicates": [
+          "run_set_non_empty",
+          "each_run_proof_pass"
+        ],
+        "mcp_proof_calls": [
+          {
+            "tool": "backtests_runs",
+            "arguments": {
+              "action": "inspect",
+              "view": "acceptance_proof"
+            }
+          }
+        ],
+        "forbid_contradictions": [
+          "no saved/active runs",
+          "cannot evaluate",
+          "lack standalone backtest runs",
+          "no standalone backtest"
+        ],
+        "allow_advisory_unblock": false,
+        "acceptance_requirements": {
+          "slice_id": "compiled_plan_v1_stage_8",
+          "contract_kind": "integration_backtest",
+          "requires_completed": true,
+          "requires_persisted_artifacts": true,
+          "requires_metrics": true
+        }
+      },
+      "acceptance_proof": {},
+      "acceptance_blockers": [],
       "budget_scale_applied": 6,
       "depends_on": [
         "compiled_plan_v1_stage_7"
       ],
       "status": "pending",
+      "acceptance_state": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
       "expensive_call_count": 0,
@@ -155,13 +292,20 @@
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
+      "dependency_blocker_slice_id": "",
+      "dependency_blocker_reason_code": "",
+      "dependency_blocker_class": "",
+      "blocked_retry_count": 0,
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
+      "gate_hint": "Кандидат не проходит дальше, если overlap_rate высокий, truly_new_trades низкий, а ownership отрицательный.",
       "artifacts": [],
-      "facts": {}
+      "facts": {},
+      "verdict": ""
     }
   ],
+  "mcp_catalog_hash": "c306b4054eaf8f466a7e29182863da4e7cd0610551ef83a0611c515c84aa415b",
   "plan_source_kind": "compiled_raw",
   "source_sequence_id": "compiled_plan_v1",
   "source_raw_plan": "raw_plans/plan_v1.md",
@@ -170,6 +314,7 @@
   "source_compile_report_path": "",
   "sequence_batch_index": 3,
   "status": "draft",
-  "created_at": "2026-04-11T10:45:01.661400+00:00",
-  "updated_at": "2026-04-11T10:45:01.661402+00:00"
+  "last_error": "",
+  "created_at": "2026-04-15T18:34:05.728895+00:00",
+  "updated_at": "2026-04-15T18:34:05.728897+00:00"
 }

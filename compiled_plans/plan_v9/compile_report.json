@@ -2,16 +2,26 @@
   "source_file": "raw_plans/plan_v9.md",
   "source_hash": "a0caa5fbcf15d619c0fd73bb12956c798e8df611b49013c38fda0eb0574d2790",
   "sequence_id": "compiled_plan_v9",
-  "compile_status": "compiled",
+  "compile_status": "failed",
   "parser_confidence": 0.95,
   "semantic_method": "llm",
   "stage_count": 12,
   "compiled_plan_count": 4,
+  "mcp_catalog_hash": "c306b4054eaf8f466a7e29182863da4e7cd0610551ef83a0611c515c84aa415b",
   "warnings": [
-    "Primary family (derivatives positioning/pressure) требует проверки availability OI, funding, basis, liquidations — может оказаться частично недоступной.",
-    "Fallback family (cross-exchange pressure) зависит от multi-venue данных, coverage может быть ограничен.",
-    "Options structure помечена как only-if-available: если данные недоступны, family пропускается без потери целостности плана."
+    "Plan is research-discovery oriented; stages 8-10 are gated branches that may not execute",
+    "Data availability for derivatives positioning / options structure is not guaranteed — early triage critical",
+    "Auto-added research_memory for stage_2: every non-trivial stage needs documentation capability.",
+    "Auto-added research_memory for stage_4: every non-trivial stage needs documentation capability.",
+    "Auto-added research_memory for stage_5: every non-trivial stage needs documentation capability.",
+    "Auto-added research_memory for stage_6: every non-trivial stage needs documentation capability.",
+    "Auto-added research_memory for stage_7: every non-trivial stage needs documentation capability.",
+    "Auto-added research_memory for stage_9: every non-trivial stage needs documentation capability.",
+    "Auto-added research_memory for stage_10_part1: every non-trivial stage needs documentation capability.",
+    "Auto-added research_memory for stage_10_part2: every non-trivial stage needs documentation capability."
   ],
-  "errors": [],
-  "compiled_at": "2026-04-11T11:01:31.894608+00:00"
+  "errors": [
+    "Slice 'compiled_plan_v9_stage_3' requires prerequisite facts ['features_catalog.scopes'] but no upstream slice (via depends_on) declares them in required_output_facts."
+  ],
+  "compiled_at": "2026-04-15T18:46:17.064863+00:00"
 }

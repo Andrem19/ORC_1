@@ -7,15 +7,20 @@
   "semantic_method": "llm",
   "stage_count": 11,
   "compiled_plan_count": 4,
+  "mcp_catalog_hash": "c306b4054eaf8f466a7e29182863da4e7cd0610551ef83a0611c515c84aa415b",
   "warnings": [
-    "v11 result was DOWNGRADED TO WATCHLIST — thresholds -0.155 and 0.164 are hand-tuned with undocumented provenance.",
-    "v10 result was mischaracterized as model-based veto overlay when it was actually a rule-based replacement candidate.",
-    "The two branches (overlay vs replacement) are strictly separate; one may confirm while the other fails.",
-    "Auto-added research_record for stage_4: every non-trivial stage needs documentation capability.",
-    "Auto-added research_record for stage_5: every non-trivial stage needs documentation capability.",
-    "Auto-added research_record for stage_7: every non-trivial stage needs documentation capability.",
-    "Auto-added research_record for stage_8: every non-trivial stage needs documentation capability."
+    "Plan is written in Russian; stage titles translated for semantic coherence.",
+    "Stage numbering in source starts at ЭТАП 0; mapped to stage_1…stage_11 in output.",
+    "Replacement track (stage_7) is semantically gated on overlay track outcome but is staged sequentially for clarity.",
+    "Stage 9 (optional gate) depends on a confirmed result from at least one track — if neither track produces anything, v12 proceeds directly to final verdict.",
+    "Auto-added research_memory for stage_2: every non-trivial stage needs documentation capability.",
+    "Auto-added research_memory for stage_4: every non-trivial stage needs documentation capability.",
+    "Auto-added research_memory for stage_5: every non-trivial stage needs documentation capability.",
+    "Auto-added research_memory for stage_6: every non-trivial stage needs documentation capability.",
+    "Auto-added research_memory for stage_7: every non-trivial stage needs documentation capability.",
+    "Auto-added research_memory for stage_8: every non-trivial stage needs documentation capability.",
+    "Auto-added research_memory for stage_9: every non-trivial stage needs documentation capability."
   ],
   "errors": [],
-  "compiled_at": "2026-04-11T11:07:02.822733+00:00"
+  "compiled_at": "2026-04-15T18:51:23.502073+00:00"
 }

@@ -1,6 +1,6 @@
 {
   "plan_id": "compiled_plan_v2_batch_2",
-  "goal": "Find one or more new orthogonal specialist signals or conditioning layers that work where active-signal-v1@1 is absent, prove their additive value, and avoid repeating v1's single-filter event-entry mistakes.",
+  "goal": "Find one or more orthogonal specialist signals or conditioning layers that work where the base does not trade, prove additive value through new entries, and pass stability and integration tests.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -9,44 +9,89 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "Base active-signal-v1@1 is immutable: no retuning of hours, days, thresholds, or execution rules.",
-    "Raw single-filter event-entry constructions (H1/H2 style) are permanently banned.",
-    "Every new candidate must first pass complement-first mode before any other evaluation.",
-    "Model-first approaches are forbidden until the low-friction Wave A is fully exhausted.",
-    "Each prototype must have at least three logical layers: new information layer, regime/state confirmation, and entry-density limiter.",
-    "A candidate whose profit vanishes under strict-additive mode is rejected regardless of permissive-integrated performance."
+    "Base active-signal-v1@1 is immutable — no retuning, threshold changes, or cosmetic variations.",
+    "Raw single-filter event entries (H1/H2 style) are permanently forbidden.",
+    "Every candidate must be tested in complement-first mode before any integration.",
+    "Every prototype must have at least 3 logical layers: new information layer + regime confirmation + density limiter.",
+    "Model-first approaches are forbidden until the low-friction wave (stages 3–8) completes.",
+    "If a prototype produces hundreds of low-conviction entries, it is rejected — not tuned.",
+    "Cannibalism check is mandatory: overlap high + strict-additive weak = automatic rejection."
   ],
   "slices": [
     {
       "slice_id": "compiled_plan_v2_stage_4",
-      "title": "Feature contract and custom feature publication for Wave A",
-      "hypothesis": "Translate hypotheses into causally correct features with explicit source, lookback, warm-up behavior, and human-readable interpretation.",
-      "objective": "Translate hypotheses into causally correct features with explicit source, lookback, warm-up behavior, and human-readable interpretation.",
+      "title": "Feature contract и публикация custom features для wave A",
+      "hypothesis": "Translate hypotheses into causally correct features with documented source, lookback, warmup behavior, and human-readable interpretation, then validate and publish.",
+      "objective": "Translate hypotheses into causally correct features with documented source, lookback, warmup behavior, and human-readable interpretation, then validate and publish.",
       "success_criteria": [
-        "All Wave A features are published, causality-checked, materialized, and verified."
+        "All Wave A features published, leakage-checked, warmup-verified, and materialized."
       ],
       "allowed_tools": [
         "features_custom",
         "features_dataset",
         "features_catalog",
-        "research_record"
+        "research_memory"
       ],
       "evidence_requirements": [
-        "All Wave A features are published, causality-checked, materialized, and verified."
+        "All Wave A features published, leakage-checked, warmup-verified, and materialized."
       ],
       "policy_tags": [
-        "feature_contract",
-        "data_readiness"
+        "feature_engineering",
+        "validation"
       ],
-      "max_turns": 24,
-      "max_tool_calls": 24,
-      "max_expensive_calls": 2,
+      "max_turns": 36,
+      "max_tool_calls": 30,
+      "max_expensive_calls": 6,
       "parallel_slot": 1,
+      "runtime_profile": "generic_mutation",
+      "required_prerequisite_facts": null,
+      "required_output_facts": [],
+      "finalization_mode": "none",
+      "dependency_unblock_mode": "accepted_only",
+      "watchlist_allows_unblock": false,
+      "requires_mutating_evidence": false,
+      "requires_persisted_artifact": false,
+      "requires_live_handle_validation": false,
+      "acceptance_contract": {
+        "kind": "feature_contract_construction",
+        "mode": "strict",
+        "required_subjects": "published_feature_and_dataset_if_required",
+        "required_predicates": [
+          "feature_subject_present",
+          "feature_proof_pass"
+        ],
+        "mcp_proof_calls": [
+          {
+            "tool": "features_custom",
+            "arguments": {
+              "action": "inspect",
+              "view": "acceptance_proof"
+            }
+          },
+          {
+            "tool": "features_dataset",
+            "arguments": {
+              "action": "inspect",
+              "view": "acceptance_proof"
+            }
+          }
+        ],
+        "forbid_contradictions": [],
+        "allow_advisory_unblock": false,
+        "acceptance_requirements": {
+          "slice_id": "compiled_plan_v2_stage_4",
+          "contract_kind": "feature_contract_construction",
+          "require_dataset_activation": false
+        }
+      },
+      "acceptance_proof": {},
+      "acceptance_blockers": [],
       "budget_scale_applied": 6,
       "depends_on": [
         "compiled_plan_v2_stage_3"
       ],
       "status": "pending",
+      "acceptance_state": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
       "expensive_call_count": 0,
@@ -57,43 +102,74 @@
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
+      "dependency_blocker_slice_id": "",
+      "dependency_blocker_reason_code": "",
+      "dependency_blocker_class": "",
+      "blocked_retry_count": 0,
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
+      "gate_hint": "",
       "artifacts": [],
-      "facts": {}
+      "facts": {},
+      "verdict": ""
     },
     {
       "slice_id": "compiled_plan_v2_stage_5",
-      "title": "Hypothesis plausibility on base-absent surface",
-      "hypothesis": "Perform early triage of hypothesis prototypes exclusively on the complement surface where the base is absent, rejecting broad or noisy candidates before building full signals.",
-      "objective": "Perform early triage of hypothesis prototypes exclusively on the complement surface where the base is absent, rejecting broad or noisy candidates before building full signals.",
+      "title": "Hypothesis plausibility на base-absent surface",
+      "hypothesis": "Perform early triage of hypothesis prototypes specifically on the complement surface of the base, rejecting noisy, too-broad, or single-bucket candidates.",
+      "objective": "Perform early triage of hypothesis prototypes specifically on the complement surface of the base, rejecting noisy, too-broad, or single-bucket candidates.",
       "success_criteria": [
-        "Only plausibility-approved prototypes remain, each showing structured effect specifically where the base is absent."
+        "Only plausibility-approved prototypes remain, each showing structured effect on base-absent surface."
       ],
       "allowed_tools": [
         "features_analytics",
-        "experiments_run",
-        "experiments_read",
-        "research_record"
+        "research_memory",
+        "research_map"
       ],
       "evidence_requirements": [
-        "Only plausibility-approved prototypes remain, each showing structured effect specifically where the base is absent."
+        "Only plausibility-approved prototypes remain, each showing structured effect on base-absent surface."
       ],
       "policy_tags": [
         "triage",
-        "cheap_first",
-        "discipline"
+        "cheap_first"
       ],
       "max_turns": 24,
       "max_tool_calls": 24,
       "max_expensive_calls": 2,
       "parallel_slot": 1,
+      "runtime_profile": "generic_mutation",
+      "required_prerequisite_facts": null,
+      "required_output_facts": [],
+      "finalization_mode": "none",
+      "dependency_unblock_mode": "accepted_only",
+      "watchlist_allows_unblock": false,
+      "requires_mutating_evidence": false,
+      "requires_persisted_artifact": false,
+      "requires_live_handle_validation": false,
+      "acceptance_contract": {
+        "kind": "generic_read_strict",
+        "mode": "strict",
+        "required_subjects": "none",
+        "required_predicates": [
+          "domain_tool_evidence_present"
+        ],
+        "mcp_proof_calls": [],
+        "forbid_contradictions": [],
+        "allow_advisory_unblock": false,
+        "acceptance_requirements": {
+          "slice_id": "compiled_plan_v2_stage_5",
+          "contract_kind": "generic_read_strict"
+        }
+      },
+      "acceptance_proof": {},
+      "acceptance_blockers": [],
       "budget_scale_applied": 6,
       "depends_on": [
         "compiled_plan_v2_stage_4"
       ],
       "status": "pending",
+      "acceptance_state": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
       "expensive_call_count": 0,
@@ -104,42 +180,74 @@
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
+      "dependency_blocker_slice_id": "",
+      "dependency_blocker_reason_code": "",
+      "dependency_blocker_class": "",
+      "blocked_retry_count": 0,
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
+      "gate_hint": "",
       "artifacts": [],
-      "facts": {}
+      "facts": {},
+      "verdict": ""
     },
     {
       "slice_id": "compiled_plan_v2_stage_6",
-      "title": "Build strict specialist prototypes",
-      "hypothesis": "Convert surviving ideas into real signal prototypes with at least three logical layers, avoiding the weak single-filter architecture that doomed H1/H2.",
-      "objective": "Convert surviving ideas into real signal prototypes with at least three logical layers, avoiding the weak single-filter architecture that doomed H1/H2.",
+      "title": "Построение strict specialist prototypes",
+      "hypothesis": "Convert surviving hypotheses into strict multi-layer signal prototypes with at least 3 logical layers, bounded trade density, and documented additive-by-construction rationale.",
+      "objective": "Convert surviving hypotheses into strict multi-layer signal prototypes with at least 3 logical layers, bounded trade density, and documented additive-by-construction rationale.",
       "success_criteria": [
-        "A small set of strict specialist prototypes exists, not a loose grid of weak filters."
+        "Small set of strict specialist prototypes exists — not a loose grid of weak filters."
       ],
       "allowed_tools": [
         "backtests_strategy",
         "backtests_strategy_validate",
-        "research_record",
-        "research_map"
+        "research_memory"
       ],
       "evidence_requirements": [
-        "A small set of strict specialist prototypes exists, not a loose grid of weak filters."
+        "Small set of strict specialist prototypes exists — not a loose grid of weak filters."
       ],
       "policy_tags": [
         "signal_design",
-        "discipline"
+        "strict_architecture"
       ],
-      "max_turns": 24,
-      "max_tool_calls": 24,
-      "max_expensive_calls": 3,
+      "max_turns": 36,
+      "max_tool_calls": 30,
+      "max_expensive_calls": 6,
       "parallel_slot": 1,
+      "runtime_profile": "generic_mutation",
+      "required_prerequisite_facts": null,
+      "required_output_facts": [],
+      "finalization_mode": "none",
+      "dependency_unblock_mode": "accepted_only",
+      "watchlist_allows_unblock": false,
+      "requires_mutating_evidence": false,
+      "requires_persisted_artifact": false,
+      "requires_live_handle_validation": false,
+      "acceptance_contract": {
+        "kind": "generic_read_strict",
+        "mode": "strict",
+        "required_subjects": "none",
+        "required_predicates": [
+          "domain_tool_evidence_present"
+        ],
+        "mcp_proof_calls": [],
+        "forbid_contradictions": [],
+        "allow_advisory_unblock": false,
+        "acceptance_requirements": {
+          "slice_id": "compiled_plan_v2_stage_6",
+          "contract_kind": "generic_read_strict"
+        }
+      },
+      "acceptance_proof": {},
+      "acceptance_blockers": [],
       "budget_scale_applied": 6,
       "depends_on": [
         "compiled_plan_v2_stage_5"
       ],
       "status": "pending",
+      "acceptance_state": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
       "expensive_call_count": 0,
@@ -150,13 +258,20 @@
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
+      "dependency_blocker_slice_id": "",
+      "dependency_blocker_reason_code": "",
+      "dependency_blocker_class": "",
+      "blocked_retry_count": 0,
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
+      "gate_hint": "",
       "artifacts": [],
-      "facts": {}
+      "facts": {},
+      "verdict": ""
     }
   ],
+  "mcp_catalog_hash": "c306b4054eaf8f466a7e29182863da4e7cd0610551ef83a0611c515c84aa415b",
   "plan_source_kind": "compiled_raw",
   "source_sequence_id": "compiled_plan_v2",
   "source_raw_plan": "raw_plans/plan_v2.md",
@@ -165,6 +280,7 @@
   "source_compile_report_path": "",
   "sequence_batch_index": 2,
   "status": "draft",
-  "created_at": "2026-04-11T10:47:21.716557+00:00",
-  "updated_at": "2026-04-11T10:47:21.716614+00:00"
+  "last_error": "",
+  "created_at": "2026-04-15T18:35:44.608507+00:00",
+  "updated_at": "2026-04-15T18:35:44.608509+00:00"
 }

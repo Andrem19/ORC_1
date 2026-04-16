@@ -1,6 +1,6 @@
 {
   "plan_id": "compiled_plan_v10_batch_4",
-  "goal": "Честно доказать или опровергнуть, что microstructure-family (прежде всего cf_micro_imbalance_1h) даёт реальный overlay alpha поверх immutable base active-signal-v1.",
+  "goal": "Validate whether the microstructure feature family (primarily cf_micro_imbalance_1h) provides a genuine overlay alpha over the immutable base through a disciplined veto-first, lockbox-verified pipeline.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -9,53 +9,80 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "active-signal-v1@1 — immutable reference, менять базу запрещено",
-    "любое улучшение обязано пройти matched OOS lockbox comparison против базы на том же окне",
-    "активна только одна data family: microstructure_proxies, все остальные locked",
-    "feature selection / threshold / архитектура не подбираются по lockbox-окну",
-    "simple baselines проверяются до сложных моделей (simpler before smarter)",
-    "short side проверяется первой (short-first priority)",
-    "veto-overlay route обязателен; early-cut и directional scout открываются только через gate",
-    "запрещены: net_pnl>0 как единственный veto label, regression на future PnL, повторное открытие закрытых routes (leadership, breadth, path-asymmetry, regime-disagreement, event-only, trade-quality без нового слоя)",
-    "microstructure должен пройти тест почти сам по себе, без подмешивания старых feature packs"
+    "Immutable base active-signal-v1@1 must never be modified or re-tuned",
+    "Only microstructure_proxies family is active; all other feature families are locked",
+    "Do not reopen closed directions: leadership/breadth as directional edge, path-asymmetry, regime-disagreement, event-only overlays, trade-quality overlays without new information layer, derivatives positioning without real OI/liquidation/basis data",
+    "Lockbox overlay comparison (base vs base+overlay on same window) is mandatory before any strong conclusion",
+    "Simpler methods must be tested before complex models (bucket rule → threshold → logistic → CatBoost)",
+    "Short side is tested before long side at every stage",
+    "Veto overlay must be proven before early-cut or directional scout routes are unlocked",
+    "net_pnl > 0 must not be used as veto label — too noisy",
+    "Feature set limited to micro-core + minimal context support; no re-injection of old large feature packs",
+    "No feature/label/threshold selection on lockbox window; lockbox is truth-only"
   ],
   "slices": [
     {
-      "slice_id": "compiled_plan_v10_stage_10",
-      "title": "Optional route execution",
-      "hypothesis": "Провести только ту optional ветку (early-cut или directional scout), которая действительно заслужила открытие через gate.",
-      "objective": "Провести только ту optional ветку (early-cut или directional scout), которая действительно заслужила открытие через gate.",
+      "slice_id": "compiled_plan_v10_stage_10_part1",
+      "title": "Optional route execution (exploration)",
+      "hypothesis": "Execute only the route that genuinely earned opening — either early-cut (post-entry micro-features + minimal model) or directional scout (simple rule first, then small model) — and test against base on lockbox.",
+      "objective": "Execute only the route that genuinely earned opening — either early-cut (post-entry micro-features + minimal model) or directional scout (simple rule first, then small model) — and test against base on lockbox.",
       "success_criteria": [
-        "Optional route выполнен и оценён на selection OOS и lockbox",
-        "Delta vs base посчитана",
-        "Final decision по optional route принят"
+        "Opened route executed with selection and lockbox quality checks",
+        "Delta vs base assessed for meaningfulness",
+        "Final decision recorded for the route",
+        "Exploration phase complete"
       ],
       "allowed_tools": [
-        "models_train",
-        "backtests_runs",
-        "backtests_analysis",
-        "models_to_feature",
-        "research_record"
+        "research_memory",
+        "models_compare"
       ],
       "evidence_requirements": [
-        "Optional route выполнен и оценён на selection OOS и lockbox",
-        "Delta vs base посчитана",
-        "Final decision по optional route принят"
+        "Opened route executed with selection and lockbox quality checks",
+        "Delta vs base assessed for meaningfulness",
+        "Final decision recorded for the route",
+        "Exploration phase complete"
       ],
       "policy_tags": [
-        "modeling",
-        "experiments",
+        "optional",
+        "gated_branch",
         "optional_candidate"
       ],
       "max_turns": 36,
       "max_tool_calls": 30,
       "max_expensive_calls": 6,
       "parallel_slot": 1,
+      "runtime_profile": "generic_mutation",
+      "required_prerequisite_facts": null,
+      "required_output_facts": [],
+      "finalization_mode": "none",
+      "dependency_unblock_mode": "accepted_only",
+      "watchlist_allows_unblock": false,
+      "requires_mutating_evidence": false,
+      "requires_persisted_artifact": false,
+      "requires_live_handle_validation": false,
+      "acceptance_contract": {
+        "kind": "generic_read_strict",
+        "mode": "strict",
+        "required_subjects": "none",
+        "required_predicates": [
+          "domain_tool_evidence_present"
+        ],
+        "mcp_proof_calls": [],
+        "forbid_contradictions": [],
+        "allow_advisory_unblock": false,
+        "acceptance_requirements": {
+          "slice_id": "compiled_plan_v10_stage_10_part1",
+          "contract_kind": "generic_read_strict"
+        }
+      },
+      "acceptance_proof": {},
+      "acceptance_blockers": [],
       "budget_scale_applied": 6,
       "depends_on": [
         "compiled_plan_v10_stage_9"
       ],
       "status": "pending",
+      "acceptance_state": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
       "expensive_call_count": 0,
@@ -66,45 +93,179 @@
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
+      "dependency_blocker_slice_id": "",
+      "dependency_blocker_reason_code": "",
+      "dependency_blocker_class": "",
+      "blocked_retry_count": 0,
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
+      "gate_hint": "Only executes if stage_9 opened at least one route; skipped entirely if both routes remain locked",
       "artifacts": [],
-      "facts": {}
+      "facts": {},
+      "verdict": ""
+    },
+    {
+      "slice_id": "compiled_plan_v10_stage_10_part2",
+      "title": "Optional route execution (construction)",
+      "hypothesis": "Execute only the route that genuinely earned opening — either early-cut (post-entry micro-features + minimal model) or directional scout (simple rule first, then small model) — and test against base on lockbox.",
+      "objective": "Execute only the route that genuinely earned opening — either early-cut (post-entry micro-features + minimal model) or directional scout (simple rule first, then small model) — and test against base on lockbox.",
+      "success_criteria": [
+        "Opened route executed with selection and lockbox quality checks",
+        "Delta vs base assessed for meaningfulness",
+        "Final decision recorded for the route"
+      ],
+      "allowed_tools": [
+        "research_memory",
+        "models_train",
+        "backtests_runs",
+        "backtests_analysis",
+        "features_custom"
+      ],
+      "evidence_requirements": [
+        "Opened route executed with selection and lockbox quality checks",
+        "Delta vs base assessed for meaningfulness",
+        "Final decision recorded for the route"
+      ],
+      "policy_tags": [
+        "optional",
+        "gated_branch",
+        "optional_candidate"
+      ],
+      "max_turns": 36,
+      "max_tool_calls": 30,
+      "max_expensive_calls": 6,
+      "parallel_slot": 1,
+      "runtime_profile": "generic_mutation",
+      "required_prerequisite_facts": null,
+      "required_output_facts": [],
+      "finalization_mode": "none",
+      "dependency_unblock_mode": "accepted_only",
+      "watchlist_allows_unblock": false,
+      "requires_mutating_evidence": false,
+      "requires_persisted_artifact": false,
+      "requires_live_handle_validation": false,
+      "acceptance_contract": {
+        "kind": "model_training",
+        "mode": "strict",
+        "required_subjects": "dataset_and_model_version",
+        "required_predicates": [
+          "model_dataset_proof_pass",
+          "model_registry_proof_pass"
+        ],
+        "mcp_proof_calls": [
+          {
+            "tool": "models_dataset",
+            "arguments": {
+              "action": "inspect",
+              "view": "acceptance_proof"
+            }
+          },
+          {
+            "tool": "models_registry",
+            "arguments": {
+              "action": "inspect",
+              "view": "acceptance_proof"
+            }
+          }
+        ],
+        "forbid_contradictions": [],
+        "allow_advisory_unblock": false,
+        "acceptance_requirements": {
+          "slice_id": "compiled_plan_v10_stage_10_part2",
+          "contract_kind": "model_training"
+        }
+      },
+      "acceptance_proof": {},
+      "acceptance_blockers": [],
+      "budget_scale_applied": 6,
+      "depends_on": [
+        "compiled_plan_v10_stage_10_part1"
+      ],
+      "status": "pending",
+      "acceptance_state": "pending",
+      "turn_count": 0,
+      "tool_call_count": 0,
+      "expensive_call_count": 0,
+      "assigned_worker_id": null,
+      "last_checkpoint_turn_id": "",
+      "last_checkpoint_summary": "",
+      "last_checkpoint_status": "",
+      "final_report_turn_id": "",
+      "last_error": "",
+      "last_summary": "",
+      "dependency_blocker_slice_id": "",
+      "dependency_blocker_reason_code": "",
+      "dependency_blocker_class": "",
+      "blocked_retry_count": 0,
+      "active_operation_ref": "",
+      "active_operation_status": "",
+      "active_operation_arguments": {},
+      "gate_hint": "Only executes if stage_9 opened at least one route; skipped entirely if both routes remain locked",
+      "artifacts": [],
+      "facts": {},
+      "verdict": ""
     },
     {
       "slice_id": "compiled_plan_v10_stage_11",
-      "title": "Финальный вердикт по v10",
-      "hypothesis": "Получить честное решение по microstructure family: Success (working overlay), Partial (watchlist-quality), или Failed.",
-      "objective": "Получить честное решение по microstructure family: Success (working overlay), Partial (watchlist-quality), или Failed.",
+      "title": "Final v10 verdict",
+      "hypothesis": "Deliver an honest terminal verdict on the microstructure family: PROMOTE if working overlay proven, WATCHLIST if partial result, REJECT if lockbox failed — with clear next steps.",
+      "objective": "Deliver an honest terminal verdict on the microstructure family: PROMOTE if working overlay proven, WATCHLIST if partial result, REJECT if lockbox failed — with clear next steps.",
       "success_criteria": [
-        "Final route classification определён (Success / Partial / Failed)",
-        "Понятный next step зафиксирован",
-        "Все результаты сведены и задокументированы"
+        "Final route classification assigned (PROMOTE / WATCHLIST / REJECT)",
+        "Clear next step defined and documented"
       ],
       "allowed_tools": [
-        "research_record",
+        "research_memory",
         "research_map",
         "notify_send"
       ],
       "evidence_requirements": [
-        "Final route classification определён (Success / Partial / Failed)",
-        "Понятный next step зафиксирован",
-        "Все результаты сведены и задокументированы"
+        "Final route classification assigned (PROMOTE / WATCHLIST / REJECT)",
+        "Clear next step defined and documented"
       ],
       "policy_tags": [
-        "finalization"
+        "finalization",
+        "verdict"
       ],
       "max_turns": 24,
       "max_tool_calls": 24,
-      "max_expensive_calls": 2,
+      "max_expensive_calls": 1,
       "parallel_slot": 1,
+      "runtime_profile": "generic_mutation",
+      "required_prerequisite_facts": null,
+      "required_output_facts": [],
+      "finalization_mode": "none",
+      "dependency_unblock_mode": "accepted_only",
+      "watchlist_allows_unblock": false,
+      "requires_mutating_evidence": false,
+      "requires_persisted_artifact": false,
+      "requires_live_handle_validation": false,
+      "acceptance_contract": {
+        "kind": "generic_read_strict",
+        "mode": "strict",
+        "required_subjects": "none",
+        "required_predicates": [
+          "domain_tool_evidence_present"
+        ],
+        "mcp_proof_calls": [],
+        "forbid_contradictions": [],
+        "allow_advisory_unblock": false,
+        "acceptance_requirements": {
+          "slice_id": "compiled_plan_v10_stage_11",
+          "contract_kind": "generic_read_strict"
+        }
+      },
+      "acceptance_proof": {},
+      "acceptance_blockers": [],
       "budget_scale_applied": 6,
       "depends_on": [
         "compiled_plan_v10_stage_8",
-        "compiled_plan_v10_stage_10"
+        "compiled_plan_v10_stage_9",
+        "compiled_plan_v10_stage_10_part2"
       ],
       "status": "pending",
+      "acceptance_state": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
       "expensive_call_count": 0,
@@ -115,13 +276,20 @@
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
+      "dependency_blocker_slice_id": "",
+      "dependency_blocker_reason_code": "",
+      "dependency_blocker_class": "",
+      "blocked_retry_count": 0,
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
+      "gate_hint": "",
       "artifacts": [],
-      "facts": {}
+      "facts": {},
+      "verdict": ""
     }
   ],
+  "mcp_catalog_hash": "c306b4054eaf8f466a7e29182863da4e7cd0610551ef83a0611c515c84aa415b",
   "plan_source_kind": "compiled_raw",
   "source_sequence_id": "compiled_plan_v10",
   "source_raw_plan": "raw_plans/plan_v10.md",
@@ -130,6 +298,7 @@
   "source_compile_report_path": "",
   "sequence_batch_index": 4,
   "status": "draft",
-  "created_at": "2026-04-11T11:03:23.954718+00:00",
-  "updated_at": "2026-04-11T11:03:23.954719+00:00"
+  "last_error": "",
+  "created_at": "2026-04-15T18:47:58.337076+00:00",
+  "updated_at": "2026-04-15T18:47:58.337078+00:00"
 }

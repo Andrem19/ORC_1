@@ -1,6 +1,6 @@
 {
   "plan_id": "compiled_plan_v6_batch_1",
-  "goal": "Найти и проверить новые cross-symbol directional custom features, обучить на них CatBoost long/short classifiers, и доказать их additive value поверх active-signal-v1@1 через matched OOS comparison.",
+  "goal": "Найти и проверить новые cross-symbol directional custom features, обучить на них CatBoost long/short classification models, и доказать их additive value поверх active-signal-v1@1 через matched OOS comparison.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -9,40 +9,42 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "База active-signal-v1@1 — immutable reference. Запрещено менять базу, подбирать ей параметры, обучать на финальном OOS.",
-    "Выбор feature set, target, threshold или архитектуры по lockbox-окну запрещён. Lockbox только проверяет frozen choice.",
-    "Улучшением считается только matched OOS comparison с базой на том же окне.",
-    "v5 regression route формально закрыт. v6 использует только classification (long/short labels).",
-    "Новый информационный слой обязателен — недостаточно переставлять старые IV/classifier features.",
-    "Сначала отдельные long и short classifiers (M1, M2). Router-модель запрещена до подтверждения обеих.",
-    "base-absent surface для discovery, matched OOS для финальной правды.",
-    "Не более 3–4 сильных feature families. Без широкой feature inflation.",
-    "Компактный disciplined HPO: depth {4,6,8}, lr {0.03,0.05}, moderate regularization, 2–3 seeds.",
-    "Purge gap между train и later windows — не менее 24h.",
-    "Горизонты только 12h и 18h. Barrier schemes только balanced и conservative."
+    "База active-signal-v1@1 — immutable reference. Запрещено менять базу, подбирать ей параметры, или обучать на данных, используемых как финальный OOS.",
+    "Никакого regression на future PnL — только directional barrier-based long/short classification labels.",
+    "Новый информационный слой обязателен: cross-symbol leadership/breadth — главный приоритет; недостаточно переставлять старые IV/classifier features.",
+    "Отдельные long и short classifiers (M1_long_cls, M2_short_cls). Общая multiclass модель запрещена на старте.",
+    "Train / selection OOS / lockbox OOS frozen до обучения. Purge gap ≥ 24h.",
+    "Label design: только горизонты 12h и 18h, схемы balanced и conservative. Не более двух вариантов. Выбор label по lockbox запрещён.",
+    "Thresholds frozen до открытия lockbox. Selection выбирает; lockbox только проверяет.",
+    "Feature families: максимум 3–4 сильных (leadership-breadth, path-asymmetry, regime-disagreement, hybrid-event). Не делать широкую feature inflation.",
+    "CatBoost HPO: depth {4,6,8}, learning_rate {0.03,0.05}, moderate regularization, 2–3 seeds. Early stopping обязателен.",
+    "Финальная правда — только matched OOS comparison с базой на том же окне через strict additive, permissive, ownership, cannibalization.",
+    "Router-модель запрещена на старте v6. Разрешается только если M1 и M2 обе показали meaningful OOS value."
   ],
   "slices": [
     {
       "slice_id": "compiled_plan_v6_stage_1",
       "title": "Старт v6 и фиксация новой model discipline",
-      "hypothesis": "Открыть новый исследовательский проект, зафиксировать immutable baseline reference, формально закрыть v5 regression route, завести atlas оси и записать anti-leakage правила.",
-      "objective": "Открыть новый исследовательский проект, зафиксировать immutable baseline reference, формально закрыть v5 regression route, завести atlas оси и записать anti-leakage правила.",
+      "hypothesis": "Открыть новый research project для v6, зафиксировать immutable baseline reference, formally закрыть v5 regression route, и завести research atlas с осями для отслеживания прогресса.",
+      "objective": "Открыть новый research project для v6, зафиксировать immutable baseline reference, formally закрыть v5 regression route, и завести research atlas с осями для отслеживания прогресса.",
       "success_criteria": [
-        "Новый проект создан",
-        "Immutable reference зафиксирован",
-        "Правила v6 (classification-only, new-layer-required, matched-OOS-only) записаны",
-        "Atlas оси заведены"
+        "Новый project создан с уникальным project_id.",
+        "Immutable reference зафиксирован в research_memory.",
+        "Research atlas заведён со всеми осями.",
+        "v5 regression route formally closed в memory.",
+        "Anti-leakage rules записаны."
       ],
       "allowed_tools": [
         "research_project",
-        "research_record",
+        "research_memory",
         "research_map"
       ],
       "evidence_requirements": [
-        "Новый проект создан",
-        "Immutable reference зафиксирован",
-        "Правила v6 (classification-only, new-layer-required, matched-OOS-only) записаны",
-        "Atlas оси заведены"
+        "Новый project создан с уникальным project_id.",
+        "Immutable reference зафиксирован в research_memory.",
+        "Research atlas заведён со всеми осями.",
+        "v5 regression route formally closed в memory.",
+        "Anti-leakage rules записаны."
       ],
       "policy_tags": [
         "setup",
@@ -50,11 +52,51 @@
       ],
       "max_turns": 24,
       "max_tool_calls": 24,
-      "max_expensive_calls": 2,
+      "max_expensive_calls": 1,
       "parallel_slot": 1,
+      "runtime_profile": "research_setup",
+      "required_prerequisite_facts": [],
+      "required_output_facts": [
+        "research.baseline_configured",
+        "research.atlas_defined",
+        "research.invariants_recorded",
+        "research.naming_recorded"
+      ],
+      "finalization_mode": "fact_based",
+      "dependency_unblock_mode": "accepted_only",
+      "watchlist_allows_unblock": false,
+      "requires_mutating_evidence": false,
+      "requires_persisted_artifact": false,
+      "requires_live_handle_validation": false,
+      "acceptance_contract": {
+        "kind": "research_setup",
+        "mode": "strict",
+        "required_subjects": "persisted_research_setup_nodes",
+        "required_predicates": [
+          "research_project_present",
+          "research_setup_facts_present"
+        ],
+        "mcp_proof_calls": [
+          {
+            "tool": "research_memory",
+            "arguments": {
+              "action": "prove"
+            }
+          }
+        ],
+        "forbid_contradictions": [],
+        "allow_advisory_unblock": false,
+        "acceptance_requirements": {
+          "slice_id": "compiled_plan_v6_stage_1",
+          "contract_kind": "research_setup"
+        }
+      },
+      "acceptance_proof": {},
+      "acceptance_blockers": [],
       "budget_scale_applied": 6,
       "depends_on": [],
       "status": "pending",
+      "acceptance_state": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
       "expensive_call_count": 0,
@@ -65,35 +107,40 @@
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
+      "dependency_blocker_slice_id": "",
+      "dependency_blocker_reason_code": "",
+      "dependency_blocker_class": "",
+      "blocked_retry_count": 0,
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
+      "gate_hint": "",
       "artifacts": [],
-      "facts": {}
+      "facts": {},
+      "verdict": ""
     },
     {
       "slice_id": "compiled_plan_v6_stage_2",
       "title": "Data readiness для нового information layer",
-      "hypothesis": "Проверить доступность и качество 1h datasets для cross-symbol features (BTCUSDT, ETHUSDT + опционально SOLUSDT, BNBUSDT) и event stores, затем заморозить final symbol universe.",
-      "objective": "Проверить доступность и качество 1h datasets для cross-symbol features (BTCUSDT, ETHUSDT + опционально SOLUSDT, BNBUSDT) и event stores, затем заморозить final symbol universe.",
+      "hypothesis": "Проверить доступность и качество 1h datasets для cross-symbol universe (BTCUSDT, ETHUSDT, SOLUSDT, BNBUSDT) и event stores (funding, expiry), затем зафиксировать final symbol universe.",
+      "objective": "Проверить доступность и качество 1h datasets для cross-symbol universe (BTCUSDT, ETHUSDT, SOLUSDT, BNBUSDT) и event stores (funding, expiry), затем зафиксировать final symbol universe.",
       "success_criteria": [
-        "Frozen symbol universe определён",
-        "Все символы в universe имеют готовые 1h datasets",
-        "Funding и expiry events доступны",
-        "Понятно, какие cross-symbol features реально можно строить"
+        "BTCUSDT и ETHUSDT 1h datasets confirmed ready.",
+        "Final symbol universe frozen и записан.",
+        "Event stores (funding, expiry) проверены."
       ],
       "allowed_tools": [
         "datasets",
+        "datasets_sync",
         "datasets_preview",
         "events",
         "events_sync",
-        "research_record"
+        "research_memory"
       ],
       "evidence_requirements": [
-        "Frozen symbol universe определён",
-        "Все символы в universe имеют готовые 1h datasets",
-        "Funding и expiry events доступны",
-        "Понятно, какие cross-symbol features реально можно строить"
+        "BTCUSDT и ETHUSDT 1h datasets confirmed ready.",
+        "Final symbol universe frozen и записан.",
+        "Event stores (funding, expiry) проверены."
       ],
       "policy_tags": [
         "data_readiness",
@@ -103,11 +150,41 @@
       "max_tool_calls": 30,
       "max_expensive_calls": 6,
       "parallel_slot": 1,
+      "runtime_profile": "generic_mutation",
+      "required_prerequisite_facts": [
+        "research.baseline_configured",
+        "research.atlas_defined",
+        "research.invariants_recorded",
+        "research.naming_recorded"
+      ],
+      "required_output_facts": [],
+      "finalization_mode": "none",
+      "dependency_unblock_mode": "accepted_only",
+      "watchlist_allows_unblock": false,
+      "requires_mutating_evidence": false,
+      "requires_persisted_artifact": false,
+      "requires_live_handle_validation": false,
+      "acceptance_contract": {
+        "kind": "feature_contract_exploration",
+        "mode": "strict",
+        "required_subjects": "none",
+        "required_predicates": [],
+        "mcp_proof_calls": [],
+        "forbid_contradictions": [],
+        "allow_advisory_unblock": false,
+        "acceptance_requirements": {
+          "slice_id": "compiled_plan_v6_stage_2",
+          "contract_kind": "feature_contract_exploration"
+        }
+      },
+      "acceptance_proof": {},
+      "acceptance_blockers": [],
       "budget_scale_applied": 6,
       "depends_on": [
         "compiled_plan_v6_stage_1"
       ],
       "status": "pending",
+      "acceptance_state": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
       "expensive_call_count": 0,
@@ -118,49 +195,99 @@
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
+      "dependency_blocker_slice_id": "",
+      "dependency_blocker_reason_code": "",
+      "dependency_blocker_class": "",
+      "blocked_retry_count": 0,
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
+      "gate_hint": "",
       "artifacts": [],
-      "facts": {}
+      "facts": {},
+      "verdict": ""
     },
     {
       "slice_id": "compiled_plan_v6_stage_3",
       "title": "Feature contract и materialization для v6 feature packs",
-      "hypothesis": "Построить 4 feature packs (leadership-breadth, path-asymmetry, regime-disagreement, hybrid-event): записать contracts, валидировать, опубликовать, материализовать, проверить coverage и causality.",
-      "objective": "Построить 4 feature packs (leadership-breadth, path-asymmetry, regime-disagreement, hybrid-event): записать contracts, валидировать, опубликовать, материализовать, проверить coverage и causality.",
+      "hypothesis": "Построить и materialize 4 feature packs (leadership-breadth, path-asymmetry, regime-disagreement, hybrid-event) через contract → validate → publish → materialize pipeline, затем зафиксировать common_model_window.",
+      "objective": "Построить и materialize 4 feature packs (leadership-breadth, path-asymmetry, regime-disagreement, hybrid-event) через contract → validate → publish → materialize pipeline, затем зафиксировать common_model_window.",
       "success_criteria": [
-        "Все 4 feature packs materialized",
-        "Coverage и warmup проверены для каждого feature",
-        "Causality нарушений не обнаружено",
-        "Общий common_model_window определён"
+        "Все принятые feature packs materialized с корректной coverage.",
+        "common_model_window зафиксирован.",
+        "Causality проверена — no leakage detected.",
+        "Общее число active columns разумное (3–4 families)."
       ],
       "allowed_tools": [
         "features_custom",
-        "features_dataset",
         "features_catalog",
+        "features_dataset",
         "features_analytics",
-        "research_record"
+        "research_memory"
       ],
       "evidence_requirements": [
-        "Все 4 feature packs materialized",
-        "Coverage и warmup проверены для каждого feature",
-        "Causality нарушений не обнаружено",
-        "Общий common_model_window определён"
+        "Все принятые feature packs materialized с корректной coverage.",
+        "common_model_window зафиксирован.",
+        "Causality проверена — no leakage detected.",
+        "Общее число active columns разумное (3–4 families)."
       ],
       "policy_tags": [
-        "feature_engineering",
-        "gate_critical"
+        "feature_contract",
+        "core_pipeline"
       ],
       "max_turns": 36,
       "max_tool_calls": 30,
       "max_expensive_calls": 6,
       "parallel_slot": 1,
+      "runtime_profile": "generic_mutation",
+      "required_prerequisite_facts": null,
+      "required_output_facts": [],
+      "finalization_mode": "none",
+      "dependency_unblock_mode": "accepted_only",
+      "watchlist_allows_unblock": false,
+      "requires_mutating_evidence": false,
+      "requires_persisted_artifact": false,
+      "requires_live_handle_validation": false,
+      "acceptance_contract": {
+        "kind": "feature_contract_construction",
+        "mode": "strict",
+        "required_subjects": "published_feature_and_dataset_if_required",
+        "required_predicates": [
+          "feature_subject_present",
+          "feature_proof_pass"
+        ],
+        "mcp_proof_calls": [
+          {
+            "tool": "features_custom",
+            "arguments": {
+              "action": "inspect",
+              "view": "acceptance_proof"
+            }
+          },
+          {
+            "tool": "features_dataset",
+            "arguments": {
+              "action": "inspect",
+              "view": "acceptance_proof"
+            }
+          }
+        ],
+        "forbid_contradictions": [],
+        "allow_advisory_unblock": false,
+        "acceptance_requirements": {
+          "slice_id": "compiled_plan_v6_stage_3",
+          "contract_kind": "feature_contract_construction",
+          "require_dataset_activation": false
+        }
+      },
+      "acceptance_proof": {},
+      "acceptance_blockers": [],
       "budget_scale_applied": 6,
       "depends_on": [
         "compiled_plan_v6_stage_2"
       ],
       "status": "pending",
+      "acceptance_state": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
       "expensive_call_count": 0,
@@ -171,13 +298,20 @@
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
+      "dependency_blocker_slice_id": "",
+      "dependency_blocker_reason_code": "",
+      "dependency_blocker_class": "",
+      "blocked_retry_count": 0,
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
+      "gate_hint": "",
       "artifacts": [],
-      "facts": {}
+      "facts": {},
+      "verdict": ""
     }
   ],
+  "mcp_catalog_hash": "c306b4054eaf8f466a7e29182863da4e7cd0610551ef83a0611c515c84aa415b",
   "plan_source_kind": "compiled_raw",
   "source_sequence_id": "compiled_plan_v6",
   "source_raw_plan": "raw_plans/plan_v6.md",
@@ -186,6 +320,7 @@
   "source_compile_report_path": "",
   "sequence_batch_index": 1,
   "status": "draft",
-  "created_at": "2026-04-11T10:54:10.388273+00:00",
-  "updated_at": "2026-04-11T10:54:10.388362+00:00"
+  "last_error": "",
+  "created_at": "2026-04-15T18:41:50.652966+00:00",
+  "updated_at": "2026-04-15T18:41:50.652969+00:00"
 }

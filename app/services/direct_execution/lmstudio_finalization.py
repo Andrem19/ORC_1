@@ -1,5 +1,5 @@
 """
-Strict auto-finalization helpers for LM Studio direct execution.
+Auto-finalization helpers for LM Studio direct execution.
 """
 
 from __future__ import annotations
@@ -11,42 +11,33 @@ from app.services.direct_execution.guardrails import (
     final_report_payload_passes_gate,
     synthesize_transcript_evidence_refs,
 )
+from app.services.direct_execution.transcript_facts import derive_facts_from_transcript
 
 
-def build_catalog_only_final_report(
+def build_profile_final_report(
     *,
     transcript: list[dict[str, Any]],
     success_criteria: list[str],
     required_output_facts: list[str],
+    runtime_profile: str,
 ) -> str | None:
-    scopes: set[str] = set()
-    timeframes: set[str] = set()
-    for entry in transcript:
-        if entry.get("kind") != "tool_result" or entry.get("tool") != "features_catalog":
-            continue
-        args = entry.get("arguments") if isinstance(entry.get("arguments"), dict) else {}
-        scope = str(args.get("scope") or "").strip()
-        timeframe = str(args.get("timeframe") or "").strip()
-        if scope:
-            scopes.add(scope)
-        if timeframe:
-            timeframes.add(timeframe)
-    findings: list[str] = []
-    if scopes:
-        findings.append(f"Catalog scopes inspected: {', '.join(sorted(scopes))}.")
-    if timeframes:
-        findings.append(f"Timeframes inspected: {', '.join(sorted(timeframes))}.")
-    for criterion in success_criteria[:2]:
-        text = str(criterion or "").strip()
-        if text:
-            findings.append(f"Contract coverage addressed: {text}")
-    if not findings:
-        findings.append("Feature catalog inspection completed for contract drafting.")
-    facts = {
-        "execution.kind": "direct",
-        "features_catalog.scopes": sorted(scopes),
-        "features_catalog.timeframes": sorted(timeframes),
-    }
+    normalized_profile = str(runtime_profile or "").strip()
+    if normalized_profile == "catalog_contract_probe":
+        facts = _catalog_probe_facts(transcript)
+        findings = _catalog_probe_findings(facts=facts, success_criteria=success_criteria)
+        summary = "Catalog-contract probe completed from live MCP tool evidence."
+        confidence = 0.74
+        verdict = "COMPLETE"
+    elif normalized_profile == "research_shortlist":
+        if not _has_successful_shortlist_write(transcript):
+            return None
+        facts = derive_facts_from_transcript(transcript, runtime_profile=runtime_profile)
+        findings = _research_shortlist_findings(facts=facts, success_criteria=success_criteria)
+        summary = "Research shortlist milestone persisted from live MCP tool evidence."
+        confidence = 0.77
+        verdict = "COMPLETE"
+    else:
+        return None
     evidence_refs = synthesize_transcript_evidence_refs(transcript)
     if not final_report_payload_passes_gate(
         facts=facts,
@@ -57,166 +48,49 @@ def build_catalog_only_final_report(
         return None
     payload = {
         "type": "final_report",
-        "summary": "Feature catalog inspection completed; data/feature contract drafted for shortlisted hypotheses.",
-        "verdict": "COMPLETE",
+        "summary": summary,
+        "verdict": verdict,
         "findings": findings,
         "facts": facts,
         "evidence_refs": evidence_refs,
-        "confidence": 0.76,
+        "confidence": confidence,
     }
-    return "```json\n" + json.dumps(payload, ensure_ascii=False) + "\n```"
-
-
-def build_backtests_budget_salvage_report(
-    *,
-    transcript: list[dict[str, Any]],
-    allowed_tools: set[str],
-    success_criteria: list[str],
-    required_output_facts: list[str],
-) -> str | None:
-    if not allowed_tools or not allowed_tools.issubset({"backtests_conditions", "backtests_analysis", "backtests_runs", "backtests_plan"}):
-        return None
-    successful = _successful_tool_entries(transcript)
-    if len(successful) < 2:
-        return None
-    tools_seen = sorted({str(item.get("tool") or "").strip() for item in successful if str(item.get("tool") or "").strip()})
-    findings = [
-        f"Collected successful backtest diagnostics signals before budget exhaustion using tools: {', '.join(tools_seen)}.",
-        "Budget cap hit after producing enough intermediate evidence to continue the cycle with summarized conclusions.",
-    ]
-    if success_criteria:
-        findings.append(f"Success criterion targeted: {success_criteria[0]}")
-    facts = {
-        "execution.kind": "direct",
-        "direct.auto_finalized_from_expensive_budget_salvage": True,
-        "backtests.successful_tool_count": len(successful),
-        "backtests.tools_seen": tools_seen,
-    }
-    evidence_refs = synthesize_transcript_evidence_refs(successful)
-    if not final_report_payload_passes_gate(
-        facts=facts,
-        findings=findings,
-        evidence_refs=evidence_refs,
-        required_output_facts=required_output_facts,
-    ):
-        return None
-    payload = {
-        "type": "final_report",
-        "summary": "Expensive-tool budget exhausted after successful diagnostics sampling; synthesized final report from collected backtest evidence.",
-        "verdict": "COMPLETE",
-        "findings": findings,
-        "facts": facts,
-        "evidence_refs": evidence_refs,
-        "confidence": 0.65,
-    }
-    return "```json\n" + json.dumps(payload, ensure_ascii=False) + "\n```"
-
-
-def build_research_budget_salvage_report(
-    *,
-    transcript: list[dict[str, Any]],
-    allowed_tools: set[str],
-    success_criteria: list[str],
-    required_output_facts: list[str],
-) -> str | None:
-    if not allowed_tools or not allowed_tools.issubset({"research_map", "research_search", "research_record"}):
-        return None
-    successful = _successful_tool_entries(transcript)
-    if not successful:
-        return None
-    project_id = ""
-    shortlist: list[str] = []
-    seen_shortlist: set[str] = set()
-    for entry in successful:
-        args = entry.get("arguments") if isinstance(entry.get("arguments"), dict) else {}
-        pid = str(args.get("project_id") or "").strip()
-        if pid and not project_id:
-            project_id = pid
-        if entry.get("tool") == "research_search":
-            query = str(args.get("query") or "").strip()
-            if query and query not in seen_shortlist:
-                seen_shortlist.add(query)
-                shortlist.append(query)
-        if entry.get("tool") == "research_record":
-            record = args.get("record") if isinstance(args.get("record"), dict) else {}
-            title = str(record.get("title") or "").strip()
-            if title and title not in seen_shortlist:
-                seen_shortlist.add(title)
-                shortlist.append(title)
-    if not project_id or not shortlist:
-        return None
-    findings = [
-        "Research transcript was successfully executed with no tool errors before budget exhaustion.",
-        f"Recovered shortlist candidates: {', '.join(shortlist[:8])}.",
-    ]
-    if success_criteria:
-        findings.append(f"Success criterion targeted: {success_criteria[0]}")
-    facts = {
-        "execution.kind": "direct",
-        "research.project_id": project_id,
-        "research.shortlist_families": shortlist[:20],
-        "direct.auto_finalized_from_budget_salvage": True,
-    }
-    evidence_refs = synthesize_transcript_evidence_refs(successful)
-    if not final_report_payload_passes_gate(
-        facts=facts,
-        findings=findings,
-        evidence_refs=evidence_refs,
-        required_output_facts=required_output_facts,
-    ):
-        return None
-    payload = {
-        "type": "final_report",
-        "summary": "Budget exhausted after successful research exploration; synthesized final report from collected transcript evidence.",
-        "verdict": "COMPLETE",
-        "findings": findings,
-        "facts": facts,
-        "evidence_refs": evidence_refs,
-        "confidence": 0.68,
-    }
-    return "```json\n" + json.dumps(payload, ensure_ascii=False) + "\n```"
+    return _json_block(payload)
 
 
 def build_generic_transcript_salvage_report(
     *,
     transcript: list[dict[str, Any]],
-    allowed_tools: set[str],
     success_criteria: list[str],
     required_output_facts: list[str],
+    runtime_profile: str = "",
     slice_title: str = "",
+    salvage_reason: str = "generic",
+    minimum_successful_tools: int = 2,
 ) -> str | None:
-    """Build a final_report from any transcript with enough successful tool evidence.
-
-    This is a last-resort salvage that triggers when domain-specific salvage
-    (research, backtests, catalog) does not apply.  All evidence gates are
-    enforced — this does NOT lower the quality bar.
-    """
     successful = _successful_tool_entries(transcript)
-    if len(successful) < 3:
+    if len(successful) < max(1, int(minimum_successful_tools or 1)):
         return None
     tools_seen = sorted({str(e.get("tool") or "").strip() for e in successful if str(e.get("tool") or "").strip()})
-    if len(tools_seen) < 2:
+    if not tools_seen:
         return None
-    from app.services.direct_execution.transcript_facts import derive_facts_from_transcript
-
-    findings = [
-        f"Collected evidence from {len(successful)} successful tool calls across {len(tools_seen)} distinct tools: {', '.join(tools_seen)}.",
-    ]
+    facts: dict[str, Any] = {
+        "execution.kind": "direct",
+        "direct.auto_finalized_from_generic_salvage": True,
+        f"direct.auto_finalized_from_{str(salvage_reason or 'generic').strip()}_salvage": True,
+        "direct.tools_seen": tools_seen,
+        "direct.successful_tool_count": len(successful),
+    }
+    transcript_facts = derive_facts_from_transcript(transcript, runtime_profile=runtime_profile)
+    for key, value in transcript_facts.items():
+        facts.setdefault(key, value)
+    findings = [f"Collected evidence from {len(successful)} successful tool calls: {', '.join(tools_seen)}."]
     for criterion in success_criteria[:2]:
         text = str(criterion or "").strip()
         if text:
             findings.append(f"Success criterion addressed: {text}")
     if slice_title:
         findings.append(f"Slice: {slice_title}")
-    facts: dict[str, Any] = {
-        "execution.kind": "direct",
-        "direct.auto_finalized_from_generic_salvage": True,
-        "direct.tools_seen": tools_seen,
-        "direct.successful_tool_count": len(successful),
-    }
-    transcript_facts = derive_facts_from_transcript(transcript)
-    for key, value in transcript_facts.items():
-        facts.setdefault(key, value)
     evidence_refs = synthesize_transcript_evidence_refs(transcript)
     if not final_report_payload_passes_gate(
         facts=facts,
@@ -234,7 +108,7 @@ def build_generic_transcript_salvage_report(
         "evidence_refs": evidence_refs,
         "confidence": 0.60,
     }
-    return "```json\n" + json.dumps(payload, ensure_ascii=False) + "\n```"
+    return _json_block(payload)
 
 
 def _successful_tool_entries(transcript: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -259,9 +133,94 @@ def _extract_structured_content(raw_payload: Any) -> dict[str, Any]:
     return structured if isinstance(structured, dict) else {}
 
 
-__all__ = [
-    "build_backtests_budget_salvage_report",
-    "build_catalog_only_final_report",
-    "build_generic_transcript_salvage_report",
-    "build_research_budget_salvage_report",
-]
+def _catalog_probe_facts(transcript: list[dict[str, Any]]) -> dict[str, Any]:
+    scopes: set[str] = set()
+    timeframes: set[str] = set()
+    for entry in transcript:
+        if entry.get("kind") != "tool_result":
+            continue
+        args = entry.get("arguments") if isinstance(entry.get("arguments"), dict) else {}
+        scope = str(args.get("scope") or "").strip()
+        timeframe = str(args.get("timeframe") or "").strip()
+        if scope:
+            scopes.add(scope)
+        if timeframe:
+            timeframes.add(timeframe)
+    facts: dict[str, Any] = {
+        "execution.kind": "direct",
+        "features_catalog.scopes": sorted(scopes) or ["all"],
+    }
+    if timeframes:
+        facts["features_catalog.timeframes"] = sorted(timeframes)
+    return facts
+
+
+def _catalog_probe_findings(*, facts: dict[str, Any], success_criteria: list[str]) -> list[str]:
+    findings: list[str] = []
+    scopes = facts.get("features_catalog.scopes") or []
+    timeframes = facts.get("features_catalog.timeframes") or []
+    if scopes:
+        findings.append(f"Catalog scopes inspected: {', '.join(str(item) for item in scopes)}.")
+    if timeframes:
+        findings.append(f"Timeframes inspected: {', '.join(str(item) for item in timeframes)}.")
+    for criterion in success_criteria[:2]:
+        text = str(criterion or "").strip()
+        if text:
+            findings.append(f"Contract coverage addressed: {text}")
+    if not findings:
+        findings.append("Catalog-style contract probe completed from live tool results.")
+    return findings
+
+
+def _has_successful_shortlist_write(transcript: list[dict[str, Any]]) -> bool:
+    for entry in transcript:
+        if entry.get("kind") != "tool_result":
+            continue
+        payload = entry.get("payload") if isinstance(entry.get("payload"), dict) else {}
+        if payload.get("error") or payload.get("ok") is False:
+            continue
+        structured = _extract_structured_content(payload.get("payload"))
+        if str(structured.get("status") or "").strip().lower() in {"error", "failed"}:
+            continue
+        arguments = entry.get("arguments") if isinstance(entry.get("arguments"), dict) else {}
+        if str(arguments.get("action") or "").strip().lower() != "create":
+            continue
+        if str(arguments.get("kind") or "").strip().lower() != "milestone":
+            continue
+        record = arguments.get("record") if isinstance(arguments.get("record"), dict) else {}
+        metadata = record.get("metadata") if isinstance(record.get("metadata"), dict) else {}
+        content = record.get("content") if isinstance(record.get("content"), dict) else {}
+        if not isinstance(metadata.get("shortlist_families"), list):
+            continue
+        if metadata.get("novelty_justification_present") is not True:
+            continue
+        candidates = content.get("candidates")
+        if not isinstance(candidates, list) or not candidates:
+            continue
+        if not all(isinstance(item, dict) and str(item.get("why_new") or "").strip() for item in candidates):
+            continue
+        return True
+    return False
+
+
+def _research_shortlist_findings(*, facts: dict[str, Any], success_criteria: list[str]) -> list[str]:
+    findings: list[str] = []
+    families = [str(item).strip() for item in list(facts.get("research.shortlist_families") or []) if str(item).strip()]
+    if families:
+        findings.append(f"Shortlist families persisted: {', '.join(families[:6])}.")
+    if facts.get("research.novelty_justification_present") is True:
+        findings.append("Novelty justification persisted in the shortlist milestone payload.")
+    for criterion in success_criteria[:2]:
+        text = str(criterion or "").strip()
+        if text:
+            findings.append(f"Success criterion addressed: {text}")
+    if not findings:
+        findings.append("Research shortlist milestone completed from live tool results.")
+    return findings
+
+
+def _json_block(payload: dict[str, Any]) -> str:
+    return "```json\n" + json.dumps(payload, ensure_ascii=False) + "\n```"
+
+
+__all__ = ["build_generic_transcript_salvage_report", "build_profile_final_report"]

@@ -2,7 +2,7 @@
   "source_file": "raw_plans/plan_v9.md",
   "source_hash": "a0caa5fbcf15d619c0fd73bb12956c798e8df611b49013c38fda0eb0574d2790",
   "source_title": "План дальнейших исследований для v9",
-  "goal": "Найти новый data universe, который добавляет реальную информацию сверх текущего OHLCV+IV+classifier+breadth+event space, и проверить его как overlay/veto route на immutable базе active-signal-v1@1.",
+  "goal": "Определить, содержит ли новый data universe (derivatives positioning / pressure) реальный информационный сигнал сверх текущего OHLCV + IV + classifier + breadth + event space, и может ли он стать основой для overlay route против immutable базы.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -11,41 +11,36 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "База active-signal-v1@1 — immutable reference. Запрещено менять, подбирать часы/дни/пороги/исполнение.",
-    "Запрещено выбирать feature set, label scheme, horizon, threshold или архитектуру по lockbox-окну.",
-    "Любое улучшение должно пройти matched OOS comparison против базы на том же окне.",
-    "Raw event entries, static IV, IV dynamics, classifier transitions, regression на future PnL, full-surface directional classification, trade-quality overlays — окончательно закрыты на текущем universe.",
-    "Новый data universe обязателен: нельзя пытаться докрутить старые модели на старых данных.",
-    "Primary family — одна, fallback — одна. Идти строго по очереди, не паралельно.",
-    "Сначала information-content triage, потом модели. Без bucket sanity модель не строится.",
-    "Overlay-first, direction-second. Direction labels запрещены без overlay evidence.",
-    "Не строить больше 12 features в первой волне для любой family.",
-    "Freeze rules: family choice freeze before modeling, feature set freeze before training, threshold freeze before lockbox.",
-    "Purge gap минимум 24h для trade/holding tasks.",
-    "Максимум одна дополнительная route (early-cut ИЛИ extension), не обе.",
-    "Не обучать direction models без overlay evidence. Не обучать router."
+    "active-signal-v1@1 — immutable reference; запрещено менять базу, подбирать ей параметры, заново открывать closed routes",
+    "запрещено: full-surface directional classification на старом data universe; trade-quality overlays без нового информационного слоя; regression на future PnL; feature/label/threshold/architecture selection по lockbox-окну",
+    "любое улучшение должно пройти matched OOS comparison против базы на том же окне",
+    "max 12 features в первой волне для primary family",
+    "direction labels запрещены до overlay evidence",
+    "максимум одна дополнительная route (early-cut ИЛИ extension, не обе)",
+    "freeze rules: family choice freeze → feature set freeze → threshold freeze before lockbox",
+    "purge gap минимум 24h для trade/holding tasks"
   ],
   "stages": [
     {
       "stage_id": "stage_1",
       "title": "Closure-audit v8 и фиксация pivot v9",
-      "objective": "Формально закрыть текущий data universe как исчерпанный для old routes и создать чистую стартовую точку v9.",
+      "objective": "Формально закрыть текущий data universe как исчерпанный для old routes, завести проект v9 и зафиксировать immutable baseline reference.",
       "actions": [
         "Открыть новый research_project для v9",
-        "Зафиксировать в research_record: v8 overlay route terminally failed, full-surface directional route closed, rationale для нового data universe",
+        "Зафиксировать в research_memory: v8 overlay route terminally failed; full-surface directional route closed; обоснование pivot к новому data universe",
         "Зафиксировать immutable baseline reference: snapshot_id=active-signal-v1, version=1, symbol=BTCUSDT, anchor=1h, execution=5m",
         "Завести оси в research_map: data_family, overlay_route, side, feature_group, model_stage, final_decision",
         "Создать open-items register: data_universe_audit, primary_family_choice, fallback_family_choice, overlay_veto_v9, overlay_exit_lock, optional_direction_lock, final_v9_verdict"
       ],
       "success_criteria": [
-        "Существует clean project v9 с записанным closure-audit",
-        "Immutable baseline reference зафиксирован",
+        "Clean project v9 создан",
+        "Terminology и baseline reference зафиксированы в research_memory",
         "Research map оси заведены",
         "Open-items register создан"
       ],
       "tool_hints": [
         "research_project",
-        "research_record",
+        "research_memory",
         "research_map"
       ],
       "policy_tags": [
@@ -61,28 +56,26 @@
     {
       "stage_id": "stage_2",
       "title": "Audit нового data universe",
-      "objective": "Проверить availability, quality, causal usability и novelty всех кандидатов нового data universe.",
+      "objective": "Проверить availability, quality, coverage, causal usability и novelty всех candidate data families (derivatives positioning, cross-exchange, microstructure, options).",
       "actions": [
-        "Проверить derivatives positioning/pressure: OI, funding history, premium index, basis, liquidations, positioning ratios",
-        "Проверить cross-exchange pressure: exchange-level spot data, exchange-level perp data, venue spreads, venue volume splits",
-        "Проверить microstructure proxies: 1m/5m OHLCV quality, lower timeframe continuity, lower timeframe volume quality",
-        "Проверить options structure: skew, term structure, near-dated vs far-dated IV, options event context",
-        "Для каждого источника зафиксировать: available/unavailable, common window, data gaps, causal usability, novelty score",
-        "Записать результаты audit в research_record"
+        "Проверить availability и quality для derivatives positioning / pressure: OI, funding, premium, basis, liquidations, positioning ratios",
+        "Проверить availability и quality для cross-exchange pressure: exchange-level spot/perp, venue spreads, volume splits",
+        "Проверить availability и quality для microstructure proxies: 1m/5m OHLCV, lower-TF continuity, volume quality",
+        "Проверить availability и quality для options structure: skew, term structure, IV divergence, options event context",
+        "Для каждого источника зафиксировать: available/unavailable, common window, data gaps, causal usability, novelty score"
       ],
       "success_criteria": [
-        "Для каждой candidate family заполнена таблица: available, common_window_ok, gaps_ok, causality_ok, novelty_ok, usable_now",
-        "Результаты записаны в research_record"
+        "Заполненная таблица audit по всем 4 data families с available, common_window_ok, gaps_ok, causality_ok, novelty_ok, usable_now",
+        "Хотя бы одна family с usable_now=true"
       ],
       "tool_hints": [
         "datasets",
         "datasets_preview",
         "events",
-        "features_catalog",
-        "research_record"
+        "features_catalog"
       ],
       "policy_tags": [
-        "triage",
+        "data_readiness",
         "cheap_first"
       ],
       "depends_on": [
@@ -96,23 +89,20 @@
     {
       "stage_id": "stage_3",
       "title": "Выбор primary family и fallback family",
-      "objective": "Выбрать одну главную data family и одну fallback по пяти критериям оценки, остальные locked.",
+      "objective": "На основе audit выбрать одну primary и одну fallback data family; остальные формально locked.",
       "actions": [
-        "Оценить families по: availability, novelty, causal usability, interpretability, overlay relevance",
-        "Назначить primary_family (приоритет: derivatives positioning/pressure)",
-        "Назначить fallback_family (приоритет: cross-exchange pressure)",
-        "Остальные семьи формально locked",
-        "Зафиксировать выбор в research_record и research_map",
-        "Freeze family choice — после этого шага family не меняется"
+        "Оценить families по 5 критериям: availability, novelty, causal usability, interpretability, overlay relevance",
+        "Выбрать primary_family (ожидаемо: derivatives positioning / pressure)",
+        "Выбрать fallback_family (ожидаемо: cross-exchange pressure / venue divergence)",
+        "Зафиксировать locked families в research_memory",
+        "Обновить research_map ось data_family"
       ],
       "success_criteria": [
-        "Primary family выбрана и зафиксирована",
-        "Fallback family выбрана и зафиксирована",
-        "Остальные families locked",
-        "Family choice freeze applied"
+        "Primary и fallback families выбраны и зафиксированы",
+        "Остальные families формально locked с обоснованием"
       ],
       "tool_hints": [
-        "research_record",
+        "research_memory",
         "research_map"
       ],
       "policy_tags": [
@@ -130,31 +120,28 @@
     {
       "stage_id": "stage_4",
       "title": "Feature contract и materialization для primary family",
-      "objective": "Построить minimal viable feature layer (максимум 12 features) для primary family с полной валидацией.",
+      "objective": "Построить minimal viable feature layer (≤12 features) для primary family: contract → validate → publish → materialize → sanity check.",
       "actions": [
         "Записать feature contract для primary family (positioning stress, funding pressure, basis/premium, liquidation stress groups)",
-        "Validate feature contract",
-        "Publish features как custom features",
-        "Materialize feature dataset",
-        "Проверить coverage completeness",
-        "Проверить causality (strictly backward-looking)",
-        "Проверить simple bucket sanity: coverage, null-rate, feature stability, bucket lift, monotonicity"
+        "Validate каждый feature через features_custom",
+        "Publish и materialize через features_dataset",
+        "Проверить coverage, causality, warmup для каждого feature",
+        "Выполнить simple bucket sanity / monotonicity check через features_analytics"
       ],
       "success_criteria": [
-        "Максимум 12 features опубликовано и материализовано",
-        "Каждый feature: validated=true, published=true, materialized=true",
-        "Coverage_ok=true для всех features",
-        "Bucket_sanity_ok=true (coverage, null-rate, stability, lift, monotonicity)"
+        "Все features validated и published",
+        "Managed dataset materialized с coverage_ok=true",
+        "Bucket sanity check показывает неслучайное разделение хотя бы для части features"
       ],
       "tool_hints": [
         "features_custom",
         "features_dataset",
         "features_catalog",
-        "research_record"
+        "features_analytics"
       ],
       "policy_tags": [
-        "feature_engineering",
-        "freeze"
+        "feature_contract",
+        "materialization"
       ],
       "depends_on": [
         "stage_3"
@@ -167,22 +154,21 @@
     {
       "stage_id": "stage_5",
       "title": "Trade-surface atlas augmentation",
-      "objective": "Привязать новый feature layer к trade surface базы и выявить, где новая family strongest.",
+      "objective": "Привязать новые features primary family к trade surface базы: обогатить atlas и выявить зоны где новая family strongest.",
       "actions": [
-        "Обогатить atlas базы новыми features на: entry time, first 1h/3h если возможно, exit time если релевантно",
-        "Проверить, где новая family strongest: long vs short, worst-decile trades, stop-loss cluster, weak-window cluster, time-limit cluster",
-        "Зафиксировать результаты в research_record"
+        "Обогатить atlas базы новыми features на: entry time, first 1h/3h, exit time",
+        "Проверить где новая family strongest: long vs short, worst-decile trades, stop-loss cluster, weak-window cluster, time-limit cluster",
+        "Зафиксировать augmentation results в research_memory"
       ],
       "success_criteria": [
         "Atlas базы обогащён новыми features",
-        "Определены strongest/weakhest сегменты trade surface по новой family",
-        "Результаты записаны"
+        "Определены зоны trade surface где новая family показывает наибольшую вариативность"
       ],
       "tool_hints": [
         "features_dataset",
-        "features_analytics",
         "backtests_strategy",
-        "research_record"
+        "datasets_preview",
+        "features_analytics"
       ],
       "policy_tags": [
         "atlas",
@@ -199,26 +185,26 @@
     {
       "stage_id": "stage_6",
       "title": "Veto-route plausibility on new family",
-      "objective": "Обучить veto-overlay модели на новой family и оценить, даёт ли она meaningful veto signal.",
+      "objective": "Обучить veto-overlay модели (v9-veto-long-balanced, v9-veto-short-balanced) и оценить plausibility на selection OOS.",
       "actions": [
-        "Подготовить training dataset с overlay labels: bad_trade_balanced, bad_trade_conservative",
-        "Обучить CatBoost-veto-long-v9 (balanced)",
-        "Обучить CatBoost-veto-short-v9 (balanced)",
-        "Conservative variants — только если balanced looks alive",
-        "Оценить: ROC AUC, PR AUC, worst-bucket lift, precision in veto bucket, simulated selection improvement if flagged trades removed"
+        "Подготовить training dataset с overlay labels (bad_trade_balanced) через models_dataset",
+        "Обучить v9-veto-long-balanced через models_train",
+        "Обучить v9-veto-short-balanced через models_train",
+        "Оценить: ROC AUC, PR AUC, worst-bucket lift, precision in veto bucket, simulated selection economic effect",
+        "При необходимости trained conservative variants — только если balanced уже shows signal"
       ],
       "success_criteria": [
-        "Veto-long и veto-short модели обучены",
-        "ROC AUC, PR AUC, worst-bucket lift, precision посчитаны на selection OOS",
-        "Simulated selection economic effect посчитан",
-        "Принято решение: promoted_to_lockbox или нет"
+        "Обе balanced veto models обучены",
+        "ROC AUC > baseline, PR AUC > baseline",
+        "Veto bucket показывает meaningful lift",
+        "Simulated removal of flagged trades улучшает selection economics"
       ],
       "tool_hints": [
         "models_dataset",
         "models_train",
         "models_registry",
         "models_compare",
-        "research_record"
+        "features_analytics"
       ],
       "policy_tags": [
         "modeling",
@@ -235,28 +221,29 @@
     {
       "stage_id": "stage_7",
       "title": "Lockbox test for veto route",
-      "objective": "Сравнить immutable base vs base+veto-overlay на lockbox OOS и получить честную оценку улучшения.",
+      "objective": "Провести честный lockbox OOS test: base vs base+veto-overlay на одном окне, с frozen thresholds.",
       "actions": [
-        "Freeze thresholds on selection OOS",
-        "Прогнать immutable base on lockbox",
-        "Прогнать base + veto overlay on same lockbox",
-        "Посчитать: delta PnL, delta PF, delta DD, removed trades, PnL of removed trades, weak-window repair, ownership"
+        "Freeze thresholds на selection OOS",
+        "Запустить immutable base run на lockbox окне через backtests_runs",
+        "Запустить base + veto overlay на том же lockbox окне",
+        "Посчитать: delta PnL, delta PF, delta DD, removed trades, PnL of removed, weak-window repair, ownership",
+        "Провести backtests_analysis для детальной диагностики"
       ],
       "success_criteria": [
-        "Lockbox comparison завершён",
-        "delta PnL, delta PF, delta DD, removed trades, PnL of removed trades посчитаны",
-        "Ownership assessed",
-        "Final decision per overlay: pass или fail"
+        "Lockbox test завершён для обеих сторон (long/short)",
+        "Delta PnL, delta PF, delta DD посчитаны",
+        "Ownership positive и weak-window repair documented"
       ],
       "tool_hints": [
-        "backtests_plan",
         "backtests_runs",
         "backtests_analysis",
-        "research_record"
+        "backtests_strategy",
+        "models_registry",
+        "models_to_feature"
       ],
       "policy_tags": [
         "lockbox",
-        "freeze"
+        "oos_validation"
       ],
       "depends_on": [
         "stage_6"
@@ -269,21 +256,22 @@
     {
       "stage_id": "stage_8",
       "title": "Early-cut и extension decision gate",
-      "objective": "Принять решение об открытии максимум одной дополнительной route (early-cut или extension) только если veto route passed.",
+      "objective": "Только если veto route passed lockbox — решить, есть ли evidence для одной дополнительной ветки (early-cut ИЛИ extension, не обе).",
       "actions": [
-        "Проверить: veto route passed lockbox?",
-        "Если passed: оценить evidence for early-cut и evidence for extension",
-        "Открыть максимум одну дополнительную ветку: либо early-cut, либо extension",
-        "Если veto route failed: обе ветки locked, переход к fallback или final verdict"
+        "Проверить: veto route прошёл lockbox с положительным delta",
+        "Если да — оценить evidence for early-cut overlay",
+        "Оценить evidence for extension overlay",
+        "Открыть максимум одну дополнительную ветку с обоснованием",
+        "Зафиксировать decision в research_memory и research_map"
       ],
       "success_criteria": [
-        "Принято решение: open early-cut, open extension, или locked",
-        "Максимум одна route открыта",
-        "Решение зафиксировано в research_record"
+        "Decision gate пройден: открыта 0 или 1 дополнительная ветка",
+        "Обоснование зафиксировано"
       ],
       "tool_hints": [
-        "research_record",
-        "research_map"
+        "research_memory",
+        "research_map",
+        "backtests_analysis"
       ],
       "policy_tags": [
         "decision",
@@ -294,32 +282,29 @@
       ],
       "required": false,
       "parallelizable": false,
-      "gate_hint": "Veto route must pass lockbox test (stage_7 final_decision=pass). If veto failed, this stage is skipped and both branches remain locked.",
+      "gate_hint": "Veto route must pass lockbox test (delta PnL > 0, ownership positive) before any additional route can be opened",
       "raw_stage_ref": "stage_8"
     },
     {
       "stage_id": "stage_9",
       "title": "Optional route execution (early-cut или extension)",
-      "objective": "Выполнить обучение и lockbox-тест для единственной дополнительной route, которая заслужила открытие.",
+      "objective": "Выполнить только ту дополнительную route (early-cut или extension), которая получила одобрение на decision gate.",
       "actions": [
-        "Если открыта early_cut: train selection model, test on lockbox, compare vs base",
-        "Если открыта extension: train selection model, test on lockbox, compare vs base",
-        "Оценить: selection_quality_ok, lockbox_quality_ok, delta_vs_base_meaningful"
+        "Если открыта early_cut: подготовить dataset с cut_now labels, обучить selection model, протестировать на lockbox, compare vs base",
+        "Если открыта extension: подготовить dataset с extend_hold labels, обучить selection model, протестировать на lockbox, compare vs base",
+        "Зафиксировать results и final decision для route"
       ],
       "success_criteria": [
-        "Optional route model обучена",
-        "Lockbox comparison завершён",
-        "Delta vs base meaningful оценён",
-        "Final decision: adopt или reject"
+        "Optional route model обучена и протестирована на lockbox",
+        "Lockbox comparison vs base documented",
+        "Final decision (promote / discard) принят"
       ],
       "tool_hints": [
         "models_dataset",
         "models_train",
         "models_registry",
-        "backtests_plan",
         "backtests_runs",
-        "backtests_analysis",
-        "research_record"
+        "backtests_analysis"
       ],
       "policy_tags": [
         "modeling",
@@ -330,65 +315,66 @@
       ],
       "required": false,
       "parallelizable": false,
-      "gate_hint": "Depends on stage_8 opening a route. If no route opened, this stage is skipped.",
+      "gate_hint": "Only executes if stage_8 opened an early-cut or extension route",
       "raw_stage_ref": "stage_9"
     },
     {
       "stage_id": "stage_10",
       "title": "Fallback family triage (только если primary family fail)",
-      "objective": "Провести минимальный triage fallback family без полного стека, если primary family провалилась.",
+      "objective": "Если primary family провалилась — провести минимальный triage fallback family: availability, 4-6 core features, atlas augmentation, one veto plausibility model.",
       "actions": [
-        "Проверить availability fallback family",
-        "Построить 4–6 core features для fallback family",
-        "Провести atlas augmentation",
-        "Обучить one veto plausibility model",
-        "Не строить полный стек заново"
+        "Проверить availability и quality fallback family (cross-exchange pressure)",
+        "Построить 4-6 core features через features_custom",
+        "Materialize через features_dataset",
+        "Обогатить atlas базы fallback features",
+        "Обучить один veto plausibility model через models_train",
+        "Не строить полный стек — только triage-level check"
       ],
       "success_criteria": [
-        "Fallback family availability подтверждена",
-        "4–6 core features materialized",
-        "One veto plausibility model обучена",
-        "Результат записан в research_record"
+        "Fallback family triage завершён",
+        "Есть вердикт: fallback值得 дальнейшего изучения или нет"
       ],
       "tool_hints": [
         "datasets",
         "features_custom",
         "features_dataset",
-        "models_train",
-        "research_record"
+        "features_analytics",
+        "models_dataset",
+        "models_train"
       ],
       "policy_tags": [
         "fallback",
-        "triage"
+        "triage",
+        "conditional"
       ],
       "depends_on": [
-        "stage_7"
+        "stage_3"
       ],
       "required": false,
       "parallelizable": false,
-      "gate_hint": "Activated only if primary family failed lockbox test (stage_7 final_decision=fail). If primary family passed, this stage is skipped.",
+      "gate_hint": "Only executes if primary family failed (stages 6-7 did not produce passing veto overlay)",
       "raw_stage_ref": "stage_10"
     },
     {
       "stage_id": "stage_11",
       "title": "Финальный вердикт по v9",
-      "objective": "Получить честную квалификацию результата v9: SUCCESS, PARTIAL или FAILED, и зафиксировать next step.",
+      "objective": "Получить честную классификацию результата v9: SUCCESS (рабочий overlay), PARTIAL (watchlist-quality), FAILED (новый universe не дал устойчивого улучшения).",
       "actions": [
-        "Суммировать все результаты: primary family, overlay route, optional routes, fallback",
-        "Присвоить итоговый classification: SUCCESS (рабочий overlay route), PARTIAL (watchlist-quality), FAILED (нет улучшения)",
-        "Зафиксировать final_v9_verdict в research_record",
-        "Определить понятный next step для каждого исхода"
+        "Собрать все результаты: veto lockbox, optional route, fallback triage",
+        "Классифицировать итог: SUCCESS / PARTIAL / FAILED",
+        "Зафиксировать final_v9_verdict в research_memory",
+        "Определить понятный next step для каждого исхода",
+        "Закрыть open-items register"
       ],
       "success_criteria": [
-        "Final route classification определён: SUCCESS, PARTIAL или FAILED",
-        "Понятный next step описан",
-        "Все open items закрыты",
-        "Итоговая таблица заполнена"
+        "Final route classification определён (SUCCESS / PARTIAL / FAILED)",
+        "Понятный next step documented",
+        "Все open-items закрыты"
       ],
       "tool_hints": [
-        "research_record",
+        "research_memory",
         "research_map",
-        "notify_send"
+        "backtests_analysis"
       ],
       "policy_tags": [
         "finalization",
@@ -396,9 +382,8 @@
       ],
       "depends_on": [
         "stage_7",
-        "stage_8",
-        "stage_9_part2",
-        "stage_10"
+        "stage_9",
+        "stage_10_part2"
       ],
       "required": true,
       "parallelizable": false,
@@ -407,9 +392,8 @@
     }
   ],
   "warnings": [
-    "Primary family (derivatives positioning/pressure) требует проверки availability OI, funding, basis, liquidations — может оказаться частично недоступной.",
-    "Fallback family (cross-exchange pressure) зависит от multi-venue данных, coverage может быть ограничен.",
-    "Options structure помечена как only-if-available: если данные недоступны, family пропускается без потери целостности плана."
+    "Plan is research-discovery oriented; stages 8-10 are gated branches that may not execute",
+    "Data availability for derivatives positioning / options structure is not guaranteed — early triage critical"
   ],
   "parse_confidence": 0.95
 }

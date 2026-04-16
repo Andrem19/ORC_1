@@ -64,6 +64,11 @@ class ExecutionArtifactStore:
     def save_direct_fallback_attempt(self, *, plan_id: str, slice_id: str, payload: dict[str, Any]) -> Path:
         return self.save_direct_attempt(plan_id=plan_id, slice_id=slice_id, payload=payload)
 
+    def save_acceptance_proof(self, *, plan_id: str, slice_id: str, turn_id: str, payload: dict[str, Any]) -> Path:
+        path = self.active_root / "acceptance_proofs" / plan_id / slice_id / f"{turn_id}.json"
+        self._write_json(path, payload)
+        return path
+
     def _write_json(self, path: Path, payload: Any) -> None:
         path.parent.mkdir(parents=True, exist_ok=True)
         if hasattr(payload, "__dataclass_fields__"):

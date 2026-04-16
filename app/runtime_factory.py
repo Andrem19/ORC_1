@@ -23,6 +23,40 @@ def create_planner_adapter(config: OrchestratorConfig) -> BaseAdapter:
     )
 
 
+def create_sequence_report_adapter(config: OrchestratorConfig) -> BaseAdapter:
+    """Create an adapter for LLM sequence-report narrative generation."""
+    sr = config.sequence_report
+    provider = sr.provider.strip().lower()
+
+    if provider == "claude_cli":
+        from app.adapters.claude_planner_cli import ClaudePlannerCli
+        return ClaudePlannerCli(
+            cli_path="claude",
+            model=sr.model,
+            mode="batch_text",
+            use_bare=True,
+            no_session_persistence=True,
+            capture_stderr_live=True,
+        )
+
+    if provider == "lmstudio":
+        from app.adapters.lmstudio_worker_api import LmStudioWorkerApi
+        lm_cfg = config.lmstudio
+        return LmStudioWorkerApi(
+            base_url=lm_cfg.base_url or "http://localhost:1234",
+            model=lm_cfg.model,
+            api_key="lm-studio",
+            temperature=0.4,
+            max_tokens=2048,
+            reasoning_effort="none",
+        )
+
+    raise ValueError(
+        f"Unknown sequence_report provider: {sr.provider!r}. "
+        "Supported: claude_cli, lmstudio"
+    )
+
+
 def create_worker_adapter(config: OrchestratorConfig) -> BaseAdapter:
     provider = config.direct_execution.provider.strip().lower()
     safe_exclude = list(config.direct_execution.safe_exclude_tools)
@@ -40,7 +74,11 @@ def create_worker_adapter(config: OrchestratorConfig) -> BaseAdapter:
         return ClaudeWorkerCli(
             allow_tool_use=True,
             exclude_tools=safe_exclude,
+            mcp_servers=_build_mcp_servers_dict(config),
         )
+
+    if provider == "minimax":
+        return _create_minimax_adapter(config=config)
 
     # Default: lmstudio — use [worker_adapter] config section
     adapter = config.worker_adapter
@@ -67,6 +105,28 @@ def _create_worker_adapter(*, config: OrchestratorConfig, adapter_config) -> Bas
         extra_flags=wa.extra_flags,
         exclude_tools=wa.exclude_tools,
         allow_tool_use=wa.allow_tool_use,
+    )
+
+
+def _create_minimax_adapter(*, config: OrchestratorConfig) -> BaseAdapter:
+    """Create an LmStudioWorkerApi configured for MiniMax's OpenAI-compatible API.
+
+    MiniMax supports the ``tools`` parameter in chat completions, so the
+    entire LmStudioToolLoop + DirectMcpClient stack is reused unchanged.
+    """
+    import os
+
+    from app.adapters.lmstudio_worker_api import LmStudioWorkerApi
+
+    mm = config.minimax
+    api_key = os.environ.get(mm.api_key_env_var, "")
+    return LmStudioWorkerApi(
+        base_url=mm.base_url,
+        model=mm.model,
+        api_key=api_key,
+        temperature=mm.temperature,
+        max_tokens=mm.max_tokens,
+        reasoning_effort="none",  # MiniMax doesn't use reasoning_effort
     )
 
 
@@ -101,6 +161,7 @@ def create_fallback_adapter(provider_name: str, config: OrchestratorConfig) -> B
         return ClaudeWorkerCli(
             allow_tool_use=True,
             exclude_tools=safe_exclude,
+            mcp_servers=_build_mcp_servers_dict(config),
         )
 
     if name == "lmstudio":
@@ -116,4 +177,51 @@ def create_fallback_adapter(provider_name: str, config: OrchestratorConfig) -> B
             reasoning_effort=lm_cfg.reasoning_effort,
         )
 
-    raise ValueError(f"Unknown fallback provider: {name!r}. Supported: qwen_cli, claude_cli, lmstudio")
+    if name == "minimax":
+        return _create_minimax_adapter(config=config)
+
+    raise ValueError(f"Unknown fallback provider: {name!r}. Supported: qwen_cli, claude_cli, lmstudio, minimax")
+
+
+def _build_mcp_servers_dict(config: OrchestratorConfig) -> dict[str, dict[str, str]]:
+    """Build MCP servers configuration dict from DirectExecutionConfig.
+
+    Returns empty dict if MCP is disabled or auth mode is invalid.
+    """
+    de = config.direct_execution
+    if not de.mcp_endpoint_url:
+        return {}
+
+    headers = {}
+    if de.mcp_auth_mode.lower() == "bearer" and de.mcp_token_env_var:
+        import os
+        token = os.environ.get(de.mcp_token_env_var, "")
+        if token:
+            headers = {"Authorization": f"Bearer {token}"}
+
+    return {
+        "dev_space1": {
+            "type": "http",
+            "url": de.mcp_endpoint_url,
+            "headers": headers,
+        },
+    }
+
+
+def get_allowed_mcp_tools(allowed_tools: list[str] | None = None) -> list[str]:
+    """Extract MCP tool names from allowed_tools list, prefixed with mcp__dev_space1__.
+
+    Filters for tools that start with dev_space1_ or backtests_ and adds
+    the mcp__dev_space1__ prefix expected by Claude CLI.
+    """
+    if not allowed_tools:
+        return []
+    mcp_prefixes = ("dev_space1_", "backtests_", "datasets_", "models_",
+                    "features_", "events_", "experiments_", "system_",
+                    "research_", "notify_", "gold_")
+    result = []
+    for tool in allowed_tools:
+        tool_str = str(tool).strip()
+        if any(tool_str.startswith(prefix) for prefix in mcp_prefixes):
+            result.append(f"mcp__dev_space1__{tool_str}")
+    return sorted(set(result))

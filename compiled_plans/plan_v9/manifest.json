@@ -1,13 +1,20 @@
 {
   "source_file": "raw_plans/plan_v9.md",
   "source_hash": "a0caa5fbcf15d619c0fd73bb12956c798e8df611b49013c38fda0eb0574d2790",
-  "compiled_at": "2026-04-11T11:01:31.894608+00:00",
+  "compiled_at": "2026-04-15T18:46:17.064863+00:00",
   "sequence_id": "compiled_plan_v9",
-  "compile_status": "compiled",
+  "compile_status": "failed",
   "warnings": [
-    "Primary family (derivatives positioning/pressure) требует проверки availability OI, funding, basis, liquidations — может оказаться частично недоступной.",
-    "Fallback family (cross-exchange pressure) зависит от multi-venue данных, coverage может быть ограничен.",
-    "Options structure помечена как only-if-available: если данные недоступны, family пропускается без потери целостности плана."
+    "Plan is research-discovery oriented; stages 8-10 are gated branches that may not execute",
+    "Data availability for derivatives positioning / options structure is not guaranteed — early triage critical",
+    "Auto-added research_memory for stage_2: every non-trivial stage needs documentation capability.",
+    "Auto-added research_memory for stage_4: every non-trivial stage needs documentation capability.",
+    "Auto-added research_memory for stage_5: every non-trivial stage needs documentation capability.",
+    "Auto-added research_memory for stage_6: every non-trivial stage needs documentation capability.",
+    "Auto-added research_memory for stage_7: every non-trivial stage needs documentation capability.",
+    "Auto-added research_memory for stage_9: every non-trivial stage needs documentation capability.",
+    "Auto-added research_memory for stage_10_part1: every non-trivial stage needs documentation capability.",
+    "Auto-added research_memory for stage_10_part2: every non-trivial stage needs documentation capability."
   ],
   "semantic_method": "llm",
   "semantic_path": "semantic.json",
@@ -17,5 +24,6 @@
     "plans/compiled_plan_v9_batch_2.json",
     "plans/compiled_plan_v9_batch_3.json",
     "plans/compiled_plan_v9_batch_4.json"
-  ]
+  ],
+  "mcp_catalog_hash": "c306b4054eaf8f466a7e29182863da4e7cd0610551ef83a0611c515c84aa415b"
 }

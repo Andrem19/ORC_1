@@ -16,6 +16,7 @@ from app.execution_models import ExecutionPlan, ExecutionStateV2, PlanSlice
 from app.execution_store import ExecutionStateStore
 from app.models import OrchestratorEvent, OrchestratorState, StopReason
 from app.runtime_console.controller import ConsoleRuntimeController
+from app.services.mcp_catalog.models import McpCatalogDiff, McpCatalogSnapshot
 from app.services.direct_execution.process_registry import ProcessRegistry
 from app.services.notification_service import NotificationService
 
@@ -49,6 +50,9 @@ class Orchestrator:
         self.process_registry = ProcessRegistry()
         self.state = OrchestratorState(goal=config.goal)
         self.execution_state = ExecutionStateV2(goal=config.goal)
+        self.mcp_catalog_snapshot: McpCatalogSnapshot | None = None
+        self.mcp_catalog_diff: McpCatalogDiff | None = None
+        self.mcp_catalog_saved_paths: dict[str, str] = {}
         self._finish_completed = False
         self._research_context_text: str | None = None
         self._stop_requested = False
@@ -130,6 +134,16 @@ class Orchestrator:
             return
         self._finish_completed = True
         self.persist_terminal_snapshot(reason=reason, summary=summary)
+        # Notify operator immediately about non-graceful terminal states.
+        if reason in (StopReason.RECOVERABLE_BLOCKED, StopReason.GOAL_IMPOSSIBLE, StopReason.MAX_ERRORS):
+            failed_plans = [p for p in self.execution_state.plans if p.status in {"failed", "stopped"}]
+            if failed_plans:
+                last = failed_plans[-1]
+                self.notification_service.send_lifecycle(
+                    "run_stopped",
+                    f"Run stopped: {reason.value}. Last failed: {last.plan_id} ({last.last_error or 'unknown'}). "
+                    f"Total failed plans: {len(failed_plans)}. {summary[:80]}",
+                )
         terminal_summary = self._terminal_summary(summary)
         report_summary = ""
         run_report = None
@@ -231,6 +245,10 @@ class Orchestrator:
 
     def _terminalize_plan(self, *, plan: ExecutionPlan, reason: StopReason, summary: str) -> None:
         plan.status = "stopped" if reason == StopReason.GRACEFUL_STOP else "failed"
+        if reason == StopReason.GRACEFUL_STOP:
+            plan.last_error = "user_stop"
+        else:
+            plan.last_error = f"terminalized:{reason.value}" if hasattr(reason, "value") else f"terminalized:{reason}"
         for slice_obj in plan.slices:
             self._terminalize_running_slice(slice_obj=slice_obj, reason=reason, summary=summary)
         plan.touch()

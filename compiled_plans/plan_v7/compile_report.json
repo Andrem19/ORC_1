@@ -5,20 +5,20 @@
   "compile_status": "compiled",
   "parser_confidence": 0.95,
   "semantic_method": "llm",
-  "stage_count": 12,
+  "stage_count": 11,
   "compiled_plan_count": 4,
+  "mcp_catalog_hash": "c306b4054eaf8f466a7e29182863da4e7cd0610551ef83a0611c515c84aa415b",
   "warnings": [
-    "Plan is written in Russian; stage titles and objectives preserved in original language for fidelity.",
-    "Weak-window models M4/M5 are gated optional branches — not promoted unless base directional models show weak but substantive signal.",
-    "v6 left drift between planned barrier labels and actually used net_pnl>0 — v7 must enforce strict label discipline.",
-    "Auto-added research_record for stage_3: every non-trivial stage needs documentation capability.",
-    "Auto-added research_record for stage_5: every non-trivial stage needs documentation capability.",
-    "Auto-added research_record for stage_6: every non-trivial stage needs documentation capability.",
-    "Auto-added research_record for stage_6b: every non-trivial stage needs documentation capability.",
-    "Auto-added research_record for stage_7: every non-trivial stage needs documentation capability.",
-    "Auto-added research_record for stage_8: every non-trivial stage needs documentation capability.",
-    "Auto-added research_record for stage_9: every non-trivial stage needs documentation capability."
+    "Plan is in Russian; stage titles, objectives and actions translated/summarized for semantic clarity.",
+    "v6 left short side, 18h horizon, label contract and several feature families incomplete — v7 is a closure pass, not a new search.",
+    "Auto-added research_memory for stage_3: every non-trivial stage needs documentation capability.",
+    "Auto-added research_memory for stage_4: every non-trivial stage needs documentation capability.",
+    "Auto-added research_memory for stage_5: every non-trivial stage needs documentation capability.",
+    "Auto-added research_memory for stage_6: every non-trivial stage needs documentation capability.",
+    "Auto-added research_memory for stage_7: every non-trivial stage needs documentation capability.",
+    "Auto-added research_memory for stage_8: every non-trivial stage needs documentation capability.",
+    "Auto-added research_memory for stage_9: every non-trivial stage needs documentation capability."
   ],
   "errors": [],
-  "compiled_at": "2026-04-11T10:56:27.522026+00:00"
+  "compiled_at": "2026-04-15T18:43:07.767735+00:00"
 }

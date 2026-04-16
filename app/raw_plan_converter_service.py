@@ -14,6 +14,7 @@ from app.raw_plan_models import CompiledPlanSequence, RawPlanDocument, RawPlanSt
 from app.raw_plan_parser import parse_raw_plan_file
 from app.raw_plan_semantic_service import RawPlanSemanticError, RawPlanSemanticService
 from app.execution_models import BaselineRef
+from app.services.mcp_catalog.models import McpCatalogSnapshot
 
 logger = logging.getLogger("orchestrator.converter")
 
@@ -24,11 +25,11 @@ class RawPlanConverterService:
         *,
         semantic_service: RawPlanSemanticService | None,
         use_llm: bool,
-        mcp_tool_catalog: list[dict[str, Any]] | None = None,
+        catalog_snapshot: McpCatalogSnapshot,
     ) -> None:
         self.semantic_service = semantic_service
         self.use_llm = use_llm
-        self._mcp_tool_catalog = mcp_tool_catalog or []
+        self.catalog_snapshot = catalog_snapshot
 
     async def convert_path(self, path: str | Path) -> CompiledPlanSequence:
         document = parse_raw_plan_file(path)
@@ -36,12 +37,25 @@ class RawPlanConverterService:
         try:
             semantic_plan = await self._semantic_plan(document)
         except RawPlanSemanticError as exc:
-            return build_failed_sequence(document, semantic_method=semantic_method, errors=[str(exc)])
-        return compile_semantic_raw_plan(document, semantic_plan, semantic_method=semantic_method)
+            return build_failed_sequence(
+                document,
+                semantic_method=semantic_method,
+                errors=[str(exc)],
+                mcp_catalog_hash=self.catalog_snapshot.schema_hash,
+            )
+        return compile_semantic_raw_plan(
+            document,
+            semantic_plan,
+            semantic_method=semantic_method,
+            catalog_snapshot=self.catalog_snapshot,
+        )
 
     async def _semantic_plan(self, document: RawPlanDocument) -> SemanticRawPlan:
         if self.use_llm and self.semantic_service is not None:
-            return await self.semantic_service.extract(document, mcp_tool_catalog=self._mcp_tool_catalog)
+            return await self.semantic_service.extract(
+                document,
+                mcp_tool_catalog=self.catalog_snapshot.to_prompt_catalog(),
+            )
         return _fallback_semantic_plan(document)
 
 

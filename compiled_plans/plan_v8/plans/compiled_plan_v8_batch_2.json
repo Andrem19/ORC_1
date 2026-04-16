@@ -1,6 +1,6 @@
 {
   "plan_id": "compiled_plan_v8_batch_2",
-  "goal": "Pivot from failed full-surface directional prediction to base-conditional trade-quality overlays — entry veto, early-cut, and hold-extension — that improve the immutable base without retuning its logic.",
+  "goal": "Pivot from full-surface directional prediction to base-conditional trade-quality overlays (veto, early-cut, hold-extension) that improve immutable base trades without modifying base logic.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -9,52 +9,98 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "Base snapshot active-signal-v1@1 is immutable — never modify its signals, thresholds, hours, days, or execution logic",
-    "No full-surface directional classification or regression on future PnL (v4–v7 routes terminally closed)",
-    "All v8 work operates on trade-level surface of already-executed base trades, not on all anchor bars",
-    "Feature selection, label selection, and threshold selection only on selection OOS — never on lockbox",
-    "Overlay labels must be frozen before any model training begins",
-    "Do not mix entry-veto and exit-extension objectives in a single label",
-    "Purge gap between train / selection-OOS / lockbox windows must be ≥ max holding horizon (minimum 24h)",
-    "Every improvement claim requires matched lockbox OOS comparison against immutable base on same trade window with same notionals"
+    "Base signal logic (active-signal-v1@1) is immutable — never retune hours, days, thresholds, or execution parameters.",
+    "Do NOT re-open full-surface directional classification on leadership/breadth/path-asymmetry/regime features — terminally closed after v4–v7.",
+    "Do NOT use CatBoost regression on future PnL — terminally closed.",
+    "Do NOT select feature sets, label schemes, horizons, thresholds, or architectures by lockbox window.",
+    "Any claimed improvement must pass matched OOS comparison with base on the same trade window.",
+    "All work operates on trade-level (executed trades of the base), not on anchor-bar level.",
+    "Labels must be frozen before training; thresholds tuned only on selection OOS.",
+    "Train/selection-OOS/lockbox-OOS split by trade entry timestamp with purge gap ≥ 24h.",
+    "Only one main research branch at a time: veto first, then early-cut, then extension."
   ],
   "slices": [
     {
       "slice_id": "compiled_plan_v8_stage_4",
-      "title": "Feature contract for trade-quality overlays",
-      "hypothesis": "Author, validate, publish, and materialize all new trade-context feature families (A–D) on the base trade surface with warmup/coverage/causality checks.",
-      "objective": "Author, validate, publish, and materialize all new trade-context feature families (A–D) on the base trade surface with warmup/coverage/causality checks.",
+      "title": "Feature contract для trade-quality overlays",
+      "hypothesis": "Author, validate, publish, and materialize new trade-quality custom features across families A (entry context), B (post-entry path), C (exit-time context), and D (cross-asset/event confirmation) with priority ordering.",
+      "objective": "Author, validate, publish, and materialize new trade-quality custom features across families A (entry context), B (post-entry path), C (exit-time context), and D (cross-asset/event confirmation) with priority ordering.",
       "success_criteria": [
-        "All Priority 1 features validated, published, and materialized with acceptable warmup and coverage",
-        "Priority 2 and 3 features authored and validated (materialization may follow gate)",
-        "No feature leaks future information relative to trade entry timestamp",
-        "Feature catalog updated with all new custom features"
+        "All priority-1 features validated, published, and materialized with acceptable warmup and coverage.",
+        "Priority-2 and priority-3 features at minimum validated and published.",
+        "Feature catalog updated with all new custom features.",
+        "Causality check passed — no future leakage."
       ],
       "allowed_tools": [
         "features_custom",
-        "features_dataset",
         "features_catalog",
-        "research_record"
+        "features_dataset",
+        "features_analytics",
+        "research_memory"
       ],
       "evidence_requirements": [
-        "All Priority 1 features validated, published, and materialized with acceptable warmup and coverage",
-        "Priority 2 and 3 features authored and validated (materialization may follow gate)",
-        "No feature leaks future information relative to trade entry timestamp",
-        "Feature catalog updated with all new custom features"
+        "All priority-1 features validated, published, and materialized with acceptable warmup and coverage.",
+        "Priority-2 and priority-3 features at minimum validated and published.",
+        "Feature catalog updated with all new custom features.",
+        "Causality check passed — no future leakage."
       ],
       "policy_tags": [
-        "feature_contract",
-        "cheap_first"
+        "feature_contract"
       ],
-      "max_turns": 24,
-      "max_tool_calls": 24,
-      "max_expensive_calls": 2,
+      "max_turns": 36,
+      "max_tool_calls": 30,
+      "max_expensive_calls": 6,
       "parallel_slot": 1,
+      "runtime_profile": "generic_mutation",
+      "required_prerequisite_facts": null,
+      "required_output_facts": [],
+      "finalization_mode": "none",
+      "dependency_unblock_mode": "accepted_only",
+      "watchlist_allows_unblock": false,
+      "requires_mutating_evidence": false,
+      "requires_persisted_artifact": false,
+      "requires_live_handle_validation": false,
+      "acceptance_contract": {
+        "kind": "feature_contract_construction",
+        "mode": "strict",
+        "required_subjects": "published_feature_and_dataset_if_required",
+        "required_predicates": [
+          "feature_subject_present",
+          "feature_proof_pass"
+        ],
+        "mcp_proof_calls": [
+          {
+            "tool": "features_custom",
+            "arguments": {
+              "action": "inspect",
+              "view": "acceptance_proof"
+            }
+          },
+          {
+            "tool": "features_dataset",
+            "arguments": {
+              "action": "inspect",
+              "view": "acceptance_proof"
+            }
+          }
+        ],
+        "forbid_contradictions": [],
+        "allow_advisory_unblock": false,
+        "acceptance_requirements": {
+          "slice_id": "compiled_plan_v8_stage_4",
+          "contract_kind": "feature_contract_construction",
+          "require_dataset_activation": false
+        }
+      },
+      "acceptance_proof": {},
+      "acceptance_blockers": [],
       "budget_scale_applied": 6,
       "depends_on": [
-        "compiled_plan_v8_stage_2"
+        "compiled_plan_v8_stage_2",
+        "compiled_plan_v8_stage_3"
       ],
       "status": "pending",
+      "acceptance_state": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
       "expensive_call_count": 0,
@@ -65,47 +111,78 @@
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
+      "dependency_blocker_slice_id": "",
+      "dependency_blocker_reason_code": "",
+      "dependency_blocker_class": "",
+      "blocked_retry_count": 0,
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
+      "gate_hint": "",
       "artifacts": [],
-      "facts": {}
+      "facts": {},
+      "verdict": ""
     },
     {
       "slice_id": "compiled_plan_v8_stage_5",
-      "title": "Dataset split and modeling surfaces for overlays",
-      "hypothesis": "Establish trade-level temporal OOS splits (train / selection-OOS / lockbox) by entry timestamp and assemble per-side modeling surfaces with frozen feature sets.",
-      "objective": "Establish trade-level temporal OOS splits (train / selection-OOS / lockbox) by entry timestamp and assemble per-side modeling surfaces with frozen feature sets.",
+      "title": "Dataset split и modeling surfaces для overlays",
+      "hypothesis": "Create frozen trade-level train/selection-OOS/lockbox-OOS split by entry timestamp with purge gaps ≥ 24h, and assemble modeling surfaces for all base trades, long-only, short-only, and weak-window subsets.",
+      "objective": "Create frozen trade-level train/selection-OOS/lockbox-OOS split by entry timestamp with purge gaps ≥ 24h, and assemble modeling surfaces for all base trades, long-only, short-only, and weak-window subsets.",
       "success_criteria": [
-        "Temporal split completed with no overlap and purge gap ≥ 24h",
-        "All modeling surfaces materialized with correct features and frozen labels",
-        "Feature set selection locked to selection OOS",
-        "Dataset contract recorded and immutable"
+        "Trade-level split frozen with documented train/validation/test windows.",
+        "Purge gap ≥ 24h enforced between windows.",
+        "Modeling surfaces assembled and documented.",
+        "Feature set and threshold selection rules locked to selection OOS."
       ],
       "allowed_tools": [
         "models_dataset",
         "features_dataset",
-        "research_record"
+        "research_memory"
       ],
       "evidence_requirements": [
-        "Temporal split completed with no overlap and purge gap ≥ 24h",
-        "All modeling surfaces materialized with correct features and frozen labels",
-        "Feature set selection locked to selection OOS",
-        "Dataset contract recorded and immutable"
+        "Trade-level split frozen with documented train/validation/test windows.",
+        "Purge gap ≥ 24h enforced between windows.",
+        "Modeling surfaces assembled and documented.",
+        "Feature set and threshold selection rules locked to selection OOS."
       ],
       "policy_tags": [
         "data_readiness"
       ],
-      "max_turns": 24,
-      "max_tool_calls": 24,
-      "max_expensive_calls": 2,
+      "max_turns": 36,
+      "max_tool_calls": 30,
+      "max_expensive_calls": 6,
       "parallel_slot": 1,
+      "runtime_profile": "generic_mutation",
+      "required_prerequisite_facts": null,
+      "required_output_facts": [],
+      "finalization_mode": "none",
+      "dependency_unblock_mode": "accepted_only",
+      "watchlist_allows_unblock": false,
+      "requires_mutating_evidence": false,
+      "requires_persisted_artifact": false,
+      "requires_live_handle_validation": false,
+      "acceptance_contract": {
+        "kind": "feature_contract_exploration",
+        "mode": "strict",
+        "required_subjects": "none",
+        "required_predicates": [],
+        "mcp_proof_calls": [],
+        "forbid_contradictions": [],
+        "allow_advisory_unblock": false,
+        "acceptance_requirements": {
+          "slice_id": "compiled_plan_v8_stage_5",
+          "contract_kind": "feature_contract_exploration"
+        }
+      },
+      "acceptance_proof": {},
+      "acceptance_blockers": [],
       "budget_scale_applied": 6,
       "depends_on": [
         "compiled_plan_v8_stage_3",
         "compiled_plan_v8_stage_4"
       ],
       "status": "pending",
+      "acceptance_state": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
       "expensive_call_count": 0,
@@ -116,47 +193,97 @@
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
+      "dependency_blocker_slice_id": "",
+      "dependency_blocker_reason_code": "",
+      "dependency_blocker_class": "",
+      "blocked_retry_count": 0,
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
+      "gate_hint": "",
       "artifacts": [],
-      "facts": {}
+      "facts": {},
+      "verdict": ""
     },
     {
       "slice_id": "compiled_plan_v8_stage_6",
-      "title": "Veto-route plausibility on selection OOS",
-      "hypothesis": "Train CatBoost veto classifiers per side and label family, then evaluate on selection OOS whether worst base trades can be reliably identified.",
-      "objective": "Train CatBoost veto classifiers per side and label family, then evaluate on selection OOS whether worst base trades can be reliably identified.",
+      "title": "Veto-route plausibility stage",
+      "hypothesis": "Train and evaluate CatBoost veto classifiers for long and short sides with balanced/conservative labels, assessing whether worst base trades can be reliably identified on selection OOS.",
+      "objective": "Train and evaluate CatBoost veto classifiers for long and short sides with balanced/conservative labels, assessing whether worst base trades can be reliably identified on selection OOS.",
       "success_criteria": [
-        "At least one veto model achieves ROC AUC meaningfully above 0.50 on selection OOS",
-        "Worst-decile lift is positive — model ranks bad trades higher",
-        "Economic simulation of vetoing top-risk trades shows non-trivial PnL/PF improvement on selection OOS",
-        "Results recorded with full metrics in research memory"
+        "At least one veto model shows ROC AUC > 0.50 meaningfully on selection OOS.",
+        "Worst-decile lift is positive and non-trivial.",
+        "Economic effect of veto on selection OOS is computed and documented.",
+        "Promote/no-promote decision recorded for each model."
       ],
       "allowed_tools": [
         "models_train",
-        "models_compare",
         "models_registry",
-        "research_record"
+        "models_compare",
+        "research_memory"
       ],
       "evidence_requirements": [
-        "At least one veto model achieves ROC AUC meaningfully above 0.50 on selection OOS",
-        "Worst-decile lift is positive — model ranks bad trades higher",
-        "Economic simulation of vetoing top-risk trades shows non-trivial PnL/PF improvement on selection OOS",
-        "Results recorded with full metrics in research memory"
+        "At least one veto model shows ROC AUC > 0.50 meaningfully on selection OOS.",
+        "Worst-decile lift is positive and non-trivial.",
+        "Economic effect of veto on selection OOS is computed and documented.",
+        "Promote/no-promote decision recorded for each model."
       ],
       "policy_tags": [
         "modeling"
       ],
-      "max_turns": 24,
-      "max_tool_calls": 24,
-      "max_expensive_calls": 2,
+      "max_turns": 36,
+      "max_tool_calls": 30,
+      "max_expensive_calls": 12,
       "parallel_slot": 1,
+      "runtime_profile": "generic_mutation",
+      "required_prerequisite_facts": null,
+      "required_output_facts": [],
+      "finalization_mode": "none",
+      "dependency_unblock_mode": "accepted_only",
+      "watchlist_allows_unblock": false,
+      "requires_mutating_evidence": false,
+      "requires_persisted_artifact": false,
+      "requires_live_handle_validation": false,
+      "acceptance_contract": {
+        "kind": "model_training",
+        "mode": "strict",
+        "required_subjects": "dataset_and_model_version",
+        "required_predicates": [
+          "model_dataset_proof_pass",
+          "model_registry_proof_pass"
+        ],
+        "mcp_proof_calls": [
+          {
+            "tool": "models_dataset",
+            "arguments": {
+              "action": "inspect",
+              "view": "acceptance_proof"
+            }
+          },
+          {
+            "tool": "models_registry",
+            "arguments": {
+              "action": "inspect",
+              "view": "acceptance_proof"
+            }
+          }
+        ],
+        "forbid_contradictions": [],
+        "allow_advisory_unblock": false,
+        "acceptance_requirements": {
+          "slice_id": "compiled_plan_v8_stage_6",
+          "contract_kind": "model_training"
+        }
+      },
+      "acceptance_proof": {},
+      "acceptance_blockers": [],
       "budget_scale_applied": 6,
       "depends_on": [
+        "compiled_plan_v8_stage_4",
         "compiled_plan_v8_stage_5"
       ],
       "status": "pending",
+      "acceptance_state": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
       "expensive_call_count": 0,
@@ -167,13 +294,20 @@
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
+      "dependency_blocker_slice_id": "",
+      "dependency_blocker_reason_code": "",
+      "dependency_blocker_class": "",
+      "blocked_retry_count": 0,
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
+      "gate_hint": "",
       "artifacts": [],
-      "facts": {}
+      "facts": {},
+      "verdict": ""
     }
   ],
+  "mcp_catalog_hash": "c306b4054eaf8f466a7e29182863da4e7cd0610551ef83a0611c515c84aa415b",
   "plan_source_kind": "compiled_raw",
   "source_sequence_id": "compiled_plan_v8",
   "source_raw_plan": "raw_plans/plan_v8.md",
@@ -182,6 +316,7 @@
   "source_compile_report_path": "",
   "sequence_batch_index": 2,
   "status": "draft",
-  "created_at": "2026-04-11T10:59:07.560574+00:00",
-  "updated_at": "2026-04-11T10:59:07.560576+00:00"
+  "last_error": "",
+  "created_at": "2026-04-15T18:44:36.406968+00:00",
+  "updated_at": "2026-04-15T18:44:36.406970+00:00"
 }

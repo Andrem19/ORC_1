@@ -44,6 +44,8 @@ class SliceResultReport:
     slice_id: str
     title: str
     status: str
+    acceptance_state: str = ""
+    dependency_unblock_mode: str = ""
     verdict: str = ""
     summary: str = ""
     facts: dict[str, Any] = field(default_factory=dict)
@@ -56,6 +58,14 @@ class SliceResultReport:
     confidence: float = 0.0
     artifacts: list[str] = field(default_factory=list)
     last_error: str = ""
+    dependency_blocker_slice_id: str = ""
+    dependency_blocker_reason_code: str = ""
+    dependency_blocker_class: str = ""
+    root_failure_reason: str = ""
+    root_failure_artifact: str = ""
+    best_failed_attempt_provider: str = ""
+    best_failed_tool_call_count: int = 0
+    last_provider_failure: str = ""
     incident_refs: list[IncidentReference] = field(default_factory=list)
     report_path: str = ""
 

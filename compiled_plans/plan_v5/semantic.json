@@ -2,7 +2,7 @@
   "source_file": "raw_plans/plan_v5.md",
   "source_hash": "c21a9aced25f3fb034b4f6b839bf8ec6d7705db97fd2ea5ba66ef82f7f09f5f4",
   "source_title": "План дальнейших исследований для v5",
-  "goal": "Построить и проверить новые custom features, обучить CatBoost long и short модели, прогнать на selection OOS и lockbox OOS, и дать итоговый ответ — дают ли custom-feature + CatBoost модели новый additive layer поверх active-signal-v1.",
+  "goal": "Построить и проверить новые custom features, обучить CatBoost long/short модели, прогнать на selection OOS и lockbox OOS, и ответить: дают ли custom-feature + CatBoost модели новый additive layer поверх active-signal-v1.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -11,36 +11,38 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "База active-signal-v1@1 — immutable reference, не меняется ни при каких условиях",
-    "Все custom features должны быть causally correct с фиксированным lookback",
-    "train / selection OOS / lockbox OOS окна замораживаются ДО начала обучения моделей",
-    "Purge gap минимум 24h между train и OOS окнами",
-    "Long и short модели обучаются отдельно",
-    "Thresholds фиксируются до открытия lockbox",
-    "Модель не имеет права быть чёрным ящиком — feature importance и SHAP обязательны",
-    "Итог cycle v5 — бинарное решение: PROMOTE / WATCHLIST / REJECT для каждого sleeve"
+    "База active-signal-v1@1 — immutable reference, никогда не меняется.",
+    "Все custom features строятся causally: lookback зафиксирован, futurity исключена.",
+    "Train / selection OOS / lockbox OOS замораживаются до начала любого обучения.",
+    "Purge gap минимум 24h между train и selection OOS, selection OOS и lockbox.",
+    "Long и short модели обучаются раздельно; общий роутер — только опционально после обеих сторон.",
+    "Threshold выбирается на selection OOS и замораживается до открытия lockbox.",
+    "Базовый снапшот прогоняется на том же OOS окне для matched comparison.",
+    "Обязательны strict additive и permissive integration comparisons на lockbox.",
+    "Каждый model sleeve получает terminal decision: PROMOTE / WATCHLIST / REJECT.",
+    "Финальный отчёт v5 обязателен перед закрытием цикла."
   ],
   "stages": [
     {
       "stage_id": "stage_1",
       "title": "Старт v5 и фиксация model-research discipline",
-      "objective": "Открыть новый исследовательский цикл v5 и зафиксировать строгую модельную дисциплину, immutable reference и anti-leakage rules.",
+      "objective": "Открыть новый исследовательский цикл v5 и зафиксировать строгую модельную дисциплину: immutable reference, anti-leakage rules, оси research map.",
       "actions": [
-        "Открыть новый research_project под v5",
-        "Записать в research_record цели и ограничения v5",
-        "Зафиксировать immutable reference active-signal-v1@1",
-        "В research_map завести оси: branch, feature_family, side, model_stage, final_decision",
-        "Записать anti-leakage rules отдельно"
+        "Открыть новый research_project под v5.",
+        "Записать в research_memory цели и ограничения v5.",
+        "Зафиксировать immutable reference active-signal-v1@1.",
+        "В research_map завести оси: branch, feature_family, side, model_stage, final_decision.",
+        "Отдельно записать anti-leakage rules."
       ],
       "success_criteria": [
-        "Создан новый проект v5",
-        "Immutable reference зафиксирован",
-        "Atlas осей заведён в research_map",
-        "Anti-leakage rules записаны в research_record"
+        "Создан проект v5.",
+        "Immutable reference зафиксирован.",
+        "Atlas осей определён в research_map.",
+        "Anti-leakage rules записаны в research_memory."
       ],
       "tool_hints": [
         "research_project",
-        "research_record",
+        "research_memory",
         "research_map"
       ],
       "policy_tags": [
@@ -56,24 +58,25 @@
     {
       "stage_id": "stage_2",
       "title": "Feature contract для новых custom features",
-      "objective": "Перевести все feature ideas в строгий причинный contract с описанием, raw input, lookback, causality, интерпретацией и side bias.",
+      "objective": "Перевести все feature ideas в строгий причинный contract: описание, raw input, lookback, causality, интерпретация, side bias для каждой planned custom feature.",
       "actions": [
-        "Для каждого custom feature записать: описание, raw input, lookback, causality, интерпретацию, side bias",
-        "Зафиксировать feature families: price-iv-divergence, transition-persistence, failed-breakout, expiry-compression, failure-event, post-event-disappointment",
-        "Проверить причинную корректность каждого feature"
+        "Для каждого custom feature записать полное описание и причинный контракт.",
+        "Зафиксировать raw input, lookback, causality, side bias.",
+        "Записать human-readable интерпретацию каждой feature.",
+        "Проверить coverage feature catalog на пересечения."
       ],
       "success_criteria": [
-        "Полный feature contract по всем planned features записан",
-        "Каждый feature имеет causality_check, lookback, side_bias"
+        "Есть полный feature contract по всем planned features.",
+        "Для каждой feature записаны: описание, raw input, lookback, causality, интерпретация, side bias."
       ],
       "tool_hints": [
-        "research_record",
-        "features_custom",
-        "features_catalog"
+        "research_memory",
+        "features_catalog",
+        "features_custom"
       ],
       "policy_tags": [
         "contract",
-        "documentation"
+        "cheap_first"
       ],
       "depends_on": [
         "stage_1"
@@ -86,29 +89,28 @@
     {
       "stage_id": "stage_3",
       "title": "Валидация, публикация и materialization custom features",
-      "objective": "Сделать весь selected feature set реально доступным для моделей: валидация, публикация, materialization, проверка NaN/coverage/leakage, фиксация common_model_window.",
+      "objective": "Сделать feature set реально доступным для моделей: валидация, публикация, materialization, проверка NaN/coverage/leakage, фиксация common_model_window.",
       "actions": [
-        "Validate каждый custom feature через features_custom",
-        "Publish валидированные features",
-        "Build/refresh dataset через features_dataset",
-        "Inspect columns, проверить NaN, coverage, leakage",
-        "Зафиксировать common_model_window"
+        "Validate и publish каждую custom feature.",
+        "Build/refresh managed feature dataset.",
+        "Inspect columns, проверить NaN, coverage, leakage.",
+        "Зафиксировать common_model_window."
       ],
       "success_criteria": [
-        "Все selected features materialized",
-        "Общий modeling frame готов",
-        "NaN, coverage, leakage проверки пройдены",
-        "common_model_window зафиксирован"
+        "Все selected features валидированы и опубликованы.",
+        "Managed feature dataset собран и materialized.",
+        "NaN, coverage и leakage проверки пройдены.",
+        "common_model_window зафиксирован."
       ],
       "tool_hints": [
         "features_custom",
         "features_dataset",
         "features_analytics",
-        "features_catalog"
+        "datasets"
       ],
       "policy_tags": [
-        "data_readiness",
-        "validation"
+        "materialization",
+        "blocking"
       ],
       "depends_on": [
         "stage_2"
@@ -121,25 +123,26 @@
     {
       "stage_id": "stage_4",
       "title": "Dataset contract и chronological split без утечек",
-      "objective": "Зафиксировать train / selection OOS / lockbox OOS окна и purge gap до начала обучения моделей, построить modeling datasets.",
+      "objective": "Зафиксировать train / selection OOS / lockbox OOS windows с purge gap и построить modeling datasets до начала обучения.",
       "actions": [
-        "Выбрать train_window, selection_oos_window, lockbox_oos_window",
-        "Убедиться в корректности разделения и purge gap ≥ 24h",
-        "Построить modeling datasets через models_dataset",
-        "Зафиксировать target definitions (long_label, short_label)"
+        "Выбрать train_window, selection_oos_window, lockbox_oos_window.",
+        "Убедиться в корректности разделения и purge gap (минимум 24h).",
+        "Построить modeling datasets через models_dataset.",
+        "Зафиксировать target definitions (long_label, short_label)."
       ],
       "success_criteria": [
-        "Все modeling windows frozen до начала training",
-        "Purge gap соблюдён",
-        "Target definitions зафиксированы"
+        "Все modeling windows frozen до начала training.",
+        "Purge gap проверен и соответствует правилам.",
+        "Modeling datasets собраны."
       ],
       "tool_hints": [
         "models_dataset",
-        "features_dataset"
+        "datasets",
+        "research_memory"
       ],
       "policy_tags": [
         "contract",
-        "anti_leakage"
+        "blocking"
       ],
       "depends_on": [
         "stage_3"
@@ -152,91 +155,87 @@
     {
       "stage_id": "stage_5",
       "title": "Быстрая plausibility-проверка feature packs на train/selection discipline",
-      "objective": "Отсеять feature packs через минимальные long/short prototypes на selection OOS, выбрать максимум 2 лучших setup на сторону.",
+      "objective": "Отсеять feature packs до full training: обучить минимальные long/short prototypes и проверить signal quality на selection OOS.",
       "actions": [
-        "Для каждого pack обучить минимальные long/short prototypes",
-        "Проверить signal quality на selection OOS",
-        "Проверить economic plausibility",
-        "Выбрать максимум 2 лучших setup для long и short"
+        "Для каждого feature pack обучить минимальные long/short prototype модели.",
+        "Проверить signal quality прототипов на selection OOS.",
+        "Выбрать максимум 2 лучших setup для long и 2 для short."
       ],
       "success_criteria": [
-        "Есть shortlist модельных setups для full training",
-        "Каждый setup проверен на selection OOS"
+        "Есть shortlist модельных setups для full training.",
+        "Каждый setup проверен на selection OOS с экономической plausibility."
       ],
       "tool_hints": [
         "models_train",
         "models_compare",
-        "models_registry"
+        "backtests_runs"
       ],
       "policy_tags": [
-        "cheap_first",
-        "filtering"
+        "screening",
+        "cheap_first"
       ],
       "depends_on": [
         "stage_4"
       ],
       "required": true,
-      "parallelizable": true,
+      "parallelizable": false,
       "gate_hint": "",
       "raw_stage_ref": "stage_5"
     },
     {
       "stage_id": "stage_6",
       "title": "Обучение CatBoost-long и CatBoost-short",
-      "objective": "Обучить по одной-две disciplined candidate CatBoost models на сторону с frozen params, feature importance и SHAP.",
+      "objective": "Обучить по одной-две disciplined candidate models на сторону, freeze params, best iteration, feature importance, SHAP.",
       "actions": [
-        "Обучить CatBoost long model(s) на best feature packs",
-        "Обучить CatBoost short model(s) на best feature packs",
-        "Для каждой модели зафиксировать: feature pack, target, params, best iteration, validation behavior",
-        "Вычислить feature importance и SHAP summary",
-        "Проверить selection OOS качество"
+        "Обучить CatBoost long candidate(s) на выбранном feature pack и target.",
+        "Обучить CatBoost short candidate(s) на выбранном feature pack и target.",
+        "Зафиксировать params, best iteration, validation behavior.",
+        "Провести feature importance и SHAP summary анализ."
       ],
       "success_criteria": [
-        "Есть frozen model candidates для long и short",
-        "Feature importance и SHAP записаны",
-        "Selection OOS quality проверено"
+        "Есть frozen model candidates для long и short.",
+        "Selection OOS quality подтверждена.",
+        "Feature importance и SHAP записаны."
       ],
       "tool_hints": [
         "models_train",
         "models_registry",
-        "models_compare",
-        "models_to_feature"
+        "models_compare"
       ],
       "policy_tags": [
-        "modeling",
-        "disciplined"
+        "training",
+        "expensive"
       ],
       "depends_on": [
         "stage_5"
       ],
       "required": true,
-      "parallelizable": true,
+      "parallelizable": false,
       "gate_hint": "",
       "raw_stage_ref": "stage_6"
     },
     {
       "stage_id": "stage_7",
       "title": "Превращение model outputs в реальные сигналы",
-      "objective": "Перевести вероятности моделей в tradeable sleeves: получить p_long/p_short, откалибровать thresholds на selection OOS, заморозить до lockbox.",
+      "objective": "Перевести вероятности моделей в tradeable sleeves: откалибровать thresholds на selection OOS, заморозить до lockbox, построить signal snapshots.",
       "actions": [
-        "Получить p_long / p_short из моделей",
-        "Откалибровать thresholds на selection OOS",
-        "Выбрать final threshold tier до открытия lockbox",
-        "Построить signal snapshots через models_to_feature и backtests_strategy"
+        "Получить p_long / p_short из обученных моделей.",
+        "Откалибровать thresholds на selection OOS.",
+        "Выбрать final threshold tier до открытия lockbox.",
+        "Построить signal snapshots через models_to_feature."
       ],
       "success_criteria": [
-        "Есть tradeable model sleeves с frozen thresholds",
-        "Thresholds заморожены до lockbox",
-        "Signal snapshots построены"
+        "Есть tradeable model sleeves, готовые к OOS backtest.",
+        "Threshold заморожен до открытия lockbox."
       ],
       "tool_hints": [
         "models_to_feature",
         "backtests_strategy",
-        "backtests_strategy_validate"
+        "signal_api_binding_inspect"
       ],
       "policy_tags": [
-        "signal_engineering",
-        "anti_leakage"
+        "calibration",
+        "blocking"
       ],
       "depends_on": [
         "stage_6"
@@ -249,53 +248,55 @@
     {
       "stage_id": "stage_8",
       "title": "OOS backtests на matched windows и сравнение с базой",
-      "objective": "Проверить на настоящем OOS: standalone на selection OOS, standalone на lockbox OOS, strict additive integration vs base, permissive integration vs base, прямое сравнение с базой на том же окне.",
+      "objective": "Проверить, даёт ли модель новый рабочий слой на настоящем OOS: standalone, strict additive, permissive integration, matched comparison с базой.",
       "actions": [
-        "Standalone backtest каждого sleeve на selection OOS",
-        "Standalone backtest каждого sleeve на lockbox OOS",
-        "Strict additive integration vs base на lockbox",
-        "Permissive integration vs base на lockbox",
-        "Сравнение с базой active-signal-v1 на том же окне"
+        "Standalone backtest на selection OOS для каждого sleeve.",
+        "Standalone backtest на lockbox OOS для каждого sleeve.",
+        "Strict additive integration vs base на lockbox.",
+        "Permissive integration vs base на lockbox.",
+        "Сравнение с базой на том же окне lockbox."
       ],
       "success_criteria": [
-        "Есть matched OOS comparison по всем пяти режимам",
-        "Все сравнения на идентичных окнах"
+        "Есть matched OOS comparison для всех sleeves.",
+        "Standalone и additive backtests выполнены на selection и lockbox."
       ],
       "tool_hints": [
-        "backtests_plan",
         "backtests_runs",
+        "backtests_strategy",
         "backtests_analysis"
       ],
       "policy_tags": [
         "backtesting",
-        "oos_validation"
+        "expensive"
       ],
       "depends_on": [
         "stage_7"
       ],
       "required": true,
-      "parallelizable": true,
+      "parallelizable": false,
       "gate_hint": "",
       "raw_stage_ref": "stage_8"
     },
     {
       "stage_id": "stage_9",
       "title": "Ownership, cannibalization и proof of new entries",
-      "objective": "Доказать, что модель добавляет новые прибыльные сделки: overlap с базой, truly new trades, PnL новых сделок, weak-window repair effect.",
+      "objective": "Доказать, что модель добавляет новые прибыльные сделки: overlap, truly new trades, PnL новых сделок, ownership, weak-window repair, terminal decision для каждого sleeve.",
       "actions": [
-        "Рассчитать overlap с базой active-signal-v1",
-        "Выделить truly new trades и replaced base trades",
-        "Оценить PnL новых сделок и ownership",
-        "Проверить weak-window repair effect",
-        "Принять terminal decision для каждого sleeve: PROMOTE / WATCHLIST / REJECT"
+        "Посчитать overlap model sleeve с базой.",
+        "Выделить truly new trades и replaced base trades.",
+        "Оценить PnL новых сделок и ownership.",
+        "Проверить weak-window repair effect.",
+        "Принять terminal decision для каждого sleeve: PROMOTE / WATCHLIST / REJECT."
       ],
       "success_criteria": [
-        "Каждый model sleeve имеет terminal decision",
-        "Ownership и cannibalization количественно оценены"
+        "Каждый model sleeve имеет terminal decision.",
+        "Ownership и cannibalization проанализированы.",
+        "Weak-window repair effect проверен."
       ],
       "tool_hints": [
         "backtests_analysis",
-        "research_record"
+        "backtests_runs",
+        "research_memory"
       ],
       "policy_tags": [
         "analysis",
@@ -312,19 +313,22 @@
     {
       "stage_id": "stage_10",
       "title": "Финальный вердикт по model route",
-      "objective": "Получить ясное решение по всему пути custom features + CatBoost: model route success / partial / failed, и записать итоговый отчёт v5.",
+      "objective": "Получить ясное решение по всему пути custom features + CatBoost: model route success / partial / failed, и записать финальный отчёт v5.",
       "actions": [
-        "Свести все результаты в единый вердикт по model route",
-        "Записать итоговый отчёт: что было целью v5, что сделано, главный вывод, что делать в v6",
-        "Записать финальное решение в research_record и обновить research_map"
+        "Свести все результаты в единый итог v5.",
+        "Определить вердикт: Model route success / partial / failed.",
+        "Записать что было целью, что сделано, главный вывод, что делать в v6.",
+        "Записать финальный отчёт в research_memory.",
+        "Обновить research_map с terminal decisions."
       ],
       "success_criteria": [
-        "Есть единый итог по всему v5",
-        "Финальный отчёт написан",
-        "Рекомендации для v6 сформулированы"
+        "Есть единый итог по всему v5.",
+        "Финальный отчёт записан.",
+        "Каждый sleeve имеет terminal decision.",
+        "Направление v6 определено."
       ],
       "tool_hints": [
-        "research_record",
+        "research_memory",
         "research_map",
         "notify_send"
       ],

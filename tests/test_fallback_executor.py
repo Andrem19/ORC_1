@@ -162,6 +162,8 @@ class _ChainTest:
         primary_results: list[DirectExecutionResult],
         fallback_results_map: dict[str, list[DirectExecutionResult]] | None = None,
         adapter_map: dict[str, _FakeAdapter | None] | None = None,
+        incident_recorder: Any | None = None,
+        direct_config: Any | None = None,
     ) -> None:
         self.primary_executor = _FakeExecutor(primary_results)
         self.artifact_store = _FakeArtifactStore()
@@ -176,8 +178,8 @@ class _ChainTest:
             primary_executor=self.primary_executor,
             fallback_providers=fallback_providers,
             artifact_store=self.artifact_store,
-            incident_store=SimpleNamespace(record=lambda **kw: None),
-            direct_config=SimpleNamespace(),
+            incident_store=SimpleNamespace(record=incident_recorder or (lambda **kw: None)),
+            direct_config=direct_config or SimpleNamespace(),
             worker_system_prompt="test prompt",
             adapter_factory=factory,
         )
@@ -334,6 +336,7 @@ def test_fallback_receives_error_context_in_prompt() -> None:
         primary_results=[_fail_result(error="model_stalled")],
         fallback_results_map={"qwen_worker_cli": [_success_result(provider="qwen_cli")]},
         adapter_map={"qwen_cli": _FakeAdapter("qwen_worker_cli")},
+        direct_config=SimpleNamespace(primary_retry_budget=0),
     )
 
     asyncio.run(ct.fb.execute_with_fallback(
@@ -352,6 +355,134 @@ def test_fallback_receives_error_context_in_prompt() -> None:
     extra = qwen_ex.calls[0]["extra_prompt_section"]
     assert "model_stalled" in extra
     assert "Fallback Context" in extra
+
+
+def test_primary_retry_uses_prior_attempt_context_before_fallback() -> None:
+    ct = _ChainTest(
+        fallback_providers=["qwen_cli"],
+        primary_results=[
+            _blocked_checkpoint_result(reason="need_retry"),
+            _fail_result(error="still_blocked"),
+        ],
+        fallback_results_map={"qwen_worker_cli": [_success_result(provider="qwen_cli")]},
+        adapter_map={"qwen_cli": _FakeAdapter("qwen_worker_cli")},
+        direct_config=SimpleNamespace(primary_retry_budget=1, parse_repair_attempts=0),
+    )
+
+    asyncio.run(ct.fb.execute_with_fallback(
+        plan_id="plan_1",
+        slice_obj=_make_slice(),
+        baseline_bootstrap={},
+        known_facts={},
+        required_output_facts=[],
+        recent_turn_summaries=[],
+        checkpoint_summary="",
+    ))
+
+    assert len(ct.primary_executor.calls) == 2
+    retry_prompt = ct.primary_executor.calls[1]["extra_prompt_section"]
+    assert "Prior attempt context" in retry_prompt
+    assert "need_retry" in retry_prompt
+
+
+def test_infra_signal_skips_primary_repair_and_jumps_to_fallback() -> None:
+    ct = _ChainTest(
+        fallback_providers=["qwen_cli"],
+        primary_results=[_fail_result(error="qwen_mcp_tools_unavailable")],
+        fallback_results_map={"qwen_worker_cli": [_success_result(provider="qwen_cli")]},
+        adapter_map={"qwen_cli": _FakeAdapter("qwen_worker_cli")},
+        direct_config=SimpleNamespace(primary_retry_budget=0, parse_repair_attempts=1, fallback_skip_repair_on_infra_signal=True),
+    )
+
+    asyncio.run(ct.fb.execute_with_fallback(
+        plan_id="plan_1",
+        slice_obj=_make_slice(),
+        baseline_bootstrap={},
+        known_facts={},
+        required_output_facts=[],
+        recent_turn_summaries=[],
+        checkpoint_summary="",
+    ))
+
+    assert len(ct.primary_executor.calls) == 1
+
+
+def test_contract_misuse_does_not_escalate_to_fallback_provider() -> None:
+    ct = _ChainTest(
+        fallback_providers=["claude_cli"],
+        primary_results=[_fail_result(error="agent_contract_misuse")],
+        fallback_results_map={"claude_worker_cli": [_success_result(provider="claude_cli")]},
+        adapter_map={"claude_cli": _FakeAdapter("claude_worker_cli")},
+        direct_config=SimpleNamespace(primary_retry_budget=0, parse_repair_attempts=0),
+    )
+
+    result, attempts = asyncio.run(ct.fb.execute_with_fallback(
+        plan_id="plan_1",
+        slice_obj=_make_slice(),
+        baseline_bootstrap={},
+        known_facts={},
+        required_output_facts=[],
+        recent_turn_summaries=[],
+        checkpoint_summary="",
+    ))
+
+    assert result.error == "agent_contract_misuse"
+    assert attempts == []
+    assert "claude_worker_cli" not in ct.fallback_executors
+
+
+def test_infra_unavailable_does_not_blindly_escalate_to_fallback_provider() -> None:
+    ct = _ChainTest(
+        fallback_providers=["claude_cli"],
+        primary_results=[_fail_result(error="dev_space1_tools_unavailable")],
+        fallback_results_map={"claude_worker_cli": [_success_result(provider="claude_cli")]},
+        adapter_map={"claude_cli": _FakeAdapter("claude_worker_cli")},
+        direct_config=SimpleNamespace(primary_retry_budget=0, parse_repair_attempts=1),
+    )
+
+    result, attempts = asyncio.run(ct.fb.execute_with_fallback(
+        plan_id="plan_1",
+        slice_obj=_make_slice(),
+        baseline_bootstrap={},
+        known_facts={},
+        required_output_facts=[],
+        recent_turn_summaries=[],
+        checkpoint_summary="",
+    ))
+
+    assert result.error == "dev_space1_tools_unavailable"
+    assert attempts == []
+    assert "claude_worker_cli" not in ct.fallback_executors
+
+
+def test_glm_repair_prompt_allows_small_new_tool_budget() -> None:
+    ct = _ChainTest(
+        fallback_providers=["glm_cli"],
+        primary_results=[_fail_result(error="timeout")],
+        fallback_results_map={
+            "glm_cli": [
+                _partial_checkpoint_result(provider="glm_cli", summary="need non-research evidence"),
+                _success_result(provider="glm_cli"),
+            ]
+        },
+        adapter_map={"glm_cli": _FakeAdapter("glm_cli")},
+        direct_config=SimpleNamespace(primary_retry_budget=0, parse_repair_attempts=1, repair_tool_call_budget=3),
+    )
+
+    asyncio.run(ct.fb.execute_with_fallback(
+        plan_id="plan_1",
+        slice_obj=_make_slice(),
+        baseline_bootstrap={},
+        known_facts={},
+        required_output_facts=[],
+        recent_turn_summaries=[],
+        checkpoint_summary="",
+    ))
+
+    glm_ex = ct.fallback_executors["glm_cli"]
+    assert len(glm_ex.calls) == 2
+    repair_prompt = glm_ex.calls[1]["extra_prompt_section"]
+    assert "up to 3 new non-expensive tool calls" in repair_prompt
 
 
 def test_adapter_factory_returns_none_skips_fallback() -> None:
@@ -691,6 +822,214 @@ def test_missing_required_facts_triggers_fallback() -> None:
     assert result.provider == "qwen_cli"
 
 
+def test_strict_watchlist_result_gets_acceptance_repair_before_success() -> None:
+    watchlist_result = _low_quality_result(
+        provider="qwen_cli",
+        verdict="WATCHLIST",
+        confidence=0.9,
+        facts={"research.project_id": "proj_1"},
+    )
+    complete_result = _low_quality_result(
+        provider="qwen_cli",
+        verdict="COMPLETE",
+        confidence=0.9,
+        facts={"research.project_id": "proj_1"},
+    )
+    ct = _ChainTest(
+        fallback_providers=["qwen_cli"],
+        primary_results=[_fail_result(error="timeout")],
+        fallback_results_map={"qwen_worker_cli": [watchlist_result, complete_result]},
+        adapter_map={"qwen_cli": _FakeAdapter("qwen_worker_cli")},
+        direct_config=SimpleNamespace(primary_retry_budget=0, parse_repair_attempts=1),
+    )
+
+    result, attempts = asyncio.run(ct.fb.execute_with_fallback(
+        plan_id="plan_1",
+        slice_obj=_make_slice(),
+        baseline_bootstrap={},
+        known_facts={},
+        required_output_facts=["research.project_id"],
+        recent_turn_summaries=[],
+        checkpoint_summary="",
+    ))
+
+    assert len(attempts) == 1
+    assert result.provider == "qwen_cli"
+    assert result.action is not None
+    assert result.action.verdict == "COMPLETE"
+    qwen_ex = ct.fallback_executors["qwen_worker_cli"]
+    assert len(qwen_ex.calls) == 2
+    repair_prompt = qwen_ex.calls[1]["extra_prompt_section"]
+    assert "requires an accepted terminal result" in repair_prompt
+    assert "MUST use `verdict=\"COMPLETE\"`" in repair_prompt
+
+
+def test_strict_watchlist_result_does_not_count_as_success_without_repair() -> None:
+    watchlist_result = _low_quality_result(
+        provider="qwen_cli",
+        verdict="WATCHLIST",
+        confidence=0.9,
+        facts={"research.project_id": "proj_1"},
+    )
+    ct = _ChainTest(
+        fallback_providers=["qwen_cli", "claude_cli"],
+        primary_results=[_fail_result(error="timeout")],
+        fallback_results_map={
+            "qwen_worker_cli": [watchlist_result],
+            "claude_worker_cli": [_success_result(provider="claude_cli")],
+        },
+        adapter_map={
+            "qwen_cli": _FakeAdapter("qwen_worker_cli"),
+            "claude_cli": _FakeAdapter("claude_worker_cli"),
+        },
+        direct_config=SimpleNamespace(primary_retry_budget=0, parse_repair_attempts=0),
+    )
+
+    result, attempts = asyncio.run(ct.fb.execute_with_fallback(
+        plan_id="plan_1",
+        slice_obj=_make_slice(),
+        baseline_bootstrap={},
+        known_facts={},
+        required_output_facts=["research.project_id"],
+        recent_turn_summaries=[],
+        checkpoint_summary="",
+    ))
+
+    assert len(attempts) == 2
+    assert result.provider == "claude_cli"
+    assert "claude_worker_cli" in ct.fallback_executors
+
+
+def test_qwen_legacy_backtests_integration_facts_are_canonicalized_before_claude() -> None:
+    qwen_result = DirectExecutionResult(
+        action=WorkerAction(
+            action_id="act_qwen",
+            action_type="final_report",
+            summary="Integration complete",
+            verdict="SUCCESS",
+            confidence=0.91,
+            evidence_refs=["analysis-18dfbc658a2a-rm-feature-long"],
+            facts={
+                "integration_handles": {"feature_long": "20260413-143910-3db43a14"},
+                "integration_refs": ["analysis-18dfbc658a2a-rm-feature-long"],
+            },
+        ),
+        artifact_path="/tmp/qwen.json",
+        raw_output='{"type":"final_report","facts":{"integration_handles":{}}}',
+        provider="qwen_cli",
+        duration_ms=100,
+        tool_call_count=10,
+    )
+    ct = _ChainTest(
+        fallback_providers=["qwen_cli", "claude_cli"],
+        primary_results=[_fail_result(error="direct_error_loop_detected")],
+        fallback_results_map={
+            "qwen_worker_cli": [qwen_result],
+            "claude_worker_cli": [_fail_result(provider="claude_cli", error="hit your limit")],
+        },
+        adapter_map={
+            "qwen_cli": _FakeAdapter("qwen_worker_cli"),
+            "claude_cli": _FakeAdapter("claude_worker_cli"),
+        },
+    )
+
+    result, attempts = asyncio.run(ct.fb.execute_with_fallback(
+        plan_id="plan_1",
+        slice_obj=_make_slice(
+            title="Integration",
+            objective="Integrate surviving candidates over the baseline.",
+            allowed_tools=["backtests_runs", "backtests_analysis", "research_memory"],
+            policy_tags=["integration"],
+            runtime_profile="backtests_integration_analysis",
+        ),
+        baseline_bootstrap={},
+        known_facts={},
+        required_output_facts=["backtests.integration_handles", "backtests.integration_refs"],
+        recent_turn_summaries=[],
+        checkpoint_summary="",
+    ))
+
+    assert result.provider == "qwen_cli"
+    assert result.action is not None
+    assert result.action.facts["backtests.integration_handles"] == {"feature_long": "20260413-143910-3db43a14"}
+    assert result.action.facts["backtests.integration_refs"] == ["analysis-18dfbc658a2a-rm-feature-long"]
+    assert len(attempts) == 1
+    assert "claude_worker_cli" not in ct.fallback_executors
+
+
+def test_exhausted_chain_checkpoint_preserves_actionable_qwen_failure_over_rate_limit_tail() -> None:
+    qwen_missing = DirectExecutionResult(
+        action=WorkerAction(
+            action_id="act_qwen_bad",
+            action_type="final_report",
+            summary="Integration incomplete",
+            verdict="SUCCESS",
+            confidence=0.9,
+            evidence_refs=["analysis-18dfbc658a2a-rm-feature-long"],
+            facts={"notes": "missing canonical handoff"},
+        ),
+        artifact_path="/tmp/qwen_bad.json",
+        raw_output='{"type":"final_report","facts":{"notes":"missing canonical handoff"}}',
+        provider="qwen_cli",
+        duration_ms=100,
+        tool_call_count=10,
+    )
+    qwen_repair_still_missing = DirectExecutionResult(
+        action=WorkerAction(
+            action_id="act_qwen_repair_bad",
+            action_type="final_report",
+            summary="Repair still incomplete",
+            verdict="SUCCESS",
+            confidence=0.9,
+            evidence_refs=["analysis-18dfbc658a2a-rm-feature-long"],
+            facts={"notes": "still missing canonical handoff"},
+        ),
+        artifact_path="/tmp/qwen_repair_bad.json",
+        raw_output='{"type":"final_report","facts":{"notes":"still missing canonical handoff"}}',
+        provider="qwen_cli",
+        duration_ms=100,
+        tool_call_count=10,
+    )
+    ct = _ChainTest(
+        fallback_providers=["qwen_cli", "claude_cli"],
+        primary_results=[_fail_result(error="direct_error_loop_detected")],
+        fallback_results_map={
+            "qwen_worker_cli": [qwen_missing, qwen_repair_still_missing],
+            "claude_worker_cli": [_fail_result(provider="claude_cli", error="hit your limit")],
+        },
+        adapter_map={
+            "qwen_cli": _FakeAdapter("qwen_worker_cli"),
+            "claude_cli": _FakeAdapter("claude_worker_cli"),
+        },
+    )
+
+    result, attempts = asyncio.run(ct.fb.execute_with_fallback(
+        plan_id="plan_1",
+        slice_obj=_make_slice(
+            title="Integration",
+            objective="Integrate surviving candidates over the baseline.",
+            allowed_tools=["backtests_runs", "backtests_analysis", "research_memory"],
+            policy_tags=["integration"],
+            runtime_profile="backtests_integration_analysis",
+        ),
+        baseline_bootstrap={},
+        known_facts={},
+        required_output_facts=["backtests.integration_handles", "backtests.integration_refs"],
+        recent_turn_summaries=[],
+        checkpoint_summary="",
+    ))
+
+    assert len(attempts) == 2
+    assert result.action is not None
+    assert result.action.action_type == "checkpoint"
+    assert result.action.status == "blocked"
+    assert result.action.facts["direct.best_failed_attempt_provider"] == "qwen_cli"
+    assert result.action.facts["direct.best_failed_tool_call_count"] == 10
+    assert result.action.facts["direct.provider_limit_seen"] is True
+    assert result.action.facts["direct.last_provider_failure"] == "hit your limit"
+    assert result.action.facts["direct.root_failure_reason"].startswith("missing_required_facts:")
+
+
 def test_high_quality_final_report_passes_gate() -> None:
     """A final_report with good verdict, confidence, tools, evidence, and facts should pass."""
     ct = _ChainTest(
@@ -790,3 +1129,216 @@ def test_qwen_preflight_failure_does_not_disable_tools() -> None:
 
     # Key assertion: allow_tool_use should NOT be False even when preflight fails
     assert captured_kwargs.get("allow_tool_use") is not False
+
+
+def test_qwen_registry_mapping_is_injected_into_fallback_and_repair_prompts() -> None:
+    from app.adapters.qwen_worker_cli import QwenWorkerCli
+
+    incident_calls: list[dict[str, Any]] = []
+    qwen_adapter = QwenWorkerCli(cli_path="/bin/false", allow_tool_use=True)
+    qwen_adapter.preflight_tool_registry = lambda required_tools, timeout=60: {
+        "available": True,
+        "visible_tools": ["research_memory", "backtests_runs"],
+        "exact_visible_tools": [
+            "mcp__dev_space1__research_memory",
+            "mcp__dev_space1__backtests_runs",
+        ],
+        "canonical_to_visible": {
+            "research_memory": "mcp__dev_space1__research_memory",
+            "backtests_runs": "mcp__dev_space1__backtests_runs",
+        },
+        "missing_required_tools": [],
+        "reason": "",
+        "preflight_inconclusive": False,
+    }
+    qwen_fail = DirectExecutionResult(
+        action=WorkerAction(
+            action_id="act_abort",
+            action_type="abort",
+            summary="tools missing",
+            reason_code="dev_space1_tools_unavailable",
+        ),
+        artifact_path="/tmp/fallback.json",
+        raw_output='{"type":"abort","reason_code":"dev_space1_tools_unavailable"}',
+        provider="qwen_cli",
+        duration_ms=10,
+    )
+    ct = _ChainTest(
+        fallback_providers=["qwen_cli"],
+        primary_results=[_fail_result(error="primary_failed")],
+        fallback_results_map={"qwen_worker_cli": [qwen_fail, _success_result(provider="qwen_cli")]},
+        adapter_map={"qwen_cli": qwen_adapter},
+        incident_recorder=lambda **kw: incident_calls.append(kw),
+    )
+
+    result, attempts = asyncio.run(ct.fb.execute_with_fallback(
+        plan_id="plan_1",
+        slice_obj=_make_slice(allowed_tools=["research_memory", "backtests_runs"]),
+        baseline_bootstrap={},
+        known_facts={},
+        required_output_facts=[],
+        recent_turn_summaries=[],
+        checkpoint_summary="",
+    ))
+
+    assert result.action is not None
+    assert len(attempts) == 1
+    fallback_calls = ct.fallback_executors["qwen_worker_cli"].calls
+    assert "mcp__dev_space1__research_memory" in fallback_calls[0]["extra_prompt_section"]
+    assert "Do not claim dev_space1 tools are unavailable" in fallback_calls[1]["extra_prompt_section"]
+    assert incident_calls
+    assert "visible registry" in incident_calls[0]["summary"]
+
+
+# ---------------------------------------------------------------------------
+# Prerequisite block terminal tests
+# ---------------------------------------------------------------------------
+
+
+def _upstream_blocked_result(
+    *,
+    provider: str = "primary",
+    verdict: str = "REJECT",
+    marker: str = "all_rejected",
+) -> DirectExecutionResult:
+    """Result with upstream prerequisite marker."""
+    facts_key = f"stage_6.{marker}"
+    return DirectExecutionResult(
+        action=WorkerAction(
+            action_id="act_upstream",
+            action_type="final_report",
+            summary=f"Upstream blocked: {marker}",
+            verdict=verdict,
+            evidence_refs=[],
+            facts={facts_key: True},
+            confidence=0.8,
+        ),
+        artifact_path="/tmp/artifact.json",
+        raw_output=f'{{"type":"final_report","verdict":"{verdict}","facts":{{"{facts_key}":true}}}}',
+        provider=provider,
+        duration_ms=100,
+        tool_call_count=0,  # Upstream blocked means no tools called
+    )
+
+
+def test_all_providers_fail_with_upstream_marker_preserves_last_action() -> None:
+    """When all providers fail but with upstream marker, the last action should be preserved."""
+    ct = _ChainTest(
+        fallback_providers=["qwen_cli", "claude_cli"],
+        primary_results=[_upstream_blocked_result(provider="primary", marker="all_rejected")],
+        fallback_results_map={
+            "qwen_worker_cli": [_upstream_blocked_result(provider="qwen_cli", marker="blocks_downstream")],
+            "claude_worker_cli": [_upstream_blocked_result(provider="claude_cli", marker="no_surviving_candidates")],
+        },
+        adapter_map={
+            "qwen_cli": _FakeAdapter("qwen_worker_cli"),
+            "claude_cli": _FakeAdapter("claude_worker_cli"),
+        },
+    )
+
+    result, attempts = asyncio.run(ct.fb.execute_with_fallback(
+        plan_id="plan_1",
+        slice_obj=_make_slice(
+            allowed_tools=["backtests_runs", "backtests_analysis"],
+            required_output_facts=["backtests.integration_handles"],
+        ),
+        baseline_bootstrap={},
+        known_facts={"stage_6.all_rejected": True},
+        required_output_facts=["backtests.integration_handles"],
+        recent_turn_summaries=[],
+        checkpoint_summary="",
+    ))
+
+    # All providers failed, last result should be from claude_cli
+    assert result.action is not None
+    assert result.action.verdict == "REJECT"
+    assert result.action.facts.get("stage_6.no_surviving_candidates") is True
+    assert result.tool_call_count == 0
+    assert result.provider == "claude_cli"
+    assert len(attempts) == 2
+
+
+def test_upstream_marker_with_skip_verdict_preserves_for_terminal() -> None:
+    """SKIP verdict with upstream marker should preserve action for terminal carve-out."""
+    ct = _ChainTest(
+        fallback_providers=["qwen_cli"],
+        primary_results=[_fail_result(error="timeout")],
+        fallback_results_map={
+            "qwen_worker_cli": [
+                _upstream_blocked_result(provider="qwen_cli", verdict="SKIP", marker="all_rejected"),
+            ],
+        },
+        adapter_map={"qwen_cli": _FakeAdapter("qwen_worker_cli")},
+    )
+
+    result, attempts = asyncio.run(ct.fb.execute_with_fallback(
+        plan_id="plan_1",
+        slice_obj=_make_slice(),
+        baseline_bootstrap={},
+        known_facts={"stage_6.all_rejected": True},
+        required_output_facts=["backtests.integration_handles"],
+        recent_turn_summaries=[],
+        checkpoint_summary="",
+    ))
+
+    assert result.action is not None
+    assert result.action.verdict == "SKIP"
+    assert result.action.facts.get("stage_6.all_rejected") is True
+    assert len(attempts) == 1
+
+
+# ---------------------------------------------------------------------------
+# Zero-tool-call enforcement in fallback prompt
+# ---------------------------------------------------------------------------
+
+
+def test_fallback_prompt_contains_zero_tool_call_enforcement() -> None:
+    """When error contains 'zero_tool_calls', fallback prompt must include explicit enforcement."""
+    section = FallbackExecutor._build_fallback_prompt_section(
+        failed_provider="lmstudio",
+        error="final_report quality gate failed: zero_tool_calls",
+        raw_output_excerpt="",
+        attempt_index=1,
+    )
+    assert "ZERO tool calls" in section
+    assert "You MUST call at least one tool" in section
+    assert "CRITICAL" in section
+
+
+def test_fallback_prompt_omits_enforcement_for_other_errors() -> None:
+    """When error is NOT zero_tool_calls, the enforcement block should not appear."""
+    section = FallbackExecutor._build_fallback_prompt_section(
+        failed_provider="lmstudio",
+        error="timeout",
+        raw_output_excerpt="",
+        attempt_index=1,
+    )
+    assert "ZERO tool calls" not in section
+    assert "Fallback Context" in section
+
+
+def test_zero_tool_calls_fallback_receives_enforcement_in_prompt() -> None:
+    """Integration: verify the full fallback chain passes zero-tool-call enforcement to fallback executor."""
+    ct = _ChainTest(
+        fallback_providers=["qwen_cli"],
+        primary_results=[_low_quality_result(tool_call_count=0)],
+        fallback_results_map={"qwen_worker_cli": [_success_result(provider="qwen_cli")]},
+        adapter_map={"qwen_cli": _FakeAdapter("qwen_worker_cli")},
+        direct_config=SimpleNamespace(primary_retry_budget=0, parse_repair_attempts=0),
+    )
+
+    asyncio.run(ct.fb.execute_with_fallback(
+        plan_id="plan_1",
+        slice_obj=_make_slice(),
+        baseline_bootstrap={},
+        known_facts={},
+        required_output_facts=[],
+        recent_turn_summaries=[],
+        checkpoint_summary="",
+    ))
+
+    qwen_ex = ct.fallback_executors["qwen_worker_cli"]
+    assert len(qwen_ex.calls) == 1
+    extra = qwen_ex.calls[0]["extra_prompt_section"]
+    assert "ZERO tool calls" in extra
+    assert "You MUST call at least one tool" in extra

@@ -1,6 +1,6 @@
 {
   "plan_id": "compiled_plan_v8_batch_3",
-  "goal": "Pivot from failed full-surface directional prediction to base-conditional trade-quality overlays — entry veto, early-cut, and hold-extension — that improve the immutable base without retuning its logic.",
+  "goal": "Pivot from full-surface directional prediction to base-conditional trade-quality overlays (veto, early-cut, hold-extension) that improve immutable base trades without modifying base logic.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -9,51 +9,80 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "Base snapshot active-signal-v1@1 is immutable — never modify its signals, thresholds, hours, days, or execution logic",
-    "No full-surface directional classification or regression on future PnL (v4–v7 routes terminally closed)",
-    "All v8 work operates on trade-level surface of already-executed base trades, not on all anchor bars",
-    "Feature selection, label selection, and threshold selection only on selection OOS — never on lockbox",
-    "Overlay labels must be frozen before any model training begins",
-    "Do not mix entry-veto and exit-extension objectives in a single label",
-    "Purge gap between train / selection-OOS / lockbox windows must be ≥ max holding horizon (minimum 24h)",
-    "Every improvement claim requires matched lockbox OOS comparison against immutable base on same trade window with same notionals"
+    "Base signal logic (active-signal-v1@1) is immutable — never retune hours, days, thresholds, or execution parameters.",
+    "Do NOT re-open full-surface directional classification on leadership/breadth/path-asymmetry/regime features — terminally closed after v4–v7.",
+    "Do NOT use CatBoost regression on future PnL — terminally closed.",
+    "Do NOT select feature sets, label schemes, horizons, thresholds, or architectures by lockbox window.",
+    "Any claimed improvement must pass matched OOS comparison with base on the same trade window.",
+    "All work operates on trade-level (executed trades of the base), not on anchor-bar level.",
+    "Labels must be frozen before training; thresholds tuned only on selection OOS.",
+    "Train/selection-OOS/lockbox-OOS split by trade entry timestamp with purge gap ≥ 24h.",
+    "Only one main research branch at a time: veto first, then early-cut, then extension."
   ],
   "slices": [
     {
       "slice_id": "compiled_plan_v8_stage_7",
       "title": "Lockbox test for veto overlays",
-      "hypothesis": "Apply the best veto models on the untouched lockbox window and measure whether the overlay materially improves the immutable base on strictly out-of-sample trades.",
-      "objective": "Apply the best veto models on the untouched lockbox window and measure whether the overlay materially improves the immutable base on strictly out-of-sample trades.",
+      "hypothesis": "Apply best veto overlays on lockbox OOS, run matched comparison against immutable base on the same trade window, and compute delta PnL, PF, DD, removed trades, and weak-window repair effect.",
+      "objective": "Apply best veto overlays on lockbox OOS, run matched comparison against immutable base on the same trade window, and compute delta PnL, PF, DD, removed trades, and weak-window repair effect.",
       "success_criteria": [
-        "Lockbox comparison is matched — same trades, same notionals, same window",
-        "Material improvement delta quantified across PnL, PF, DD",
-        "Effect on weak windows separately assessed",
-        "Veto route formally promoted, watchlisted, or rejected"
+        "Matched lockbox comparison completed — base vs base+veto on same window.",
+        "Delta PnL, delta PF, delta DD computed.",
+        "Removed trades and their PnL impact quantified.",
+        "Weak-window repair effect assessed.",
+        "Final promote/watchlist/reject decision for veto route recorded."
       ],
       "allowed_tools": [
         "backtests_runs",
         "backtests_analysis",
-        "models_registry",
-        "research_record"
+        "research_memory"
       ],
       "evidence_requirements": [
-        "Lockbox comparison is matched — same trades, same notionals, same window",
-        "Material improvement delta quantified across PnL, PF, DD",
-        "Effect on weak windows separately assessed",
-        "Veto route formally promoted, watchlisted, or rejected"
+        "Matched lockbox comparison completed — base vs base+veto on same window.",
+        "Delta PnL, delta PF, delta DD computed.",
+        "Removed trades and their PnL impact quantified.",
+        "Weak-window repair effect assessed.",
+        "Final promote/watchlist/reject decision for veto route recorded."
       ],
       "policy_tags": [
         "backtesting"
       ],
-      "max_turns": 24,
-      "max_tool_calls": 24,
-      "max_expensive_calls": 3,
+      "max_turns": 48,
+      "max_tool_calls": 36,
+      "max_expensive_calls": 12,
       "parallel_slot": 1,
+      "runtime_profile": "generic_mutation",
+      "required_prerequisite_facts": null,
+      "required_output_facts": [],
+      "finalization_mode": "none",
+      "dependency_unblock_mode": "accepted_only",
+      "watchlist_allows_unblock": false,
+      "requires_mutating_evidence": false,
+      "requires_persisted_artifact": false,
+      "requires_live_handle_validation": false,
+      "acceptance_contract": {
+        "kind": "generic_read_strict",
+        "mode": "strict",
+        "required_subjects": "none",
+        "required_predicates": [
+          "domain_tool_evidence_present"
+        ],
+        "mcp_proof_calls": [],
+        "forbid_contradictions": [],
+        "allow_advisory_unblock": false,
+        "acceptance_requirements": {
+          "slice_id": "compiled_plan_v8_stage_7",
+          "contract_kind": "generic_read_strict"
+        }
+      },
+      "acceptance_proof": {},
+      "acceptance_blockers": [],
       "budget_scale_applied": 6,
       "depends_on": [
         "compiled_plan_v8_stage_6"
       ],
       "status": "pending",
+      "acceptance_state": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
       "expensive_call_count": 0,
@@ -64,46 +93,98 @@
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
+      "dependency_blocker_slice_id": "",
+      "dependency_blocker_reason_code": "",
+      "dependency_blocker_class": "",
+      "blocked_retry_count": 0,
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
+      "gate_hint": "",
       "artifacts": [],
-      "facts": {}
+      "facts": {},
+      "verdict": ""
     },
     {
       "slice_id": "compiled_plan_v8_stage_8",
-      "title": "Early-cut route — conditional on veto signal",
-      "hypothesis": "Investigate post-entry early-cut overlays only if the veto route demonstrated at least weak meaningful signal, to determine if failing trades can be rescued mid-flight.",
-      "objective": "Investigate post-entry early-cut overlays only if the veto route demonstrated at least weak meaningful signal, to determine if failing trades can be rescued mid-flight.",
+      "title": "Early-cut route (gated on veto signal)",
+      "hypothesis": "Train and evaluate early-cut overlay models only if veto route showed at least weak meaningful signal and post-entry failure patterns are identifiable in bad trades.",
+      "objective": "Train and evaluate early-cut overlay models only if veto route showed at least weak meaningful signal and post-entry failure patterns are identifiable in bad trades.",
       "success_criteria": [
-        "Early-cut models trained with frozen labels on correct trade surfaces",
-        "Selection OOS shows improvement over baseline exit with positive net delta after fees",
-        "Model cuts real losers more often than future winners"
+        "Gating condition explicitly checked and documented before proceeding.",
+        "Early-cut models trained and evaluated on selection OOS.",
+        "Cut quality verified: cuts real losers more often than future winners.",
+        "Net economic effect after fees is positive on selection OOS."
       ],
       "allowed_tools": [
         "models_train",
-        "models_compare",
+        "models_registry",
         "backtests_runs",
-        "research_record"
+        "backtests_analysis",
+        "research_memory"
       ],
       "evidence_requirements": [
-        "Early-cut models trained with frozen labels on correct trade surfaces",
-        "Selection OOS shows improvement over baseline exit with positive net delta after fees",
-        "Model cuts real losers more often than future winners"
+        "Gating condition explicitly checked and documented before proceeding.",
+        "Early-cut models trained and evaluated on selection OOS.",
+        "Cut quality verified: cuts real losers more often than future winners.",
+        "Net economic effect after fees is positive on selection OOS."
       ],
       "policy_tags": [
         "modeling",
         "optional_candidate"
       ],
-      "max_turns": 24,
-      "max_tool_calls": 24,
-      "max_expensive_calls": 3,
+      "max_turns": 36,
+      "max_tool_calls": 30,
+      "max_expensive_calls": 12,
       "parallel_slot": 1,
+      "runtime_profile": "generic_mutation",
+      "required_prerequisite_facts": null,
+      "required_output_facts": [],
+      "finalization_mode": "none",
+      "dependency_unblock_mode": "accepted_only",
+      "watchlist_allows_unblock": false,
+      "requires_mutating_evidence": false,
+      "requires_persisted_artifact": false,
+      "requires_live_handle_validation": false,
+      "acceptance_contract": {
+        "kind": "model_training",
+        "mode": "strict",
+        "required_subjects": "dataset_and_model_version",
+        "required_predicates": [
+          "model_dataset_proof_pass",
+          "model_registry_proof_pass"
+        ],
+        "mcp_proof_calls": [
+          {
+            "tool": "models_dataset",
+            "arguments": {
+              "action": "inspect",
+              "view": "acceptance_proof"
+            }
+          },
+          {
+            "tool": "models_registry",
+            "arguments": {
+              "action": "inspect",
+              "view": "acceptance_proof"
+            }
+          }
+        ],
+        "forbid_contradictions": [],
+        "allow_advisory_unblock": false,
+        "acceptance_requirements": {
+          "slice_id": "compiled_plan_v8_stage_8",
+          "contract_kind": "model_training"
+        }
+      },
+      "acceptance_proof": {},
+      "acceptance_blockers": [],
       "budget_scale_applied": 6,
       "depends_on": [
         "compiled_plan_v8_stage_7"
       ],
       "status": "pending",
+      "acceptance_state": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
       "expensive_call_count": 0,
@@ -114,48 +195,98 @@
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
+      "dependency_blocker_slice_id": "",
+      "dependency_blocker_reason_code": "",
+      "dependency_blocker_class": "",
+      "blocked_retry_count": 0,
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
+      "gate_hint": "veto_route_shows_signal AND post_entry_failure_identifiable_in_bad_trades",
       "artifacts": [],
-      "facts": {}
+      "facts": {},
+      "verdict": ""
     },
     {
       "slice_id": "compiled_plan_v8_stage_9",
-      "title": "Hold-extension route — conditional on underheld winners",
-      "hypothesis": "Test whether a rare class of underheld winning trades can be identified and held longer for incremental PnL, only if the trade-surface atlas and selection diagnostics support it.",
-      "objective": "Test whether a rare class of underheld winning trades can be identified and held longer for incremental PnL, only if the trade-surface atlas and selection diagnostics support it.",
+      "title": "Hold-extension route (gated on underheld winners evidence)",
+      "hypothesis": "Train and evaluate hold-extension overlay models only if trade-surface atlas revealed an underheld winner cluster and selection diagnostics suggest extension viability.",
+      "objective": "Train and evaluate hold-extension overlay models only if trade-surface atlas revealed an underheld winner cluster and selection diagnostics suggest extension viability.",
       "success_criteria": [
-        "Extension models trained with frozen labels",
-        "Selection OOS shows positive incremental PnL on extension subset",
-        "Extension does not materially worsen drawdown",
-        "Hit rate of extensions is meaningfully above random"
+        "Gating condition explicitly checked — underheld winner cluster exists and extension viability indicated.",
+        "Extension models trained and evaluated on selection OOS.",
+        "Incremental PnL positive on extension subset.",
+        "Extension does not materially worsen drawdown."
       ],
       "allowed_tools": [
         "models_train",
-        "models_compare",
+        "models_registry",
         "backtests_runs",
-        "research_record"
+        "backtests_analysis",
+        "research_memory"
       ],
       "evidence_requirements": [
-        "Extension models trained with frozen labels",
-        "Selection OOS shows positive incremental PnL on extension subset",
-        "Extension does not materially worsen drawdown",
-        "Hit rate of extensions is meaningfully above random"
+        "Gating condition explicitly checked — underheld winner cluster exists and extension viability indicated.",
+        "Extension models trained and evaluated on selection OOS.",
+        "Incremental PnL positive on extension subset.",
+        "Extension does not materially worsen drawdown."
       ],
       "policy_tags": [
         "modeling",
         "optional_candidate"
       ],
-      "max_turns": 24,
-      "max_tool_calls": 24,
-      "max_expensive_calls": 3,
+      "max_turns": 36,
+      "max_tool_calls": 30,
+      "max_expensive_calls": 12,
       "parallel_slot": 1,
+      "runtime_profile": "generic_mutation",
+      "required_prerequisite_facts": null,
+      "required_output_facts": [],
+      "finalization_mode": "none",
+      "dependency_unblock_mode": "accepted_only",
+      "watchlist_allows_unblock": false,
+      "requires_mutating_evidence": false,
+      "requires_persisted_artifact": false,
+      "requires_live_handle_validation": false,
+      "acceptance_contract": {
+        "kind": "model_training",
+        "mode": "strict",
+        "required_subjects": "dataset_and_model_version",
+        "required_predicates": [
+          "model_dataset_proof_pass",
+          "model_registry_proof_pass"
+        ],
+        "mcp_proof_calls": [
+          {
+            "tool": "models_dataset",
+            "arguments": {
+              "action": "inspect",
+              "view": "acceptance_proof"
+            }
+          },
+          {
+            "tool": "models_registry",
+            "arguments": {
+              "action": "inspect",
+              "view": "acceptance_proof"
+            }
+          }
+        ],
+        "forbid_contradictions": [],
+        "allow_advisory_unblock": false,
+        "acceptance_requirements": {
+          "slice_id": "compiled_plan_v8_stage_9",
+          "contract_kind": "model_training"
+        }
+      },
+      "acceptance_proof": {},
+      "acceptance_blockers": [],
       "budget_scale_applied": 6,
       "depends_on": [
-        "compiled_plan_v8_stage_8"
+        "compiled_plan_v8_stage_7"
       ],
       "status": "pending",
+      "acceptance_state": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
       "expensive_call_count": 0,
@@ -166,13 +297,20 @@
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
+      "dependency_blocker_slice_id": "",
+      "dependency_blocker_reason_code": "",
+      "dependency_blocker_class": "",
+      "blocked_retry_count": 0,
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
+      "gate_hint": "underheld_winner_cluster_in_atlas AND selection_diagnostics_show_extension_viability",
       "artifacts": [],
-      "facts": {}
+      "facts": {},
+      "verdict": ""
     }
   ],
+  "mcp_catalog_hash": "c306b4054eaf8f466a7e29182863da4e7cd0610551ef83a0611c515c84aa415b",
   "plan_source_kind": "compiled_raw",
   "source_sequence_id": "compiled_plan_v8",
   "source_raw_plan": "raw_plans/plan_v8.md",
@@ -181,6 +319,7 @@
   "source_compile_report_path": "",
   "sequence_batch_index": 3,
   "status": "draft",
-  "created_at": "2026-04-11T10:59:07.560946+00:00",
-  "updated_at": "2026-04-11T10:59:07.560953+00:00"
+  "last_error": "",
+  "created_at": "2026-04-15T18:44:36.407209+00:00",
+  "updated_at": "2026-04-15T18:44:36.407211+00:00"
 }

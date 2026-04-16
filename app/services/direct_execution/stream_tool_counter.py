@@ -13,13 +13,20 @@ import json
 from dataclasses import dataclass, field
 from typing import Any
 
-from app.services.direct_execution.tool_catalog import DEFAULT_DEV_SPACE1_TOOLS
-
-_DEV_SPACE1_TOOL_SET: frozenset[str] = frozenset(DEFAULT_DEV_SPACE1_TOOLS)
-
 _MCP_PREFIX = "mcp__dev_space1__"
-
-
+_GENERIC_DEVSPACE1_PREFIXES = {
+    "backtests",
+    "datasets",
+    "events",
+    "experiments",
+    "features",
+    "incidents",
+    "models",
+    "notify",
+    "research",
+    "signal",
+    "system",
+}
 @dataclass(frozen=True)
 class ToolCallCountResult:
     """Result of counting tool calls from stream-json output."""
@@ -31,6 +38,7 @@ class ToolCallCountResult:
 def count_tool_calls_from_stream_json(
     raw_stdout: str,
     provider: str = "",
+    allowed_tool_names: set[str] | None = None,
 ) -> ToolCallCountResult:
     """Parse line-delimited stream-json and count dev_space1 tool_use events.
 
@@ -41,8 +49,10 @@ def count_tool_calls_from_stream_json(
               (tool names prefixed with ``mcp__dev_space1__``)
     * Both:   ``stream_event`` wrappers around the above
 
-    Only tool names present in ``DEFAULT_DEV_SPACE1_TOOLS`` (after prefix
-    stripping) are counted.  Local tools (Bash, read_file, etc.) are ignored.
+    When a live tool set is supplied, only those tool names are counted.
+    Without a live tool set this parser degrades to MCP-prefix evidence only,
+    which is suitable for postmortem stream inspection but not authoritative
+    runtime accounting.
     """
     if not raw_stdout:
         return ToolCallCountResult()
@@ -56,13 +66,15 @@ def count_tool_calls_from_stream_json(
             payload = json.loads(line)
         except (json.JSONDecodeError, ValueError):
             continue
-        _collect_tool_names(payload, names)
+        _collect_tool_names(payload, names, allowed_tool_names=allowed_tool_names)
 
     return ToolCallCountResult(tool_call_count=len(names), tool_names=names)
 
 
 def count_tool_calls_from_single_event(
     raw_line: str,
+    *,
+    allowed_tool_names: set[str] | None = None,
 ) -> list[str]:
     """Count dev_space1 tool names in a single stream-json line.
 
@@ -77,7 +89,7 @@ def count_tool_calls_from_single_event(
     except (json.JSONDecodeError, ValueError):
         return []
     names: list[str] = []
-    _collect_tool_names(payload, names)
+    _collect_tool_names(payload, names, allowed_tool_names=allowed_tool_names)
     return names
 
 
@@ -86,7 +98,7 @@ def count_tool_calls_from_single_event(
 # ------------------------------------------------------------------
 
 
-def _collect_tool_names(payload: Any, out: list[str]) -> None:
+def _collect_tool_names(payload: Any, out: list[str], *, allowed_tool_names: set[str] | None) -> None:
     """Walk a single stream-json payload and append dev_space1 tool names."""
     if not isinstance(payload, dict):
         return
@@ -97,15 +109,16 @@ def _collect_tool_names(payload: Any, out: list[str]) -> None:
     if event_type == "stream_event":
         inner = payload.get("event")
         if isinstance(inner, dict):
-            _collect_tool_names(inner, out)
+            _collect_tool_names(inner, out, allowed_tool_names=allowed_tool_names)
         return
 
     # Claude format: content_block_start → content_block.type == "tool_use"
     if event_type == "content_block_start":
         content_block = payload.get("content_block")
         if isinstance(content_block, dict) and str(content_block.get("type", "")).lower() == "tool_use":
-            name = _normalize_tool_name(content_block.get("name", ""))
-            if name and name in _DEV_SPACE1_TOOL_SET:
+            raw_name = str(content_block.get("name", "") or "")
+            name = _normalize_tool_name(raw_name)
+            if _is_dev_space1_tool_name(name, raw_name=raw_name, allowed_tool_names=allowed_tool_names):
                 out.append(name)
         return
 
@@ -113,17 +126,17 @@ def _collect_tool_names(payload: Any, out: list[str]) -> None:
     if event_type == "assistant":
         message = payload.get("message")
         if isinstance(message, dict):
-            _scan_content_blocks(message.get("content"), out)
+            _scan_content_blocks(message.get("content"), out, allowed_tool_names=allowed_tool_names)
         # Also check top-level content (some Qwen variants)
-        _scan_content_blocks(payload.get("content"), out)
+        _scan_content_blocks(payload.get("content"), out, allowed_tool_names=allowed_tool_names)
         return
 
     # Generic message with content blocks
     if "content" in payload and isinstance(payload.get("content"), list):
-        _scan_content_blocks(payload["content"], out)
+        _scan_content_blocks(payload["content"], out, allowed_tool_names=allowed_tool_names)
 
 
-def _scan_content_blocks(content: Any, out: list[str]) -> None:
+def _scan_content_blocks(content: Any, out: list[str], *, allowed_tool_names: set[str] | None) -> None:
     """Scan a list of content blocks for tool_use entries."""
     if not isinstance(content, list):
         return
@@ -131,8 +144,9 @@ def _scan_content_blocks(content: Any, out: list[str]) -> None:
         if not isinstance(block, dict):
             continue
         if str(block.get("type", "")).lower() == "tool_use":
-            name = _normalize_tool_name(block.get("name", ""))
-            if name and name in _DEV_SPACE1_TOOL_SET:
+            raw_name = str(block.get("name", "") or "")
+            name = _normalize_tool_name(raw_name)
+            if _is_dev_space1_tool_name(name, raw_name=raw_name, allowed_tool_names=allowed_tool_names):
                 out.append(name)
 
 
@@ -142,6 +156,19 @@ def _normalize_tool_name(raw_name: Any) -> str:
     if name.startswith(_MCP_PREFIX):
         name = name[len(_MCP_PREFIX):]
     return name
+
+
+def _is_dev_space1_tool_name(name: str, *, raw_name: str = "", allowed_tool_names: set[str] | None) -> bool:
+    normalized = str(name or "").strip()
+    if not normalized:
+        return False
+    if allowed_tool_names is not None:
+        return normalized in allowed_tool_names
+    raw_text = str(raw_name or "").strip()
+    if raw_text.startswith(_MCP_PREFIX):
+        return True
+    prefix = normalized.split("_", 1)[0].strip().lower()
+    return prefix in _GENERIC_DEVSPACE1_PREFIXES
 
 
 __all__ = [

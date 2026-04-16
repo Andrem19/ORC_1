@@ -1,6 +1,6 @@
 {
   "plan_id": "compiled_plan_v3_batch_4",
-  "goal": "Close the unfinished A1 branch from v2 to a final PROMOTE/REJECT verdict, and only if A1 fails open exactly one next low-friction candidate through the full acceptance chain.",
+  "goal": "Close the unfinished A1 branch to a final PROMOTE/REJECT verdict, then explore at most one additional low-friction candidate before any medium-friction expansion.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -9,44 +9,78 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "active-signal-v1@1 is immutable: never retune its hours, days, thresholds, or execution parameters",
-    "Any candidate must pass strict-additive, permissive-integration, ownership, and cannibalization proof before promotion",
-    "No medium-friction wave B until both low-friction branches (A1 + one of A2/A3) are fully closed with no promoted candidate",
-    "Only one active low-friction branch may be investigated at a time",
-    "Maximum 3-4 features per prototype; maximum 2-3 prototypes per branch",
-    "If a candidate loses positivity after removing its strongest historical segment, it is not mainline-quality"
+    "active-signal-v1@1 is the immutable reference; never modify its hours, days, thresholds, or execution logic",
+    "Nothing may be declared an improvement unless it passes strict additive integration, permissive integration, ownership, and cannibalization proof",
+    "At most one low-friction branch (A2 or A3) may be open at any time",
+    "Wave B (medium-friction: cross-symbol, model-backed routing, hybrids) is forbidden until A1 is closed AND the chosen A2/A3 branch is fully resolved AND neither produced a promoted candidate",
+    "Every branch must reach an explicit PROMOTE / WATCHLIST / REJECT decision before another branch is opened"
   ],
   "slices": [
     {
       "slice_id": "compiled_plan_v3_stage_10",
-      "title": "Контроль запрета на medium-friction wave B",
-      "hypothesis": "Enforce the hard gate: wave B (cross-symbol, model-backed routing, hybrids) is forbidden until both low-friction branches are fully closed without a promoted candidate.",
-      "objective": "Enforce the hard gate: wave B (cross-symbol, model-backed routing, hybrids) is forbidden until both low-friction branches are fully closed without a promoted candidate.",
+      "title": "Запрет на medium-friction wave до закрытия low-friction",
+      "hypothesis": "Enforce the hard gate that prevents premature expansion into cross-symbol, model-backed routing, or hybrid strategies until all low-friction branches are exhausted without a promoted candidate.",
+      "objective": "Enforce the hard gate that prevents premature expansion into cross-symbol, model-backed routing, or hybrid strategies until all low-friction branches are exhausted without a promoted candidate.",
       "success_criteria": [
-        "All three gate conditions are verified and recorded: A1 closed, A2/A3 closed, wave B not opened"
+        "Gate status is explicitly recorded: all low-friction branches closed",
+        "Wave B remains sealed unless both branches produced no promoted candidate"
       ],
       "allowed_tools": [
-        "research_record",
+        "research_memory",
         "research_map"
       ],
       "evidence_requirements": [
-        "All three gate conditions are verified and recorded: A1 closed, A2/A3 closed, wave B not opened"
+        "Gate status is explicitly recorded: all low-friction branches closed",
+        "Wave B remains sealed unless both branches produced no promoted candidate"
       ],
       "policy_tags": [
         "gate",
-        "discipline"
+        "policy"
       ],
       "max_turns": 24,
       "max_tool_calls": 24,
-      "max_expensive_calls": 2,
+      "max_expensive_calls": 1,
       "parallel_slot": 1,
+      "runtime_profile": "write_result",
+      "required_prerequisite_facts": null,
+      "required_output_facts": [],
+      "finalization_mode": "none",
+      "dependency_unblock_mode": "accepted_only",
+      "watchlist_allows_unblock": false,
+      "requires_mutating_evidence": true,
+      "requires_persisted_artifact": false,
+      "requires_live_handle_validation": false,
+      "acceptance_contract": {
+        "kind": "write_result",
+        "mode": "strict",
+        "required_subjects": "persisted_research_node",
+        "required_predicates": [
+          "mutating_tool_call_present",
+          "research_node_proof_pass"
+        ],
+        "mcp_proof_calls": [
+          {
+            "tool": "research_memory",
+            "arguments": {
+              "action": "prove"
+            }
+          }
+        ],
+        "forbid_contradictions": [],
+        "allow_advisory_unblock": false,
+        "acceptance_requirements": {
+          "slice_id": "compiled_plan_v3_stage_10",
+          "contract_kind": "write_result"
+        }
+      },
+      "acceptance_proof": {},
+      "acceptance_blockers": [],
       "budget_scale_applied": 6,
       "depends_on": [
-        "compiled_plan_v3_stage_6",
-        "compiled_plan_v3_stage_8",
-        "compiled_plan_v3_stage_9"
+        "compiled_plan_v3_stage_6"
       ],
       "status": "pending",
+      "acceptance_state": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
       "expensive_call_count": 0,
@@ -57,45 +91,75 @@
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
+      "dependency_blocker_slice_id": "",
+      "dependency_blocker_reason_code": "",
+      "dependency_blocker_class": "",
+      "blocked_retry_count": 0,
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
+      "gate_hint": "",
       "artifacts": [],
-      "facts": {}
+      "facts": {},
+      "verdict": ""
     },
     {
       "slice_id": "compiled_plan_v3_stage_11",
-      "title": "Финальный отчёт агента",
-      "hypothesis": "Produce the mandatory structured final report covering v2 gaps, A1 closure verdict, next-branch results, overall v3 outcome, and concrete v4 recommendations.",
-      "objective": "Produce the mandatory structured final report covering v2 gaps, A1 closure verdict, next-branch results, overall v3 outcome, and concrete v4 recommendations.",
+      "title": "Финальный отчет агента",
+      "hypothesis": "Produce the mandatory structured report covering v2 gaps, A1 closure, branch selection rationale, next-branch results, overall v3 outcome, and v4 recommendations.",
+      "objective": "Produce the mandatory structured report covering v2 gaps, A1 closure, branch selection rationale, next-branch results, overall v3 outcome, and v4 recommendations.",
       "success_criteria": [
-        "Final report follows the mandatory 7-section structure",
-        "All branch decisions are recorded with rationale",
-        "v4 recommendations are concrete and actionable"
+        "All seven mandatory report sections are completed",
+        "Report is stored in research_memory"
       ],
       "allowed_tools": [
-        "research_record",
-        "research_map",
+        "research_memory",
         "notify_send"
       ],
       "evidence_requirements": [
-        "Final report follows the mandatory 7-section structure",
-        "All branch decisions are recorded with rationale",
-        "v4 recommendations are concrete and actionable"
+        "All seven mandatory report sections are completed",
+        "Report is stored in research_memory"
       ],
       "policy_tags": [
-        "finalization",
-        "reporting"
+        "reporting",
+        "finalization"
       ],
       "max_turns": 24,
-      "max_tool_calls": 24,
-      "max_expensive_calls": 2,
+      "max_tool_calls": 18,
+      "max_expensive_calls": 1,
       "parallel_slot": 1,
+      "runtime_profile": "generic_mutation",
+      "required_prerequisite_facts": null,
+      "required_output_facts": [],
+      "finalization_mode": "none",
+      "dependency_unblock_mode": "accepted_only",
+      "watchlist_allows_unblock": false,
+      "requires_mutating_evidence": false,
+      "requires_persisted_artifact": false,
+      "requires_live_handle_validation": false,
+      "acceptance_contract": {
+        "kind": "generic_read_strict",
+        "mode": "strict",
+        "required_subjects": "none",
+        "required_predicates": [
+          "domain_tool_evidence_present"
+        ],
+        "mcp_proof_calls": [],
+        "forbid_contradictions": [],
+        "allow_advisory_unblock": false,
+        "acceptance_requirements": {
+          "slice_id": "compiled_plan_v3_stage_11",
+          "contract_kind": "generic_read_strict"
+        }
+      },
+      "acceptance_proof": {},
+      "acceptance_blockers": [],
       "budget_scale_applied": 6,
       "depends_on": [
         "compiled_plan_v3_stage_10"
       ],
       "status": "pending",
+      "acceptance_state": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
       "expensive_call_count": 0,
@@ -106,13 +170,20 @@
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
+      "dependency_blocker_slice_id": "",
+      "dependency_blocker_reason_code": "",
+      "dependency_blocker_class": "",
+      "blocked_retry_count": 0,
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
+      "gate_hint": "",
       "artifacts": [],
-      "facts": {}
+      "facts": {},
+      "verdict": ""
     }
   ],
+  "mcp_catalog_hash": "c306b4054eaf8f466a7e29182863da4e7cd0610551ef83a0611c515c84aa415b",
   "plan_source_kind": "compiled_raw",
   "source_sequence_id": "compiled_plan_v3",
   "source_raw_plan": "raw_plans/plan_v3.md",
@@ -121,6 +192,7 @@
   "source_compile_report_path": "",
   "sequence_batch_index": 4,
   "status": "draft",
-  "created_at": "2026-04-11T10:49:08.828981+00:00",
-  "updated_at": "2026-04-11T10:49:08.828982+00:00"
+  "last_error": "",
+  "created_at": "2026-04-15T18:37:31.795575+00:00",
+  "updated_at": "2026-04-15T18:37:31.795576+00:00"
 }

@@ -5,12 +5,23 @@
   "compile_status": "compiled",
   "parser_confidence": 0.95,
   "semantic_method": "llm",
-  "stage_count": 11,
+  "stage_count": 12,
   "compiled_plan_count": 4,
+  "mcp_catalog_hash": "c306b4054eaf8f466a7e29182863da4e7cd0610551ef83a0611c515c84aa415b",
   "warnings": [
-    "Plan is written in Russian; stage titles and objectives translated to English for semantic consistency.",
-    "v10 reported suspiciously high veto-model AUC/PR (~0.95) and identical delta across short/long/combined — primary red flags driving this audit."
+    "v10 lockbox table used active-signal-v1@3 as baseline while reference should be @1 — must be resolved first",
+    "v10 veto models report AUC/PR ~0.95 which is suspiciously high and may indicate label-feature shortcut",
+    "Auto-added research_memory for stage_2_part1: every non-trivial stage needs documentation capability.",
+    "Auto-added research_memory for stage_2_part2: every non-trivial stage needs documentation capability.",
+    "Auto-added research_memory for stage_3: every non-trivial stage needs documentation capability.",
+    "Auto-added research_memory for stage_4: every non-trivial stage needs documentation capability.",
+    "Auto-added research_memory for stage_5: every non-trivial stage needs documentation capability.",
+    "Auto-added research_memory for stage_6: every non-trivial stage needs documentation capability.",
+    "Auto-added research_memory for stage_7: every non-trivial stage needs documentation capability.",
+    "Auto-added research_memory for stage_8: every non-trivial stage needs documentation capability.",
+    "Auto-added research_memory for stage_9: every non-trivial stage needs documentation capability.",
+    "Auto-added research_memory for stage_10: every non-trivial stage needs documentation capability."
   ],
   "errors": [],
-  "compiled_at": "2026-04-11T11:05:11.914152+00:00"
+  "compiled_at": "2026-04-15T18:49:12.870732+00:00"
 }

@@ -1,6 +1,6 @@
 {
   "plan_id": "compiled_plan_v1_batch_1",
-  "goal": "Найти один или несколько новых ортогональных сигналов, которые проходят standalone → stability → integration → cannibalization проверку и дают чистый прирост поверх неизменной базы active-signal-v1@1.",
+  "goal": "Найти один или несколько новых ортогональных сигналов, которые дают самостоятельную информативность, проходят проверку на устойчивость и при интеграции с active-signal-v1@1 улучшают общий результат без разрушения качества.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -9,35 +9,34 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "База active-signal-v1@1 остается неизменной на протяжении всего цикла; тюнинг её старых правил, порогов, часов, дней и косметических вариаций запрещён.",
-    "Новый сигнал должен использовать новый класс информации, новый gating, новый missing-regime слой или новую логику входа — не перестановку старых шаблонов.",
-    "Каннибализм недопустим: новый сигнал не должен преимущественно входить там же, где база, и перехватывать уже хорошие сделки.",
-    "Acceptance-воронка обязательна: standalone → stability → integration → cannibalization → final report. Пропуск шагов запрещён.",
-    "Каждая гипотеза должна иметь записанное обоснование, почему она новая относительно базы и истории v1–v12.",
-    "Отрицательные результаты фиксируются в research_record так же обязательно, как и положительные.",
-    "Walk-forward обязателен для всех финалистов перед принятием решения о продвижении."
+    "База active-signal-v1@1 неизменна на протяжении всего цикла — никакого тюнинга порогов, часов, дней или косметических вариаций старых правил.",
+    "Новый сигнал обязан использовать новый класс информации или новый способ маршрутизации — не перестановку hour/dow/cl_*/rsi/iv_est шаблонов базы.",
+    "Каннибализм недопустим: новый сигнал должен расширять покрытие, а не перехватывать сделки базы.",
+    "Любая гипотеза проходит строго через воронку: standalone → stability → integration → cannibalization → final report.",
+    "Отрицательные результаты фиксируются в research_memory — повтор закрытых идей запрещён.",
+    "Model-backed признаки допускаются только с честным train/validation/test split без leakage в OOS."
   ],
   "slices": [
     {
       "slice_id": "compiled_plan_v1_stage_1",
       "title": "Запуск цикла и фиксация инвариантов",
-      "hypothesis": "Зафиксировать неизменную базу active-signal-v1@1, открыть отдельный исследовательский проект, завести карту гипотез и записать инварианты цикла.",
-      "objective": "Зафиксировать неизменную базу active-signal-v1@1, открыть отдельный исследовательский проект, завести карту гипотез и записать инварианты цикла.",
+      "hypothesis": "Зафиксировать неизменную базу active-signal-v1@1, открыть отдельный исследовательский проект и завести карту гипотез с едиными осями и правилами приёмки.",
+      "objective": "Зафиксировать неизменную базу active-signal-v1@1, открыть отдельный исследовательский проект и завести карту гипотез с едиными осями и правилами приёмки.",
       "success_criteria": [
         "Открытый проект существует.",
-        "Карта гипотез создана с заданными осями.",
-        "Инварианты цикла записаны в research_record.",
+        "Карта гипотез создана с требуемыми осями.",
+        "Инварианты цикла записаны в research_memory.",
         "Baseline reference зафиксирован."
       ],
       "allowed_tools": [
         "research_project",
         "research_map",
-        "research_record"
+        "research_memory"
       ],
       "evidence_requirements": [
         "Открытый проект существует.",
-        "Карта гипотез создана с заданными осями.",
-        "Инварианты цикла записаны в research_record.",
+        "Карта гипотез создана с требуемыми осями.",
+        "Инварианты цикла записаны в research_memory.",
         "Baseline reference зафиксирован."
       ],
       "policy_tags": [
@@ -46,11 +45,51 @@
       ],
       "max_turns": 24,
       "max_tool_calls": 24,
-      "max_expensive_calls": 2,
+      "max_expensive_calls": 1,
       "parallel_slot": 1,
+      "runtime_profile": "research_setup",
+      "required_prerequisite_facts": [],
+      "required_output_facts": [
+        "research.baseline_configured",
+        "research.atlas_defined",
+        "research.invariants_recorded",
+        "research.naming_recorded"
+      ],
+      "finalization_mode": "fact_based",
+      "dependency_unblock_mode": "accepted_only",
+      "watchlist_allows_unblock": false,
+      "requires_mutating_evidence": false,
+      "requires_persisted_artifact": false,
+      "requires_live_handle_validation": false,
+      "acceptance_contract": {
+        "kind": "research_setup",
+        "mode": "strict",
+        "required_subjects": "persisted_research_setup_nodes",
+        "required_predicates": [
+          "research_project_present",
+          "research_setup_facts_present"
+        ],
+        "mcp_proof_calls": [
+          {
+            "tool": "research_memory",
+            "arguments": {
+              "action": "prove"
+            }
+          }
+        ],
+        "forbid_contradictions": [],
+        "allow_advisory_unblock": false,
+        "acceptance_requirements": {
+          "slice_id": "compiled_plan_v1_stage_1",
+          "contract_kind": "research_setup"
+        }
+      },
+      "acceptance_proof": {},
+      "acceptance_blockers": [],
       "budget_scale_applied": 6,
       "depends_on": [],
       "status": "pending",
+      "acceptance_state": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
       "expensive_call_count": 0,
@@ -61,43 +100,94 @@
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
+      "dependency_blocker_slice_id": "",
+      "dependency_blocker_reason_code": "",
+      "dependency_blocker_class": "",
+      "blocked_retry_count": 0,
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
+      "gate_hint": "",
       "artifacts": [],
-      "facts": {}
+      "facts": {},
+      "verdict": ""
     },
     {
       "slice_id": "compiled_plan_v1_stage_2",
       "title": "Формирование пространства только новых гипотез",
-      "hypothesis": "Собрать и отфильтровать список новых классов сигналов, которые не являются переименованными или косметическими вариациями уже исчерпанного пространства базы.",
-      "objective": "Собрать и отфильтровать список новых классов сигналов, которые не являются переименованными или косметическими вариациями уже исчерпанного пространства базы.",
+      "hypothesis": "Собрать и отфильтровать список новых классов сигналов, которые не являются переименованными вариациями уже исчерпанного пространства базы.",
+      "objective": "Собрать и отфильтровать список новых классов сигналов, которые не являются переименованными вариациями уже исчерпанного пространства базы.",
       "success_criteria": [
-        "Short-list первой волны существует.",
+        "Есть short-list первой волны гипотез.",
         "По каждой гипотезе сформулировано, почему она действительно новая относительно базы и истории v1–v12."
       ],
       "allowed_tools": [
-        "research_record",
+        "research_memory",
         "research_map",
-        "research_search"
+        "features_catalog",
+        "datasets",
+        "events"
       ],
       "evidence_requirements": [
-        "Short-list первой волны существует.",
+        "Есть short-list первой волны гипотез.",
         "По каждой гипотезе сформулировано, почему она действительно новая относительно базы и истории v1–v12."
       ],
       "policy_tags": [
-        "planning",
+        "exploration",
         "cheap_first"
       ],
       "max_turns": 24,
       "max_tool_calls": 24,
       "max_expensive_calls": 2,
       "parallel_slot": 1,
+      "runtime_profile": "research_shortlist",
+      "required_prerequisite_facts": [
+        "research.baseline_configured",
+        "research.atlas_defined",
+        "research.invariants_recorded",
+        "research.naming_recorded"
+      ],
+      "required_output_facts": [
+        "research.shortlist_families",
+        "research.novelty_justification_present"
+      ],
+      "finalization_mode": "fact_based",
+      "dependency_unblock_mode": "accepted_only",
+      "watchlist_allows_unblock": false,
+      "requires_mutating_evidence": false,
+      "requires_persisted_artifact": false,
+      "requires_live_handle_validation": false,
+      "acceptance_contract": {
+        "kind": "research_shortlist_write",
+        "mode": "strict",
+        "required_subjects": "persisted_research_node",
+        "required_predicates": [
+          "mutating_tool_call_present",
+          "research_node_proof_pass"
+        ],
+        "mcp_proof_calls": [
+          {
+            "tool": "research_memory",
+            "arguments": {
+              "action": "prove"
+            }
+          }
+        ],
+        "forbid_contradictions": [],
+        "allow_advisory_unblock": false,
+        "acceptance_requirements": {
+          "slice_id": "compiled_plan_v1_stage_2",
+          "contract_kind": "research_shortlist_write"
+        }
+      },
+      "acceptance_proof": {},
+      "acceptance_blockers": [],
       "budget_scale_applied": 6,
       "depends_on": [
         "compiled_plan_v1_stage_1"
       ],
       "status": "pending",
+      "acceptance_state": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
       "expensive_call_count": 0,
@@ -108,51 +198,84 @@
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
+      "dependency_blocker_slice_id": "",
+      "dependency_blocker_reason_code": "",
+      "dependency_blocker_class": "",
+      "blocked_retry_count": 0,
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
+      "gate_hint": "",
       "artifacts": [],
-      "facts": {}
+      "facts": {},
+      "verdict": ""
     },
     {
       "slice_id": "compiled_plan_v1_stage_3_part1",
       "title": "Data contract и feature contract для каждой новой семьи (exploration)",
-      "hypothesis": "Для каждой новой гипотезы зафиксировать точный контракт данных и признаков: входные колонки, способ построения, lookback, cross-symbol joins, event alignment, potential leakage.",
-      "objective": "Для каждой новой гипотезы зафиксировать точный контракт данных и признаков: входные колонки, способ построения, lookback, cross-symbol joins, event alignment, potential leakage.",
+      "hypothesis": "Зафиксировать для каждой гипотезы чистый контракт данных и признаков: входные колонки, выравнивание, lookback, leakage-границы и способ построения.",
+      "objective": "Зафиксировать для каждой гипотезы чистый контракт данных и признаков: входные колонки, выравнивание, lookback, leakage-границы и способ построения.",
       "success_criteria": [
         "По каждой гипотезе есть чистый contract данных и признаков.",
-        "Leakage проверен.",
-        "Custom features опубликованы (если нужны).",
+        "Leakage-границы проверены.",
+        "Custom features валидированы и опубликованы.",
         "Agent понимает, что именно будет тестироваться.",
         "Exploration phase complete"
       ],
       "allowed_tools": [
-        "research_record",
+        "research_memory",
         "features_catalog",
         "datasets",
-        "datasets_preview",
         "events"
       ],
       "evidence_requirements": [
         "По каждой гипотезе есть чистый contract данных и признаков.",
-        "Leakage проверен.",
-        "Custom features опубликованы (если нужны).",
+        "Leakage-границы проверены.",
+        "Custom features валидированы и опубликованы.",
         "Agent понимает, что именно будет тестироваться.",
         "Exploration phase complete"
       ],
       "policy_tags": [
         "data_readiness",
-        "feature_contract"
+        "cheap_first"
       ],
-      "max_turns": 24,
-      "max_tool_calls": 24,
-      "max_expensive_calls": 2,
+      "max_turns": 36,
+      "max_tool_calls": 30,
+      "max_expensive_calls": 6,
       "parallel_slot": 1,
+      "runtime_profile": "generic_mutation",
+      "required_prerequisite_facts": [
+        "research.shortlist_families",
+        "research.novelty_justification_present"
+      ],
+      "required_output_facts": [],
+      "finalization_mode": "none",
+      "dependency_unblock_mode": "accepted_only",
+      "watchlist_allows_unblock": false,
+      "requires_mutating_evidence": false,
+      "requires_persisted_artifact": false,
+      "requires_live_handle_validation": false,
+      "acceptance_contract": {
+        "kind": "feature_contract_exploration",
+        "mode": "strict",
+        "required_subjects": "none",
+        "required_predicates": [],
+        "mcp_proof_calls": [],
+        "forbid_contradictions": [],
+        "allow_advisory_unblock": false,
+        "acceptance_requirements": {
+          "slice_id": "compiled_plan_v1_stage_3_part1",
+          "contract_kind": "feature_contract_exploration"
+        }
+      },
+      "acceptance_proof": {},
+      "acceptance_blockers": [],
       "budget_scale_applied": 6,
       "depends_on": [
         "compiled_plan_v1_stage_2"
       ],
       "status": "pending",
+      "acceptance_state": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
       "expensive_call_count": 0,
@@ -163,13 +286,20 @@
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
+      "dependency_blocker_slice_id": "",
+      "dependency_blocker_reason_code": "",
+      "dependency_blocker_class": "",
+      "blocked_retry_count": 0,
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
+      "gate_hint": "",
       "artifacts": [],
-      "facts": {}
+      "facts": {},
+      "verdict": ""
     }
   ],
+  "mcp_catalog_hash": "c306b4054eaf8f466a7e29182863da4e7cd0610551ef83a0611c515c84aa415b",
   "plan_source_kind": "compiled_raw",
   "source_sequence_id": "compiled_plan_v1",
   "source_raw_plan": "raw_plans/plan_v1.md",
@@ -178,6 +308,7 @@
   "source_compile_report_path": "",
   "sequence_batch_index": 1,
   "status": "draft",
-  "created_at": "2026-04-11T10:45:01.661334+00:00",
-  "updated_at": "2026-04-11T10:45:01.661337+00:00"
+  "last_error": "",
+  "created_at": "2026-04-15T18:34:05.728392+00:00",
+  "updated_at": "2026-04-15T18:34:05.728395+00:00"
 }

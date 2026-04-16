@@ -1,6 +1,6 @@
 {
   "plan_id": "compiled_plan_v5_batch_4",
-  "goal": "Построить и проверить новые custom features, обучить CatBoost long и short модели, прогнать на selection OOS и lockbox OOS, и дать итоговый ответ — дают ли custom-feature + CatBoost модели новый additive layer поверх active-signal-v1.",
+  "goal": "Построить и проверить новые custom features, обучить CatBoost long/short модели, прогнать на selection OOS и lockbox OOS, и ответить: дают ли custom-feature + CatBoost модели новый additive layer поверх active-signal-v1.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -9,35 +9,39 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "База active-signal-v1@1 — immutable reference, не меняется ни при каких условиях",
-    "Все custom features должны быть causally correct с фиксированным lookback",
-    "train / selection OOS / lockbox OOS окна замораживаются ДО начала обучения моделей",
-    "Purge gap минимум 24h между train и OOS окнами",
-    "Long и short модели обучаются отдельно",
-    "Thresholds фиксируются до открытия lockbox",
-    "Модель не имеет права быть чёрным ящиком — feature importance и SHAP обязательны",
-    "Итог cycle v5 — бинарное решение: PROMOTE / WATCHLIST / REJECT для каждого sleeve"
+    "База active-signal-v1@1 — immutable reference, никогда не меняется.",
+    "Все custom features строятся causally: lookback зафиксирован, futurity исключена.",
+    "Train / selection OOS / lockbox OOS замораживаются до начала любого обучения.",
+    "Purge gap минимум 24h между train и selection OOS, selection OOS и lockbox.",
+    "Long и short модели обучаются раздельно; общий роутер — только опционально после обеих сторон.",
+    "Threshold выбирается на selection OOS и замораживается до открытия lockbox.",
+    "Базовый снапшот прогоняется на том же OOS окне для matched comparison.",
+    "Обязательны strict additive и permissive integration comparisons на lockbox.",
+    "Каждый model sleeve получает terminal decision: PROMOTE / WATCHLIST / REJECT.",
+    "Финальный отчёт v5 обязателен перед закрытием цикла."
   ],
   "slices": [
     {
       "slice_id": "compiled_plan_v5_stage_10",
       "title": "Финальный вердикт по model route",
-      "hypothesis": "Получить ясное решение по всему пути custom features + CatBoost: model route success / partial / failed, и записать итоговый отчёт v5.",
-      "objective": "Получить ясное решение по всему пути custom features + CatBoost: model route success / partial / failed, и записать итоговый отчёт v5.",
+      "hypothesis": "Получить ясное решение по всему пути custom features + CatBoost: model route success / partial / failed, и записать финальный отчёт v5.",
+      "objective": "Получить ясное решение по всему пути custom features + CatBoost: model route success / partial / failed, и записать финальный отчёт v5.",
       "success_criteria": [
-        "Есть единый итог по всему v5",
-        "Финальный отчёт написан",
-        "Рекомендации для v6 сформулированы"
+        "Есть единый итог по всему v5.",
+        "Финальный отчёт записан.",
+        "Каждый sleeve имеет terminal decision.",
+        "Направление v6 определено."
       ],
       "allowed_tools": [
-        "research_record",
+        "research_memory",
         "research_map",
         "notify_send"
       ],
       "evidence_requirements": [
-        "Есть единый итог по всему v5",
-        "Финальный отчёт написан",
-        "Рекомендации для v6 сформулированы"
+        "Есть единый итог по всему v5.",
+        "Финальный отчёт записан.",
+        "Каждый sleeve имеет terminal decision.",
+        "Направление v6 определено."
       ],
       "policy_tags": [
         "finalization",
@@ -45,13 +49,40 @@
       ],
       "max_turns": 24,
       "max_tool_calls": 24,
-      "max_expensive_calls": 2,
+      "max_expensive_calls": 1,
       "parallel_slot": 1,
+      "runtime_profile": "generic_mutation",
+      "required_prerequisite_facts": null,
+      "required_output_facts": [],
+      "finalization_mode": "none",
+      "dependency_unblock_mode": "accepted_only",
+      "watchlist_allows_unblock": false,
+      "requires_mutating_evidence": false,
+      "requires_persisted_artifact": false,
+      "requires_live_handle_validation": false,
+      "acceptance_contract": {
+        "kind": "generic_read_strict",
+        "mode": "strict",
+        "required_subjects": "none",
+        "required_predicates": [
+          "domain_tool_evidence_present"
+        ],
+        "mcp_proof_calls": [],
+        "forbid_contradictions": [],
+        "allow_advisory_unblock": false,
+        "acceptance_requirements": {
+          "slice_id": "compiled_plan_v5_stage_10",
+          "contract_kind": "generic_read_strict"
+        }
+      },
+      "acceptance_proof": {},
+      "acceptance_blockers": [],
       "budget_scale_applied": 6,
       "depends_on": [
         "compiled_plan_v5_stage_9"
       ],
       "status": "pending",
+      "acceptance_state": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
       "expensive_call_count": 0,
@@ -62,13 +93,20 @@
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
+      "dependency_blocker_slice_id": "",
+      "dependency_blocker_reason_code": "",
+      "dependency_blocker_class": "",
+      "blocked_retry_count": 0,
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
+      "gate_hint": "",
       "artifacts": [],
-      "facts": {}
+      "facts": {},
+      "verdict": ""
     }
   ],
+  "mcp_catalog_hash": "c306b4054eaf8f466a7e29182863da4e7cd0610551ef83a0611c515c84aa415b",
   "plan_source_kind": "compiled_raw",
   "source_sequence_id": "compiled_plan_v5",
   "source_raw_plan": "raw_plans/plan_v5.md",
@@ -77,6 +115,7 @@
   "source_compile_report_path": "",
   "sequence_batch_index": 4,
   "status": "draft",
-  "created_at": "2026-04-11T10:51:59.004169+00:00",
-  "updated_at": "2026-04-11T10:51:59.004171+00:00"
+  "last_error": "",
+  "created_at": "2026-04-15T18:40:09.616316+00:00",
+  "updated_at": "2026-04-15T18:40:09.616318+00:00"
 }

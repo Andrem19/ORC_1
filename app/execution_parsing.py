@@ -127,7 +127,7 @@ def parse_plan_slice(payload: Any) -> PlanSlice:
     return slice_obj
 
 
-def parse_worker_action_output(text: str, *, allowlist: set[str]) -> WorkerAction:
+def parse_worker_action_output(text: str, *, allowlist: set[str], provider: str = "") -> WorkerAction:
     try:
         payload = extract_json_object(text)
     except StructuredOutputError:
@@ -190,7 +190,7 @@ def parse_worker_action_output(text: str, *, allowlist: set[str]) -> WorkerActio
         reason_code=str(payload.get("reason_code", "") or "").strip(),
         retryable=bool(payload.get("retryable", False)),
     )
-    _validate_worker_action(action, allowlist=allowlist)
+    _validate_worker_action(action, allowlist=allowlist, provider=provider)
     return action
 
 
@@ -198,11 +198,14 @@ def worker_action_to_dict(action: WorkerAction) -> dict[str, Any]:
     return asdict(action)
 
 
-def _validate_worker_action(action: WorkerAction, *, allowlist: set[str]) -> None:
+def _validate_worker_action(action: WorkerAction, *, allowlist: set[str], provider: str = "") -> None:
     if action.action_type == "tool_call":
         if not action.tool:
             raise StructuredOutputError("tool_call_requires_tool")
-        if action.tool.startswith("mcp__dev_space1__"):
+        # LMStudio (direct execution) must NOT use mcp__dev_space1__ prefix
+        # Qwen CLI (fallback) DOES use mcp__dev_space1__ prefix
+        # Only validate namespace for LMStudio to prevent inconsistency
+        if provider in ("lmstudio", "minimax") and action.tool.startswith("mcp__dev_space1__"):
             raise StructuredOutputError(f"tool_prefixed_namespace_forbidden:{action.tool}")
         if action.tool not in allowlist:
             raise StructuredOutputError(f"tool_not_in_allowlist:{action.tool}")

@@ -1,6 +1,6 @@
 {
   "plan_id": "compiled_plan_v3_batch_2",
-  "goal": "Close the unfinished A1 branch from v2 to a final PROMOTE/REJECT verdict, and only if A1 fails open exactly one next low-friction candidate through the full acceptance chain.",
+  "goal": "Close the unfinished A1 branch to a final PROMOTE/REJECT verdict, then explore at most one additional low-friction candidate before any medium-friction expansion.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -9,46 +9,91 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "active-signal-v1@1 is immutable: never retune its hours, days, thresholds, or execution parameters",
-    "Any candidate must pass strict-additive, permissive-integration, ownership, and cannibalization proof before promotion",
-    "No medium-friction wave B until both low-friction branches (A1 + one of A2/A3) are fully closed with no promoted candidate",
-    "Only one active low-friction branch may be investigated at a time",
-    "Maximum 3-4 features per prototype; maximum 2-3 prototypes per branch",
-    "If a candidate loses positivity after removing its strongest historical segment, it is not mainline-quality"
+    "active-signal-v1@1 is the immutable reference; never modify its hours, days, thresholds, or execution logic",
+    "Nothing may be declared an improvement unless it passes strict additive integration, permissive integration, ownership, and cannibalization proof",
+    "At most one low-friction branch (A2 or A3) may be open at any time",
+    "Wave B (medium-friction: cross-symbol, model-backed routing, hybrids) is forbidden until A1 is closed AND the chosen A2/A3 branch is fully resolved AND neither produced a promoted candidate",
+    "Every branch must reach an explicit PROMOTE / WATCHLIST / REJECT decision before another branch is opened"
   ],
   "slices": [
     {
       "slice_id": "compiled_plan_v3_stage_4",
       "title": "Обязательная интеграция A1 в двух режимах",
-      "hypothesis": "Close the main v2 gap by proving whether A1 is truly additive through both strict-additive and permissive integration against the unchanged base.",
-      "objective": "Close the main v2 gap by proving whether A1 is truly additive through both strict-additive and permissive integration against the unchanged base.",
+      "hypothesis": "Prove whether A1 is genuinely additive to the immutable base by running both strict-additive and permissive-integrated modes against the unchanged reference.",
+      "objective": "Prove whether A1 is genuinely additive to the immutable base by running both strict-additive and permissive-integrated modes against the unchanged reference.",
       "success_criteria": [
-        "Complete integration picture for A1 in both modes",
-        "Delta metrics against base computed for PnL, trades, PF, DD, and weak-quarter repair"
+        "Complete integration picture for A1 exists with delta metrics in both modes",
+        "Strict vs permissive comparison is documented",
+        "Weak-quarter repair assessment is complete"
       ],
       "allowed_tools": [
         "backtests_runs",
         "backtests_analysis",
         "backtests_strategy",
-        "research_record"
+        "research_memory"
       ],
       "evidence_requirements": [
-        "Complete integration picture for A1 in both modes",
-        "Delta metrics against base computed for PnL, trades, PF, DD, and weak-quarter repair"
+        "Complete integration picture for A1 exists with delta metrics in both modes",
+        "Strict vs permissive comparison is documented",
+        "Weak-quarter repair assessment is complete"
       ],
       "policy_tags": [
         "integration",
-        "mandatory"
+        "critical"
       ],
-      "max_turns": 24,
-      "max_tool_calls": 24,
-      "max_expensive_calls": 3,
+      "max_turns": 48,
+      "max_tool_calls": 36,
+      "max_expensive_calls": 12,
       "parallel_slot": 1,
+      "runtime_profile": "backtests_integration_analysis",
+      "required_prerequisite_facts": null,
+      "required_output_facts": [],
+      "finalization_mode": "none",
+      "dependency_unblock_mode": "accepted_only",
+      "watchlist_allows_unblock": false,
+      "requires_mutating_evidence": false,
+      "requires_persisted_artifact": false,
+      "requires_live_handle_validation": false,
+      "acceptance_contract": {
+        "kind": "integration_backtest",
+        "mode": "strict",
+        "required_subjects": "each_referenced_run",
+        "required_predicates": [
+          "run_set_non_empty",
+          "each_run_proof_pass"
+        ],
+        "mcp_proof_calls": [
+          {
+            "tool": "backtests_runs",
+            "arguments": {
+              "action": "inspect",
+              "view": "acceptance_proof"
+            }
+          }
+        ],
+        "forbid_contradictions": [
+          "no saved/active runs",
+          "cannot evaluate",
+          "lack standalone backtest runs",
+          "no standalone backtest"
+        ],
+        "allow_advisory_unblock": false,
+        "acceptance_requirements": {
+          "slice_id": "compiled_plan_v3_stage_4",
+          "contract_kind": "integration_backtest",
+          "requires_completed": true,
+          "requires_persisted_artifacts": true,
+          "requires_metrics": true
+        }
+      },
+      "acceptance_proof": {},
+      "acceptance_blockers": [],
       "budget_scale_applied": 6,
       "depends_on": [
         "compiled_plan_v3_stage_3"
       ],
       "status": "pending",
+      "acceptance_state": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
       "expensive_call_count": 0,
@@ -59,43 +104,78 @@
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
+      "dependency_blocker_slice_id": "",
+      "dependency_blocker_reason_code": "",
+      "dependency_blocker_class": "",
+      "blocked_retry_count": 0,
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
+      "gate_hint": "",
       "artifacts": [],
-      "facts": {}
+      "facts": {},
+      "verdict": ""
     },
     {
       "slice_id": "compiled_plan_v3_stage_5",
       "title": "Ownership, cannibalization и proof of new entries для A1",
-      "hypothesis": "Prove the nature of A1's delta to the base by measuring overlap, truly new trades, replaced base trades, and coverage expansion.",
-      "objective": "Prove the nature of A1's delta to the base by measuring overlap, truly new trades, replaced base trades, and coverage expansion.",
+      "hypothesis": "Attribute the nature of A1's delta to the base — prove it creates genuinely new positive entries rather than cannibalizing existing base trades.",
+      "objective": "Attribute the nature of A1's delta to the base — prove it creates genuinely new positive entries rather than cannibalizing existing base trades.",
       "success_criteria": [
-        "Ownership and cannibalization metrics are recorded",
-        "Enough evidence exists for a final PROMOTE / WATCHLIST / REJECT decision on A1"
+        "Overlap, new-trade PnL, and cannibalization metrics are quantified",
+        "Ownership analysis confirms or denies genuine expansion",
+        "Sufficient evidence exists for a definitive PROMOTE/REJECT decision on A1"
       ],
       "allowed_tools": [
         "backtests_analysis",
-        "backtests_runs",
-        "research_record"
+        "backtests_strategy",
+        "research_memory"
       ],
       "evidence_requirements": [
-        "Ownership and cannibalization metrics are recorded",
-        "Enough evidence exists for a final PROMOTE / WATCHLIST / REJECT decision on A1"
+        "Overlap, new-trade PnL, and cannibalization metrics are quantified",
+        "Ownership analysis confirms or denies genuine expansion",
+        "Sufficient evidence exists for a definitive PROMOTE/REJECT decision on A1"
       ],
       "policy_tags": [
-        "validation",
-        "mandatory"
+        "ownership",
+        "critical"
       ],
-      "max_turns": 24,
-      "max_tool_calls": 24,
-      "max_expensive_calls": 3,
+      "max_turns": 48,
+      "max_tool_calls": 36,
+      "max_expensive_calls": 12,
       "parallel_slot": 1,
+      "runtime_profile": "backtests_cannibalization_analysis",
+      "required_prerequisite_facts": null,
+      "required_output_facts": [],
+      "finalization_mode": "none",
+      "dependency_unblock_mode": "accepted_only",
+      "watchlist_allows_unblock": false,
+      "requires_mutating_evidence": false,
+      "requires_persisted_artifact": false,
+      "requires_live_handle_validation": false,
+      "acceptance_contract": {
+        "kind": "generic_read_strict",
+        "mode": "strict",
+        "required_subjects": "none",
+        "required_predicates": [
+          "domain_tool_evidence_present"
+        ],
+        "mcp_proof_calls": [],
+        "forbid_contradictions": [],
+        "allow_advisory_unblock": false,
+        "acceptance_requirements": {
+          "slice_id": "compiled_plan_v3_stage_5",
+          "contract_kind": "generic_read_strict"
+        }
+      },
+      "acceptance_proof": {},
+      "acceptance_blockers": [],
       "budget_scale_applied": 6,
       "depends_on": [
         "compiled_plan_v3_stage_4"
       ],
       "status": "pending",
+      "acceptance_state": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
       "expensive_call_count": 0,
@@ -106,42 +186,83 @@
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
+      "dependency_blocker_slice_id": "",
+      "dependency_blocker_reason_code": "",
+      "dependency_blocker_class": "",
+      "blocked_retry_count": 0,
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
+      "gate_hint": "",
       "artifacts": [],
-      "facts": {}
+      "facts": {},
+      "verdict": ""
     },
     {
       "slice_id": "compiled_plan_v3_stage_6",
       "title": "Финальное решение по A1",
-      "hypothesis": "Close A1 definitively with one of three verdicts: PROMOTE, WATCHLIST SPECIALIST, or REJECT.",
-      "objective": "Close A1 definitively with one of three verdicts: PROMOTE, WATCHLIST SPECIALIST, or REJECT.",
+      "hypothesis": "Close the A1 branch with an irreversible decision: PROMOTE, WATCHLIST SPECIALIST, or REJECT.",
+      "objective": "Close the A1 branch with an irreversible decision: PROMOTE, WATCHLIST SPECIALIST, or REJECT.",
       "success_criteria": [
-        "A1 is definitively closed with a recorded verdict and rationale"
+        "A1 has an explicit, final decision with documented rationale",
+        "A1 branch is definitively closed"
       ],
       "allowed_tools": [
-        "research_record",
-        "research_map",
-        "models_to_feature",
-        "backtests_strategy"
+        "research_memory",
+        "research_map"
       ],
       "evidence_requirements": [
-        "A1 is definitively closed with a recorded verdict and rationale"
+        "A1 has an explicit, final decision with documented rationale",
+        "A1 branch is definitively closed"
       ],
       "policy_tags": [
         "decision",
-        "checkpoint"
+        "gate"
       ],
       "max_turns": 24,
       "max_tool_calls": 24,
-      "max_expensive_calls": 3,
+      "max_expensive_calls": 1,
       "parallel_slot": 1,
+      "runtime_profile": "write_result",
+      "required_prerequisite_facts": null,
+      "required_output_facts": [],
+      "finalization_mode": "none",
+      "dependency_unblock_mode": "accepted_only",
+      "watchlist_allows_unblock": false,
+      "requires_mutating_evidence": true,
+      "requires_persisted_artifact": false,
+      "requires_live_handle_validation": false,
+      "acceptance_contract": {
+        "kind": "write_result",
+        "mode": "strict",
+        "required_subjects": "persisted_research_node",
+        "required_predicates": [
+          "mutating_tool_call_present",
+          "research_node_proof_pass"
+        ],
+        "mcp_proof_calls": [
+          {
+            "tool": "research_memory",
+            "arguments": {
+              "action": "prove"
+            }
+          }
+        ],
+        "forbid_contradictions": [],
+        "allow_advisory_unblock": false,
+        "acceptance_requirements": {
+          "slice_id": "compiled_plan_v3_stage_6",
+          "contract_kind": "write_result"
+        }
+      },
+      "acceptance_proof": {},
+      "acceptance_blockers": [],
       "budget_scale_applied": 6,
       "depends_on": [
         "compiled_plan_v3_stage_5"
       ],
       "status": "pending",
+      "acceptance_state": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
       "expensive_call_count": 0,
@@ -152,13 +273,20 @@
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
+      "dependency_blocker_slice_id": "",
+      "dependency_blocker_reason_code": "",
+      "dependency_blocker_class": "",
+      "blocked_retry_count": 0,
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
+      "gate_hint": "",
       "artifacts": [],
-      "facts": {}
+      "facts": {},
+      "verdict": ""
     }
   ],
+  "mcp_catalog_hash": "c306b4054eaf8f466a7e29182863da4e7cd0610551ef83a0611c515c84aa415b",
   "plan_source_kind": "compiled_raw",
   "source_sequence_id": "compiled_plan_v3",
   "source_raw_plan": "raw_plans/plan_v3.md",
@@ -167,6 +295,7 @@
   "source_compile_report_path": "",
   "sequence_batch_index": 2,
   "status": "draft",
-  "created_at": "2026-04-11T10:49:08.828646+00:00",
-  "updated_at": "2026-04-11T10:49:08.828647+00:00"
+  "last_error": "",
+  "created_at": "2026-04-15T18:37:31.795119+00:00",
+  "updated_at": "2026-04-15T18:37:31.795121+00:00"
 }

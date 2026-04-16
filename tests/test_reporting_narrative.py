@@ -112,3 +112,66 @@ def test_report_narrative_service_accepts_russian_summary_with_technical_terms()
     sections = asyncio.run(service.generate(report_kind="run", payload={"run_id": "run_1"}))
 
     assert sections.executive_summary_ru.startswith("Этот backtest")
+
+
+def test_generate_for_sequence_uses_sequence_prompt() -> None:
+    """generate_for_sequence returns parsed NarrativeSectionsRu."""
+    service = ReportNarrativeService(
+        adapter=_StubAdapter(
+            """
+            {
+              "executive_summary_ru": "Последовательность plan_v1 успешно выполнена с положительным результатом.",
+              "key_findings_ru": ["Feature cf_alpha показал улучшение метрик"],
+              "important_failures_ru": [],
+              "recommended_next_actions_ru": ["Протестировать cf_alpha на walk-forward"],
+              "operator_notes_ru": ["Рекомендуется расширить исследование"]
+            }
+            """
+        ),
+        timeout_seconds=5,
+        retry_attempts=1,
+        retry_backoff_seconds=0.01,
+    )
+
+    sections = asyncio.run(service.generate_for_sequence(
+        payload={"sequence_id": "plan_v1", "sequence_status": "completed"},
+    ))
+
+    assert sections.executive_summary_ru.startswith("Последовательность")
+    assert len(sections.key_findings_ru) == 1
+    assert "cf_alpha" in sections.key_findings_ru[0]
+
+
+def test_generate_for_sequence_disabled_raises() -> None:
+    service = ReportNarrativeService(
+        adapter=None,
+        timeout_seconds=5,
+        retry_attempts=1,
+        retry_backoff_seconds=0.01,
+        enabled=False,
+    )
+
+    with pytest.raises(NarrativeGenerationError, match="narrative_generation_disabled"):
+        asyncio.run(service.generate_for_sequence(payload={"sequence_id": "v1"}))
+
+
+def test_generate_for_sequence_rejects_non_russian() -> None:
+    service = ReportNarrativeService(
+        adapter=_StubAdapter(
+            """
+            {
+              "executive_summary_ru": "This sequence completed successfully.",
+              "key_findings_ru": ["Data was validated"],
+              "important_failures_ru": [],
+              "recommended_next_actions_ru": ["Continue testing"],
+              "operator_notes_ru": ["Note for operator"]
+            }
+            """
+        ),
+        timeout_seconds=5,
+        retry_attempts=1,
+        retry_backoff_seconds=0.01,
+    )
+
+    with pytest.raises(NarrativeGenerationError, match="narrative_not_russian"):
+        asyncio.run(service.generate_for_sequence(payload={"sequence_id": "v1"}))

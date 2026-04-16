@@ -1,6 +1,6 @@
 {
   "plan_id": "compiled_plan_v5_batch_2",
-  "goal": "Построить и проверить новые custom features, обучить CatBoost long и short модели, прогнать на selection OOS и lockbox OOS, и дать итоговый ответ — дают ли custom-feature + CatBoost модели новый additive layer поверх active-signal-v1.",
+  "goal": "Построить и проверить новые custom features, обучить CatBoost long/short модели, прогнать на selection OOS и lockbox OOS, и ответить: дают ли custom-feature + CatBoost модели новый additive layer поверх active-signal-v1.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -9,49 +9,76 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "База active-signal-v1@1 — immutable reference, не меняется ни при каких условиях",
-    "Все custom features должны быть causally correct с фиксированным lookback",
-    "train / selection OOS / lockbox OOS окна замораживаются ДО начала обучения моделей",
-    "Purge gap минимум 24h между train и OOS окнами",
-    "Long и short модели обучаются отдельно",
-    "Thresholds фиксируются до открытия lockbox",
-    "Модель не имеет права быть чёрным ящиком — feature importance и SHAP обязательны",
-    "Итог cycle v5 — бинарное решение: PROMOTE / WATCHLIST / REJECT для каждого sleeve"
+    "База active-signal-v1@1 — immutable reference, никогда не меняется.",
+    "Все custom features строятся causally: lookback зафиксирован, futurity исключена.",
+    "Train / selection OOS / lockbox OOS замораживаются до начала любого обучения.",
+    "Purge gap минимум 24h между train и selection OOS, selection OOS и lockbox.",
+    "Long и short модели обучаются раздельно; общий роутер — только опционально после обеих сторон.",
+    "Threshold выбирается на selection OOS и замораживается до открытия lockbox.",
+    "Базовый снапшот прогоняется на том же OOS окне для matched comparison.",
+    "Обязательны strict additive и permissive integration comparisons на lockbox.",
+    "Каждый model sleeve получает terminal decision: PROMOTE / WATCHLIST / REJECT.",
+    "Финальный отчёт v5 обязателен перед закрытием цикла."
   ],
   "slices": [
     {
       "slice_id": "compiled_plan_v5_stage_4",
       "title": "Dataset contract и chronological split без утечек",
-      "hypothesis": "Зафиксировать train / selection OOS / lockbox OOS окна и purge gap до начала обучения моделей, построить modeling datasets.",
-      "objective": "Зафиксировать train / selection OOS / lockbox OOS окна и purge gap до начала обучения моделей, построить modeling datasets.",
+      "hypothesis": "Зафиксировать train / selection OOS / lockbox OOS windows с purge gap и построить modeling datasets до начала обучения.",
+      "objective": "Зафиксировать train / selection OOS / lockbox OOS windows с purge gap и построить modeling datasets до начала обучения.",
       "success_criteria": [
-        "Все modeling windows frozen до начала training",
-        "Purge gap соблюдён",
-        "Target definitions зафиксированы"
+        "Все modeling windows frozen до начала training.",
+        "Purge gap проверен и соответствует правилам.",
+        "Modeling datasets собраны."
       ],
       "allowed_tools": [
         "models_dataset",
-        "features_dataset",
-        "research_record"
+        "datasets",
+        "research_memory"
       ],
       "evidence_requirements": [
-        "Все modeling windows frozen до начала training",
-        "Purge gap соблюдён",
-        "Target definitions зафиксированы"
+        "Все modeling windows frozen до начала training.",
+        "Purge gap проверен и соответствует правилам.",
+        "Modeling datasets собраны."
       ],
       "policy_tags": [
         "contract",
-        "anti_leakage"
+        "blocking"
       ],
       "max_turns": 36,
       "max_tool_calls": 30,
       "max_expensive_calls": 6,
       "parallel_slot": 1,
+      "runtime_profile": "generic_mutation",
+      "required_prerequisite_facts": null,
+      "required_output_facts": [],
+      "finalization_mode": "none",
+      "dependency_unblock_mode": "accepted_only",
+      "watchlist_allows_unblock": false,
+      "requires_mutating_evidence": false,
+      "requires_persisted_artifact": false,
+      "requires_live_handle_validation": false,
+      "acceptance_contract": {
+        "kind": "feature_contract_exploration",
+        "mode": "strict",
+        "required_subjects": "none",
+        "required_predicates": [],
+        "mcp_proof_calls": [],
+        "forbid_contradictions": [],
+        "allow_advisory_unblock": false,
+        "acceptance_requirements": {
+          "slice_id": "compiled_plan_v5_stage_4",
+          "contract_kind": "feature_contract_exploration"
+        }
+      },
+      "acceptance_proof": {},
+      "acceptance_blockers": [],
       "budget_scale_applied": 6,
       "depends_on": [
         "compiled_plan_v5_stage_3"
       ],
       "status": "pending",
+      "acceptance_state": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
       "expensive_call_count": 0,
@@ -62,44 +89,85 @@
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
+      "dependency_blocker_slice_id": "",
+      "dependency_blocker_reason_code": "",
+      "dependency_blocker_class": "",
+      "blocked_retry_count": 0,
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
+      "gate_hint": "",
       "artifacts": [],
-      "facts": {}
+      "facts": {},
+      "verdict": ""
     },
     {
       "slice_id": "compiled_plan_v5_stage_5",
       "title": "Быстрая plausibility-проверка feature packs на train/selection discipline",
-      "hypothesis": "Отсеять feature packs через минимальные long/short prototypes на selection OOS, выбрать максимум 2 лучших setup на сторону.",
-      "objective": "Отсеять feature packs через минимальные long/short prototypes на selection OOS, выбрать максимум 2 лучших setup на сторону.",
+      "hypothesis": "Отсеять feature packs до full training: обучить минимальные long/short prototypes и проверить signal quality на selection OOS.",
+      "objective": "Отсеять feature packs до full training: обучить минимальные long/short prototypes и проверить signal quality на selection OOS.",
       "success_criteria": [
-        "Есть shortlist модельных setups для full training",
-        "Каждый setup проверен на selection OOS"
+        "Есть shortlist модельных setups для full training.",
+        "Каждый setup проверен на selection OOS с экономической plausibility."
       ],
       "allowed_tools": [
         "models_train",
         "models_compare",
-        "models_registry",
-        "research_record"
+        "backtests_runs",
+        "research_memory"
       ],
       "evidence_requirements": [
-        "Есть shortlist модельных setups для full training",
-        "Каждый setup проверен на selection OOS"
+        "Есть shortlist модельных setups для full training.",
+        "Каждый setup проверен на selection OOS с экономической plausibility."
       ],
       "policy_tags": [
-        "cheap_first",
-        "filtering"
+        "screening",
+        "cheap_first"
       ],
-      "max_turns": 24,
-      "max_tool_calls": 24,
-      "max_expensive_calls": 2,
-      "parallel_slot": 2,
+      "max_turns": 36,
+      "max_tool_calls": 30,
+      "max_expensive_calls": 6,
+      "parallel_slot": 1,
+      "runtime_profile": "generic_mutation",
+      "required_prerequisite_facts": null,
+      "required_output_facts": [],
+      "finalization_mode": "none",
+      "dependency_unblock_mode": "accepted_only",
+      "watchlist_allows_unblock": false,
+      "requires_mutating_evidence": false,
+      "requires_persisted_artifact": true,
+      "requires_live_handle_validation": true,
+      "acceptance_contract": {
+        "kind": "research_shortlist_write",
+        "mode": "strict",
+        "required_subjects": "persisted_research_node",
+        "required_predicates": [
+          "mutating_tool_call_present",
+          "research_node_proof_pass"
+        ],
+        "mcp_proof_calls": [
+          {
+            "tool": "research_memory",
+            "arguments": {
+              "action": "prove"
+            }
+          }
+        ],
+        "forbid_contradictions": [],
+        "allow_advisory_unblock": false,
+        "acceptance_requirements": {
+          "slice_id": "compiled_plan_v5_stage_5",
+          "contract_kind": "research_shortlist_write"
+        }
+      },
+      "acceptance_proof": {},
+      "acceptance_blockers": [],
       "budget_scale_applied": 6,
       "depends_on": [
         "compiled_plan_v5_stage_4"
       ],
       "status": "pending",
+      "acceptance_state": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
       "expensive_call_count": 0,
@@ -110,47 +178,95 @@
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
+      "dependency_blocker_slice_id": "",
+      "dependency_blocker_reason_code": "",
+      "dependency_blocker_class": "",
+      "blocked_retry_count": 0,
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
+      "gate_hint": "",
       "artifacts": [],
-      "facts": {}
+      "facts": {},
+      "verdict": ""
     },
     {
       "slice_id": "compiled_plan_v5_stage_6",
       "title": "Обучение CatBoost-long и CatBoost-short",
-      "hypothesis": "Обучить по одной-две disciplined candidate CatBoost models на сторону с frozen params, feature importance и SHAP.",
-      "objective": "Обучить по одной-две disciplined candidate CatBoost models на сторону с frozen params, feature importance и SHAP.",
+      "hypothesis": "Обучить по одной-две disciplined candidate models на сторону, freeze params, best iteration, feature importance, SHAP.",
+      "objective": "Обучить по одной-две disciplined candidate models на сторону, freeze params, best iteration, feature importance, SHAP.",
       "success_criteria": [
-        "Есть frozen model candidates для long и short",
-        "Feature importance и SHAP записаны",
-        "Selection OOS quality проверено"
+        "Есть frozen model candidates для long и short.",
+        "Selection OOS quality подтверждена.",
+        "Feature importance и SHAP записаны."
       ],
       "allowed_tools": [
         "models_train",
         "models_registry",
         "models_compare",
-        "models_to_feature",
-        "research_record"
+        "research_memory"
       ],
       "evidence_requirements": [
-        "Есть frozen model candidates для long и short",
-        "Feature importance и SHAP записаны",
-        "Selection OOS quality проверено"
+        "Есть frozen model candidates для long и short.",
+        "Selection OOS quality подтверждена.",
+        "Feature importance и SHAP записаны."
       ],
       "policy_tags": [
-        "modeling",
-        "disciplined"
+        "training",
+        "expensive"
       ],
-      "max_turns": 36,
-      "max_tool_calls": 30,
-      "max_expensive_calls": 6,
-      "parallel_slot": 3,
+      "max_turns": 24,
+      "max_tool_calls": 24,
+      "max_expensive_calls": 2,
+      "parallel_slot": 1,
+      "runtime_profile": "generic_mutation",
+      "required_prerequisite_facts": null,
+      "required_output_facts": [],
+      "finalization_mode": "none",
+      "dependency_unblock_mode": "accepted_only",
+      "watchlist_allows_unblock": false,
+      "requires_mutating_evidence": false,
+      "requires_persisted_artifact": false,
+      "requires_live_handle_validation": false,
+      "acceptance_contract": {
+        "kind": "model_training",
+        "mode": "strict",
+        "required_subjects": "dataset_and_model_version",
+        "required_predicates": [
+          "model_dataset_proof_pass",
+          "model_registry_proof_pass"
+        ],
+        "mcp_proof_calls": [
+          {
+            "tool": "models_dataset",
+            "arguments": {
+              "action": "inspect",
+              "view": "acceptance_proof"
+            }
+          },
+          {
+            "tool": "models_registry",
+            "arguments": {
+              "action": "inspect",
+              "view": "acceptance_proof"
+            }
+          }
+        ],
+        "forbid_contradictions": [],
+        "allow_advisory_unblock": false,
+        "acceptance_requirements": {
+          "slice_id": "compiled_plan_v5_stage_6",
+          "contract_kind": "model_training"
+        }
+      },
+      "acceptance_proof": {},
+      "acceptance_blockers": [],
       "budget_scale_applied": 6,
       "depends_on": [
         "compiled_plan_v5_stage_5"
       ],
       "status": "pending",
+      "acceptance_state": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
       "expensive_call_count": 0,
@@ -161,13 +277,20 @@
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
+      "dependency_blocker_slice_id": "",
+      "dependency_blocker_reason_code": "",
+      "dependency_blocker_class": "",
+      "blocked_retry_count": 0,
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
+      "gate_hint": "",
       "artifacts": [],
-      "facts": {}
+      "facts": {},
+      "verdict": ""
     }
   ],
+  "mcp_catalog_hash": "c306b4054eaf8f466a7e29182863da4e7cd0610551ef83a0611c515c84aa415b",
   "plan_source_kind": "compiled_raw",
   "source_sequence_id": "compiled_plan_v5",
   "source_raw_plan": "raw_plans/plan_v5.md",
@@ -176,6 +299,7 @@
   "source_compile_report_path": "",
   "sequence_batch_index": 2,
   "status": "draft",
-  "created_at": "2026-04-11T10:51:59.003126+00:00",
-  "updated_at": "2026-04-11T10:51:59.003256+00:00"
+  "last_error": "",
+  "created_at": "2026-04-15T18:40:09.615991+00:00",
+  "updated_at": "2026-04-15T18:40:09.615993+00:00"
 }

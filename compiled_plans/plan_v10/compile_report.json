@@ -5,17 +5,15 @@
   "compile_status": "compiled",
   "parser_confidence": 0.95,
   "semantic_method": "llm",
-  "stage_count": 11,
+  "stage_count": 12,
   "compiled_plan_count": 4,
+  "mcp_catalog_hash": "c306b4054eaf8f466a7e29182863da4e7cd0610551ef83a0611c515c84aa415b",
   "warnings": [
-    "Auto-added research_record for stage_2: every non-trivial stage needs documentation capability.",
-    "Auto-added research_record for stage_3: every non-trivial stage needs documentation capability.",
-    "Auto-added research_record for stage_5: every non-trivial stage needs documentation capability.",
-    "Auto-added research_record for stage_6: every non-trivial stage needs documentation capability.",
-    "Auto-added research_record for stage_7: every non-trivial stage needs documentation capability.",
-    "Auto-added research_record for stage_8: every non-trivial stage needs documentation capability.",
-    "Auto-added research_record for stage_10: every non-trivial stage needs documentation capability."
+    "Plan is entirely in Russian; all objectives translated to English for semantic draft",
+    "Stages 9 (gate) and 10 (optional route) are gated branches that may produce no further work",
+    "v9 status was 'PROMISING SIGNAL DISCOVERED' not 'SUCCESS' — this plan inherits unproven microstructure signal",
+    "Auto-added research_memory for stage_2: every non-trivial stage needs documentation capability."
   ],
   "errors": [],
-  "compiled_at": "2026-04-11T11:03:23.954731+00:00"
+  "compiled_at": "2026-04-15T18:47:58.337096+00:00"
 }

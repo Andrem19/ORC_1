@@ -11,6 +11,8 @@ from app.raw_plan_converter_service import RawPlanConverterService
 from app.raw_plan_ordering import raw_plan_sort_key
 from app.raw_plan_semantic_service import RawPlanSemanticService
 from app.runtime_factory import create_planner_adapter
+from app.services.direct_execution.mcp_client import DirectMcpConfig
+from app.services.mcp_catalog import McpCatalogRefreshService, McpCatalogStore, McpCatalogUnavailableError
 
 
 def _load_config() -> OrchestratorConfig:
@@ -27,36 +29,24 @@ def _load_config() -> OrchestratorConfig:
     return load_config_from_dict(payload)
 
 
-async def _fetch_mcp_tool_catalog(config: OrchestratorConfig) -> list:
-    from app.services.direct_execution.mcp_client import DirectMcpClient, DirectMcpConfig
-
-    direct = getattr(config, "direct_execution", None)
-    if not direct:
-        return []
-    endpoint = str(getattr(direct, "mcp_endpoint_url", "") or "").strip()
-    if not endpoint:
-        return []
-    mcp_config = DirectMcpConfig(
-        endpoint_url=endpoint,
+def _build_mcp_config(config: OrchestratorConfig) -> DirectMcpConfig:
+    direct = config.direct_execution
+    return DirectMcpConfig(
+        endpoint_url=str(getattr(direct, "mcp_endpoint_url", "") or "").strip(),
         auth_mode=str(getattr(direct, "mcp_auth_mode", "none") or "none"),
         token_env_var=str(getattr(direct, "mcp_token_env_var", "DEV_SPACE1_MCP_BEARER_TOKEN") or ""),
         connect_timeout_seconds=float(getattr(direct, "connect_timeout_seconds", 10) or 10),
         read_timeout_seconds=float(getattr(direct, "read_timeout_seconds", 60) or 60),
         retry_budget=int(getattr(direct, "retry_budget", 1) or 1),
     )
-    client = DirectMcpClient(mcp_config)
-    try:
-        tools = await client.list_tools()
-        await client.close()
-        print(f"MCP tool catalog fetched: {len(tools)} tools from {endpoint}")
-        return tools
-    except Exception as exc:
-        print(f"Warning: could not fetch MCP tool catalog: {exc}", file=sys.stderr)
-        try:
-            await client.close()
-        except Exception:
-            pass
-        return []
+
+
+async def _refresh_mcp_catalog(config: OrchestratorConfig):
+    refresh = McpCatalogRefreshService(
+        mcp_config=_build_mcp_config(config),
+        store=McpCatalogStore(config.state_dir, run_id=config.current_run_id),
+    )
+    return await refresh.refresh()
 
 
 async def _run() -> int:
@@ -85,12 +75,20 @@ async def _run() -> int:
             retry_backoff_seconds=config.decision_retry_backoff_seconds,
         )
 
-    mcp_tool_catalog = await _fetch_mcp_tool_catalog(config)
+    try:
+        catalog_refresh = await _refresh_mcp_catalog(config)
+    except McpCatalogUnavailableError as exc:
+        print(f"Fatal: could not fetch live MCP catalog: {exc}", file=sys.stderr)
+        return 3
+    print(
+        f"MCP catalog refreshed: {len(catalog_refresh.snapshot.tools)} tools "
+        f"hash={catalog_refresh.snapshot.schema_hash[:12]}"
+    )
 
     converter = RawPlanConverterService(
         semantic_service=semantic_service,
         use_llm=bool(config.converter_use_llm),
-        mcp_tool_catalog=mcp_tool_catalog,
+        catalog_snapshot=catalog_refresh.snapshot,
     )
     compiled = 0
     failed = 0

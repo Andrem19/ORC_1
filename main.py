@@ -36,11 +36,14 @@ from app.logging_setup import setup_logging
 from app.logging_runtime import clear_log_root
 from app.models import StopReason
 from app.orchestrator import Orchestrator
+from app.runtime_incidents import LocalIncidentStore
 from app.runtime_factory import (
     create_planner_adapter,
     create_worker_adapter,
 )
 from app.run_context import ensure_current_run, generate_run_id, read_current_run_id
+from app.services.direct_execution.mcp_client import DirectMcpConfig
+from app.services.mcp_catalog import McpCatalogRefreshService, McpCatalogStore, McpCatalogUnavailableError
 from app.services.notification_service import NotificationService
 
 logger = logging.getLogger("orchestrator")
@@ -328,11 +331,11 @@ def create_real_orchestrator(config: OrchestratorConfig) -> Orchestrator:
 
     if not worker_ok:
         logger.error(
-            "Worker adapter '%s' is NOT available (cli_path='%s')",
-            worker_adapter.name(), config.worker_adapter.cli_path or config.worker_adapter.base_url,
+            "Worker adapter '%s' is NOT available (endpoint='%s')",
+            worker_adapter.name(), getattr(worker_adapter, 'base_url', '') or config.worker_adapter.cli_path or config.worker_adapter.base_url,
         )
     else:
-        logger.info("Worker adapter '%s' available (cli_path='%s')", worker_adapter.name(), config.worker_adapter.cli_path or config.worker_adapter.base_url)
+        logger.info("Worker adapter '%s' available (endpoint='%s')", worker_adapter.name(), getattr(worker_adapter, 'base_url', '') or config.worker_adapter.cli_path or config.worker_adapter.base_url)
     logger.info("Direct execution provider: %s", config.direct_execution.provider)
 
     notification_service = NotificationService(
@@ -355,6 +358,88 @@ def create_real_orchestrator(config: OrchestratorConfig) -> Orchestrator:
         notification_service=notification_service,
         console_controller=console_controller,
     )
+
+
+def _build_direct_mcp_config(config: OrchestratorConfig) -> DirectMcpConfig:
+    direct = config.direct_execution
+    return DirectMcpConfig(
+        endpoint_url=str(direct.mcp_endpoint_url or "").strip(),
+        auth_mode=str(direct.mcp_auth_mode or "none"),
+        token_env_var=str(direct.mcp_token_env_var or "DEV_SPACE1_MCP_BEARER_TOKEN"),
+        connect_timeout_seconds=float(direct.connect_timeout_seconds or 10.0),
+        read_timeout_seconds=float(direct.read_timeout_seconds or 60.0),
+        retry_budget=int(direct.retry_budget or 1),
+    )
+
+
+async def _refresh_startup_mcp_catalog(orch: Orchestrator) -> None:
+    refresh_service = McpCatalogRefreshService(
+        mcp_config=_build_direct_mcp_config(orch.config),
+        store=McpCatalogStore(orch.config.state_dir, run_id=orch.config.current_run_id),
+        artifact_root=str(orch.artifact_store.active_root),
+    )
+    try:
+        result = await refresh_service.refresh()
+    except McpCatalogUnavailableError as exc:
+        await _handle_catalog_startup_failure(orch, refresh_service=refresh_service, error=exc)
+        raise
+    orch.mcp_catalog_snapshot = result.snapshot
+    orch.mcp_catalog_diff = result.diff
+    orch.mcp_catalog_saved_paths = {key: str(path) for key, path in result.saved_paths.items()}
+    if result.diff.previous_hash and not result.diff.unchanged:
+        message = (
+            f"MCP catalog drift detected: {result.diff.summary} "
+            f"(prev={result.diff.previous_hash[:12]} current={result.diff.current_hash[:12]})."
+        )
+        logger.warning(message)
+        orch.notification_service.send_lifecycle("mcp_catalog_diff", message)
+    logger.info(
+        "MCP catalog ready: tools=%d hash=%s latest=%s",
+        len(result.snapshot.tools),
+        result.snapshot.schema_hash[:12],
+        orch.mcp_catalog_saved_paths.get("latest", ""),
+    )
+
+
+async def _handle_catalog_startup_failure(
+    orch: Orchestrator,
+    *,
+    refresh_service: McpCatalogRefreshService,
+    error: Exception,
+) -> None:
+    reason_code = "mcp_catalog_unavailable"
+    metadata = {
+        "reason_code": reason_code,
+        "error": str(error),
+        "endpoint_url": orch.config.direct_execution.mcp_endpoint_url,
+        "run_id": orch.config.current_run_id,
+    }
+    incident_path = LocalIncidentStore(
+        orch.config.state_dir,
+        run_id=orch.config.current_run_id,
+    ).record(
+        summary="Startup blocked: live MCP catalog unavailable",
+        metadata=metadata,
+        source="startup",
+        severity="high",
+    )
+    metadata["local_incident_path"] = str(incident_path)
+    try:
+        await refresh_service.capture_remote_incident(
+            summary="Startup blocked: live MCP catalog unavailable",
+            metadata=metadata,
+        )
+    except Exception:
+        pass
+    orch.state.status = "finished"
+    orch.state.stop_reason = StopReason.MCP_UNHEALTHY
+    orch.execution_state.status = "finished"
+    orch.execution_state.stop_reason = StopReason.MCP_UNHEALTHY.value
+    orch.execution_state.touch()
+    orch.state.updated_at = orch.execution_state.updated_at
+    orch.execution_store.save(orch.execution_state)
+    logger.error("Startup blocked with %s: %s", reason_code, error)
+    orch.notification_service.send_lifecycle("startup_blocked", f"{reason_code}: {error}")
 
 
 def run_demo() -> None:
@@ -555,6 +640,20 @@ def main() -> None:
             logger.error(startup_issue)
             logger.info("Orchestrator stopped: %s", StopReason.SUBPROCESS_ERROR.value)
             return
+
+        try:
+            asyncio.run(_refresh_startup_mcp_catalog(orch))
+        except McpCatalogUnavailableError:
+            # Retry once — the MCP streamable-http handshake can fail on first
+            # attempt due to transient network or TLS timing issues.
+            logger.warning("MCP catalog refresh failed on first attempt, retrying...")
+            import time as _time
+            _time.sleep(1.0)
+            try:
+                asyncio.run(_refresh_startup_mcp_catalog(orch))
+            except McpCatalogUnavailableError:
+                logger.info("Orchestrator stopped: %s", StopReason.MCP_UNHEALTHY.value)
+                return
 
         Path(config.plan_dir).mkdir(parents=True, exist_ok=True)
         logger.info("Plans directory: %s", config.plan_dir)

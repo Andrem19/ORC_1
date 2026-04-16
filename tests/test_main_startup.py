@@ -6,8 +6,10 @@ from unittest.mock import MagicMock, patch
 from app.adapters.fake_planner import FakePlanner
 from app.adapters.fake_worker import FakeWorker
 from app.config import LMStudioConfig, OrchestratorConfig
+from app.models import StopReason
 from app.orchestrator import Orchestrator
 from main import (
+    _handle_catalog_startup_failure,
     _apply_terminal_safety_defaults,
     _log_plan_source_startup,
     _print_orchestrator_status,
@@ -30,6 +32,39 @@ def _make_orch(*, planner_ok: bool = True, worker_ok: bool = True):
         planner_adapter=planner_adapter,
         worker_adapter=worker_adapter,
     )
+
+
+def test_handle_catalog_startup_failure_marks_runtime_finished(tmp_path):
+    orch = SimpleNamespace(
+        config=SimpleNamespace(
+            state_dir=str(tmp_path / "state"),
+            current_run_id="run_1",
+            direct_execution=SimpleNamespace(mcp_endpoint_url="http://127.0.0.1:8766/mcp"),
+        ),
+        state=SimpleNamespace(status="running", stop_reason=None, updated_at=""),
+        execution_state=SimpleNamespace(status="running", stop_reason="", touch=MagicMock(), updated_at=""),
+        execution_store=MagicMock(),
+        notification_service=MagicMock(),
+    )
+    refresh_service = MagicMock()
+    refresh_service.capture_remote_incident = MagicMock(return_value=None)
+
+    import asyncio
+
+    asyncio.run(
+        _handle_catalog_startup_failure(
+            orch,
+            refresh_service=refresh_service,
+            error=RuntimeError("mcp_catalog_unavailable:test"),
+        )
+    )
+
+    assert orch.state.status == "finished"
+    assert orch.state.stop_reason == StopReason.MCP_UNHEALTHY
+    assert orch.execution_state.status == "finished"
+    assert orch.execution_state.stop_reason == StopReason.MCP_UNHEALTHY.value
+    assert orch.execution_store.save.called
+    assert orch.notification_service.send_lifecycle.called
 
 
 def test_validate_runtime_startup_accepts_available_adapters():

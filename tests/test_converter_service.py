@@ -7,6 +7,7 @@ from app.execution_models import BaselineRef
 from app.raw_plan_converter_service import RawPlanConverterService
 from app.raw_plan_models import SemanticRawPlan, SemanticStage
 from app.raw_plan_semantic_service import RawPlanSemanticError
+from tests.mcp_catalog_fixtures import make_catalog_snapshot
 
 
 class _SemanticService:
@@ -65,6 +66,7 @@ def test_converter_service_compiles_with_llm_semantic_service(tmp_path) -> None:
     service = RawPlanConverterService(
         semantic_service=_SemanticService(_semantic_plan(str(raw_file), document_hash)),
         use_llm=True,
+        catalog_snapshot=make_catalog_snapshot(),
     )
 
     sequence = asyncio.run(service.convert_path(raw_file))
@@ -81,6 +83,7 @@ def test_converter_service_returns_failed_sequence_on_semantic_error(tmp_path) -
     service = RawPlanConverterService(
         semantic_service=_SemanticService(error="semantic_raw_plan_missing_fields:goal"),
         use_llm=True,
+        catalog_snapshot=make_catalog_snapshot(),
     )
 
     sequence = asyncio.run(service.convert_path(raw_file))

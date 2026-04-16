@@ -25,6 +25,7 @@ class StopReason(str, Enum):
     MAX_ERRORS = "max_errors"
     GOAL_REACHED = "goal_reached"
     GOAL_IMPOSSIBLE = "goal_impossible"
+    RECOVERABLE_BLOCKED = "recoverable_blocked"
     MCP_UNHEALTHY = "mcp_unhealthy"
     GRACEFUL_STOP = "graceful_stop"
 

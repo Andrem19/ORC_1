@@ -1,5 +1,5 @@
 """
-Confirmed research handle tracking and deterministic project-id repair.
+Generic handle tracking and repair for direct MCP tool calls.
 """
 
 from __future__ import annotations
@@ -8,93 +8,98 @@ import json
 from dataclasses import dataclass, field
 from typing import Any
 
+from app.services.mcp_catalog.models import McpCatalogSnapshot
+from app.services.direct_execution.handle_hygiene import (
+    DURABLE_HANDLE_FIELDS,
+    is_placeholder_handle_value,
+    is_suspicious_handle_value,
+)
+
+_HANDLE_FIELDS = DURABLE_HANDLE_FIELDS[:-1]
+
 
 @dataclass
 class ResearchHandleState:
     confirmed_project_id: str = ""
-    project_aliases: set[str] = field(default_factory=set)
-    atlas_dimensions: dict[str, list[Any]] = field(default_factory=dict)
+    confirmed_job_id: str = ""
     confirmed_experiment_job_id: str = ""
+    confirmed_run_id: str = ""
+    confirmed_snapshot_id: str = ""
+    confirmed_operation_id: str = ""
+    project_aliases: set[str] = field(default_factory=set)
     experiment_job_ids: set[str] = field(default_factory=set)
+    atlas_dimensions: dict[str, list[Any]] = field(default_factory=dict)
+    known_handles: dict[str, set[str]] = field(default_factory=dict)
 
 
-def repair_project_handle(
+def seed_handle_state_from_facts(state: ResearchHandleState, facts: dict[str, Any] | None) -> None:
+    """Prime confirmed durable handles from accepted prerequisite facts."""
+
+    if not isinstance(facts, dict):
+        return
+    for field_name in _HANDLE_FIELDS:
+        current = _confirmed_handle_value(state, field_name)
+        candidates = _handle_candidates_from_facts(facts, field_name)
+        for candidate in candidates:
+            state.known_handles.setdefault(field_name, set()).add(candidate)
+        if current or not candidates:
+            continue
+        preferred = _select_seed_candidate(candidates)
+        if preferred:
+            _set_confirmed_handle(state, field_name, preferred)
+            if field_name == "job_id":
+                state.experiment_job_ids.add(preferred)
+
+
+def repair_handle_arguments(
     *,
     tool_name: str,
     arguments: dict[str, Any],
     state: ResearchHandleState,
+    catalog_snapshot: McpCatalogSnapshot | None,
+    runtime_profile: str = "",
 ) -> tuple[dict[str, Any], list[str]]:
-    if not tool_name.startswith("research_"):
-        return arguments, []
-    project_id = str(arguments.get("project_id") or "").strip()
-    confirmed = str(state.confirmed_project_id or "").strip()
-    if not project_id or not confirmed or project_id == confirmed:
-        return arguments, []
-    if project_id in state.project_aliases or confirmed.startswith(f"{project_id}-"):
-        rewritten = json.loads(json.dumps(arguments))
-        rewritten["project_id"] = confirmed
-        return rewritten, [f"rewrote stale project_id '{project_id}' to confirmed '{confirmed}'"]
-    return arguments, []
-
-
-def repair_atlas_coordinates(
-    *,
-    tool_name: str,
-    arguments: dict[str, Any],
-    state: ResearchHandleState,
-) -> tuple[dict[str, Any], list[str]]:
-    if tool_name != "research_record":
-        return arguments, []
-    if str(arguments.get("action") or "").strip() != "create" or str(arguments.get("kind") or "").strip() != "hypothesis":
-        return arguments, []
-    atlas = arguments.get("atlas")
-    if not isinstance(atlas, dict) or not state.atlas_dimensions:
-        return arguments, []
-    coords = atlas.get("coordinates")
-    if not isinstance(coords, dict):
-        return arguments, []
-    repaired = json.loads(json.dumps(arguments))
-    new_coords: dict[str, Any] = {}
-    notes: list[str] = []
-    for dim_name, allowed in state.atlas_dimensions.items():
-        candidate = coords.get(dim_name)
-        if candidate is None:
-            candidate = _alias_coordinate(dim_name, coords)
-        coerced = _coerce_to_allowed(candidate, allowed)
-        if coerced is None:
-            return arguments, []
-        new_coords[dim_name] = coerced
-        if candidate != coerced or dim_name not in coords:
-            notes.append(f"repaired atlas.coordinates.{dim_name} -> {coerced!r}")
-    if new_coords != coords:
-        repaired["atlas"]["coordinates"] = new_coords
-        return repaired, notes
-    return arguments, []
-
-
-def repair_experiment_handle(
-    *,
-    tool_name: str,
-    arguments: dict[str, Any],
-    state: ResearchHandleState,
-) -> tuple[dict[str, Any], list[str]]:
-    if tool_name not in {"experiments_read", "experiments_inspect"}:
-        return arguments, []
-    if tool_name == "experiments_inspect" and str(arguments.get("view") or "").strip() == "list":
-        return arguments, []
-    confirmed = str(state.confirmed_experiment_job_id or "").strip()
-    if not confirmed:
-        return arguments, []
-    current = str(arguments.get("job_id") or "").strip()
-    if current and not _is_placeholder_job_id(current) and current in state.experiment_job_ids:
-        return arguments, []
-    if current and not _is_placeholder_job_id(current) and current == confirmed:
+    del runtime_profile
+    tool = catalog_snapshot.get_tool(tool_name) if catalog_snapshot is not None else None
+    accepted = set(tool.accepted_handle_fields) if tool is not None else {
+        field_name for field_name in _HANDLE_FIELDS
+        if field_name in arguments or _confirmed_handle_value(state, field_name)
+    }
+    if not accepted:
         return arguments, []
     rewritten = json.loads(json.dumps(arguments))
-    rewritten["job_id"] = confirmed
-    if current:
-        return rewritten, [f"rewrote experiment job_id '{current}' to confirmed '{confirmed}'"]
-    return rewritten, [f"filled missing experiment job_id with confirmed '{confirmed}'"]
+    notes: list[str] = []
+    for field_name in _HANDLE_FIELDS:
+        if field_name not in accepted:
+            continue
+        confirmed = _confirmed_handle_value(state, field_name)
+        if not confirmed:
+            continue
+        current = str(rewritten.get(field_name) or "").strip()
+        known_values = set(state.known_handles.get(field_name, set()))
+        if field_name == "job_id":
+            known_values |= set(state.experiment_job_ids)
+        if field_name == "project_id" and current and current != confirmed:
+            if (
+                current in state.project_aliases
+                or confirmed.startswith(f"{current}-")
+                or _should_rewrite_invalid_project_id(current, confirmed=confirmed, known_values=known_values)
+            ):
+                rewritten[field_name] = confirmed
+                notes.append(f"rewrote stale {field_name} '{current}' to confirmed '{confirmed}'")
+            continue
+        if current and current != confirmed and len(known_values) == 1 and confirmed in known_values:
+            rewritten[field_name] = confirmed
+            notes.append(f"rewrote stale {field_name} '{current}' to confirmed '{confirmed}'")
+            continue
+        if current and not is_placeholder_handle_value(current):
+            continue
+        rewritten[field_name] = confirmed
+        if current:
+            notes.append(f"rewrote placeholder {field_name} '{current}' to confirmed '{confirmed}'")
+        else:
+            notes.append(f"filled missing {field_name} with confirmed '{confirmed}'")
+    return rewritten, notes
 
 
 def update_handle_state(
@@ -103,46 +108,116 @@ def update_handle_state(
     arguments: dict[str, Any],
     result_payload: dict[str, Any],
     state: ResearchHandleState,
+    runtime_profile: str = "",
 ) -> None:
+    del tool_name, runtime_profile
     structured = _extract_structured(result_payload.get("payload"))
     data = structured.get("data") if isinstance(structured.get("data"), dict) else {}
-    project = data.get("project") if isinstance(data.get("project"), dict) else {}
-    confirmed = (
-        str(project.get("project_id") or "").strip()
-        or str(data.get("project_id") or "").strip()
-        or str((data.get("state_summary") or {}).get("project_id") or "").strip()
-    )
-    if confirmed:
-        state.confirmed_project_id = confirmed
-    dims = data.get("dimensions")
-    if isinstance(dims, list):
-        parsed: dict[str, list[Any]] = {}
-        for item in dims:
-            if not isinstance(item, dict):
+    _remember_project_candidates(state=state, data=data)
+    sources = [arguments, structured, data]
+    for sub_key in ("project", "record", "state_summary", "job", "operation", "result_ref"):
+        sub = data.get(sub_key)
+        if isinstance(sub, dict):
+            sources.append(sub)
+    for field_name in _HANDLE_FIELDS:
+        value = _first_string_field(sources, field_name)
+        if value:
+            if is_suspicious_handle_value(value, field_name=field_name):
                 continue
-            name = str(item.get("name") or "").strip()
-            values = item.get("values")
-            if name and isinstance(values, list) and values:
-                parsed[name] = list(values)
-        if parsed:
-            state.atlas_dimensions = parsed
+            _set_confirmed_handle(state, field_name, value)
+            state.known_handles.setdefault(field_name, set()).add(value)
+            if field_name == "job_id":
+                state.experiment_job_ids.add(value)
     for candidate in (
         str(arguments.get("project_id") or "").strip(),
-        str(project.get("name") or "").strip(),
-        str(project.get("project_id") or "").strip(),
-        str((data.get("state_summary") or {}).get("project_id") or "").strip(),
+        _first_string_field(sources, "name"),
+        _first_string_field(sources, "project_id"),
     ):
         if candidate:
             state.project_aliases.add(candidate)
-    job_ids = _extract_experiment_job_ids(data)
-    if job_ids:
-        for job_id in job_ids:
-            state.experiment_job_ids.add(job_id)
-        if state.confirmed_experiment_job_id not in state.experiment_job_ids:
-            state.confirmed_experiment_job_id = job_ids[0]
-    arg_job_id = str(arguments.get("job_id") or "").strip()
-    if arg_job_id and arg_job_id in state.experiment_job_ids:
-        state.confirmed_experiment_job_id = arg_job_id
+
+
+def repair_project_handle(
+    *,
+    tool_name: str,
+    arguments: dict[str, Any],
+    state: ResearchHandleState,
+    catalog_snapshot: McpCatalogSnapshot | None = None,
+    runtime_profile: str = "",
+) -> tuple[dict[str, Any], list[str]]:
+    return repair_handle_arguments(
+        tool_name=tool_name,
+        arguments=arguments,
+        state=state,
+        catalog_snapshot=catalog_snapshot,
+        runtime_profile=runtime_profile,
+    )
+
+
+def repair_experiment_handle(
+    *,
+    tool_name: str,
+    arguments: dict[str, Any],
+    state: ResearchHandleState,
+    catalog_snapshot: McpCatalogSnapshot | None = None,
+    runtime_profile: str = "",
+) -> tuple[dict[str, Any], list[str]]:
+    return repair_handle_arguments(
+        tool_name=tool_name,
+        arguments=arguments,
+        state=state,
+        catalog_snapshot=catalog_snapshot,
+        runtime_profile=runtime_profile,
+    )
+
+
+def repair_atlas_coordinates(
+    *,
+    tool_name: str,
+    arguments: dict[str, Any],
+    state: ResearchHandleState,
+) -> tuple[dict[str, Any], list[str]]:
+    del tool_name
+    atlas = arguments.get("atlas") if isinstance(arguments.get("atlas"), dict) else None
+    if atlas is None:
+        return arguments, []
+    coordinates = atlas.get("coordinates") if isinstance(atlas.get("coordinates"), dict) else None
+    if coordinates is None or not state.atlas_dimensions:
+        return arguments, []
+    rewritten = json.loads(json.dumps(arguments))
+    atlas_copy = rewritten.get("atlas") if isinstance(rewritten.get("atlas"), dict) else {}
+    coords_copy = atlas_copy.get("coordinates") if isinstance(atlas_copy.get("coordinates"), dict) else {}
+    normalized, notes = _normalize_coordinates(coords_copy, state.atlas_dimensions)
+    if not notes:
+        return arguments, []
+    atlas_copy["coordinates"] = normalized
+    rewritten["atlas"] = atlas_copy
+    return rewritten, notes
+
+
+def _handle_candidates_from_facts(facts: dict[str, Any], field_name: str) -> list[str]:
+    candidates: list[str] = []
+    accepted_keys = {field_name}
+    if field_name == "project_id":
+        accepted_keys.add("research.project_id")
+    for raw_key, raw_value in facts.items():
+        key = str(raw_key or "").strip()
+        if key not in accepted_keys and not any(key.endswith(f".{item}") for item in accepted_keys):
+            continue
+        value = str(raw_value or "").strip()
+        if not value:
+            continue
+        if is_placeholder_handle_value(value) or is_suspicious_handle_value(value, field_name=field_name):
+            continue
+        if value not in candidates:
+            candidates.append(value)
+    return candidates
+
+
+def _select_seed_candidate(candidates: list[str]) -> str:
+    if len(candidates) == 1:
+        return candidates[0]
+    return ""
 
 
 def _extract_structured(payload: Any) -> dict[str, Any]:
@@ -152,92 +227,186 @@ def _extract_structured(payload: Any) -> dict[str, Any]:
     return structured if isinstance(structured, dict) else {}
 
 
-def _alias_coordinate(dim_name: str, coords: dict[str, Any]) -> Any:
-    aliases = {
-        "timeframe": ("anchor",),
-        "anchor": ("timeframe",),
-    }
-    for alias in aliases.get(dim_name, ()):
-        if alias in coords:
-            return coords.get(alias)
-    return None
-
-
-def _coerce_to_allowed(candidate: Any, allowed: list[Any]) -> Any | None:
-    if isinstance(candidate, (list, tuple, set)):
-        for item in candidate:
-            coerced = _coerce_to_allowed(item, allowed)
-            if coerced is not None:
-                return coerced
-        return allowed[0] if allowed else None
-    if candidate in allowed:
-        return candidate
-    allowed_strings = {str(item): item for item in allowed}
-    text = str(candidate or "").strip()
-    if text in allowed_strings:
-        return allowed_strings[text]
-    digits = "".join(ch for ch in text if ch.isdigit())
-    if digits:
-        for item in allowed:
-            if isinstance(item, int) and item == int(digits):
-                return item
-        for item in allowed:
-            if isinstance(item, str) and item.startswith(digits):
-                return item
-    if isinstance(candidate, int):
-        for item in allowed:
-            if isinstance(item, str) and item.startswith(str(candidate)):
-                return item
-    return allowed[0] if allowed else None
-
-
-def _extract_experiment_job_ids(data: dict[str, Any]) -> list[str]:
-    ids: list[str] = []
-    job = data.get("job")
-    if isinstance(job, dict):
-        job_id = str(job.get("job_id") or "").strip()
-        if job_id:
-            ids.append(job_id)
-    jobs = data.get("jobs")
-    if isinstance(jobs, list):
-        for item in jobs:
-            if not isinstance(item, dict):
-                continue
-            job_id = str(item.get("job_id") or "").strip()
-            if job_id:
-                ids.append(job_id)
-    operation = data.get("operation")
-    if isinstance(operation, dict):
-        result_ref = operation.get("result_ref")
-        if isinstance(result_ref, dict) and str(result_ref.get("kind") or "").strip() == "experiment_job":
-            job_id = str(result_ref.get("id") or "").strip()
-            if job_id:
-                ids.append(job_id)
-    deduped: list[str] = []
-    seen: set[str] = set()
-    for item in ids:
-        if item in seen:
+def _first_string_field(sources: list[dict[str, Any]], field_name: str) -> str:
+    for source in sources:
+        if not isinstance(source, dict):
             continue
-        seen.add(item)
-        deduped.append(item)
-    return deduped
+        value = str(source.get(field_name) or "").strip()
+        if value:
+            return value
+    return ""
 
 
-def _is_placeholder_job_id(value: str) -> bool:
-    normalized = value.strip().lower()
-    if not normalized:
+def _confirmed_handle_value(state: ResearchHandleState, field_name: str) -> str:
+    return {
+        "project_id": state.confirmed_project_id,
+        "job_id": state.confirmed_job_id or state.confirmed_experiment_job_id,
+        "run_id": state.confirmed_run_id,
+        "snapshot_id": state.confirmed_snapshot_id,
+        "operation_id": state.confirmed_operation_id,
+    }.get(field_name, "")
+
+
+def _set_confirmed_handle(state: ResearchHandleState, field_name: str, value: str) -> None:
+    if field_name == "project_id":
+        state.confirmed_project_id = value
+    elif field_name == "job_id":
+        state.confirmed_job_id = value
+        state.confirmed_experiment_job_id = value
+    elif field_name == "run_id":
+        state.confirmed_run_id = value
+    elif field_name == "snapshot_id":
+        state.confirmed_snapshot_id = value
+    elif field_name == "operation_id":
+        state.confirmed_operation_id = value
+
+
+def _remember_project_candidates(*, state: ResearchHandleState, data: dict[str, Any]) -> None:
+    projects = data.get("projects") if isinstance(data.get("projects"), list) else []
+    if not isinstance(projects, list):
+        return
+    candidates: list[tuple[str, dict[str, Any]]] = []
+    for item in projects:
+        if not isinstance(item, dict):
+            continue
+        project_id = str(item.get("project_id") or "").strip()
+        if not project_id:
+            continue
+        state.known_handles.setdefault("project_id", set()).add(project_id)
+        name = str(item.get("name") or "").strip()
+        if name:
+            state.project_aliases.add(name)
+        candidates.append((project_id, item))
+    if state.confirmed_project_id:
+        return
+    selected = _select_best_project_candidate(candidates)
+    if selected:
+        state.confirmed_project_id = selected
+
+
+def _select_best_project_candidate(candidates: list[tuple[str, dict[str, Any]]]) -> str:
+    preferred: list[str] = []
+    fallback: list[str] = []
+    for project_id, project in candidates:
+        fallback.append(project_id)
+        name = str(project.get("name") or "").strip().lower()
+        tags = {
+            str(item).strip().lower()
+            for item in project.get("tags", [])
+            if str(item).strip()
+        }
+        metadata = project.get("metadata") if isinstance(project.get("metadata"), dict) else {}
+        metadata_kind = str(metadata.get("kind") or "").strip().lower()
+        if (
+            "incident" in name
+            or "placeholder" in project_id.lower()
+            or metadata_kind == "incident_backlog"
+            or {"incident", "infrastructure", "mcp"} & tags
+        ):
+            continue
+        preferred.append(project_id)
+    if len(preferred) == 1:
+        return preferred[0]
+    if not preferred and len(fallback) == 1:
+        return fallback[0]
+    return ""
+
+
+def _should_rewrite_invalid_project_id(
+    current: str,
+    *,
+    confirmed: str,
+    known_values: set[str],
+) -> bool:
+    if not current or current == confirmed or current in known_values:
+        return False
+    if current.isdigit():
         return True
-    if normalized in {"<job_id>", "job_id", "latest", "pending", "none", "null", "0", "unknown"}:
+    lowered = current.lower()
+    if lowered in {"true", "false"}:
         return True
-    if normalized.startswith("job_"):
+    if len(current) >= 16 and all(ch in "0123456789abcdef" for ch in lowered):
         return True
     return False
+
+
+def _normalize_coordinates(
+    coordinates: dict[str, Any],
+    atlas_dimensions: dict[str, list[Any]],
+) -> tuple[dict[str, Any], list[str]]:
+    normalized: dict[str, Any] = {}
+    used_dimensions: set[str] = set()
+    notes: list[str] = []
+    for raw_key, raw_value in coordinates.items():
+        key = str(raw_key or "").strip()
+        if not key:
+            continue
+        target_key = key if key in atlas_dimensions else _match_dimension_key(
+            value=raw_value,
+            atlas_dimensions=atlas_dimensions,
+            used_dimensions=used_dimensions,
+        )
+        if not target_key:
+            continue
+        coerced = _coerce_to_allowed(raw_value, atlas_dimensions.get(target_key) or [])
+        if coerced is None:
+            continue
+        normalized[target_key] = coerced
+        used_dimensions.add(target_key)
+        if target_key != key or coerced != raw_value:
+            notes.append(f"normalized atlas coordinate '{key}' to '{target_key}'")
+    for key, allowed_values in atlas_dimensions.items():
+        if key in normalized or not allowed_values:
+            continue
+        if len(allowed_values) == 1:
+            normalized[key] = allowed_values[0]
+            notes.append(f"filled missing atlas coordinate '{key}' from the only allowed value")
+    return normalized, notes
+
+
+def _match_dimension_key(
+    *,
+    value: Any,
+    atlas_dimensions: dict[str, list[Any]],
+    used_dimensions: set[str],
+) -> str:
+    for key, allowed_values in atlas_dimensions.items():
+        if key in used_dimensions:
+            continue
+        if _coerce_to_allowed(value, allowed_values) is not None:
+            return key
+    return ""
+
+
+def _coerce_to_allowed(value: Any, allowed_values: list[Any]) -> Any | None:
+    candidates = value if isinstance(value, list) else [value]
+    for candidate in candidates:
+        for allowed in allowed_values:
+            if _values_match(candidate, allowed):
+                return allowed
+    return allowed_values[0] if allowed_values else None
+
+
+def _values_match(candidate: Any, allowed: Any) -> bool:
+    return bool(_coerce_numeric_token(candidate) == _coerce_numeric_token(allowed) or _normalize_value(candidate) == _normalize_value(allowed))
+
+
+def _normalize_value(value: Any) -> str:
+    return str(value or "").strip().lower()
+
+
+def _coerce_numeric_token(value: Any) -> str:
+    text = _normalize_value(value)
+    digits = "".join(ch for ch in text if ch.isdigit())
+    return digits or text
 
 
 __all__ = [
     "ResearchHandleState",
     "repair_atlas_coordinates",
     "repair_experiment_handle",
+    "repair_handle_arguments",
     "repair_project_handle",
+    "seed_handle_state_from_facts",
     "update_handle_state",
 ]

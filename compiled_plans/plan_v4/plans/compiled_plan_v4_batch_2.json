@@ -1,6 +1,6 @@
 {
   "plan_id": "compiled_plan_v4_batch_2",
-  "goal": "Close all open branches from v3 through disciplined terminal decisions, then attempt weak-window targeted repair on the immutable base before considering any higher-friction exploration.",
+  "goal": "Close all v3 loose ends, exhaust low-friction signal space, attempt targeted weak-window repair, and conditionally evaluate medium-friction branches.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -9,48 +9,74 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "active-signal-v1@1 is immutable reference — never modify the base snapshot.",
-    "Previously rejected branches (H1_post_funding_long, H2_expiry_lead_lag, A1_high_iv_long_v1, A1b_high_iv_momentum, A4_wed_afternoon) must not be reopened.",
-    "Static high-IV regime is a volatility mode, not a directional signal — do not reinterpret as alpha.",
-    "Every hypothesis branch must reach a terminal decision (promoted or rejected) before the plan can advance past its wave.",
-    "Medium-friction wave is locked until low-friction wave is fully exhausted with recorded final verdict and no promoted candidate.",
+    "active-signal-v1@1 is immutable and must never be modified.",
+    "Previously rejected branches (H1_post_funding_long, H2_expiry_lead_lag, A1_high_iv_long_v1, A1b_high_iv_momentum, A4_wed_afternoon) must NOT be reopened.",
+    "Static high-IV regime is a volatility regime, not a directional signal — do not reuse as direction.",
+    "Medium-friction wave is locked until low-friction wave, weak-window repair, and all prior stages have terminal decisions.",
     "Maximum 2 weak pockets may be selected for specialist repair.",
-    "Separate data tasks from research results — never conflate them."
+    "Every branch must reach a terminal decision (promoted, rejected, or formally skipped) before proceeding.",
+    "Do not confuse data tasks with research results."
   ],
   "slices": [
     {
       "slice_id": "compiled_plan_v4_stage_4",
-      "title": "Полностью закрыть A3_broader_cl_transition (только если A2 не promoted)",
-      "hypothesis": "Only if A2 was not promoted, bring the backup branch A3 to a terminal decision so no half-alive branches remain.",
-      "objective": "Only if A2 was not promoted, bring the backup branch A3 to a terminal decision so no half-alive branches remain.",
+      "title": "Только если A2 не promoted — полностью закрыть A3_broader_cl_transition",
+      "hypothesis": "If A2 was not promoted, drive the A3 broader CL-transition branch to a terminal decision so no branch remains half-alive.",
+      "objective": "If A2 was not promoted, drive the A3 broader CL-transition branch to a terminal decision so no branch remains half-alive.",
       "success_criteria": [
-        "A3 has a terminal decision: promoted or rejected with documented reason."
+        "A3_broader_cl_transition has a terminal decision."
       ],
       "allowed_tools": [
         "features_custom",
-        "features_dataset",
+        "features_analytics",
+        "backtests_strategy",
         "backtests_runs",
         "backtests_analysis",
-        "research_record"
+        "research_memory"
       ],
       "evidence_requirements": [
-        "A3 has a terminal decision: promoted or rejected with documented reason."
+        "A3_broader_cl_transition has a terminal decision."
       ],
       "policy_tags": [
-        "research",
-        "conditional",
-        "full_chain",
+        "core_research",
+        "acceptance_chain",
+        "gated",
         "optional_candidate"
       ],
-      "max_turns": 24,
-      "max_tool_calls": 24,
-      "max_expensive_calls": 3,
+      "max_turns": 36,
+      "max_tool_calls": 30,
+      "max_expensive_calls": 6,
       "parallel_slot": 1,
+      "runtime_profile": "generic_mutation",
+      "required_prerequisite_facts": null,
+      "required_output_facts": [],
+      "finalization_mode": "none",
+      "dependency_unblock_mode": "accepted_only",
+      "watchlist_allows_unblock": false,
+      "requires_mutating_evidence": false,
+      "requires_persisted_artifact": false,
+      "requires_live_handle_validation": false,
+      "acceptance_contract": {
+        "kind": "feature_contract_exploration",
+        "mode": "strict",
+        "required_subjects": "none",
+        "required_predicates": [],
+        "mcp_proof_calls": [],
+        "forbid_contradictions": [],
+        "allow_advisory_unblock": false,
+        "acceptance_requirements": {
+          "slice_id": "compiled_plan_v4_stage_4",
+          "contract_kind": "feature_contract_exploration"
+        }
+      },
+      "acceptance_proof": {},
+      "acceptance_blockers": [],
       "budget_scale_applied": 6,
       "depends_on": [
         "compiled_plan_v4_stage_3"
       ],
       "status": "pending",
+      "acceptance_state": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
       "expensive_call_count": 0,
@@ -61,42 +87,77 @@
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
+      "dependency_blocker_slice_id": "",
+      "dependency_blocker_reason_code": "",
+      "dependency_blocker_class": "",
+      "blocked_retry_count": 0,
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
+      "gate_hint": "Only executes if A2_iv_acceleration was NOT promoted. If A2 is promoted, skip this stage entirely.",
       "artifacts": [],
-      "facts": {}
+      "facts": {},
+      "verdict": ""
     },
     {
       "slice_id": "compiled_plan_v4_stage_5",
       "title": "Общий вердикт по low-friction wave",
-      "hypothesis": "Produce a single binding final verdict on whether the low-friction candidate space has been exhausted.",
-      "objective": "Produce a single binding final verdict on whether the low-friction candidate space has been exhausted.",
+      "hypothesis": "Produce a final binding verdict on whether low-friction signal space is exhausted or contains viable candidates.",
+      "objective": "Produce a final binding verdict on whether low-friction signal space is exhausted or contains viable candidates.",
       "success_criteria": [
-        "A single, unambiguous low_friction_final verdict is recorded."
+        "A single binding final verdict on low-friction wave exists.",
+        "Every candidate has an explicit classification."
       ],
       "allowed_tools": [
+        "research_memory",
         "backtests_strategy",
-        "backtests_runs",
-        "research_record"
+        "research_map"
       ],
       "evidence_requirements": [
-        "A single, unambiguous low_friction_final verdict is recorded."
+        "A single binding final verdict on low-friction wave exists.",
+        "Every candidate has an explicit classification."
       ],
       "policy_tags": [
-        "decision",
-        "synthesis"
+        "decision_point",
+        "gate"
       ],
       "max_turns": 24,
       "max_tool_calls": 24,
       "max_expensive_calls": 3,
       "parallel_slot": 1,
+      "runtime_profile": "generic_mutation",
+      "required_prerequisite_facts": null,
+      "required_output_facts": [],
+      "finalization_mode": "none",
+      "dependency_unblock_mode": "accepted_only",
+      "watchlist_allows_unblock": false,
+      "requires_mutating_evidence": false,
+      "requires_persisted_artifact": false,
+      "requires_live_handle_validation": false,
+      "acceptance_contract": {
+        "kind": "generic_read_strict",
+        "mode": "strict",
+        "required_subjects": "none",
+        "required_predicates": [
+          "domain_tool_evidence_present"
+        ],
+        "mcp_proof_calls": [],
+        "forbid_contradictions": [],
+        "allow_advisory_unblock": false,
+        "acceptance_requirements": {
+          "slice_id": "compiled_plan_v4_stage_5",
+          "contract_kind": "generic_read_strict"
+        }
+      },
+      "acceptance_proof": {},
+      "acceptance_blockers": [],
       "budget_scale_applied": 6,
       "depends_on": [
         "compiled_plan_v4_stage_3",
         "compiled_plan_v4_stage_4"
       ],
       "status": "pending",
+      "acceptance_state": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
       "expensive_call_count": 0,
@@ -107,42 +168,78 @@
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
+      "dependency_blocker_slice_id": "",
+      "dependency_blocker_reason_code": "",
+      "dependency_blocker_class": "",
+      "blocked_retry_count": 0,
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
+      "gate_hint": "",
       "artifacts": [],
-      "facts": {}
+      "facts": {},
+      "verdict": ""
     },
     {
-      "slice_id": "compiled_plan_v4_stage_6_part1",
-      "title": "Weak-window repair specialists (exploration)",
-      "hypothesis": "Determine whether targeted specialist features can repair the weakest performance pockets of the immutable base.",
-      "objective": "Determine whether targeted specialist features can repair the weakest performance pockets of the immutable base.",
+      "slice_id": "compiled_plan_v4_stage_6",
+      "title": "Новая программа v4 — weak-window repair specialists",
+      "hypothesis": "Identify the weakest performance windows of the immutable base and build targeted specialist hypotheses to repair them.",
+      "objective": "Identify the weakest performance windows of the immutable base and build targeted specialist hypotheses to repair them.",
       "success_criteria": [
-        "Answer recorded: can targeted repair produce anything useful beyond the base, or is the base already optimal within low-friction scope?",
-        "Exploration phase complete"
+        "There is a clear answer on whether targeted repair can produce something useful.",
+        "Each specialist hypothesis has a recorded verdict."
       ],
       "allowed_tools": [
-        "research_record",
-        "backtests_analysis"
+        "backtests_analysis",
+        "backtests_strategy",
+        "backtests_runs",
+        "features_custom",
+        "features_analytics",
+        "research_memory"
       ],
       "evidence_requirements": [
-        "Answer recorded: can targeted repair produce anything useful beyond the base, or is the base already optimal within low-friction scope?",
-        "Exploration phase complete"
+        "There is a clear answer on whether targeted repair can produce something useful.",
+        "Each specialist hypothesis has a recorded verdict."
       ],
       "policy_tags": [
-        "research",
-        "targeted"
+        "core_research",
+        "acceptance_chain",
+        "bounded"
       ],
-      "max_turns": 24,
-      "max_tool_calls": 24,
-      "max_expensive_calls": 3,
+      "max_turns": 36,
+      "max_tool_calls": 30,
+      "max_expensive_calls": 6,
       "parallel_slot": 1,
+      "runtime_profile": "generic_mutation",
+      "required_prerequisite_facts": null,
+      "required_output_facts": [],
+      "finalization_mode": "none",
+      "dependency_unblock_mode": "accepted_only",
+      "watchlist_allows_unblock": false,
+      "requires_mutating_evidence": false,
+      "requires_persisted_artifact": false,
+      "requires_live_handle_validation": false,
+      "acceptance_contract": {
+        "kind": "feature_contract_exploration",
+        "mode": "strict",
+        "required_subjects": "none",
+        "required_predicates": [],
+        "mcp_proof_calls": [],
+        "forbid_contradictions": [],
+        "allow_advisory_unblock": false,
+        "acceptance_requirements": {
+          "slice_id": "compiled_plan_v4_stage_6",
+          "contract_kind": "feature_contract_exploration"
+        }
+      },
+      "acceptance_proof": {},
+      "acceptance_blockers": [],
       "budget_scale_applied": 6,
       "depends_on": [
         "compiled_plan_v4_stage_5"
       ],
       "status": "pending",
+      "acceptance_state": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
       "expensive_call_count": 0,
@@ -153,13 +250,20 @@
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
+      "dependency_blocker_slice_id": "",
+      "dependency_blocker_reason_code": "",
+      "dependency_blocker_class": "",
+      "blocked_retry_count": 0,
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
+      "gate_hint": "",
       "artifacts": [],
-      "facts": {}
+      "facts": {},
+      "verdict": ""
     }
   ],
+  "mcp_catalog_hash": "c306b4054eaf8f466a7e29182863da4e7cd0610551ef83a0611c515c84aa415b",
   "plan_source_kind": "compiled_raw",
   "source_sequence_id": "compiled_plan_v4",
   "source_raw_plan": "raw_plans/plan_v4.md",
@@ -168,6 +272,7 @@
   "source_compile_report_path": "",
   "sequence_batch_index": 2,
   "status": "draft",
-  "created_at": "2026-04-11T10:50:40.017318+00:00",
-  "updated_at": "2026-04-11T10:50:40.017538+00:00"
+  "last_error": "",
+  "created_at": "2026-04-15T18:38:47.063418+00:00",
+  "updated_at": "2026-04-15T18:38:47.063420+00:00"
 }

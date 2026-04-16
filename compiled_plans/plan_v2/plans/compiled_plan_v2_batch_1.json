@@ -1,6 +1,6 @@
 {
   "plan_id": "compiled_plan_v2_batch_1",
-  "goal": "Find one or more new orthogonal specialist signals or conditioning layers that work where active-signal-v1@1 is absent, prove their additive value, and avoid repeating v1's single-filter event-entry mistakes.",
+  "goal": "Find one or more orthogonal specialist signals or conditioning layers that work where the base does not trade, prove additive value through new entries, and pass stability and integration tests.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -9,43 +9,84 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "Base active-signal-v1@1 is immutable: no retuning of hours, days, thresholds, or execution rules.",
-    "Raw single-filter event-entry constructions (H1/H2 style) are permanently banned.",
-    "Every new candidate must first pass complement-first mode before any other evaluation.",
-    "Model-first approaches are forbidden until the low-friction Wave A is fully exhausted.",
-    "Each prototype must have at least three logical layers: new information layer, regime/state confirmation, and entry-density limiter.",
-    "A candidate whose profit vanishes under strict-additive mode is rejected regardless of permissive-integrated performance."
+    "Base active-signal-v1@1 is immutable — no retuning, threshold changes, or cosmetic variations.",
+    "Raw single-filter event entries (H1/H2 style) are permanently forbidden.",
+    "Every candidate must be tested in complement-first mode before any integration.",
+    "Every prototype must have at least 3 logical layers: new information layer + regime confirmation + density limiter.",
+    "Model-first approaches are forbidden until the low-friction wave (stages 3–8) completes.",
+    "If a prototype produces hundreds of low-conviction entries, it is rejected — not tuned.",
+    "Cannibalism check is mandatory: overlap high + strict-additive weak = automatic rejection."
   ],
   "slices": [
     {
       "slice_id": "compiled_plan_v2_stage_1",
-      "title": "Postmortem plan_v1 and fix new rules",
-      "hypothesis": "Record the specific lessons from the failed v1 cycle so the agent does not repeat the same mistakes under different names, and codify the invariant rules for v2.",
-      "objective": "Record the specific lessons from the failed v1 cycle so the agent does not repeat the same mistakes under different names, and codify the invariant rules for v2.",
+      "title": "Постмортем plan_v1 и фиксация новых правил",
+      "hypothesis": "Record a postmortem of the v1 cycle, fix immutable invariants, and enumerate permitted hypothesis families for v2 so the agent cannot repeat failed patterns under new names.",
+      "objective": "Record a postmortem of the v1 cycle, fix immutable invariants, and enumerate permitted hypothesis families for v2 so the agent cannot repeat failed patterns under new names.",
       "success_criteria": [
-        "Explicit postmortem is recorded and the agent understands v2 is a different research class, not a retry of the same raw ideas."
+        "Postmortem recorded in research memory with explicit failure reasons.",
+        "v2 invariants and permitted families written to research_map."
       ],
       "allowed_tools": [
         "research_project",
-        "research_record",
-        "research_map",
-        "research_search"
+        "research_memory",
+        "research_map"
       ],
       "evidence_requirements": [
-        "Explicit postmortem is recorded and the agent understands v2 is a different research class, not a retry of the same raw ideas."
+        "Postmortem recorded in research memory with explicit failure reasons.",
+        "v2 invariants and permitted families written to research_map."
       ],
       "policy_tags": [
         "setup",
-        "cheap_first",
-        "discipline"
+        "cheap_first"
       ],
       "max_turns": 24,
       "max_tool_calls": 24,
-      "max_expensive_calls": 2,
+      "max_expensive_calls": 1,
       "parallel_slot": 1,
+      "runtime_profile": "research_setup",
+      "required_prerequisite_facts": [],
+      "required_output_facts": [
+        "research.baseline_configured",
+        "research.atlas_defined",
+        "research.invariants_recorded",
+        "research.naming_recorded"
+      ],
+      "finalization_mode": "fact_based",
+      "dependency_unblock_mode": "accepted_only",
+      "watchlist_allows_unblock": false,
+      "requires_mutating_evidence": false,
+      "requires_persisted_artifact": false,
+      "requires_live_handle_validation": false,
+      "acceptance_contract": {
+        "kind": "research_setup",
+        "mode": "strict",
+        "required_subjects": "persisted_research_setup_nodes",
+        "required_predicates": [
+          "research_project_present",
+          "research_setup_facts_present"
+        ],
+        "mcp_proof_calls": [
+          {
+            "tool": "research_memory",
+            "arguments": {
+              "action": "prove"
+            }
+          }
+        ],
+        "forbid_contradictions": [],
+        "allow_advisory_unblock": false,
+        "acceptance_requirements": {
+          "slice_id": "compiled_plan_v2_stage_1",
+          "contract_kind": "research_setup"
+        }
+      },
+      "acceptance_proof": {},
+      "acceptance_blockers": [],
       "budget_scale_applied": 6,
       "depends_on": [],
       "status": "pending",
+      "acceptance_state": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
       "expensive_call_count": 0,
@@ -56,91 +97,158 @@
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
+      "dependency_blocker_slice_id": "",
+      "dependency_blocker_reason_code": "",
+      "dependency_blocker_class": "",
+      "blocked_retry_count": 0,
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
+      "gate_hint": "",
       "artifacts": [],
-      "facts": {}
+      "facts": {},
+      "verdict": ""
     },
     {
       "slice_id": "compiled_plan_v2_stage_2",
-      "title": "Build base-absent research surface",
-      "hypothesis": "Construct an anchor-level map that labels every 1h bar as base-long-fired, base-short-fired, or base-absent, then identify subspaces where the base is silent but the market has directional opportunity.",
-      "objective": "Construct an anchor-level map that labels every 1h bar as base-long-fired, base-short-fired, or base-absent, then identify subspaces where the base is silent but the market has directional opportunity.",
+      "title": "Построение base-absent research surface",
+      "hypothesis": "Build an anchor-level table that separates base-fired from base-absent bars, then map missing regimes where the base is silent but the market shows directionality.",
+      "objective": "Build an anchor-level table that separates base-fired from base-absent bars, then map missing regimes where the base is silent but the market shows directionality.",
       "success_criteria": [
-        "A map of missing regimes exists specifically on the surface where the base does not participate."
+        "Map of missing regimes exists specifically on the base-absent surface with directional bias identified."
       ],
       "allowed_tools": [
         "experiments_run",
         "experiments_read",
-        "research_record",
-        "research_map"
+        "research_memory",
+        "features_catalog",
+        "events"
       ],
       "evidence_requirements": [
-        "A map of missing regimes exists specifically on the surface where the base does not participate."
+        "Map of missing regimes exists specifically on the base-absent surface with directional bias identified."
       ],
       "policy_tags": [
-        "research",
-        "data_readiness",
+        "setup",
+        "cheap_first",
+        "foundation"
+      ],
+      "max_turns": 24,
+      "max_tool_calls": 24,
+      "max_expensive_calls": 2,
+      "parallel_slot": 1,
+      "runtime_profile": "generic_mutation",
+      "required_prerequisite_facts": [
+        "research.baseline_configured",
+        "research.atlas_defined",
+        "research.invariants_recorded",
+        "research.naming_recorded"
+      ],
+      "required_output_facts": [],
+      "finalization_mode": "none",
+      "dependency_unblock_mode": "accepted_only",
+      "watchlist_allows_unblock": false,
+      "requires_mutating_evidence": false,
+      "requires_persisted_artifact": false,
+      "requires_live_handle_validation": false,
+      "acceptance_contract": {
+        "kind": "feature_contract_exploration",
+        "mode": "strict",
+        "required_subjects": "none",
+        "required_predicates": [],
+        "mcp_proof_calls": [],
+        "forbid_contradictions": [],
+        "allow_advisory_unblock": false,
+        "acceptance_requirements": {
+          "slice_id": "compiled_plan_v2_stage_2",
+          "contract_kind": "feature_contract_exploration"
+        }
+      },
+      "acceptance_proof": {},
+      "acceptance_blockers": [],
+      "budget_scale_applied": 6,
+      "depends_on": [
+        "compiled_plan_v2_stage_1"
+      ],
+      "status": "pending",
+      "acceptance_state": "pending",
+      "turn_count": 0,
+      "tool_call_count": 0,
+      "expensive_call_count": 0,
+      "assigned_worker_id": null,
+      "last_checkpoint_turn_id": "",
+      "last_checkpoint_summary": "",
+      "last_checkpoint_status": "",
+      "final_report_turn_id": "",
+      "last_error": "",
+      "last_summary": "",
+      "dependency_blocker_slice_id": "",
+      "dependency_blocker_reason_code": "",
+      "dependency_blocker_class": "",
+      "blocked_retry_count": 0,
+      "active_operation_ref": "",
+      "active_operation_status": "",
+      "active_operation_arguments": {},
+      "gate_hint": "",
+      "artifacts": [],
+      "facts": {},
+      "verdict": ""
+    },
+    {
+      "slice_id": "compiled_plan_v2_stage_3",
+      "title": "Wave A — low-friction hypotheses on existing data",
+      "hypothesis": "Select hypothesis families buildable from already-available 1h data with minimal new custom features, define hypothesis contracts with missing regime and non-duplication rationale.",
+      "objective": "Select hypothesis families buildable from already-available 1h data with minimal new custom features, define hypothesis contracts with missing regime and non-duplication rationale.",
+      "success_criteria": [
+        "Small, high-quality list of Wave A hypotheses, each data-ready or nearly data-ready, with explicit non-duplication rationale."
+      ],
+      "allowed_tools": [
+        "research_map",
+        "research_memory",
+        "features_catalog",
+        "features_custom",
+        "events"
+      ],
+      "evidence_requirements": [
+        "Small, high-quality list of Wave A hypotheses, each data-ready or nearly data-ready, with explicit non-duplication rationale."
+      ],
+      "policy_tags": [
+        "hypothesis_design",
         "cheap_first"
       ],
       "max_turns": 24,
       "max_tool_calls": 24,
       "max_expensive_calls": 2,
       "parallel_slot": 1,
-      "budget_scale_applied": 6,
-      "depends_on": [
-        "compiled_plan_v2_stage_1"
-      ],
-      "status": "pending",
-      "turn_count": 0,
-      "tool_call_count": 0,
-      "expensive_call_count": 0,
-      "assigned_worker_id": null,
-      "last_checkpoint_turn_id": "",
-      "last_checkpoint_summary": "",
-      "last_checkpoint_status": "",
-      "final_report_turn_id": "",
-      "last_error": "",
-      "last_summary": "",
-      "active_operation_ref": "",
-      "active_operation_status": "",
-      "active_operation_arguments": {},
-      "artifacts": [],
-      "facts": {}
-    },
-    {
-      "slice_id": "compiled_plan_v2_stage_3",
-      "title": "Wave A — low-friction new layers on already available data",
-      "hypothesis": "Select hypothesis families that can be built without heavy external infrastructure, using already available 1h data and minimal new custom features.",
-      "objective": "Select hypothesis families that can be built without heavy external infrastructure, using already available 1h data and minimal new custom features.",
-      "success_criteria": [
-        "A small but high-quality list of Wave A hypotheses exists, all data-ready or nearly data-ready."
-      ],
-      "allowed_tools": [
-        "features_catalog",
-        "features_dataset",
-        "events",
-        "research_record",
-        "research_map"
-      ],
-      "evidence_requirements": [
-        "A small but high-quality list of Wave A hypotheses exists, all data-ready or nearly data-ready."
-      ],
-      "policy_tags": [
-        "hypothesis_design",
-        "cheap_first",
-        "discipline"
-      ],
-      "max_turns": 24,
-      "max_tool_calls": 24,
-      "max_expensive_calls": 2,
-      "parallel_slot": 1,
+      "runtime_profile": "generic_mutation",
+      "required_prerequisite_facts": null,
+      "required_output_facts": [],
+      "finalization_mode": "none",
+      "dependency_unblock_mode": "accepted_only",
+      "watchlist_allows_unblock": false,
+      "requires_mutating_evidence": false,
+      "requires_persisted_artifact": false,
+      "requires_live_handle_validation": false,
+      "acceptance_contract": {
+        "kind": "feature_contract_exploration",
+        "mode": "strict",
+        "required_subjects": "none",
+        "required_predicates": [],
+        "mcp_proof_calls": [],
+        "forbid_contradictions": [],
+        "allow_advisory_unblock": false,
+        "acceptance_requirements": {
+          "slice_id": "compiled_plan_v2_stage_3",
+          "contract_kind": "feature_contract_exploration"
+        }
+      },
+      "acceptance_proof": {},
+      "acceptance_blockers": [],
       "budget_scale_applied": 6,
       "depends_on": [
         "compiled_plan_v2_stage_2"
       ],
       "status": "pending",
+      "acceptance_state": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
       "expensive_call_count": 0,
@@ -151,13 +259,20 @@
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
+      "dependency_blocker_slice_id": "",
+      "dependency_blocker_reason_code": "",
+      "dependency_blocker_class": "",
+      "blocked_retry_count": 0,
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
+      "gate_hint": "",
       "artifacts": [],
-      "facts": {}
+      "facts": {},
+      "verdict": ""
     }
   ],
+  "mcp_catalog_hash": "c306b4054eaf8f466a7e29182863da4e7cd0610551ef83a0611c515c84aa415b",
   "plan_source_kind": "compiled_raw",
   "source_sequence_id": "compiled_plan_v2",
   "source_raw_plan": "raw_plans/plan_v2.md",
@@ -166,6 +281,7 @@
   "source_compile_report_path": "",
   "sequence_batch_index": 1,
   "status": "draft",
-  "created_at": "2026-04-11T10:47:21.716060+00:00",
-  "updated_at": "2026-04-11T10:47:21.716071+00:00"
+  "last_error": "",
+  "created_at": "2026-04-15T18:35:44.608240+00:00",
+  "updated_at": "2026-04-15T18:35:44.608244+00:00"
 }

@@ -1,0 +1,388 @@
+"""
+Backtests-specific prompt guidance and local safety guards.
+"""
+
+from __future__ import annotations
+
+import json
+from typing import Any
+
+from app.services.mcp_catalog.models import McpCatalogSnapshot
+
+STRICT_BACKTESTS_PROFILES = frozenset(
+    {
+        "backtests_stability_analysis",
+        "backtests_integration_analysis",
+        "backtests_cannibalization_analysis",
+    }
+)
+
+_BACKTESTS_CONTEXT_MARKERS = (
+    "backtest",
+    "standalone",
+    "stability",
+    "condition analysis",
+    "integration",
+    "cannibal",
+    "ownership",
+    "new-entry proof",
+    "walk-forward",
+    "walkforward",
+)
+
+
+def is_backtests_context(
+    *,
+    runtime_profile: str = "",
+    title: str = "",
+    objective: str = "",
+    success_criteria: list[str] | tuple[str, ...] | None = None,
+    policy_tags: list[str] | tuple[str, ...] | None = None,
+    allowed_tools: set[str] | list[str] | tuple[str, ...] | None = None,
+) -> bool:
+    profile = str(runtime_profile or "").strip()
+    if profile.startswith("backtests_"):
+        return True
+    tool_set = {str(item).strip() for item in (allowed_tools or []) if str(item).strip()}
+    if not (tool_set & {"backtests_plan", "backtests_runs", "backtests_conditions", "backtests_analysis", "backtests_walkforward"}):
+        return False
+    haystack = " ".join(
+        str(item or "").strip().lower()
+        for item in (title, objective, *(success_criteria or []), *(policy_tags or []))
+        if str(item or "").strip()
+    )
+    return any(marker in haystack for marker in _BACKTESTS_CONTEXT_MARKERS)
+
+
+def augment_allowed_tools_for_backtests(
+    *,
+    allowed_tools: set[str],
+    catalog_snapshot: McpCatalogSnapshot | None,
+    runtime_profile: str = "",
+    title: str = "",
+    objective: str = "",
+    success_criteria: list[str] | tuple[str, ...] | None = None,
+    policy_tags: list[str] | tuple[str, ...] | None = None,
+) -> set[str]:
+    """Add cheap read-only planning when a backtests run slice can use it."""
+
+    tools = {str(item).strip() for item in allowed_tools if str(item).strip()}
+    if "backtests_runs" not in tools or "backtests_plan" in tools:
+        return tools
+    if catalog_snapshot is None or not catalog_snapshot.has_tool_name("backtests_plan"):
+        return tools
+    if not is_backtests_context(
+        runtime_profile=runtime_profile,
+        title=title,
+        objective=objective,
+        success_criteria=success_criteria,
+        policy_tags=policy_tags,
+        allowed_tools=tools,
+    ):
+        return tools
+    tools.add("backtests_plan")
+    return tools
+
+
+def format_backtests_plan_call(*, baseline_bootstrap: dict[str, Any]) -> str:
+    snapshot_id = str(
+        baseline_bootstrap.get("baseline_snapshot_id")
+        or baseline_bootstrap.get("snapshot_id")
+        or "active-signal-v1"
+    )
+    version = baseline_bootstrap.get("baseline_version", 1)
+    symbol = str(baseline_bootstrap.get("symbol", "BTCUSDT") or "BTCUSDT")
+    anchor_timeframe = str(baseline_bootstrap.get("anchor_timeframe", "1h") or "1h")
+    execution_timeframe = str(baseline_bootstrap.get("execution_timeframe", "5m") or "5m")
+    return (
+        "backtests_plan("
+        f"snapshot_id='{snapshot_id}', version={version}, symbol='{symbol}', "
+        f"anchor_timeframe='{anchor_timeframe}', execution_timeframe='{execution_timeframe}')"
+    )
+
+
+def _is_standalone_backtest_slice(slice_payload: dict[str, Any]) -> bool:
+    """Detect slices that test new signals independently (not re-running baseline).
+
+    Only matches when "standalone" is explicitly present in title/objective/criteria.
+    Broader terms like "candidate" alone are not enough — integration slices also
+    mention candidates but should use the standard protocol.
+    """
+    haystack = " ".join(
+        str(item or "").strip().lower()
+        for item in (
+            slice_payload.get("title"),
+            slice_payload.get("objective"),
+            *(slice_payload.get("success_criteria") or []),
+        )
+        if str(item or "").strip()
+    )
+    return "standalone" in haystack
+
+
+def build_backtests_protocol_lines(
+    *,
+    slice_payload: dict[str, Any],
+    allowed_tools: list[str],
+    baseline_bootstrap: dict[str, Any],
+) -> list[str]:
+    tool_set = {str(item).strip() for item in allowed_tools if str(item).strip()}
+    if not is_backtests_context(
+        runtime_profile=str(slice_payload.get("runtime_profile") or ""),
+        title=str(slice_payload.get("title") or ""),
+        objective=str(slice_payload.get("objective") or ""),
+        success_criteria=list(slice_payload.get("success_criteria") or []),
+        policy_tags=list(slice_payload.get("policy_tags") or []),
+        allowed_tools=tool_set,
+    ):
+        return []
+    lines = ["", "Backtests protocol:"]
+    is_standalone = _is_standalone_backtest_slice(slice_payload)
+    if "backtests_plan" in tool_set:
+        plan_call = format_backtests_plan_call(baseline_bootstrap=baseline_bootstrap)
+        if is_standalone:
+            lines.extend(
+                [
+                    "- First, inspect existing snapshots via `backtests_strategy(action='inspect', view='list')` to find candidate-specific snapshots.",
+                    f"- If candidate snapshots exist, plan and run backtests on those. If not, call {plan_call} to check baseline readiness.",
+                    "- If the baseline already has completed runs and no new candidate snapshots can be created, create a `research_memory(action='create', kind='result')` entry recording this finding, then return COMPLETE.",
+                ]
+            )
+        else:
+            lines.extend(
+                [
+                    f"- First live action: call {plan_call}.",
+                    "- Start `backtests_runs(action='start', ...)` only after a successful `backtests_plan(...)` or when reusing a known durable run_id.",
+                ]
+            )
+    else:
+        lines.extend(
+            [
+                "- Use only the approved backtests tools listed above; do not call unavailable readiness tools.",
+                "- Do not start a new run unless a successful readiness/preflight result already exists in this attempt.",
+            ]
+        )
+    lines.extend(
+        [
+            "- Use one targeted `research_memory.search` only if shortlist/project context is genuinely missing, then switch back to backtests immediately.",
+            "- Do not loop on research_memory once the candidate/backtest context is clear.",
+            "- After `backtests_runs(... view='list' ...)`, treat `active_runs` and `saved_runs` as the only valid `run_id` sources.",
+            "- `request_id`, `correlation_id`, and `server_session_id` are transport metadata only. They are never `run_id` values.",
+            "- If the run list has no reusable run_id, do not guess and do not switch to detail/status/events/trades.",
+            "- If no reusable run_id or allowed readiness path exists, return a blocked checkpoint with the missing durable handle reason instead of starting a duplicate baseline run.",
+            "- Do not return final_report until the transcript contains live backtest planning or run evidence.",
+            "- IMPORTANT: If backtests_runs(action='start') is blocked as a duplicate, do NOT retry with the same arguments. Instead, create a research_memory note with your findings and return COMPLETE or BLOCKED.",
+            "- When returning evidence_refs, use real IDs from tool responses (snapshot@version, transcript:N:tool_name, node-ids, run-ids). NEVER fabricate refs like 'tool-response-empty'.",
+        ]
+    )
+    if "backtests_analysis" in tool_set:
+        lines.append(
+            "- layer_compare requires compatible runs (matching execution profiles). "
+            "If layer_compare fails with a compatibility error, fall back to individual diagnostics per run."
+        )
+    return lines
+
+
+def build_backtests_first_action_guide(
+    *,
+    allowed_tools: set[str],
+    baseline_bootstrap: dict[str, Any],
+    first_criterion: str = "",
+) -> str:
+    if "backtests_plan" in allowed_tools:
+        plan_call = format_backtests_plan_call(baseline_bootstrap=baseline_bootstrap)
+        parts = [
+            "PROTOCOL:",
+            f"Step 1: Call {plan_call}.",
+            "Step 2: Read the planning result and shortlist/run readiness details.",
+            "Step 3: If needed, start or inspect backtests_runs using the planned inputs.",
+            "Step 4: Return exactly one final_report JSON with evidence_refs referencing the live backtest results.",
+        ]
+        if first_criterion:
+            parts.append(f"Prioritize evidence for: {first_criterion}.")
+        parts.append(f"IMPORTANT: You MUST call {plan_call} or another allowed backtests tool before returning text.")
+        return " ".join(parts)
+    preferred = "backtests_runs" if "backtests_runs" in allowed_tools else sorted(allowed_tools)[0]
+    parts = [
+        "PROTOCOL:",
+        f"Step 1: Use {preferred} only within the approved tool contract.",
+        "Step 2: If listing runs, use run_id only from active_runs or saved_runs.",
+        "Step 3: Do not guess run_id from request_id, correlation_id, or server_session_id.",
+        "Step 4: If no durable run_id is available, return a blocked checkpoint instead of starting a duplicate baseline run.",
+    ]
+    if first_criterion:
+        parts.append(f"Prioritize evidence for: {first_criterion}.")
+    return " ".join(parts)
+
+
+def build_backtests_zero_tool_nudge(*, allowed_tools: set[str], baseline_bootstrap: dict[str, Any]) -> str:
+    if "backtests_plan" in allowed_tools:
+        return (
+            "You did not call any tool. "
+            f"You MUST call {format_backtests_plan_call(baseline_bootstrap=baseline_bootstrap)} now, unless you already know a reusable run_id. "
+            "If shortlist context is missing, do at most one targeted research_memory.search and then immediately call a backtests tool. "
+            "Call a tool first, then return your final_report JSON."
+        )
+    tools = ", ".join(sorted(allowed_tools))
+    return (
+        "You did not call any tool. Use only approved tools "
+        f"[{tools}]. If no durable run_id is available, return a blocked checkpoint; "
+        "do not guess from transport ids and do not start a duplicate baseline run."
+    )
+
+
+def backtests_start_guard_payload(
+    *,
+    tool_name: str,
+    arguments: dict[str, Any],
+    transcript: list[dict[str, Any]] | None,
+    runtime_profile: str,
+    baseline_bootstrap: dict[str, Any] | None,
+) -> dict[str, Any] | None:
+    if str(tool_name or "").strip() != "backtests_runs":
+        return None
+    if str(arguments.get("action") or "").strip().lower() != "start":
+        return None
+    transcript_items = list(transcript or [])
+    if _has_prior_handle_misuse(transcript_items):
+        return _start_guard_error("backtests_start_blocked_after_handle_misuse", arguments)
+    if _has_duplicate_saved_run(transcript_items, arguments):
+        return _start_guard_error("duplicate_baseline_start_blocked", arguments)
+    if _is_baseline_rerun_in_strict_profile(arguments=arguments, runtime_profile=runtime_profile, baseline_bootstrap=baseline_bootstrap or {}):
+        return _start_guard_error("duplicate_baseline_start_blocked", arguments)
+    if not _has_successful_backtests_plan(transcript_items):
+        return _start_guard_error("backtests_plan_required_before_start", arguments)
+    return None
+
+
+def _start_guard_error(reason_code: str, arguments: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "ok": False,
+        "error_class": "agent_contract_misuse",
+        "summary": "backtests_runs(action='start') blocked by local backtests start guard.",
+        "details": {
+            "tool_name": "backtests_runs",
+            "reason_code": reason_code,
+            "arguments": dict(arguments or {}),
+        },
+    }
+
+
+def _has_successful_backtests_plan(transcript: list[dict[str, Any]]) -> bool:
+    for item in transcript:
+        if item.get("kind") != "tool_result" or str(item.get("tool") or "") != "backtests_plan":
+            continue
+        if _is_success_payload(item.get("payload")):
+            return True
+    return False
+
+
+def _has_prior_handle_misuse(transcript: list[dict[str, Any]]) -> bool:
+    for item in transcript:
+        if item.get("kind") != "tool_result":
+            continue
+        payload = item.get("payload") if isinstance(item.get("payload"), dict) else {}
+        if str(payload.get("error_class") or "") != "agent_contract_misuse":
+            continue
+        details = payload.get("details") if isinstance(payload.get("details"), dict) else {}
+        reason = str(details.get("reason_code") or "").strip()
+        json_path = str(details.get("json_path") or "").strip()
+        if reason == "suspicious_durable_handle" or json_path == "run_id":
+            return True
+    return False
+
+
+def _has_duplicate_saved_run(transcript: list[dict[str, Any]], arguments: dict[str, Any]) -> bool:
+    target_symbol = str(arguments.get("symbol") or "").strip()
+    target_snapshot = str(arguments.get("snapshot_id") or arguments.get("strategy_snapshot_id") or "").strip()
+    target_version = str(arguments.get("version") or arguments.get("snapshot_version") or arguments.get("strategy_snapshot_version") or "").strip()
+    if not target_symbol or not target_snapshot:
+        return False
+    for item in transcript:
+        if item.get("kind") != "tool_result" or str(item.get("tool") or "") != "backtests_runs":
+            continue
+        args = item.get("arguments") if isinstance(item.get("arguments"), dict) else {}
+        if str(args.get("view") or "").strip().lower() != "list":
+            continue
+        data = _structured_data(item.get("payload"))
+        saved_runs = data.get("saved_runs") if isinstance(data.get("saved_runs"), list) else []
+        for run in saved_runs:
+            if not isinstance(run, dict):
+                continue
+            if str(run.get("status") or "").strip().lower() != "completed":
+                continue
+            if str(run.get("symbol") or "").strip() != target_symbol:
+                continue
+            if str(run.get("strategy_snapshot_id") or "").strip() != target_snapshot:
+                continue
+            version = str(run.get("strategy_snapshot_version") or "").strip()
+            if target_version and version and target_version != version:
+                continue
+            return True
+    return False
+
+
+def _is_baseline_rerun_in_strict_profile(
+    *,
+    arguments: dict[str, Any],
+    runtime_profile: str,
+    baseline_bootstrap: dict[str, Any],
+) -> bool:
+    if str(runtime_profile or "").strip() not in {"backtests_integration_analysis", "backtests_cannibalization_analysis"}:
+        return False
+    snapshot = str(arguments.get("snapshot_id") or "").strip()
+    version = str(arguments.get("version") or "").strip()
+    symbol = str(arguments.get("symbol") or "").strip()
+    baseline_snapshot = str(baseline_bootstrap.get("baseline_snapshot_id") or baseline_bootstrap.get("snapshot_id") or "active-signal-v1").strip()
+    baseline_version = str(baseline_bootstrap.get("baseline_version") or baseline_bootstrap.get("version") or 1).strip()
+    baseline_symbol = str(baseline_bootstrap.get("symbol") or "BTCUSDT").strip()
+    return snapshot == baseline_snapshot and version == baseline_version and symbol == baseline_symbol
+
+
+def _structured_data(payload: Any) -> dict[str, Any]:
+    structured = _structured_payload(payload)
+    data = structured.get("data") if isinstance(structured.get("data"), dict) else {}
+    return data if isinstance(data, dict) else {}
+
+
+def _structured_payload(payload: Any) -> dict[str, Any]:
+    if not isinstance(payload, dict):
+        return {}
+    nested = payload.get("payload") if isinstance(payload.get("payload"), dict) else {}
+    structured = nested.get("structuredContent")
+    if isinstance(structured, dict):
+        return structured
+    content = nested.get("content")
+    if isinstance(content, list):
+        for item in content:
+            if not isinstance(item, dict) or str(item.get("type") or "") != "text":
+                continue
+            try:
+                parsed = json.loads(str(item.get("text") or ""))
+            except json.JSONDecodeError:
+                continue
+            if isinstance(parsed, dict):
+                return parsed
+    return {}
+
+
+def _is_success_payload(payload: Any) -> bool:
+    if not isinstance(payload, dict):
+        return False
+    if payload.get("error") or payload.get("ok") is False:
+        return False
+    structured = _structured_payload(payload)
+    status = str(structured.get("status") or "").strip().lower()
+    return status not in {"error", "failed"}
+
+
+__all__ = [
+    "STRICT_BACKTESTS_PROFILES",
+    "augment_allowed_tools_for_backtests",
+    "backtests_start_guard_payload",
+    "build_backtests_first_action_guide",
+    "build_backtests_protocol_lines",
+    "build_backtests_zero_tool_nudge",
+    "format_backtests_plan_call",
+    "is_backtests_context",
+]

@@ -7,10 +7,11 @@
   "semantic_method": "llm",
   "stage_count": 13,
   "compiled_plan_count": 5,
+  "mcp_catalog_hash": "c306b4054eaf8f466a7e29182863da4e7cd0610551ef83a0611c515c84aa415b",
   "warnings": [
-    "Plan is written in Russian; semantic intent was inferred without loss of meaning.",
-    "Stage 11 (Wave B) is explicitly gated on Wave A being inconclusive — the compiler must treat it as a conditional branch."
+    "Stages 11–12 (Wave B) are intentionally gated behind Wave A inconclusive outcome; agent must not start Wave B unless explicitly justified.",
+    "Stage 12 raw_markdown was sparse — objective and actions inferred from surrounding context and the operational checklist."
   ],
   "errors": [],
-  "compiled_at": "2026-04-11T10:47:21.717369+00:00"
+  "compiled_at": "2026-04-15T18:35:44.609189+00:00"
 }

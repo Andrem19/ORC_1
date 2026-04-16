@@ -245,6 +245,49 @@ class TestFallbackChain:
         result = svc.translate("Hello")
         assert result == "claude result"
 
+    def test_active_fallback_is_preferred_after_load_model_switch(self):
+        from unittest.mock import MagicMock
+        svc = TranslationService(
+            translate=True, provider="lmstudio",
+            fallback_1="claude_cli",
+        )
+        svc._active_provider = "claude_cli"
+        svc._model_loaded = True
+
+        mock_lm = MagicMock()
+        mock_lm._available_checked = True
+        mock_lm.is_available = False
+        mock_qwen = MagicMock()
+        mock_qwen.translate.return_value = "fallback result"
+        svc._translators["lmstudio"] = mock_lm
+        svc._translators["claude_cli"] = mock_qwen
+
+        result = svc.translate("Hello")
+        assert result == "fallback result"
+        mock_lm.translate.assert_not_called()
+
+    def test_load_model_switches_active_provider_to_available_fallback(self):
+        from unittest.mock import MagicMock
+        svc = TranslationService(
+            translate=True, provider="lmstudio",
+            fallback_1="qwen_cli",
+            fallback_2="claude_cli",
+        )
+        mock_lm = MagicMock()
+        mock_lm.check_available.return_value = False
+        mock_qwen = MagicMock()
+        mock_qwen.check_available.return_value = False
+        mock_claude = MagicMock()
+        mock_claude.check_available.return_value = True
+        svc._translators["lmstudio"] = mock_lm
+        svc._translators["qwen_cli"] = mock_qwen
+        svc._translators["claude_cli"] = mock_claude
+
+        svc.load_model()
+
+        assert svc.is_ready is True
+        assert svc._active_provider == "claude_cli"
+
     def test_all_fail_returns_original(self):
         from unittest.mock import MagicMock
         svc = TranslationService(

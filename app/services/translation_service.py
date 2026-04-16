@@ -70,6 +70,10 @@ Rules:
 - Be concise — these are short status notifications, not literary text
 - Do not add any explanations, comments, or extra text — output ONLY the translation"""
 
+_LMSTUDIO_PROBE_TEXT = "Orchestrator started"
+_LMSTUDIO_PROBE_TIMEOUT_SECONDS = 5
+_LMSTUDIO_PROBE_MAX_TOKENS = 48
+
 # System prompt for CLI translators.
 _CLI_TRANSLATION_PROMPT = (
     "Translate the following English text to Russian. "
@@ -103,6 +107,94 @@ class LMStudioTranslator:
     def is_available(self) -> bool:
         return self._available
 
+    def _normalized_reasoning_effort(self) -> str:
+        effort = str(self._reasoning_effort or "").strip().lower()
+        if effort == "off":
+            return "none"
+        return effort
+
+    def _build_body(self, text: str, *, max_tokens: int | None = None) -> dict:
+        body: dict = {
+            "messages": [
+                {"role": "system", "content": _LMSTUDIO_SYSTEM_PROMPT},
+                {"role": "user", "content": text},
+            ],
+            "temperature": 0.3,
+            "max_tokens": max_tokens if max_tokens is not None else self._max_tokens,
+        }
+        reasoning_effort = self._normalized_reasoning_effort()
+        if reasoning_effort:
+            body["reasoning_effort"] = reasoning_effort
+        if self._model:
+            body["model"] = self._model
+        return body
+
+    def _request_translation(
+        self,
+        text: str,
+        *,
+        timeout: int | None = None,
+        max_tokens: int | None = None,
+        log_prefix: str = "LM Studio translation",
+    ) -> str:
+        body = self._build_body(text, max_tokens=max_tokens)
+        parsed = urlparse(self._base_url)
+        conn = HTTPConnection(
+            parsed.hostname, parsed.port or 1234,
+            timeout=timeout or self._timeout,
+        )
+        try:
+            headers = {"Content-Type": "application/json"}
+            conn.request(
+                "POST", "/v1/chat/completions", json.dumps(body), headers,
+            )
+            resp = conn.getresponse()
+            resp_body = resp.read().decode("utf-8")
+            if resp.status != 200:
+                logger.warning(
+                    "%s returned HTTP %d: %s",
+                    log_prefix,
+                    resp.status,
+                    resp_body[:200],
+                )
+                return ""
+
+            data = json.loads(resp_body)
+            translated = (
+                data.get("choices", [{}])[0]
+                .get("message", {})
+                .get("content", "")
+            ).strip()
+            if translated:
+                return translated
+
+            reasoning = (
+                data.get("choices", [{}])[0]
+                .get("message", {})
+                .get("reasoning_content", "")
+            ).strip()
+            logger.warning(
+                "%s returned empty assistant content (reasoning_chars=%d)",
+                log_prefix,
+                len(reasoning),
+            )
+            return ""
+        finally:
+            conn.close()
+
+    def _probe_generation(self) -> bool:
+        try:
+            translated = self._request_translation(
+                _LMSTUDIO_PROBE_TEXT,
+                timeout=min(self._timeout, _LMSTUDIO_PROBE_TIMEOUT_SECONDS),
+                max_tokens=min(self._max_tokens, _LMSTUDIO_PROBE_MAX_TOKENS),
+                log_prefix="LM Studio translation probe",
+            )
+        except Exception as exc:
+            logger.warning("LM Studio translation probe failed: %s", exc)
+            return False
+        return bool(translated)
+
     def check_available(self) -> bool:
         """Check if LM Studio server is reachable."""
         try:
@@ -111,19 +203,26 @@ class LMStudioTranslator:
                 model=self._model,
                 timeout=5,
             )
-            if ok and not self._available_checked:
-                logger.info(
-                    "LM Studio translator available at %s", self._base_url,
-                )
-            elif not ok and self._model and models:
+            if not ok and self._model and models:
                 logger.warning(
                     "LM Studio translator model '%s' not found at %s (available=%s)",
                     self._model,
                     self._base_url,
                     ", ".join(models[:10]),
                 )
+            elif ok and not self._probe_generation():
+                logger.warning(
+                    "LM Studio translator chat probe failed at %s; endpoint is reachable "
+                    "but the model is not meeting translation latency/content requirements",
+                    self._base_url,
+                )
+                ok = False
             self._available = ok
             self._available_checked = True
+            if ok:
+                logger.info(
+                    "LM Studio translator available at %s", self._base_url,
+                )
             return ok
         except Exception:
             self._available = False
@@ -140,59 +239,29 @@ class LMStudioTranslator:
             self._cache.move_to_end(text)
             return self._cache[text]
 
-        body: dict = {
-            "messages": [
-                {"role": "system", "content": _LMSTUDIO_SYSTEM_PROMPT},
-                {"role": "user", "content": text},
-            ],
-            "temperature": 0.3,
-            "max_tokens": self._max_tokens,
-        }
-        if self._reasoning_effort and self._reasoning_effort not in ("none", "off"):
-            body["reasoning_effort"] = self._reasoning_effort
-        if self._model:
-            body["model"] = self._model
-
         try:
-            parsed = urlparse(self._base_url)
-            conn = HTTPConnection(
-                parsed.hostname, parsed.port or 1234,
-                timeout=self._timeout,
+            translated = self._request_translation(
+                text,
+                log_prefix="LM Studio translation",
             )
-            headers = {"Content-Type": "application/json"}
-            conn.request(
-                "POST", "/v1/chat/completions", json.dumps(body), headers,
-            )
-            resp = conn.getresponse()
-            resp_body = resp.read().decode("utf-8")
-            conn.close()
-
-            if resp.status != 200:
-                logger.warning(
-                    "LM Studio translation returned HTTP %d: %s",
-                    resp.status, resp_body[:200],
-                )
-                return text
-
-            data = json.loads(resp_body)
-            translated = (
-                data.get("choices", [{}])[0]
-                .get("message", {})
-                .get("content", "")
-            ).strip()
-
             if not translated:
+                self._available = False
+                self._available_checked = True
                 return text
 
             # Cache result
             self._cache[text] = translated
             if len(self._cache) > _CACHE_MAX:
                 self._cache.popitem(last=False)
+            self._available = True
+            self._available_checked = True
 
             return translated
 
         except Exception as e:
             logger.warning("LM Studio translation failed: %s", e)
+            self._available = False
+            self._available_checked = True
             return text
 
 
@@ -222,6 +291,12 @@ class CliTranslator:
             return str(explicit)
         return ""
 
+    def _build_command(self, prompt: str, resolved: str) -> list[str]:
+        cli_name = Path(resolved).name.lower()
+        if cli_name == "claude":
+            return [resolved, "--print", "--output-format", "text", prompt]
+        return [resolved, "-p", prompt, "-e", "none", "-o", "text"]
+
     def translate(self, text: str) -> str:
         """Translate text via CLI subprocess."""
         if not text.strip():
@@ -234,12 +309,20 @@ class CliTranslator:
         prompt = f"{_CLI_TRANSLATION_PROMPT}{text}"
         try:
             result = subprocess.run(
-                [resolved, "-p", prompt, "-e", "none", "-o", "text"],
+                self._build_command(prompt, resolved),
                 stdin=subprocess.DEVNULL,
                 capture_output=True,
                 text=True,
                 timeout=self._timeout,
             )
+            if result.returncode != 0:
+                logger.warning(
+                    "CLI translation failed (%s) exit=%d: %s",
+                    self._cli_path,
+                    result.returncode,
+                    (result.stderr or "").strip()[:200],
+                )
+                return text
             output = (result.stdout or "").strip()
             if not output:
                 return text
@@ -276,6 +359,7 @@ class TranslationService:
         self._provider = provider.strip().lower() if provider else "off"
         self._fallback_1 = fallback_1.strip().lower() if fallback_1 else ""
         self._fallback_2 = fallback_2.strip().lower() if fallback_2 else ""
+        self._active_provider = self._provider
         self._load_attempted = False
         self._model_loaded = False
         self._cache: OrderedDict[str, str] = OrderedDict()
@@ -361,6 +445,7 @@ class TranslationService:
                         "Primary translator %r unavailable, using fallback %r",
                         self._provider, fb_name,
                     )
+                    self._active_provider = fb_name
                     self._model_loaded = True
                     return
             raise RuntimeError(
@@ -368,8 +453,9 @@ class TranslationService:
                 f"and no fallback is available."
             )
 
+        self._active_provider = self._provider
         self._model_loaded = True
-        logger.info("Translation provider %r ready", self._provider)
+        logger.info("Translation provider %r ready", self._active_provider)
 
     def translate(self, text: str) -> str:
         """Translate English text to Russian, preserving technical terms.
@@ -392,11 +478,16 @@ class TranslationService:
             return text
 
         # Try primary, then fallbacks
-        providers = [self._provider]
-        if self._fallback_1 and self._fallback_1 not in ("off", "none"):
-            providers.append(self._fallback_1)
-        if self._fallback_2 and self._fallback_2 not in ("off", "none"):
-            providers.append(self._fallback_2)
+        providers: list[str] = []
+        for name in (
+            self._active_provider,
+            self._provider,
+            self._fallback_1,
+            self._fallback_2,
+        ):
+            if not name or name in ("off", "none") or name in providers:
+                continue
+            providers.append(name)
 
         protected, placeholders = self._protect_terms(text)
 
@@ -409,6 +500,12 @@ class TranslationService:
             translator = self._translators.get(provider_name)
             if translator is None:
                 continue
+            if (
+                isinstance(translator, LMStudioTranslator)
+                and translator._available_checked
+                and not translator.is_available
+            ):
+                continue
             try:
                 translated = translator.translate(protected)
                 if translated != protected and translated.strip():
@@ -416,6 +513,7 @@ class TranslationService:
                     self._cache[protected] = translated
                     if len(self._cache) > _CACHE_MAX:
                         self._cache.popitem(last=False)
+                    self._active_provider = provider_name
                     return self._restore_terms(translated, placeholders)
             except Exception as e:
                 logger.warning(

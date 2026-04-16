@@ -104,6 +104,24 @@ class TestLMStudioTranslator:
         body = json.loads(call_args[0][2])
         assert body["model"] == "qwen3.5-9b"
 
+    def test_translate_sends_reasoning_effort_none(self):
+        t = self._make_translator(model="qwen3.5-9b", reasoning_effort="none")
+        mock_resp = MagicMock()
+        mock_resp.status = 200
+        mock_resp.read.return_value = json.dumps({
+            "choices": [{"message": {"content": "Тест"}}],
+        }).encode()
+
+        with patch(
+            "app.services.translation_service.HTTPConnection"
+        ) as mock_conn_cls:
+            mock_conn = mock_conn_cls.return_value
+            mock_conn.getresponse.return_value = mock_resp
+            t.translate("Test")
+
+        body = json.loads(mock_conn.request.call_args[0][2])
+        assert body["reasoning_effort"] == "none"
+
     def test_translate_http_error_returns_original(self):
         t = self._make_translator()
         mock_resp = MagicMock()
@@ -129,6 +147,7 @@ class TestLMStudioTranslator:
             result = t.translate("Hello")
 
         assert result == "Hello"
+        assert t.is_available is False
 
     def test_translate_empty_response_returns_original(self):
         t = self._make_translator()
@@ -168,12 +187,21 @@ class TestLMStudioCheckAvailable:
         mock_resp = MagicMock()
         mock_resp.status = 200
         mock_resp.read.return_value = json.dumps({"data": [{"id": "qwen/qwen3.5-9b"}]}).encode()
+        probe_resp = MagicMock()
+        probe_resp.status = 200
+        probe_resp.read.return_value = json.dumps({
+            "choices": [{"message": {"content": "Оркестратор запущен"}}],
+        }).encode()
 
         with patch(
             "app.lmstudio_api.HTTPConnection"
-        ) as mock_conn_cls:
+        ) as mock_conn_cls, patch(
+            "app.services.translation_service.HTTPConnection"
+        ) as probe_conn_cls:
             mock_conn = mock_conn_cls.return_value
             mock_conn.getresponse.return_value = mock_resp
+            probe_conn = probe_conn_cls.return_value
+            probe_conn.getresponse.return_value = probe_resp
             assert t.check_available() is True
         assert t.is_available is True
 
@@ -189,6 +217,29 @@ class TestLMStudioCheckAvailable:
             mock_conn = mock_conn_cls.return_value
             mock_conn.getresponse.return_value = mock_resp
             assert t.check_available() is False
+
+    def test_unavailable_when_probe_returns_empty_content(self):
+        t = LMStudioTranslator(base_url="http://localhost:1234")
+        mock_resp = MagicMock()
+        mock_resp.status = 200
+        mock_resp.read.return_value = json.dumps({"data": [{"id": "qwen/qwen3.5-9b"}]}).encode()
+        probe_resp = MagicMock()
+        probe_resp.status = 200
+        probe_resp.read.return_value = json.dumps({
+            "choices": [{"message": {"content": "", "reasoning_content": "thinking"}}],
+        }).encode()
+
+        with patch(
+            "app.lmstudio_api.HTTPConnection"
+        ) as mock_conn_cls, patch(
+            "app.services.translation_service.HTTPConnection"
+        ) as probe_conn_cls:
+            mock_conn = mock_conn_cls.return_value
+            mock_conn.getresponse.return_value = mock_resp
+            probe_conn = probe_conn_cls.return_value
+            probe_conn.getresponse.return_value = probe_resp
+            assert t.check_available() is False
+        assert t.is_available is False
 
     def test_unavailable_on_connection_error(self):
         t = LMStudioTranslator(base_url="http://localhost:1234")
@@ -240,9 +291,20 @@ class TestCliTranslator:
         t = CliTranslator(cli_path="qwen", timeout=10)
         t._resolved = "/usr/bin/qwen"
         with patch("subprocess.run") as mock_run:
-            mock_run.return_value = MagicMock(stdout="Привет мир", returncode=0)
+            mock_run.return_value = MagicMock(stdout="Привет мир", returncode=0, stderr="")
             result = t.translate("Hello world")
         assert result == "Привет мир"
+
+    def test_translate_uses_modern_claude_cli_flags(self):
+        t = CliTranslator(cli_path="claude", timeout=10)
+        t._resolved = "/usr/bin/claude"
+        with patch("subprocess.run") as mock_run:
+            mock_run.return_value = MagicMock(stdout="Привет мир", returncode=0, stderr="")
+            result = t.translate("Hello world")
+        assert result == "Привет мир"
+        cmd = mock_run.call_args[0][0]
+        assert cmd[:4] == ["/usr/bin/claude", "--print", "--output-format", "text"]
+        assert "Translate the following English text to Russian." in cmd[4]
 
     def test_translate_subprocess_timeout_returns_original(self):
         import subprocess
@@ -297,12 +359,21 @@ class TestTranslationServiceProviders:
         mock_resp = MagicMock()
         mock_resp.status = 200
         mock_resp.read.return_value = json.dumps({"data": []}).encode()
+        probe_resp = MagicMock()
+        probe_resp.status = 200
+        probe_resp.read.return_value = json.dumps({
+            "choices": [{"message": {"content": "Оркестратор запущен"}}],
+        }).encode()
 
         with patch(
             "app.lmstudio_api.HTTPConnection"
-        ) as mock_conn_cls:
+        ) as mock_conn_cls, patch(
+            "app.services.translation_service.HTTPConnection"
+        ) as probe_conn_cls:
             mock_conn = mock_conn_cls.return_value
             mock_conn.getresponse.return_value = mock_resp
+            probe_conn = probe_conn_cls.return_value
+            probe_conn.getresponse.return_value = probe_resp
             svc.load_model()
 
         assert svc._model_loaded is True

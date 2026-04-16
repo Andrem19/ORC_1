@@ -36,3 +36,36 @@ def build_narrative_prompt(*, report_kind: str, payload: dict[str, Any]) -> str:
         {NARRATIVE_SCHEMA}
         """
     ).strip()
+
+
+SEQUENCE_NARRATIVE_SCHEMA = """{
+  "executive_summary_ru": "3-7 предложений на русском: что за sequence, какие батчи прошли, общий результат",
+  "key_findings_ru": ["подробный вывод на русском: какие features/signals исследовались, результаты backtest-сравнений, метрики"],
+  "important_failures_ru": ["важный сбой, заблокированный батч или риск на русском с деталями"],
+  "recommended_next_actions_ru": ["конкретное следующее действие на русском с указанием feature/snapshot/run_id"],
+  "operator_notes_ru": ["операторская заметка на русском: рекомендации по дальнейшим исследованиям"]
+}"""
+
+
+def build_sequence_narrative_prompt(*, payload: dict[str, Any]) -> str:
+    compact_json = json.dumps(payload, ensure_ascii=False, indent=2)
+    return dedent(
+        f"""
+        Ты — аналитик торговых стратегий. Готовишь развёрнутую операторскую сводку по итогам выполнения compiled sequence.
+        Пиши ТОЛЬКО на русском языке. Английские идентификаторы (plan_id, run_id, sequence_id, snapshot_id, feature names, tool names) оставляй как есть.
+
+        Твои задачи:
+        1. Проанализировать что было сделано: какие slices выполнялись, какие tools использовались, какие features/signals исследовались.
+        2. Описать результаты: backtest-сравнения, метрики (Sharpe, net PnL, max DD, trade count), были ли improvements относительно baseline.
+        3. Выявить провалы и блокировки: какие slices упали, почему, что не получилось.
+        4. Предложить конкретные следующие шаги для дальнейшего исследования.
+
+        Не выдумывай факты. Используй только данные из JSON ниже. Если данных недостаточно для вывода — так и скажи.
+
+        JSON sequence report:
+        {compact_json}
+
+        Верни JSON строго по схеме:
+        {SEQUENCE_NARRATIVE_SCHEMA}
+        """
+    ).strip()

@@ -8,8 +8,10 @@ Supports --yolo for auto-approved tool use and --exclude-tools for safety.
 from __future__ import annotations
 
 import fcntl
+import json
 import logging
 import os
+import tempfile
 from pathlib import Path
 import shlex
 import shutil
@@ -45,14 +47,19 @@ class ClaudeWorkerCli(BaseAdapter):
         exclude_tools: list[str] | None = None,
         *,
         allow_tool_use: bool = True,
+        mcp_servers: dict[str, dict[str, Any]] | None = None,
+        allowed_mcp_tools: list[str] | None = None,
     ) -> None:
         self.cli_path = cli_path
         self.model = model
         self.extra_flags = extra_flags or []
         self.exclude_tools = _dedupe_preserve_order(exclude_tools or [])
         self.allow_tool_use = allow_tool_use
+        self.mcp_servers = dict(mcp_servers or {})
+        self.allowed_mcp_tools = _dedupe_preserve_order(allowed_mcp_tools or [])
         self._resolved_cli_path: str | None = None
         self._resolved_env_path_prefix = ""
+        self._mcp_config_paths: list[str] = []
 
     def name(self) -> str:
         return "claude_worker_cli"
@@ -71,10 +78,46 @@ class ClaudeWorkerCli(BaseAdapter):
             if excluded:
                 cmd.append("--disallowedTools")
                 cmd.extend(excluded)
+            runtime_mcp_servers = kwargs.get("mcp_servers") or self.mcp_servers
+            runtime_allowed_mcp = _dedupe_preserve_order(
+                list(kwargs.get("allowed_mcp_tools") or []) or list(self.allowed_mcp_tools)
+            )
+            if runtime_mcp_servers:
+                mcp_config_path = self._write_mcp_config({"mcpServers": dict(runtime_mcp_servers)})
+                if mcp_config_path:
+                    cmd.extend(["--mcp-config", mcp_config_path])
+            if runtime_allowed_mcp:
+                cmd.append("--allowedTools")
+                cmd.append(",".join(runtime_allowed_mcp))
         cmd.extend(["--output-format", "stream-json"])
         cmd.extend(["-p", prompt])
         cmd.extend(self.extra_flags)
         return cmd
+
+    def _write_mcp_config(self, payload: dict[str, Any]) -> str:
+        try:
+            fd, path = tempfile.mkstemp(prefix="claude_mcp_", suffix=".json")
+            with os.fdopen(fd, "w", encoding="utf-8") as handle:
+                json.dump(payload, handle)
+            self._mcp_config_paths.append(path)
+            return path
+        except Exception as exc:
+            logger.warning("Failed to write Claude MCP config: %s", exc)
+            return ""
+
+    def _cleanup_mcp_configs(self) -> None:
+        for path in list(self._mcp_config_paths):
+            try:
+                os.unlink(path)
+            except FileNotFoundError:
+                pass
+            except Exception as exc:
+                logger.debug("Failed to unlink Claude MCP config %s: %s", path, exc)
+            finally:
+                try:
+                    self._mcp_config_paths.remove(path)
+                except ValueError:
+                    pass
 
     def invoke(self, prompt: str, timeout: int = 300, **kwargs: Any) -> AdapterResponse:
         """Call Claude Code CLI with a prompt and return the output (blocking)."""
@@ -173,6 +216,8 @@ class ClaudeWorkerCli(BaseAdapter):
                 duration_seconds=duration,
                 finish_reason="adapter_exception",
             )
+        finally:
+            self._cleanup_mcp_configs()
 
     # ---------------------------------------------------------------
     # Async background execution (start / check)
@@ -222,6 +267,7 @@ class ClaudeWorkerCli(BaseAdapter):
 
     def terminate(self, handle: ProcessHandle, *, force: bool = False) -> None:
         terminate_process_handle(handle, force=force)
+        self._cleanup_mcp_configs()
 
     def check(self, handle: ProcessHandle) -> tuple[str, bool]:
         """Non-blocking check on a running worker."""

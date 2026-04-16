@@ -6,20 +6,6 @@ from __future__ import annotations
 
 from app.execution_models import ExecutionPlan
 
-_SYNC_TOOLS = {"events_sync", "datasets_sync"}
-_MUTATING_EXPENSIVE_TOOLS = {
-    "features_custom",
-    "features_dataset",
-    "models_dataset",
-    "models_train",
-    "experiments_run",
-    "research_record",
-    "backtests_runs",
-    "backtests_studies",
-    "backtests_walkforward",
-    "backtests_analysis",
-    "backtests_conditions",
-}
 _DYNAMIC_EXPENSIVE_BUDGET_HARD_CAP = 10
 _BUDGET_SCALE_FACTOR = 6
 
@@ -40,9 +26,9 @@ def normalize_plan_budgets(plan: ExecutionPlan) -> ExecutionPlan:
 def _expensive_budget_floor(allowed_tools: list[str]) -> int:
     allowed = {str(item).strip() for item in allowed_tools if str(item).strip()}
     floor = 1
-    if allowed & _SYNC_TOOLS:
+    if any(tool.endswith("_sync") for tool in allowed):
         floor += 1
-    if allowed & _MUTATING_EXPENSIVE_TOOLS:
+    if any(_looks_expensive_or_mutating(tool) for tool in allowed):
         floor += 1
     if any(tool.startswith("backtests_") for tool in allowed):
         floor += 1
@@ -56,3 +42,14 @@ def maybe_extend_expensive_budget(*, allowed_tools: list[str], current_budget: i
     if current_budget >= _DYNAMIC_EXPENSIVE_BUDGET_HARD_CAP:
         return current_budget
     return current_budget + 1
+
+
+def _looks_expensive_or_mutating(tool_name: str) -> bool:
+    normalized = str(tool_name or "").strip().lower()
+    if not normalized:
+        return False
+    if normalized.startswith("backtests_"):
+        return True
+    if normalized.startswith(("models_", "features_", "experiments_")):
+        return not normalized.endswith(("_inspect", "_read", "_compare", "_registry"))
+    return any(token in normalized for token in ("train", "publish", "build", "refresh", "materialize", "record", "apply", "run"))

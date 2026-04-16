@@ -1,6 +1,6 @@
 {
   "plan_id": "compiled_plan_v6_batch_3",
-  "goal": "Найти и проверить новые cross-symbol directional custom features, обучить на них CatBoost long/short classifiers, и доказать их additive value поверх active-signal-v1@1 через matched OOS comparison.",
+  "goal": "Найти и проверить новые cross-symbol directional custom features, обучить на них CatBoost long/short classification models, и доказать их additive value поверх active-signal-v1@1 через matched OOS comparison.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -9,160 +9,82 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "База active-signal-v1@1 — immutable reference. Запрещено менять базу, подбирать ей параметры, обучать на финальном OOS.",
-    "Выбор feature set, target, threshold или архитектуры по lockbox-окну запрещён. Lockbox только проверяет frozen choice.",
-    "Улучшением считается только matched OOS comparison с базой на том же окне.",
-    "v5 regression route формально закрыт. v6 использует только classification (long/short labels).",
-    "Новый информационный слой обязателен — недостаточно переставлять старые IV/classifier features.",
-    "Сначала отдельные long и short classifiers (M1, M2). Router-модель запрещена до подтверждения обеих.",
-    "base-absent surface для discovery, matched OOS для финальной правды.",
-    "Не более 3–4 сильных feature families. Без широкой feature inflation.",
-    "Компактный disciplined HPO: depth {4,6,8}, lr {0.03,0.05}, moderate regularization, 2–3 seeds.",
-    "Purge gap между train и later windows — не менее 24h.",
-    "Горизонты только 12h и 18h. Barrier schemes только balanced и conservative."
+    "База active-signal-v1@1 — immutable reference. Запрещено менять базу, подбирать ей параметры, или обучать на данных, используемых как финальный OOS.",
+    "Никакого regression на future PnL — только directional barrier-based long/short classification labels.",
+    "Новый информационный слой обязателен: cross-symbol leadership/breadth — главный приоритет; недостаточно переставлять старые IV/classifier features.",
+    "Отдельные long и short classifiers (M1_long_cls, M2_short_cls). Общая multiclass модель запрещена на старте.",
+    "Train / selection OOS / lockbox OOS frozen до обучения. Purge gap ≥ 24h.",
+    "Label design: только горизонты 12h и 18h, схемы balanced и conservative. Не более двух вариантов. Выбор label по lockbox запрещён.",
+    "Thresholds frozen до открытия lockbox. Selection выбирает; lockbox только проверяет.",
+    "Feature families: максимум 3–4 сильных (leadership-breadth, path-asymmetry, regime-disagreement, hybrid-event). Не делать широкую feature inflation.",
+    "CatBoost HPO: depth {4,6,8}, learning_rate {0.03,0.05}, moderate regularization, 2–3 seeds. Early stopping обязателен.",
+    "Финальная правда — только matched OOS comparison с базой на том же окне через strict additive, permissive, ownership, cannibalization.",
+    "Router-модель запрещена на старте v6. Разрешается только если M1 и M2 обе показали meaningful OOS value."
   ],
   "slices": [
     {
       "slice_id": "compiled_plan_v6_stage_7",
       "title": "Превращение моделей в tradeable sleeves",
-      "hypothesis": "Получить p_long_success / p_short_success, выбрать и заморозить threshold tiers на selection OOS, построить v6-long-balanced и v6-short-balanced sleeves.",
-      "objective": "Получить p_long_success / p_short_success, выбрать и заморозить threshold tiers на selection OOS, построить v6-long-balanced и v6-short-balanced sleeves.",
+      "hypothesis": "Перевести классификационные вероятности в реальные tradeable long/short sleeves: определить p_long_success и p_short_success, выбрать threshold tiers на selection OOS, freeze thresholds до lockbox.",
+      "objective": "Перевести классификационные вероятности в реальные tradeable long/short sleeves: определить p_long_success и p_short_success, выбрать threshold tiers на selection OOS, freeze thresholds до lockbox.",
       "success_criteria": [
-        "Thresholds frozen на selection OOS до lockbox",
-        "v6-long-balanced sleeve построен",
-        "v6-short-balanced sleeve построен",
-        "Оба sleeves готовы к OOS backtest"
+        "p_long_success и p_short_success получены.",
+        "Threshold tiers выбраны и frozen на selection OOS.",
+        "Tradeable sleeves построены и готовы к OOS backtest.",
+        "Thresholds frozen — не меняются до lockbox."
       ],
       "allowed_tools": [
         "models_to_feature",
         "backtests_strategy",
         "backtests_strategy_validate",
-        "research_record"
+        "research_memory"
       ],
       "evidence_requirements": [
-        "Thresholds frozen на selection OOS до lockbox",
-        "v6-long-balanced sleeve построен",
-        "v6-short-balanced sleeve построен",
-        "Оба sleeves готовы к OOS backtest"
+        "p_long_success и p_short_success получены.",
+        "Threshold tiers выбраны и frozen на selection OOS.",
+        "Tradeable sleeves построены и готовы к OOS backtest.",
+        "Thresholds frozen — не меняются до lockbox."
       ],
       "policy_tags": [
-        "sleeve_construction",
+        "modeling",
         "anti_leakage"
-      ],
-      "max_turns": 36,
-      "max_tool_calls": 30,
-      "max_expensive_calls": 6,
-      "parallel_slot": 1,
-      "budget_scale_applied": 6,
-      "depends_on": [
-        "compiled_plan_v6_stage_6"
-      ],
-      "status": "pending",
-      "turn_count": 0,
-      "tool_call_count": 0,
-      "expensive_call_count": 0,
-      "assigned_worker_id": null,
-      "last_checkpoint_turn_id": "",
-      "last_checkpoint_summary": "",
-      "last_checkpoint_status": "",
-      "final_report_turn_id": "",
-      "last_error": "",
-      "last_summary": "",
-      "active_operation_ref": "",
-      "active_operation_status": "",
-      "active_operation_arguments": {},
-      "artifacts": [],
-      "facts": {}
-    },
-    {
-      "slice_id": "compiled_plan_v6_stage_8",
-      "title": "Matched OOS comparison против базы",
-      "hypothesis": "Провести полный matched OOS comparison: standalone на selection и lockbox, strict additive и permissive integration vs base на lockbox, base runs на тех же окнах.",
-      "objective": "Провести полный matched OOS comparison: standalone на selection и lockbox, strict additive и permissive integration vs base на lockbox, base runs на тех же окнах.",
-      "success_criteria": [
-        "Standalone results на lockbox OOS получены",
-        "Strict additive comparison выполнен",
-        "Permissive comparison выполнена",
-        "Base прогнана на тех же окнах",
-        "Полная matched OOS таблица заполнена"
-      ],
-      "allowed_tools": [
-        "backtests_runs",
-        "backtests_analysis",
-        "backtests_plan",
-        "research_record"
-      ],
-      "evidence_requirements": [
-        "Standalone results на lockbox OOS получены",
-        "Strict additive comparison выполнен",
-        "Permissive comparison выполнена",
-        "Base прогнана на тех же окнах",
-        "Полная matched OOS таблица заполнена"
-      ],
-      "policy_tags": [
-        "oos_validation",
-        "expensive",
-        "critical"
-      ],
-      "max_turns": 48,
-      "max_tool_calls": 36,
-      "max_expensive_calls": 12,
-      "parallel_slot": 2,
-      "budget_scale_applied": 6,
-      "depends_on": [
-        "compiled_plan_v6_stage_7"
-      ],
-      "status": "pending",
-      "turn_count": 0,
-      "tool_call_count": 0,
-      "expensive_call_count": 0,
-      "assigned_worker_id": null,
-      "last_checkpoint_turn_id": "",
-      "last_checkpoint_summary": "",
-      "last_checkpoint_status": "",
-      "final_report_turn_id": "",
-      "last_error": "",
-      "last_summary": "",
-      "active_operation_ref": "",
-      "active_operation_status": "",
-      "active_operation_arguments": {},
-      "artifacts": [],
-      "facts": {}
-    },
-    {
-      "slice_id": "compiled_plan_v6_stage_9",
-      "title": "Ownership, cannibalization и proof of new entries",
-      "hypothesis": "Для лучших long и short sleeves посчитать overlap с базой, truly new trades, replaced trades, ownership прибыли, weak-window repair effect — и вынести terminal decision (PROMOTE / WATCHLIST / REJECT).",
-      "objective": "Для лучших long и short sleeves посчитать overlap с базой, truly new trades, replaced trades, ownership прибыли, weak-window repair effect — и вынести terminal decision (PROMOTE / WATCHLIST / REJECT).",
-      "success_criteria": [
-        "Overlap и cannibalization посчитаны для каждого лучшего sleeve",
-        "Ownership прибыли определён",
-        "Weak-window repair оценён",
-        "Каждый sleeve имеет terminal decision (PROMOTE / WATCHLIST / REJECT)"
-      ],
-      "allowed_tools": [
-        "backtests_analysis",
-        "research_record"
-      ],
-      "evidence_requirements": [
-        "Overlap и cannibalization посчитаны для каждого лучшего sleeve",
-        "Ownership прибыли определён",
-        "Weak-window repair оценён",
-        "Каждый sleeve имеет terminal decision (PROMOTE / WATCHLIST / REJECT)"
-      ],
-      "policy_tags": [
-        "ownership_analysis",
-        "decision_gate"
       ],
       "max_turns": 24,
       "max_tool_calls": 24,
       "max_expensive_calls": 3,
       "parallel_slot": 1,
+      "runtime_profile": "generic_mutation",
+      "required_prerequisite_facts": null,
+      "required_output_facts": [],
+      "finalization_mode": "none",
+      "dependency_unblock_mode": "accepted_only",
+      "watchlist_allows_unblock": false,
+      "requires_mutating_evidence": false,
+      "requires_persisted_artifact": false,
+      "requires_live_handle_validation": false,
+      "acceptance_contract": {
+        "kind": "generic_read_strict",
+        "mode": "strict",
+        "required_subjects": "none",
+        "required_predicates": [
+          "domain_tool_evidence_present"
+        ],
+        "mcp_proof_calls": [],
+        "forbid_contradictions": [],
+        "allow_advisory_unblock": false,
+        "acceptance_requirements": {
+          "slice_id": "compiled_plan_v6_stage_7",
+          "contract_kind": "generic_read_strict"
+        }
+      },
+      "acceptance_proof": {},
+      "acceptance_blockers": [],
       "budget_scale_applied": 6,
       "depends_on": [
-        "compiled_plan_v6_stage_8"
+        "compiled_plan_v6_stage_6"
       ],
       "status": "pending",
+      "acceptance_state": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
       "expensive_call_count": 0,
@@ -173,13 +95,192 @@
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
+      "dependency_blocker_slice_id": "",
+      "dependency_blocker_reason_code": "",
+      "dependency_blocker_class": "",
+      "blocked_retry_count": 0,
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
+      "gate_hint": "",
       "artifacts": [],
-      "facts": {}
+      "facts": {},
+      "verdict": ""
+    },
+    {
+      "slice_id": "compiled_plan_v6_stage_8",
+      "title": "Matched OOS comparison против базы",
+      "hypothesis": "Провести matched OOS comparison каждого sleeve против immutable baseline: standalone на selection OOS и lockbox OOS, strict additive integration, permissive integration, и base runs на тех же окнах.",
+      "objective": "Провести matched OOS comparison каждого sleeve против immutable baseline: standalone на selection OOS и lockbox OOS, strict additive integration, permissive integration, и base runs на тех же окнах.",
+      "success_criteria": [
+        "Standalone runs завершены на selection и lockbox OOS.",
+        "Strict additive comparison выполнена на lockbox.",
+        "Permissive comparison выполнена на lockbox.",
+        "Base runs прогнаны на тех же windows.",
+        "Matched comparison таблица заполнена."
+      ],
+      "allowed_tools": [
+        "backtests_plan",
+        "backtests_runs",
+        "backtests_analysis",
+        "backtests_strategy",
+        "research_memory"
+      ],
+      "evidence_requirements": [
+        "Standalone runs завершены на selection и lockbox OOS.",
+        "Strict additive comparison выполнена на lockbox.",
+        "Permissive comparison выполнена на lockbox.",
+        "Base runs прогнаны на тех же windows.",
+        "Matched comparison таблица заполнена."
+      ],
+      "policy_tags": [
+        "backtesting",
+        "core_pipeline",
+        "validation"
+      ],
+      "max_turns": 48,
+      "max_tool_calls": 36,
+      "max_expensive_calls": 12,
+      "parallel_slot": 2,
+      "runtime_profile": "generic_mutation",
+      "required_prerequisite_facts": null,
+      "required_output_facts": [],
+      "finalization_mode": "none",
+      "dependency_unblock_mode": "accepted_only",
+      "watchlist_allows_unblock": false,
+      "requires_mutating_evidence": false,
+      "requires_persisted_artifact": false,
+      "requires_live_handle_validation": false,
+      "acceptance_contract": {
+        "kind": "generic_read_strict",
+        "mode": "strict",
+        "required_subjects": "none",
+        "required_predicates": [
+          "domain_tool_evidence_present"
+        ],
+        "mcp_proof_calls": [],
+        "forbid_contradictions": [],
+        "allow_advisory_unblock": false,
+        "acceptance_requirements": {
+          "slice_id": "compiled_plan_v6_stage_8",
+          "contract_kind": "generic_read_strict"
+        }
+      },
+      "acceptance_proof": {},
+      "acceptance_blockers": [],
+      "budget_scale_applied": 6,
+      "depends_on": [
+        "compiled_plan_v6_stage_7"
+      ],
+      "status": "pending",
+      "acceptance_state": "pending",
+      "turn_count": 0,
+      "tool_call_count": 0,
+      "expensive_call_count": 0,
+      "assigned_worker_id": null,
+      "last_checkpoint_turn_id": "",
+      "last_checkpoint_summary": "",
+      "last_checkpoint_status": "",
+      "final_report_turn_id": "",
+      "last_error": "",
+      "last_summary": "",
+      "dependency_blocker_slice_id": "",
+      "dependency_blocker_reason_code": "",
+      "dependency_blocker_class": "",
+      "blocked_retry_count": 0,
+      "active_operation_ref": "",
+      "active_operation_status": "",
+      "active_operation_arguments": {},
+      "gate_hint": "",
+      "artifacts": [],
+      "facts": {},
+      "verdict": ""
+    },
+    {
+      "slice_id": "compiled_plan_v6_stage_9",
+      "title": "Ownership, cannibalization и proof of new entries",
+      "hypothesis": "Доказать, что лучшие sleeves добавляют новые прибыльные long/short сделки: посчитать overlap, truly new trades, replaced trades, PnL новых сделок, ownership, и принять terminal decision (PROMOTE/WATCHLIST/REJECT).",
+      "objective": "Доказать, что лучшие sleeves добавляют новые прибыльные long/short сделки: посчитать overlap, truly new trades, replaced trades, PnL новых сделок, ownership, и принять terminal decision (PROMOTE/WATCHLIST/REJECT).",
+      "success_criteria": [
+        "Overlap и truly new trades посчитаны для каждого best sleeve.",
+        "Ownership и cannibalization quantified.",
+        "Каждый best sleeve имеет terminal decision: PROMOTE, WATCHLIST, или REJECT.",
+        "PROMOTE только при: lockbox standalone не пустой, strict additive > 0, new trades прибыльны, ownership > 0."
+      ],
+      "allowed_tools": [
+        "backtests_analysis",
+        "research_memory"
+      ],
+      "evidence_requirements": [
+        "Overlap и truly new trades посчитаны для каждого best sleeve.",
+        "Ownership и cannibalization quantified.",
+        "Каждый best sleeve имеет terminal decision: PROMOTE, WATCHLIST, или REJECT.",
+        "PROMOTE только при: lockbox standalone не пустой, strict additive > 0, new trades прибыльны, ownership > 0."
+      ],
+      "policy_tags": [
+        "analysis",
+        "terminal_decision"
+      ],
+      "max_turns": 48,
+      "max_tool_calls": 36,
+      "max_expensive_calls": 12,
+      "parallel_slot": 1,
+      "runtime_profile": "generic_mutation",
+      "required_prerequisite_facts": null,
+      "required_output_facts": [],
+      "finalization_mode": "none",
+      "dependency_unblock_mode": "accepted_only",
+      "watchlist_allows_unblock": false,
+      "requires_mutating_evidence": false,
+      "requires_persisted_artifact": false,
+      "requires_live_handle_validation": false,
+      "acceptance_contract": {
+        "kind": "generic_read_strict",
+        "mode": "strict",
+        "required_subjects": "none",
+        "required_predicates": [
+          "domain_tool_evidence_present"
+        ],
+        "mcp_proof_calls": [],
+        "forbid_contradictions": [],
+        "allow_advisory_unblock": false,
+        "acceptance_requirements": {
+          "slice_id": "compiled_plan_v6_stage_9",
+          "contract_kind": "generic_read_strict"
+        }
+      },
+      "acceptance_proof": {},
+      "acceptance_blockers": [],
+      "budget_scale_applied": 6,
+      "depends_on": [
+        "compiled_plan_v6_stage_8"
+      ],
+      "status": "pending",
+      "acceptance_state": "pending",
+      "turn_count": 0,
+      "tool_call_count": 0,
+      "expensive_call_count": 0,
+      "assigned_worker_id": null,
+      "last_checkpoint_turn_id": "",
+      "last_checkpoint_summary": "",
+      "last_checkpoint_status": "",
+      "final_report_turn_id": "",
+      "last_error": "",
+      "last_summary": "",
+      "dependency_blocker_slice_id": "",
+      "dependency_blocker_reason_code": "",
+      "dependency_blocker_class": "",
+      "blocked_retry_count": 0,
+      "active_operation_ref": "",
+      "active_operation_status": "",
+      "active_operation_arguments": {},
+      "gate_hint": "",
+      "artifacts": [],
+      "facts": {},
+      "verdict": ""
     }
   ],
+  "mcp_catalog_hash": "c306b4054eaf8f466a7e29182863da4e7cd0610551ef83a0611c515c84aa415b",
   "plan_source_kind": "compiled_raw",
   "source_sequence_id": "compiled_plan_v6",
   "source_raw_plan": "raw_plans/plan_v6.md",
@@ -188,6 +289,7 @@
   "source_compile_report_path": "",
   "sequence_batch_index": 3,
   "status": "draft",
-  "created_at": "2026-04-11T10:54:10.388432+00:00",
-  "updated_at": "2026-04-11T10:54:10.388433+00:00"
+  "last_error": "",
+  "created_at": "2026-04-15T18:41:50.653464+00:00",
+  "updated_at": "2026-04-15T18:41:50.653466+00:00"
 }

@@ -10,7 +10,7 @@ from typing import Any
 from app.adapters.base import BaseAdapter
 from app.execution_parsing import StructuredOutputError, extract_json_object
 from app.reporting.models import NarrativeSectionsRu
-from app.reporting.prompts import build_narrative_prompt
+from app.reporting.prompts import build_narrative_prompt, build_sequence_narrative_prompt
 from app.services.direct_execution.invocation import AdapterInvocationError, invoke_adapter_with_retries
 
 
@@ -38,6 +38,24 @@ class ReportNarrativeService:
         if not self.enabled or self.adapter is None:
             raise NarrativeGenerationError("narrative_generation_disabled")
         prompt = build_narrative_prompt(report_kind=report_kind, payload=payload)
+        try:
+            response = await invoke_adapter_with_retries(
+                adapter=self.adapter,
+                prompt=prompt,
+                timeout_seconds=self.timeout_seconds,
+                max_attempts=self.retry_attempts,
+                base_backoff_seconds=self.retry_backoff_seconds,
+            )
+        except AdapterInvocationError as exc:
+            raise NarrativeGenerationError(str(exc)) from exc
+        if not response.success:
+            raise NarrativeGenerationError(response.error or "narrative_invoke_failed")
+        return _parse_narrative(response.raw_output)
+
+    async def generate_for_sequence(self, *, payload: dict[str, Any]) -> NarrativeSectionsRu:
+        if not self.enabled or self.adapter is None:
+            raise NarrativeGenerationError("narrative_generation_disabled")
+        prompt = build_sequence_narrative_prompt(payload=payload)
         try:
             response = await invoke_adapter_with_retries(
                 adapter=self.adapter,

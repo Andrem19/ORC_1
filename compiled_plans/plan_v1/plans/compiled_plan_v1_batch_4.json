@@ -1,6 +1,6 @@
 {
   "plan_id": "compiled_plan_v1_batch_4",
-  "goal": "Найти один или несколько новых ортогональных сигналов, которые проходят standalone → stability → integration → cannibalization проверку и дают чистый прирост поверх неизменной базы active-signal-v1@1.",
+  "goal": "Найти один или несколько новых ортогональных сигналов, которые дают самостоятельную информативность, проходят проверку на устойчивость и при интеграции с active-signal-v1@1 улучшают общий результат без разрушения качества.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -9,46 +9,73 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "База active-signal-v1@1 остается неизменной на протяжении всего цикла; тюнинг её старых правил, порогов, часов, дней и косметических вариаций запрещён.",
-    "Новый сигнал должен использовать новый класс информации, новый gating, новый missing-regime слой или новую логику входа — не перестановку старых шаблонов.",
-    "Каннибализм недопустим: новый сигнал не должен преимущественно входить там же, где база, и перехватывать уже хорошие сделки.",
-    "Acceptance-воронка обязательна: standalone → stability → integration → cannibalization → final report. Пропуск шагов запрещён.",
-    "Каждая гипотеза должна иметь записанное обоснование, почему она новая относительно базы и истории v1–v12.",
-    "Отрицательные результаты фиксируются в research_record так же обязательно, как и положительные.",
-    "Walk-forward обязателен для всех финалистов перед принятием решения о продвижении."
+    "База active-signal-v1@1 неизменна на протяжении всего цикла — никакого тюнинга порогов, часов, дней или косметических вариаций старых правил.",
+    "Новый сигнал обязан использовать новый класс информации или новый способ маршрутизации — не перестановку hour/dow/cl_*/rsi/iv_est шаблонов базы.",
+    "Каннибализм недопустим: новый сигнал должен расширять покрытие, а не перехватывать сделки базы.",
+    "Любая гипотеза проходит строго через воронку: standalone → stability → integration → cannibalization → final report.",
+    "Отрицательные результаты фиксируются в research_memory — повтор закрытых идей запрещён.",
+    "Model-backed признаки допускаются только с честным train/validation/test split без leakage в OOS."
   ],
   "slices": [
     {
       "slice_id": "compiled_plan_v1_stage_9",
       "title": "Walk-forward и финальная валидация финалистов",
-      "hypothesis": "Пропустить финалистов через walk-forward как строгую финальную проверку перед принятием решения о продвижении.",
-      "objective": "Пропустить финалистов через walk-forward как строгую финальную проверку перед принятием решения о продвижении.",
+      "hypothesis": "Пропустить финалистов через строгую walk-forward проверку как обязательную позднюю стадию валидации.",
+      "objective": "Пропустить финалистов через строгую walk-forward проверку как обязательную позднюю стадию валидации.",
       "success_criteria": [
-        "Walk-forward завершён для всех кандидатов, дошедших до финала.",
-        "Каждый кандидат имеет final_status: pass или fail."
+        "Walk-forward завершен для всех кандидатов, дошедших до финала.",
+        "Для каждого кандидата есть итоговый вердикт: accept, conditional accept, reject."
       ],
       "allowed_tools": [
         "backtests_walkforward",
-        "research_record"
+        "backtests_analysis",
+        "research_memory"
       ],
       "evidence_requirements": [
-        "Walk-forward завершён для всех кандидатов, дошедших до финала.",
-        "Каждый кандидат имеет final_status: pass или fail."
+        "Walk-forward завершен для всех кандидатов, дошедших до финала.",
+        "Для каждого кандидата есть итоговый вердикт: accept, conditional accept, reject."
       ],
       "policy_tags": [
-        "backtesting",
-        "finalization",
-        "critical_gate"
+        "validation",
+        "expensive",
+        "gate"
       ],
-      "max_turns": 24,
-      "max_tool_calls": 24,
-      "max_expensive_calls": 3,
+      "max_turns": 48,
+      "max_tool_calls": 36,
+      "max_expensive_calls": 12,
       "parallel_slot": 1,
+      "runtime_profile": "generic_mutation",
+      "required_prerequisite_facts": null,
+      "required_output_facts": [],
+      "finalization_mode": "none",
+      "dependency_unblock_mode": "accepted_only",
+      "watchlist_allows_unblock": false,
+      "requires_mutating_evidence": false,
+      "requires_persisted_artifact": false,
+      "requires_live_handle_validation": false,
+      "acceptance_contract": {
+        "kind": "generic_read_strict",
+        "mode": "strict",
+        "required_subjects": "none",
+        "required_predicates": [
+          "domain_tool_evidence_present"
+        ],
+        "mcp_proof_calls": [],
+        "forbid_contradictions": [],
+        "allow_advisory_unblock": false,
+        "acceptance_requirements": {
+          "slice_id": "compiled_plan_v1_stage_9",
+          "contract_kind": "generic_read_strict"
+        }
+      },
+      "acceptance_proof": {},
+      "acceptance_blockers": [],
       "budget_scale_applied": 6,
       "depends_on": [
         "compiled_plan_v1_stage_8"
       ],
       "status": "pending",
+      "acceptance_state": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
       "expensive_call_count": 0,
@@ -59,48 +86,81 @@
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
+      "dependency_blocker_slice_id": "",
+      "dependency_blocker_reason_code": "",
+      "dependency_blocker_class": "",
+      "blocked_retry_count": 0,
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
+      "gate_hint": "Кандидат не проходит к финальному отбору, если walk-forward_verdict отрицательный.",
       "artifacts": [],
-      "facts": {}
+      "facts": {},
+      "verdict": ""
     },
     {
       "slice_id": "compiled_plan_v1_stage_10",
       "title": "Финальный отбор и решение по продвижению",
-      "hypothesis": "Принять итоговое решение по каждому кандидату: PROMOTE, WATCHLIST SPECIALIST или REJECT — на основе всей накопленной доказательной базы.",
-      "objective": "Принять итоговое решение по каждому кандидату: PROMOTE, WATCHLIST SPECIALIST или REJECT — на основе всей накопленной доказательной базы.",
+      "hypothesis": "Принять итоговое решение по каждому кандидату: PROMOTE в mainline, WATCHLIST как specialist, или REJECT — с обязательным журналом каннибализма и финальным отчетом.",
+      "objective": "Принять итоговое решение по каждому кандидату: PROMOTE в mainline, WATCHLIST как specialist, или REJECT — с обязательным журналом каннибализма и финальным отчетом.",
       "success_criteria": [
-        "Каждый кандидат имеет итоговое решение с evidence_ref.",
-        "База не была изменена ни разу.",
-        "Отрицательные результаты зафиксированы.",
-        "Финальный отчет написан.",
-        "Есть честный ответ: найден ли реально новый входной слой."
+        "По каждому кандидату есть формальное решение с доказательной базой.",
+        "Журнал каннибализма заполнен.",
+        "Операционный чек-лист пройден.",
+        "Финальный отчет написан и отправлен."
       ],
       "allowed_tools": [
-        "research_record",
+        "research_memory",
         "research_map",
-        "notify_send"
+        "notify_send",
+        "backtests_analysis"
       ],
       "evidence_requirements": [
-        "Каждый кандидат имеет итоговое решение с evidence_ref.",
-        "База не была изменена ни разу.",
-        "Отрицательные результаты зафиксированы.",
-        "Финальный отчет написан.",
-        "Есть честный ответ: найден ли реально новый входной слой."
+        "По каждому кандидату есть формальное решение с доказательной базой.",
+        "Журнал каннибализма заполнен.",
+        "Операционный чек-лист пройден.",
+        "Финальный отчет написан и отправлен."
       ],
       "policy_tags": [
-        "finalization"
+        "finalization",
+        "report"
       ],
       "max_turns": 24,
       "max_tool_calls": 24,
-      "max_expensive_calls": 2,
+      "max_expensive_calls": 3,
       "parallel_slot": 1,
+      "runtime_profile": "generic_mutation",
+      "required_prerequisite_facts": null,
+      "required_output_facts": [],
+      "finalization_mode": "none",
+      "dependency_unblock_mode": "accepted_only",
+      "watchlist_allows_unblock": false,
+      "requires_mutating_evidence": false,
+      "requires_persisted_artifact": false,
+      "requires_live_handle_validation": false,
+      "acceptance_contract": {
+        "kind": "generic_read_strict",
+        "mode": "strict",
+        "required_subjects": "none",
+        "required_predicates": [
+          "domain_tool_evidence_present"
+        ],
+        "mcp_proof_calls": [],
+        "forbid_contradictions": [],
+        "allow_advisory_unblock": false,
+        "acceptance_requirements": {
+          "slice_id": "compiled_plan_v1_stage_10",
+          "contract_kind": "generic_read_strict"
+        }
+      },
+      "acceptance_proof": {},
+      "acceptance_blockers": [],
       "budget_scale_applied": 6,
       "depends_on": [
         "compiled_plan_v1_stage_9"
       ],
       "status": "pending",
+      "acceptance_state": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
       "expensive_call_count": 0,
@@ -111,13 +171,20 @@
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
+      "dependency_blocker_slice_id": "",
+      "dependency_blocker_reason_code": "",
+      "dependency_blocker_class": "",
+      "blocked_retry_count": 0,
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
+      "gate_hint": "",
       "artifacts": [],
-      "facts": {}
+      "facts": {},
+      "verdict": ""
     }
   ],
+  "mcp_catalog_hash": "c306b4054eaf8f466a7e29182863da4e7cd0610551ef83a0611c515c84aa415b",
   "plan_source_kind": "compiled_raw",
   "source_sequence_id": "compiled_plan_v1",
   "source_raw_plan": "raw_plans/plan_v1.md",
@@ -126,6 +193,7 @@
   "source_compile_report_path": "",
   "sequence_batch_index": 4,
   "status": "draft",
-  "created_at": "2026-04-11T10:45:01.661418+00:00",
-  "updated_at": "2026-04-11T10:45:01.661419+00:00"
+  "last_error": "",
+  "created_at": "2026-04-15T18:34:05.729072+00:00",
+  "updated_at": "2026-04-15T18:34:05.729074+00:00"
 }

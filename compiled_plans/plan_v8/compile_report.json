@@ -7,10 +7,17 @@
   "semantic_method": "llm",
   "stage_count": 10,
   "compiled_plan_count": 4,
+  "mcp_catalog_hash": "c306b4054eaf8f466a7e29182863da4e7cd0610551ef83a0611c515c84aa415b",
   "warnings": [
-    "Plan is in Russian; stage titles and objectives are translated to English in the semantic draft while preserving original intent",
-    "Stages 8 and 9 are gated on positive evidence from prior stages — the plan may terminate earlier if veto route shows no signal"
+    "Plan is a strategic pivot after v7 full-surface classification failure — requires disciplined gating.",
+    "Early-cut (stage 8) and hold-extension (stage 9) are explicitly gated on prior stage evidence — they may never open.",
+    "Auto-added research_memory for stage_2: every non-trivial stage needs documentation capability.",
+    "Auto-added research_memory for stage_4: every non-trivial stage needs documentation capability.",
+    "Auto-added research_memory for stage_6: every non-trivial stage needs documentation capability.",
+    "Auto-added research_memory for stage_7: every non-trivial stage needs documentation capability.",
+    "Auto-added research_memory for stage_8: every non-trivial stage needs documentation capability.",
+    "Auto-added research_memory for stage_9: every non-trivial stage needs documentation capability."
   ],
   "errors": [],
-  "compiled_at": "2026-04-11T10:59:07.561005+00:00"
+  "compiled_at": "2026-04-15T18:44:36.407351+00:00"
 }

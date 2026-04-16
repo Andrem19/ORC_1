@@ -78,6 +78,7 @@ class CompileReport:
     semantic_method: str
     stage_count: int
     compiled_plan_count: int
+    mcp_catalog_hash: str = ""
     warnings: list[str] = field(default_factory=list)
     errors: list[str] = field(default_factory=list)
     compiled_at: str = field(default_factory=utc_now_iso)
@@ -95,6 +96,7 @@ class CompiledPlanManifest:
     semantic_path: str = ""
     compile_report_path: str = ""
     plan_files: list[str] = field(default_factory=list)
+    mcp_catalog_hash: str = ""
 
 
 @dataclass

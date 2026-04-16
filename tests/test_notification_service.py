@@ -821,3 +821,238 @@ class TestSendRunComplete:
         # Should only have "Run complete —..." header, not Best outcomes etc.
         assert not any("Best outcomes" in h for h in header_values)
         assert not any("Blockers" in h for h in header_values)
+
+
+# ---------------------------------------------------------------------------
+# Tests: send_sequence_complete
+# ---------------------------------------------------------------------------
+
+
+class TestSendSequenceComplete:
+    def _make_seq_report(self, **overrides):
+        from types import SimpleNamespace
+        from app.reporting.models import NarrativeSectionsRu
+        narrative = NarrativeSectionsRu()
+        defaults = dict(
+            sequence_id="compiled_plan_v1",
+            sequence_status="completed",
+            duration_ms=600_000,
+            batch_results=[
+                {"plan_id": "compiled_plan_v1_batch_1", "status": "completed", "final_verdict": "PROMOTE"},
+                {"plan_id": "compiled_plan_v1_batch_2", "status": "completed", "final_verdict": "WATCHLIST"},
+            ],
+            slice_verdict_rollup={"PROMOTE": 3, "WATCHLIST": 2, "REJECT": 1},
+            confirmed_findings=["Strong momentum edge", "RSI divergence confirmed"],
+            failed_branches=[],
+            blockers=[],
+            executive_summary_ru="Sequence plan_v1 завершена успешно. 4 batch-планов выполнено.",
+            recommended_next_actions=["Расширить бэктест", "Протестировать ETH"],
+            compiled_plan_count=4,
+            narrative_sections_ru=narrative,
+        )
+        defaults.update(overrides)
+        return SimpleNamespace(**defaults)
+
+    def _make_enabled_svc(self):
+        with patch.dict(os.environ, {"ALGO_BOT": "tok", "CHAT_ID": "1"}):
+            cfg = NotificationConfig(enabled=True, min_interval_seconds=0)
+            return NotificationService(cfg)
+
+    def test_sequence_complete_disabled_returns_false(self):
+        svc = NotificationService()
+        assert svc.send_sequence_complete(object()) is False
+
+    def test_sequence_complete_includes_sequence_id(self):
+        svc = self._make_enabled_svc()
+        report = self._make_seq_report()
+        with patch.object(svc, "_send_structured", return_value=True) as mock:
+            svc.send_sequence_complete(report)
+        sections = mock.call_args[0][0]
+        header_text = " ".join(s.value for s in sections if s.kind == "header")
+        assert "compiled_plan_v1" in header_text
+
+    def test_sequence_complete_includes_status(self):
+        svc = self._make_enabled_svc()
+        report = self._make_seq_report()
+        with patch.object(svc, "_send_structured", return_value=True) as mock:
+            svc.send_sequence_complete(report)
+        sections = mock.call_args[0][0]
+        header_text = " ".join(s.value for s in sections if s.kind == "header")
+        assert "completed" in header_text
+
+    def test_sequence_complete_includes_duration(self):
+        svc = self._make_enabled_svc()
+        report = self._make_seq_report()
+        with patch.object(svc, "_send_structured", return_value=True) as mock:
+            svc.send_sequence_complete(report)
+        sections = mock.call_args[0][0]
+        all_text = " ".join(s.value for s in sections)
+        assert "10m" in all_text
+
+    def test_sequence_complete_includes_batch_results(self):
+        svc = self._make_enabled_svc()
+        report = self._make_seq_report()
+        with patch.object(svc, "_send_structured", return_value=True) as mock:
+            svc.send_sequence_complete(report)
+        sections = mock.call_args[0][0]
+        all_text = " ".join(s.value for s in sections)
+        assert "compiled_plan_v1_batch_1" in all_text
+        assert "compiled_plan_v1_batch_2" in all_text
+
+    def test_sequence_complete_includes_verdict_rollup(self):
+        svc = self._make_enabled_svc()
+        report = self._make_seq_report()
+        with patch.object(svc, "_send_structured", return_value=True) as mock:
+            svc.send_sequence_complete(report)
+        sections = mock.call_args[0][0]
+        body_text = " ".join(s.value for s in sections if s.kind == "body")
+        assert "PROMOTE: 3" in body_text
+        assert "WATCHLIST: 2" in body_text
+
+    def test_sequence_complete_includes_findings(self):
+        svc = self._make_enabled_svc()
+        report = self._make_seq_report()
+        with patch.object(svc, "_send_structured", return_value=True) as mock:
+            svc.send_sequence_complete(report)
+        sections = mock.call_args[0][0]
+        body_text = " ".join(s.value for s in sections if s.kind == "body")
+        assert "Strong momentum edge" in body_text
+
+    def test_sequence_complete_includes_summary(self):
+        svc = self._make_enabled_svc()
+        report = self._make_seq_report()
+        with patch.object(svc, "_send_structured", return_value=True) as mock:
+            svc.send_sequence_complete(report)
+        sections = mock.call_args[0][0]
+        body_text = " ".join(s.value for s in sections if s.kind == "body")
+        assert "завершена успешно" in body_text
+
+    def test_sequence_complete_includes_next_actions(self):
+        svc = self._make_enabled_svc()
+        report = self._make_seq_report()
+        with patch.object(svc, "_send_structured", return_value=True) as mock:
+            svc.send_sequence_complete(report)
+        sections = mock.call_args[0][0]
+        body_text = " ".join(s.value for s in sections if s.kind == "body")
+        assert "Расширить бэктест" in body_text
+
+    def test_sequence_complete_includes_blockers(self):
+        svc = self._make_enabled_svc()
+        report = self._make_seq_report(blockers=["MCP timeout", "Missing feature"])
+        with patch.object(svc, "_send_structured", return_value=True) as mock:
+            svc.send_sequence_complete(report)
+        sections = mock.call_args[0][0]
+        body_text = " ".join(s.value for s in sections if s.kind == "body")
+        assert "MCP timeout" in body_text
+
+    def test_sequence_complete_includes_failed_branches(self):
+        svc = self._make_enabled_svc()
+        report = self._make_seq_report(
+            failed_branches=["stage_5: confidence too low (minimax, tools=2)"],
+        )
+        with patch.object(svc, "_send_structured", return_value=True) as mock:
+            svc.send_sequence_complete(report)
+        sections = mock.call_args[0][0]
+        body_text = " ".join(s.value for s in sections if s.kind == "body")
+        assert "stage_5" in body_text
+
+    def test_sequence_complete_failed_status_icon(self):
+        svc = self._make_enabled_svc()
+        report = self._make_seq_report(sequence_status="failed")
+        with patch.object(svc, "_send_structured", return_value=True) as mock:
+            svc.send_sequence_complete(report)
+        sections = mock.call_args[0][0]
+        header_text = " ".join(s.value for s in sections if s.kind == "header")
+        assert "failed" in header_text
+
+    def test_sequence_complete_skips_empty_sections(self):
+        svc = self._make_enabled_svc()
+        report = self._make_seq_report(
+            confirmed_findings=[],
+            failed_branches=[],
+            blockers=[],
+            executive_summary_ru="",
+            recommended_next_actions=[],
+        )
+        with patch.object(svc, "_send_structured", return_value=True) as mock:
+            svc.send_sequence_complete(report)
+        sections = mock.call_args[0][0]
+        header_values = [s.value for s in sections if s.kind == "header"]
+        assert not any("Findings" in h for h in header_values)
+        assert not any("Failed" in h for h in header_values)
+        assert not any("Blockers" in h for h in header_values)
+
+    def test_sequence_complete_renders_narrative_key_findings(self):
+        from app.reporting.models import NarrativeSectionsRu
+        narrative = NarrativeSectionsRu(
+            executive_summary_ru="Последовательность выполнена.",
+            key_findings_ru=["Feature cf_volatility улучшил Sharpe до 1.2"],
+            important_failures_ru=[],
+            recommended_next_actions_ru=["Протестировать на walk-forward"],
+            operator_notes_ru=["Рекомендация: проверить стационарность"],
+        )
+        svc = self._make_enabled_svc()
+        report = self._make_seq_report(narrative_sections_ru=narrative)
+        with patch.object(svc, "_send_structured", return_value=True) as mock:
+            svc.send_sequence_complete(report)
+        sections = mock.call_args[0][0]
+        body_text = " ".join(s.value for s in sections if s.kind == "body")
+        assert "cf_volatility" in body_text
+
+    def test_sequence_complete_renders_narrative_next_actions_over_deterministic(self):
+        from app.reporting.models import NarrativeSectionsRu
+        narrative = NarrativeSectionsRu(
+            executive_summary_ru="Тестирование завершено успешно.",
+            key_findings_ru=[],
+            important_failures_ru=[],
+            recommended_next_actions_ru=["LLM-действие: запустить walk-forward"],
+            operator_notes_ru=[],
+        )
+        svc = self._make_enabled_svc()
+        report = self._make_seq_report(
+            narrative_sections_ru=narrative,
+            recommended_next_actions=["Детерминированное действие"],
+        )
+        with patch.object(svc, "_send_structured", return_value=True) as mock:
+            svc.send_sequence_complete(report)
+        sections = mock.call_args[0][0]
+        body_text = " ".join(s.value for s in sections if s.kind == "body")
+        assert "LLM-действие" in body_text
+        assert "Детерминированное" not in body_text
+
+    def test_sequence_complete_renders_narrative_notes(self):
+        from app.reporting.models import NarrativeSectionsRu
+        narrative = NarrativeSectionsRu(
+            executive_summary_ru="Выполнено.",
+            key_findings_ru=[],
+            important_failures_ru=[],
+            recommended_next_actions_ru=[],
+            operator_notes_ru=["Проверить стационарность feature cf_alpha"],
+        )
+        svc = self._make_enabled_svc()
+        report = self._make_seq_report(narrative_sections_ru=narrative)
+        with patch.object(svc, "_send_structured", return_value=True) as mock:
+            svc.send_sequence_complete(report)
+        sections = mock.call_args[0][0]
+        body_text = " ".join(s.value for s in sections if s.kind == "body")
+        assert "Проверить стационарность" in body_text
+
+    def test_sequence_complete_renders_narrative_failures(self):
+        from app.reporting.models import NarrativeSectionsRu
+        narrative = NarrativeSectionsRu(
+            executive_summary_ru="Частичный успех.",
+            key_findings_ru=[],
+            important_failures_ru=["Batch 3 упал из-за таймаута LMStudio"],
+            recommended_next_actions_ru=[],
+            operator_notes_ru=[],
+        )
+        svc = self._make_enabled_svc()
+        report = self._make_seq_report(
+            narrative_sections_ru=narrative,
+            failed_branches=[],
+        )
+        with patch.object(svc, "_send_structured", return_value=True) as mock:
+            svc.send_sequence_complete(report)
+        sections = mock.call_args[0][0]
+        body_text = " ".join(s.value for s in sections if s.kind == "body")
+        assert "таймаута LMStudio" in body_text

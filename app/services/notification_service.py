@@ -214,6 +214,12 @@ class NotificationService:
             return False
         return self._send_run_complete_report(report)
 
+    def send_sequence_complete(self, report: object) -> bool:
+        """Send a rich sequence-complete Telegram message from SequenceExecutionReport."""
+        if not self._enabled:
+            return False
+        return self._send_sequence_report(report)
+
     # ---------------------------------------------------------------
     # Batch notification system
     # ---------------------------------------------------------------
@@ -352,6 +358,96 @@ class NotificationService:
         if result.next_actions:
             for action in result.next_actions[:2]:
                 builder.add_body(f"\u2192 {action[:100]}")
+
+        return self._send_structured(builder.build())
+
+    # ---------------------------------------------------------------
+    # Rich sequence-complete message
+    # ---------------------------------------------------------------
+
+    def _send_sequence_report(self, report: object) -> bool:
+        """Build and send a rich sequence-complete Telegram message."""
+        seq_id = str(getattr(report, "sequence_id", "") or "")
+        status = str(getattr(report, "sequence_status", "") or "")
+        duration_ms = int(getattr(report, "duration_ms", 0) or 0)
+        batch_results: list[dict] = list(getattr(report, "batch_results", []) or [])
+        verdict_rollup: dict = dict(getattr(report, "slice_verdict_rollup", {}) or {})
+        confirmed_findings: list[str] = list(getattr(report, "confirmed_findings", []) or [])
+        failed_branches: list[str] = list(getattr(report, "failed_branches", []) or [])
+        blockers: list[str] = list(getattr(report, "blockers", []) or [])
+        executive_summary = str(getattr(report, "executive_summary_ru", "") or "")
+        recommended_actions: list[str] = list(getattr(report, "recommended_next_actions", []) or [])
+        compiled_count = int(getattr(report, "compiled_plan_count", 0) or 0)
+        # LLM narrative sections (enriched by sequence_reporter)
+        narrative = getattr(report, "narrative_sections_ru", None)
+        narrative_key_findings: list[str] = list(getattr(narrative, "key_findings_ru", []) or []) if narrative else []
+        narrative_next_actions: list[str] = list(getattr(narrative, "recommended_next_actions_ru", []) or []) if narrative else []
+        narrative_failures: list[str] = list(getattr(narrative, "important_failures_ru", []) or []) if narrative else []
+        narrative_notes: list[str] = list(getattr(narrative, "operator_notes_ru", []) or []) if narrative else []
+
+        _SEQ_STATUS_ICON = {"completed": "\u2705", "failed": "\u274c", "partial": "\u26a0\ufe0f"}
+        icon = _SEQ_STATUS_ICON.get(status, "\u2139\ufe0f")
+
+        builder = TelegramMessageBuilder()
+        builder.add_header(icon, f"Sequence {seq_id} \u2014 {status}")
+        builder.add_separator()
+
+        if duration_ms:
+            builder.add_field("Duration", _ms_to_human(duration_ms))
+        if compiled_count:
+            builder.add_field("Batches", str(compiled_count))
+
+        if batch_results:
+            builder.add_separator()
+            for batch in batch_results[:6]:
+                v_icon = _verdict_icon(batch.get("final_verdict", ""))
+                builder.add_body(f"  {v_icon} {batch.get('plan_id', '?')}: {batch.get('status', '?')}")
+
+        if verdict_rollup:
+            parts = [f"{_verdict_icon(v)} {v}: {c}" for v, c in verdict_rollup.items()]
+            builder.add_separator()
+            builder.add_body("  ".join(parts))
+
+        if executive_summary:
+            builder.add_separator()
+            builder.add_header("\U0001f4cb", "Summary")
+            builder.add_body(executive_summary[:500])
+
+        # LLM-enriched key findings take priority over deterministic ones
+        display_findings = narrative_key_findings if narrative_key_findings else confirmed_findings
+        if display_findings:
+            builder.add_separator()
+            builder.add_header("\u2705", f"Findings ({len(display_findings)})")
+            for finding in display_findings[:6]:
+                builder.add_body(f"\u2022 {finding[:150]}")
+
+        # LLM-enriched failures
+        display_failures = narrative_failures if narrative_failures else failed_branches
+        if display_failures:
+            builder.add_separator()
+            builder.add_header("\u26a0\ufe0f", f"Failed ({len(display_failures)})")
+            for branch in display_failures[:4]:
+                builder.add_body(f"\u2022 {branch[:150]}")
+
+        if blockers:
+            builder.add_separator()
+            builder.add_header("\U0001f6a7", f"Blockers ({len(blockers)})")
+            for blocker in blockers[:3]:
+                builder.add_body(f"\u2022 {blocker[:100]}")
+
+        # LLM-enriched next actions take priority
+        display_actions = narrative_next_actions if narrative_next_actions else recommended_actions
+        if display_actions:
+            builder.add_separator()
+            builder.add_header("\U0001f51c", "Next actions")
+            for action in display_actions[:4]:
+                builder.add_body(f"\u2192 {action[:150]}")
+
+        if narrative_notes:
+            builder.add_separator()
+            builder.add_header("\U0001f4dd", "Notes")
+            for note in narrative_notes[:2]:
+                builder.add_body(f"\u2022 {note[:150]}")
 
         return self._send_structured(builder.build())
 

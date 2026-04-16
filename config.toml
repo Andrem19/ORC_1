@@ -3,10 +3,17 @@ goal = "Continuously improve automated trading strategy performance on BTCUSDT v
 # --- Plan source / runtime mode ---
 # "planner"      -> normal mode, planner generates new execution plans
 # "compiled_raw" -> plannerless mode, orchestrator executes plans produced by `python converter.py`
+start_from = "v1"
 plan_source = "compiled_raw"
 raw_plan_dir = "raw_plans"
 compiled_plan_dir = "compiled_plans"
 compiled_queue_skip_failures = true
+# Transient infra failures (LM Studio crash, HTTP timeout, gate rejection) must
+# NEVER skip remaining batches of a compiled sequence — next batch still runs
+# so its slices flow through the primary → qwen_cli → claude_cli fallback chain.
+# Only explicit semantic aborts (user_stop, goal_impossible, contract_violation)
+# trigger the sequence skip.
+infra_failure_never_skip_batches = true
 max_consecutive_failed_plans = 3
 converter_use_llm = true
 
@@ -141,11 +148,12 @@ max_tokens = 4096
 
 [direct_execution]
 # provider values:
+# - "minimax": use MiniMax OpenAI-compatible API plus internal dev_space1 MCP tool loop
 # - "lmstudio": use LM Studio chat completions plus internal dev_space1 MCP tool loop
 # - "qwen_cli": use qwen-code native tool mode
-provider = "lmstudio"
-fallback_1 = "qwen_cli"
-fallback_2 = "claude_cli"
+provider = "minimax"
+fallback_1 = "claude_cli"
+fallback_2 = "off"
 timeout_seconds = 1200
 max_attempts_per_slice = 2
 max_tool_calls_per_slice = 24
@@ -160,6 +168,9 @@ stalled_action_timeout_seconds = 90
 retry_budget = 1
 incident_on_unclear_contract = true
 safe_exclude_tools = ["run_shell_command", "read_file", "write_file", "edit", "grep_search", "glob", "list_directory", "web_fetch", "system_reset_space"]
+# Qwen CLI visible_tools probe timeout (s). 30s was flaky on cold MCP handshake;
+# 60s lets the probe complete before falling back to tool_use=True.
+qwen_preflight_timeout_seconds = 60
 
 [research_config]
 baseline_snapshot_id = "active-signal-v1"
@@ -175,10 +186,26 @@ translate_to_russian = true
 # Translation provider: "lmstudio" | "qwen_cli" | "claude_cli" | "off"
 translation_provider = "lmstudio"
 translation_fallback_1 = "qwen_cli"     # "" to disable
-translation_fallback_2 = "claude_cli"   # "" to disable
+translation_fallback_2 = ""   # "" to disable
+
+# Sequence report narrative generation (LLM enrichment for compiled_raw mode)
+[sequence_report]
+provider = "claude_cli"
+model = "opus"
+timeout_seconds = 120
+retry_attempts = 2
+retry_backoff_seconds = 0.5
 
 # LM Studio — shared connection for worker API and optional translation
 [lmstudio]
 base_url = "http://localhost:1234"
 model = "qwen/qwen3.5-35b-a3b"  # must match model id from /v1/models; empty = use currently loaded
 reasoning_effort = "none"   # "none" disables thinking mode for fast responses; "low"/"medium"/"high" enables it
+
+# MiniMax — OpenAI-compatible cloud API for direct execution
+[minimax]
+base_url = "https://api.minimax.io"
+model = "MiniMax-M2.5"
+api_key_env_var = "MINIMAX_API"  # reads from .env MINIMAX_API
+temperature = 1.0
+max_tokens = 8192

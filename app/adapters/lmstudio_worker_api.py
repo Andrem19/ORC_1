@@ -11,12 +11,12 @@ import json
 import logging
 import threading
 import time
-from http.client import HTTPConnection, HTTPException
+from http.client import HTTPConnection, HTTPSConnection, HTTPException
 from typing import Any
 from urllib.parse import urlparse
 
 from app.adapters.base import AdapterResponse, BaseAdapter
-from app.lmstudio_api import validate_lmstudio_endpoint
+from app.lmstudio_api import validate_lmstudio_endpoint, _is_cloud_provider
 from app.adapters.base import ProcessHandle
 
 logger = logging.getLogger("orchestrator.adapter.lmstudio")
@@ -50,12 +50,15 @@ class LmStudioWorkerApi(BaseAdapter):
         return "lmstudio_worker_api"
 
     def is_available(self) -> bool:
-        """Check if LM Studio server is reachable and the configured model exists."""
+        """Check if the API server is reachable and the configured model exists."""
         try:
+            # Cloud providers (MiniMax) need a longer timeout for the chat probe.
+            timeout = 15 if _is_cloud_provider(self.base_url) else 5
             ok, models = validate_lmstudio_endpoint(
                 base_url=self.base_url,
                 model=self.model,
-                timeout=5,
+                timeout=timeout,
+                api_key=self.api_key,
             )
             if not ok and self.model and models:
                 logger.warning(
@@ -98,9 +101,12 @@ class LmStudioWorkerApi(BaseAdapter):
 
         try:
             parsed = urlparse(self.base_url)
-            conn = HTTPConnection(
+            use_https = parsed.scheme == "https"
+            conn_cls = HTTPSConnection if use_https else HTTPConnection
+            default_port = 443 if use_https else 1234
+            conn = conn_cls(
                 parsed.hostname,
-                parsed.port or 1234,
+                parsed.port or default_port,
                 timeout=timeout,
             )
 
@@ -215,7 +221,17 @@ class LmStudioWorkerApi(BaseAdapter):
             system_prompt = kwargs.get("system_prompt")
             if system_prompt is not None:
                 invoke_kwargs["system_prompt"] = system_prompt
-            response = self.invoke(prompt, timeout=timeout, **invoke_kwargs)
+            try:
+                response = self.invoke(prompt, timeout=timeout, **invoke_kwargs)
+            except Exception as exc:  # pragma: no cover - defensive fallback
+                logger.exception("LM Studio worker thread failed")
+                response = AdapterResponse(
+                    success=False,
+                    raw_output="",
+                    exit_code=-1,
+                    error=str(exc) or "lmstudio_worker_thread_failed",
+                    duration_seconds=0.0,
+                )
             handle.metadata["response"] = response
             handle.metadata["thread_done"] = True
 
@@ -228,6 +244,11 @@ class LmStudioWorkerApi(BaseAdapter):
         """Poll background LM Studio invocation."""
         if handle.metadata.get("cancelled"):
             return "", True
+        worker = handle.metadata.get("thread")
+        if not handle.metadata.get("thread_done") and isinstance(worker, threading.Thread):
+            # Tiny join yields control so short-lived worker threads can finish
+            # under tight polling loops used by unit tests and the worker shim.
+            worker.join(timeout=0.001)
         if not handle.metadata.get("thread_done"):
             return "", False
         if handle.metadata.get("result_emitted"):

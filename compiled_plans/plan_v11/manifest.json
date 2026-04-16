@@ -1,12 +1,22 @@
 {
   "source_file": "raw_plans/plan_v11.md",
   "source_hash": "3f49d822ba6a5bfa9dab725eed820edaac3196724c74fd317b87b3d2bee21676",
-  "compiled_at": "2026-04-11T11:05:11.914152+00:00",
+  "compiled_at": "2026-04-15T18:49:12.870732+00:00",
   "sequence_id": "compiled_plan_v11",
   "compile_status": "compiled",
   "warnings": [
-    "Plan is written in Russian; stage titles and objectives translated to English for semantic consistency.",
-    "v10 reported suspiciously high veto-model AUC/PR (~0.95) and identical delta across short/long/combined — primary red flags driving this audit."
+    "v10 lockbox table used active-signal-v1@3 as baseline while reference should be @1 — must be resolved first",
+    "v10 veto models report AUC/PR ~0.95 which is suspiciously high and may indicate label-feature shortcut",
+    "Auto-added research_memory for stage_2_part1: every non-trivial stage needs documentation capability.",
+    "Auto-added research_memory for stage_2_part2: every non-trivial stage needs documentation capability.",
+    "Auto-added research_memory for stage_3: every non-trivial stage needs documentation capability.",
+    "Auto-added research_memory for stage_4: every non-trivial stage needs documentation capability.",
+    "Auto-added research_memory for stage_5: every non-trivial stage needs documentation capability.",
+    "Auto-added research_memory for stage_6: every non-trivial stage needs documentation capability.",
+    "Auto-added research_memory for stage_7: every non-trivial stage needs documentation capability.",
+    "Auto-added research_memory for stage_8: every non-trivial stage needs documentation capability.",
+    "Auto-added research_memory for stage_9: every non-trivial stage needs documentation capability.",
+    "Auto-added research_memory for stage_10: every non-trivial stage needs documentation capability."
   ],
   "semantic_method": "llm",
   "semantic_path": "semantic.json",
@@ -16,5 +26,6 @@
     "plans/compiled_plan_v11_batch_2.json",
     "plans/compiled_plan_v11_batch_3.json",
     "plans/compiled_plan_v11_batch_4.json"
-  ]
+  ],
+  "mcp_catalog_hash": "c306b4054eaf8f466a7e29182863da4e7cd0610551ef83a0611c515c84aa415b"
 }

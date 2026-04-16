@@ -1,6 +1,6 @@
 {
   "plan_id": "compiled_plan_v12_batch_3",
-  "goal": "Final qualification of the microstructure-route into one of three honest statuses: confirmed true overlay, confirmed replacement layer, or watchlist/reject.",
+  "goal": "Классифицировать microstructure-сигнал в один из трёх честных статусов: confirmed true overlay, confirmed replacement layer, или watchlist/reject — через строгие parallel-free track-ветки поверх immutable reference active-signal-v1@1.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -9,50 +9,76 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "All comparisons must use active-signal-v1@1 as the sole decision reference; @3 is auxiliary only.",
-    "Overlay and replacement tracks must never be mixed in the same narrative or snapshot.",
-    "Every threshold must have documented provenance: quantile-based or selection-OOS with frozen lockbox.",
-    "All key comparisons must occur on the same window (same-window truth only).",
-    "Simple rules (bucket, threshold, quantile) must be tested before any model-based approach.",
-    "No re-opening of old routes: IV, breadth, path-asymmetry, regime-disagreement, or old-universe classification.",
-    "No new data families or data-universe expansion until microstructure qualification is complete.",
-    "Cannot claim microstructure-result as overlay unless signal IDs, entry timing, and base logic are preserved with microstructure applied only as veto/filter.",
-    "Cannot claim result as replacement unless compared as a separate snapshot against @1 on the same window."
+    "Immutable reference active-signal-v1@1: never modify, never retune, never change its hours/days/thresholds/execution.",
+    "All key decisions use only @1 as base reference; @3 is auxiliary comparison only, never a decision base.",
+    "Overlay and replacement are separate products: never mix them in the same narrative or run.",
+    "Simple rules first: bucket → threshold → quantile before any logistic or CatBoost.",
+    "Every threshold must have documented provenance: quantile rule or selection-OOS search with frozen lockbox.",
+    "Same-window truth: every critical comparison must run on the identical evaluation window.",
+    "No new data families, model families, or macro routes until microstructure qualification is complete.",
+    "Short/long/combined must all be tested explicitly; no short-only conclusions.",
+    "No opening new research directions until v12 reaches final verdict."
   ],
   "slices": [
     {
       "slice_id": "compiled_plan_v12_stage_7",
       "title": "Honest replacement track vs base @1",
-      "hypothesis": "If overlay is weak or impossible, test microstructure as an honest replacement-layer — new signal layer compared head-to-head against base @1.",
-      "objective": "If overlay is weak or impossible, test microstructure as an honest replacement-layer — new signal layer compared head-to-head against base @1.",
+      "hypothesis": "If overlay is weak or impossible, honestly test microstructure as a standalone replacement signal layer — new signal, new snapshot, honest comparison against @1, no claim of being a filter.",
+      "objective": "If overlay is weak or impossible, honestly test microstructure as a standalone replacement signal layer — new signal, new snapshot, honest comparison against @1, no claim of being a filter.",
       "success_criteria": [
-        "Final verdict on replacement track with honest head-to-head comparison."
+        "Final verdict on replacement track: confirmed, watchlist, or rejected.",
+        "Full comparison table against base @1 documented."
       ],
       "allowed_tools": [
         "backtests_strategy",
-        "backtests_strategy_validate",
         "backtests_runs",
         "backtests_analysis",
-        "research_record"
+        "research_memory"
       ],
       "evidence_requirements": [
-        "Final verdict on replacement track with honest head-to-head comparison."
+        "Final verdict on replacement track: confirmed, watchlist, or rejected.",
+        "Full comparison table against base @1 documented."
       ],
       "policy_tags": [
         "replacement_track",
-        "lockbox",
         "same_window_truth"
       ],
-      "max_turns": 36,
-      "max_tool_calls": 30,
-      "max_expensive_calls": 6,
+      "max_turns": 48,
+      "max_tool_calls": 36,
+      "max_expensive_calls": 12,
       "parallel_slot": 1,
+      "runtime_profile": "generic_mutation",
+      "required_prerequisite_facts": null,
+      "required_output_facts": [],
+      "finalization_mode": "none",
+      "dependency_unblock_mode": "accepted_only",
+      "watchlist_allows_unblock": false,
+      "requires_mutating_evidence": false,
+      "requires_persisted_artifact": false,
+      "requires_live_handle_validation": false,
+      "acceptance_contract": {
+        "kind": "generic_read_strict",
+        "mode": "strict",
+        "required_subjects": "none",
+        "required_predicates": [
+          "domain_tool_evidence_present"
+        ],
+        "mcp_proof_calls": [],
+        "forbid_contradictions": [],
+        "allow_advisory_unblock": false,
+        "acceptance_requirements": {
+          "slice_id": "compiled_plan_v12_stage_7",
+          "contract_kind": "generic_read_strict"
+        }
+      },
+      "acceptance_proof": {},
+      "acceptance_blockers": [],
       "budget_scale_applied": 6,
       "depends_on": [
-        "compiled_plan_v12_stage_6",
-        "compiled_plan_v12_stage_3"
+        "compiled_plan_v12_stage_6"
       ],
       "status": "pending",
+      "acceptance_state": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
       "expensive_call_count": 0,
@@ -63,42 +89,77 @@
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
+      "dependency_blocker_slice_id": "",
+      "dependency_blocker_reason_code": "",
+      "dependency_blocker_class": "",
+      "blocked_retry_count": 0,
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
+      "gate_hint": "Executed only if overlay track does not produce CONFIRMED TRUE OVERLAY; may be skipped if overlay is confirmed strong.",
       "artifacts": [],
-      "facts": {}
+      "facts": {},
+      "verdict": ""
     },
     {
       "slice_id": "compiled_plan_v12_stage_8",
       "title": "Cannibalization, ownership and regime analysis",
-      "hypothesis": "Evaluate whether surviving variants improve via useful trade removal rather than coverage profile change or profitable cluster damage.",
-      "objective": "Evaluate whether surviving variants improve via useful trade removal rather than coverage profile change or profitable cluster damage.",
+      "hypothesis": "Audit all surviving variants from both tracks for cannibalization: are we removing bad trades or killing profitable clusters, and which regimes benefit or suffer.",
+      "objective": "Audit all surviving variants from both tracks for cannibalization: are we removing bad trades or killing profitable clusters, and which regimes benefit or suffer.",
       "success_criteria": [
-        "Ownership/cannibalization map across all viable variants with regime-level detail."
+        "Ownership/cannibalization map exists for all viable variants.",
+        "Clear answer on whether improvement is genuine pruning vs coverage shift."
       ],
       "allowed_tools": [
         "backtests_analysis",
         "backtests_conditions",
-        "research_record"
+        "research_memory"
       ],
       "evidence_requirements": [
-        "Ownership/cannibalization map across all viable variants with regime-level detail."
+        "Ownership/cannibalization map exists for all viable variants.",
+        "Clear answer on whether improvement is genuine pruning vs coverage shift."
       ],
       "policy_tags": [
-        "diagnostics",
-        "cannibalization_audit"
+        "audit",
+        "cannibalization_check"
       ],
       "max_turns": 48,
       "max_tool_calls": 36,
       "max_expensive_calls": 12,
       "parallel_slot": 1,
+      "runtime_profile": "generic_mutation",
+      "required_prerequisite_facts": null,
+      "required_output_facts": [],
+      "finalization_mode": "none",
+      "dependency_unblock_mode": "accepted_only",
+      "watchlist_allows_unblock": false,
+      "requires_mutating_evidence": false,
+      "requires_persisted_artifact": false,
+      "requires_live_handle_validation": false,
+      "acceptance_contract": {
+        "kind": "generic_read_strict",
+        "mode": "strict",
+        "required_subjects": "none",
+        "required_predicates": [
+          "domain_tool_evidence_present"
+        ],
+        "mcp_proof_calls": [],
+        "forbid_contradictions": [],
+        "allow_advisory_unblock": false,
+        "acceptance_requirements": {
+          "slice_id": "compiled_plan_v12_stage_8",
+          "contract_kind": "generic_read_strict"
+        }
+      },
+      "acceptance_proof": {},
+      "acceptance_blockers": [],
       "budget_scale_applied": 6,
       "depends_on": [
         "compiled_plan_v12_stage_6",
         "compiled_plan_v12_stage_7"
       ],
       "status": "pending",
+      "acceptance_state": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
       "expensive_call_count": 0,
@@ -109,17 +170,23 @@
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
+      "dependency_blocker_slice_id": "",
+      "dependency_blocker_reason_code": "",
+      "dependency_blocker_class": "",
+      "blocked_retry_count": 0,
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
+      "gate_hint": "",
       "artifacts": [],
-      "facts": {}
+      "facts": {},
+      "verdict": ""
     },
     {
       "slice_id": "compiled_plan_v12_stage_9",
       "title": "Does model layer add anything?",
-      "hypothesis": "Determine whether ML models provide meaningful improvement over simple microstructure rules.",
-      "objective": "Determine whether ML models provide meaningful improvement over simple microstructure rules.",
+      "hypothesis": "Determine whether ML (logistic/CatBoost) provides meaningful improvement over simple microstructure rules on the best surviving route.",
+      "objective": "Determine whether ML (logistic/CatBoost) provides meaningful improvement over simple microstructure rules on the best surviving route.",
       "success_criteria": [
         "Clear verdict: simple_rule_enough, model_adds_value, or model_not_worth_complexity."
       ],
@@ -127,24 +194,67 @@
         "models_train",
         "models_compare",
         "backtests_runs",
-        "research_record"
+        "research_memory"
       ],
       "evidence_requirements": [
         "Clear verdict: simple_rule_enough, model_adds_value, or model_not_worth_complexity."
       ],
       "policy_tags": [
-        "model_assessment",
-        "cheap_first"
+        "simple_rules_first",
+        "model_assessment"
       ],
-      "max_turns": 24,
-      "max_tool_calls": 24,
-      "max_expensive_calls": 3,
+      "max_turns": 36,
+      "max_tool_calls": 30,
+      "max_expensive_calls": 12,
       "parallel_slot": 1,
+      "runtime_profile": "generic_mutation",
+      "required_prerequisite_facts": null,
+      "required_output_facts": [],
+      "finalization_mode": "none",
+      "dependency_unblock_mode": "accepted_only",
+      "watchlist_allows_unblock": false,
+      "requires_mutating_evidence": false,
+      "requires_persisted_artifact": true,
+      "requires_live_handle_validation": true,
+      "acceptance_contract": {
+        "kind": "model_training",
+        "mode": "strict",
+        "required_subjects": "dataset_and_model_version",
+        "required_predicates": [
+          "model_dataset_proof_pass",
+          "model_registry_proof_pass"
+        ],
+        "mcp_proof_calls": [
+          {
+            "tool": "models_dataset",
+            "arguments": {
+              "action": "inspect",
+              "view": "acceptance_proof"
+            }
+          },
+          {
+            "tool": "models_registry",
+            "arguments": {
+              "action": "inspect",
+              "view": "acceptance_proof"
+            }
+          }
+        ],
+        "forbid_contradictions": [],
+        "allow_advisory_unblock": false,
+        "acceptance_requirements": {
+          "slice_id": "compiled_plan_v12_stage_9",
+          "contract_kind": "model_training"
+        }
+      },
+      "acceptance_proof": {},
+      "acceptance_blockers": [],
       "budget_scale_applied": 6,
       "depends_on": [
         "compiled_plan_v12_stage_8"
       ],
       "status": "pending",
+      "acceptance_state": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
       "expensive_call_count": 0,
@@ -155,13 +265,20 @@
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
+      "dependency_blocker_slice_id": "",
+      "dependency_blocker_reason_code": "",
+      "dependency_blocker_class": "",
+      "blocked_retry_count": 0,
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
+      "gate_hint": "",
       "artifacts": [],
-      "facts": {}
+      "facts": {},
+      "verdict": ""
     }
   ],
+  "mcp_catalog_hash": "c306b4054eaf8f466a7e29182863da4e7cd0610551ef83a0611c515c84aa415b",
   "plan_source_kind": "compiled_raw",
   "source_sequence_id": "compiled_plan_v12",
   "source_raw_plan": "raw_plans/plan_v12.md",
@@ -170,6 +287,7 @@
   "source_compile_report_path": "",
   "sequence_batch_index": 3,
   "status": "draft",
-  "created_at": "2026-04-11T11:07:02.822698+00:00",
-  "updated_at": "2026-04-11T11:07:02.822700+00:00"
+  "last_error": "",
+  "created_at": "2026-04-15T18:51:23.501868+00:00",
+  "updated_at": "2026-04-15T18:51:23.501870+00:00"
 }

@@ -1,6 +1,6 @@
 {
   "plan_id": "compiled_plan_v3_batch_3",
-  "goal": "Close the unfinished A1 branch from v2 to a final PROMOTE/REJECT verdict, and only if A1 fails open exactly one next low-friction candidate through the full acceptance chain.",
+  "goal": "Close the unfinished A1 branch to a final PROMOTE/REJECT verdict, then explore at most one additional low-friction candidate before any medium-friction expansion.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -9,47 +9,73 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "active-signal-v1@1 is immutable: never retune its hours, days, thresholds, or execution parameters",
-    "Any candidate must pass strict-additive, permissive-integration, ownership, and cannibalization proof before promotion",
-    "No medium-friction wave B until both low-friction branches (A1 + one of A2/A3) are fully closed with no promoted candidate",
-    "Only one active low-friction branch may be investigated at a time",
-    "Maximum 3-4 features per prototype; maximum 2-3 prototypes per branch",
-    "If a candidate loses positivity after removing its strongest historical segment, it is not mainline-quality"
+    "active-signal-v1@1 is the immutable reference; never modify its hours, days, thresholds, or execution logic",
+    "Nothing may be declared an improvement unless it passes strict additive integration, permissive integration, ownership, and cannibalization proof",
+    "At most one low-friction branch (A2 or A3) may be open at any time",
+    "Wave B (medium-friction: cross-symbol, model-backed routing, hybrids) is forbidden until A1 is closed AND the chosen A2/A3 branch is fully resolved AND neither produced a promoted candidate",
+    "Every branch must reach an explicit PROMOTE / WATCHLIST / REJECT decision before another branch is opened"
   ],
   "slices": [
     {
       "slice_id": "compiled_plan_v3_stage_7",
       "title": "Выбор ровно одной следующей low-friction ветки (если A1 не promoted)",
-      "hypothesis": "If A1 was not promoted, select exactly one next low-friction branch (A2_iv_acceleration preferred, then A3_broader_cl_transition) and prepare its hypothesis and feature contracts.",
-      "objective": "If A1 was not promoted, select exactly one next low-friction branch (A2_iv_acceleration preferred, then A3_broader_cl_transition) and prepare its hypothesis and feature contracts.",
+      "hypothesis": "If A1 was not promoted, select exactly one next low-friction branch (A2_iv_acceleration preferred, A3_broader_cl_transition as fallback) and prepare its feature and hypothesis contracts.",
+      "objective": "If A1 was not promoted, select exactly one next low-friction branch (A2_iv_acceleration preferred, A3_broader_cl_transition as fallback) and prepare its feature and hypothesis contracts.",
       "success_criteria": [
         "Exactly one next branch is selected with documented rationale",
-        "Feature and hypothesis contracts are ready for clean testing"
+        "Feature and hypothesis contracts are prepared",
+        "Branch is ready for clean standalone testing"
       ],
       "allowed_tools": [
-        "features_catalog",
+        "research_memory",
         "features_custom",
-        "research_record",
+        "features_catalog",
         "research_map"
       ],
       "evidence_requirements": [
         "Exactly one next branch is selected with documented rationale",
-        "Feature and hypothesis contracts are ready for clean testing"
+        "Feature and hypothesis contracts are prepared",
+        "Branch is ready for clean standalone testing"
       ],
       "policy_tags": [
-        "gated_branch",
-        "cheap_first",
+        "branch_selection",
+        "gated",
         "optional_candidate"
       ],
       "max_turns": 24,
       "max_tool_calls": 24,
       "max_expensive_calls": 2,
       "parallel_slot": 1,
+      "runtime_profile": "generic_mutation",
+      "required_prerequisite_facts": null,
+      "required_output_facts": [],
+      "finalization_mode": "none",
+      "dependency_unblock_mode": "accepted_only",
+      "watchlist_allows_unblock": false,
+      "requires_mutating_evidence": false,
+      "requires_persisted_artifact": false,
+      "requires_live_handle_validation": false,
+      "acceptance_contract": {
+        "kind": "feature_contract_exploration",
+        "mode": "strict",
+        "required_subjects": "none",
+        "required_predicates": [],
+        "mcp_proof_calls": [],
+        "forbid_contradictions": [],
+        "allow_advisory_unblock": false,
+        "acceptance_requirements": {
+          "slice_id": "compiled_plan_v3_stage_7",
+          "contract_kind": "feature_contract_exploration"
+        }
+      },
+      "acceptance_proof": {},
+      "acceptance_blockers": [],
       "budget_scale_applied": 6,
       "depends_on": [
         "compiled_plan_v3_stage_6"
       ],
       "status": "pending",
+      "acceptance_state": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
       "expensive_call_count": 0,
@@ -60,44 +86,100 @@
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
+      "dependency_blocker_slice_id": "",
+      "dependency_blocker_reason_code": "",
+      "dependency_blocker_class": "",
+      "blocked_retry_count": 0,
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
+      "gate_hint": "Only executes if A1 decision is not PROMOTE; otherwise skip to stage_10",
       "artifacts": [],
-      "facts": {}
+      "facts": {},
+      "verdict": ""
     },
     {
       "slice_id": "compiled_plan_v3_stage_8",
-      "title": "A2_iv_acceleration: прототип и standalone-тест",
-      "hypothesis": "Test whether IV dynamics produce a viable specialist layer by building a compact feature set and running it through plausibility and standalone checks on the base-absent surface.",
-      "objective": "Test whether IV dynamics produce a viable specialist layer by building a compact feature set and running it through plausibility and standalone checks on the base-absent surface.",
+      "title": "A2_iv_acceleration: prototype и standalone тест",
+      "hypothesis": "Test whether IV dynamics produce a genuine specialist layer by building a compact feature set (max 3–4 features), validating on base-absent surface, and assembling strict prototypes.",
+      "objective": "Test whether IV dynamics produce a genuine specialist layer by building a compact feature set (max 3–4 features), validating on base-absent surface, and assembling strict prototypes.",
       "success_criteria": [
-        "Either one mature A2 prototype survives plausibility and standalone tests, or an honest early rejection is recorded"
+        "Either one mature A2 prototype passes plausibility and standalone checks",
+        "Or an honest early-reject verdict is recorded"
       ],
       "allowed_tools": [
         "features_custom",
-        "features_dataset",
-        "backtests_strategy",
+        "features_catalog",
         "backtests_runs",
-        "research_record"
+        "backtests_strategy",
+        "research_memory"
       ],
       "evidence_requirements": [
-        "Either one mature A2 prototype survives plausibility and standalone tests, or an honest early rejection is recorded"
+        "Either one mature A2 prototype passes plausibility and standalone checks",
+        "Or an honest early-reject verdict is recorded"
       ],
       "policy_tags": [
-        "prototyping",
-        "gated_branch",
+        "prototype",
+        "gated",
         "optional_candidate"
       ],
-      "max_turns": 24,
-      "max_tool_calls": 24,
-      "max_expensive_calls": 3,
+      "max_turns": 36,
+      "max_tool_calls": 30,
+      "max_expensive_calls": 6,
       "parallel_slot": 1,
+      "runtime_profile": "generic_mutation",
+      "required_prerequisite_facts": null,
+      "required_output_facts": [],
+      "finalization_mode": "none",
+      "dependency_unblock_mode": "accepted_only",
+      "watchlist_allows_unblock": false,
+      "requires_mutating_evidence": false,
+      "requires_persisted_artifact": true,
+      "requires_live_handle_validation": true,
+      "acceptance_contract": {
+        "kind": "standalone_backtests",
+        "mode": "strict",
+        "required_subjects": "each_surviving_candidate",
+        "required_predicates": [
+          "candidate_set_non_empty",
+          "each_candidate_has_run_id",
+          "each_run_exists",
+          "each_run_completed",
+          "each_run_has_metrics",
+          "each_run_matches_snapshot_symbol_timeframes"
+        ],
+        "mcp_proof_calls": [
+          {
+            "tool": "backtests_runs",
+            "arguments": {
+              "action": "inspect",
+              "view": "acceptance_proof"
+            }
+          }
+        ],
+        "forbid_contradictions": [
+          "no saved/active runs",
+          "cannot evaluate",
+          "lack standalone backtest runs",
+          "no standalone backtest"
+        ],
+        "allow_advisory_unblock": false,
+        "acceptance_requirements": {
+          "slice_id": "compiled_plan_v3_stage_8",
+          "contract_kind": "standalone_backtests",
+          "requires_completed": true,
+          "requires_persisted_artifacts": true,
+          "requires_metrics": true
+        }
+      },
+      "acceptance_proof": {},
+      "acceptance_blockers": [],
       "budget_scale_applied": 6,
       "depends_on": [
         "compiled_plan_v3_stage_7"
       ],
       "status": "pending",
+      "acceptance_state": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
       "expensive_call_count": 0,
@@ -108,44 +190,100 @@
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
+      "dependency_blocker_slice_id": "",
+      "dependency_blocker_reason_code": "",
+      "dependency_blocker_class": "",
+      "blocked_retry_count": 0,
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
+      "gate_hint": "Only executes if A2_iv_acceleration was selected in stage_7; mutually exclusive with stage_9",
       "artifacts": [],
-      "facts": {}
+      "facts": {},
+      "verdict": ""
     },
     {
       "slice_id": "compiled_plan_v3_stage_9",
-      "title": "A3_broader_cl_transition: прототип и standalone-тест",
-      "hypothesis": "Test whether a broader class of classifier transitions produces a viable specialist layer through transition features and base-absent surface evaluation.",
-      "objective": "Test whether a broader class of classifier transitions produces a viable specialist layer through transition features and base-absent surface evaluation.",
+      "title": "A3_broader_cl_transition: prototype и standalone тест",
+      "hypothesis": "Test whether broader classifier transitions produce a genuine specialist layer by building transition features, grouping by semantic meaning, and validating on base-absent surface.",
+      "objective": "Test whether broader classifier transitions produce a genuine specialist layer by building transition features, grouping by semantic meaning, and validating on base-absent surface.",
       "success_criteria": [
-        "Either one mature A3 prototype survives plausibility and standalone tests, or an honest early rejection is recorded"
+        "Either one mature A3 prototype passes plausibility and standalone checks",
+        "Or an honest early-reject verdict is recorded"
       ],
       "allowed_tools": [
         "features_custom",
-        "features_dataset",
-        "backtests_strategy",
+        "features_catalog",
         "backtests_runs",
-        "research_record"
+        "backtests_strategy",
+        "research_memory"
       ],
       "evidence_requirements": [
-        "Either one mature A3 prototype survives plausibility and standalone tests, or an honest early rejection is recorded"
+        "Either one mature A3 prototype passes plausibility and standalone checks",
+        "Or an honest early-reject verdict is recorded"
       ],
       "policy_tags": [
-        "prototyping",
-        "gated_branch",
+        "prototype",
+        "gated",
         "optional_candidate"
       ],
-      "max_turns": 24,
-      "max_tool_calls": 24,
-      "max_expensive_calls": 3,
+      "max_turns": 36,
+      "max_tool_calls": 30,
+      "max_expensive_calls": 6,
       "parallel_slot": 1,
+      "runtime_profile": "generic_mutation",
+      "required_prerequisite_facts": null,
+      "required_output_facts": [],
+      "finalization_mode": "none",
+      "dependency_unblock_mode": "accepted_only",
+      "watchlist_allows_unblock": false,
+      "requires_mutating_evidence": false,
+      "requires_persisted_artifact": true,
+      "requires_live_handle_validation": true,
+      "acceptance_contract": {
+        "kind": "standalone_backtests",
+        "mode": "strict",
+        "required_subjects": "each_surviving_candidate",
+        "required_predicates": [
+          "candidate_set_non_empty",
+          "each_candidate_has_run_id",
+          "each_run_exists",
+          "each_run_completed",
+          "each_run_has_metrics",
+          "each_run_matches_snapshot_symbol_timeframes"
+        ],
+        "mcp_proof_calls": [
+          {
+            "tool": "backtests_runs",
+            "arguments": {
+              "action": "inspect",
+              "view": "acceptance_proof"
+            }
+          }
+        ],
+        "forbid_contradictions": [
+          "no saved/active runs",
+          "cannot evaluate",
+          "lack standalone backtest runs",
+          "no standalone backtest"
+        ],
+        "allow_advisory_unblock": false,
+        "acceptance_requirements": {
+          "slice_id": "compiled_plan_v3_stage_9",
+          "contract_kind": "standalone_backtests",
+          "requires_completed": true,
+          "requires_persisted_artifacts": true,
+          "requires_metrics": true
+        }
+      },
+      "acceptance_proof": {},
+      "acceptance_blockers": [],
       "budget_scale_applied": 6,
       "depends_on": [
         "compiled_plan_v3_stage_7"
       ],
       "status": "pending",
+      "acceptance_state": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
       "expensive_call_count": 0,
@@ -156,13 +294,20 @@
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
+      "dependency_blocker_slice_id": "",
+      "dependency_blocker_reason_code": "",
+      "dependency_blocker_class": "",
+      "blocked_retry_count": 0,
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
+      "gate_hint": "Only executes if A3_broader_cl_transition was selected in stage_7; mutually exclusive with stage_8",
       "artifacts": [],
-      "facts": {}
+      "facts": {},
+      "verdict": ""
     }
   ],
+  "mcp_catalog_hash": "c306b4054eaf8f466a7e29182863da4e7cd0610551ef83a0611c515c84aa415b",
   "plan_source_kind": "compiled_raw",
   "source_sequence_id": "compiled_plan_v3",
   "source_raw_plan": "raw_plans/plan_v3.md",
@@ -171,6 +316,7 @@
   "source_compile_report_path": "",
   "sequence_batch_index": 3,
   "status": "draft",
-  "created_at": "2026-04-11T10:49:08.828953+00:00",
-  "updated_at": "2026-04-11T10:49:08.828957+00:00"
+  "last_error": "",
+  "created_at": "2026-04-15T18:37:31.795441+00:00",
+  "updated_at": "2026-04-15T18:37:31.795443+00:00"
 }

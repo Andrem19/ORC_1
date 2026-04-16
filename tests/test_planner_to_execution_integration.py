@@ -16,6 +16,9 @@ from app.services.direct_execution.planner import (
     PlannerDecisionService,
     PlannerDecisionError,
 )
+from tests.mcp_catalog_fixtures import make_catalog_snapshot
+
+SNAPSHOT = make_catalog_snapshot()
 
 BOOTSTRAP = {
     "baseline_snapshot_id": "active-signal-v1",
@@ -25,21 +28,7 @@ BOOTSTRAP = {
     "execution_timeframe": "5m",
 }
 
-TOOLS = [
-    "research_project",
-    "research_map",
-    "research_record",
-    "research_search",
-    "datasets",
-    "datasets_sync",
-    "features_custom",
-    "features_dataset",
-    "backtests_runs",
-    "backtests_analysis",
-    "experiments_run",
-    "experiments_inspect",
-    "notify_send",
-]
+TOOLS = SNAPSHOT.tool_names()
 
 
 def _semantic_response(stages: list[dict], **overrides) -> str:
@@ -102,6 +91,7 @@ def _make_service(mock_raw_output: str) -> PlannerDecisionService:
         retry_attempts=1,
         retry_backoff_seconds=0.01,
         invoker=mock_invoke,
+        catalog_snapshot=SNAPSHOT,
     )
     return service
 

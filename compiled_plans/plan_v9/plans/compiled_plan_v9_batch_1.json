@@ -1,6 +1,6 @@
 {
   "plan_id": "compiled_plan_v9_batch_1",
-  "goal": "Найти новый data universe, который добавляет реальную информацию сверх текущего OHLCV+IV+classifier+breadth+event space, и проверить его как overlay/veto route на immutable базе active-signal-v1@1.",
+  "goal": "Определить, содержит ли новый data universe (derivatives positioning / pressure) реальный информационный сигнал сверх текущего OHLCV + IV + classifier + breadth + event space, и может ли он стать основой для overlay route против immutable базы.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -9,40 +9,35 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "База active-signal-v1@1 — immutable reference. Запрещено менять, подбирать часы/дни/пороги/исполнение.",
-    "Запрещено выбирать feature set, label scheme, horizon, threshold или архитектуру по lockbox-окну.",
-    "Любое улучшение должно пройти matched OOS comparison против базы на том же окне.",
-    "Raw event entries, static IV, IV dynamics, classifier transitions, regression на future PnL, full-surface directional classification, trade-quality overlays — окончательно закрыты на текущем universe.",
-    "Новый data universe обязателен: нельзя пытаться докрутить старые модели на старых данных.",
-    "Primary family — одна, fallback — одна. Идти строго по очереди, не паралельно.",
-    "Сначала information-content triage, потом модели. Без bucket sanity модель не строится.",
-    "Overlay-first, direction-second. Direction labels запрещены без overlay evidence.",
-    "Не строить больше 12 features в первой волне для любой family.",
-    "Freeze rules: family choice freeze before modeling, feature set freeze before training, threshold freeze before lockbox.",
-    "Purge gap минимум 24h для trade/holding tasks.",
-    "Максимум одна дополнительная route (early-cut ИЛИ extension), не обе.",
-    "Не обучать direction models без overlay evidence. Не обучать router."
+    "active-signal-v1@1 — immutable reference; запрещено менять базу, подбирать ей параметры, заново открывать closed routes",
+    "запрещено: full-surface directional classification на старом data universe; trade-quality overlays без нового информационного слоя; regression на future PnL; feature/label/threshold/architecture selection по lockbox-окну",
+    "любое улучшение должно пройти matched OOS comparison против базы на том же окне",
+    "max 12 features в первой волне для primary family",
+    "direction labels запрещены до overlay evidence",
+    "максимум одна дополнительная route (early-cut ИЛИ extension, не обе)",
+    "freeze rules: family choice freeze → feature set freeze → threshold freeze before lockbox",
+    "purge gap минимум 24h для trade/holding tasks"
   ],
   "slices": [
     {
       "slice_id": "compiled_plan_v9_stage_1",
       "title": "Closure-audit v8 и фиксация pivot v9",
-      "hypothesis": "Формально закрыть текущий data universe как исчерпанный для old routes и создать чистую стартовую точку v9.",
-      "objective": "Формально закрыть текущий data universe как исчерпанный для old routes и создать чистую стартовую точку v9.",
+      "hypothesis": "Формально закрыть текущий data universe как исчерпанный для old routes, завести проект v9 и зафиксировать immutable baseline reference.",
+      "objective": "Формально закрыть текущий data universe как исчерпанный для old routes, завести проект v9 и зафиксировать immutable baseline reference.",
       "success_criteria": [
-        "Существует clean project v9 с записанным closure-audit",
-        "Immutable baseline reference зафиксирован",
+        "Clean project v9 создан",
+        "Terminology и baseline reference зафиксированы в research_memory",
         "Research map оси заведены",
         "Open-items register создан"
       ],
       "allowed_tools": [
         "research_project",
-        "research_record",
+        "research_memory",
         "research_map"
       ],
       "evidence_requirements": [
-        "Существует clean project v9 с записанным closure-audit",
-        "Immutable baseline reference зафиксирован",
+        "Clean project v9 создан",
+        "Terminology и baseline reference зафиксированы в research_memory",
         "Research map оси заведены",
         "Open-items register создан"
       ],
@@ -52,11 +47,51 @@
       ],
       "max_turns": 24,
       "max_tool_calls": 24,
-      "max_expensive_calls": 2,
+      "max_expensive_calls": 1,
       "parallel_slot": 1,
+      "runtime_profile": "research_setup",
+      "required_prerequisite_facts": [],
+      "required_output_facts": [
+        "research.baseline_configured",
+        "research.atlas_defined",
+        "research.invariants_recorded",
+        "research.naming_recorded"
+      ],
+      "finalization_mode": "fact_based",
+      "dependency_unblock_mode": "accepted_only",
+      "watchlist_allows_unblock": false,
+      "requires_mutating_evidence": false,
+      "requires_persisted_artifact": false,
+      "requires_live_handle_validation": false,
+      "acceptance_contract": {
+        "kind": "research_setup",
+        "mode": "strict",
+        "required_subjects": "persisted_research_setup_nodes",
+        "required_predicates": [
+          "research_project_present",
+          "research_setup_facts_present"
+        ],
+        "mcp_proof_calls": [
+          {
+            "tool": "research_memory",
+            "arguments": {
+              "action": "prove"
+            }
+          }
+        ],
+        "forbid_contradictions": [],
+        "allow_advisory_unblock": false,
+        "acceptance_requirements": {
+          "slice_id": "compiled_plan_v9_stage_1",
+          "contract_kind": "research_setup"
+        }
+      },
+      "acceptance_proof": {},
+      "acceptance_blockers": [],
       "budget_scale_applied": 6,
       "depends_on": [],
       "status": "pending",
+      "acceptance_state": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
       "expensive_call_count": 0,
@@ -67,45 +102,81 @@
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
+      "dependency_blocker_slice_id": "",
+      "dependency_blocker_reason_code": "",
+      "dependency_blocker_class": "",
+      "blocked_retry_count": 0,
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
+      "gate_hint": "",
       "artifacts": [],
-      "facts": {}
+      "facts": {},
+      "verdict": ""
     },
     {
       "slice_id": "compiled_plan_v9_stage_2",
       "title": "Audit нового data universe",
-      "hypothesis": "Проверить availability, quality, causal usability и novelty всех кандидатов нового data universe.",
-      "objective": "Проверить availability, quality, causal usability и novelty всех кандидатов нового data universe.",
+      "hypothesis": "Проверить availability, quality, coverage, causal usability и novelty всех candidate data families (derivatives positioning, cross-exchange, microstructure, options).",
+      "objective": "Проверить availability, quality, coverage, causal usability и novelty всех candidate data families (derivatives positioning, cross-exchange, microstructure, options).",
       "success_criteria": [
-        "Для каждой candidate family заполнена таблица: available, common_window_ok, gaps_ok, causality_ok, novelty_ok, usable_now",
-        "Результаты записаны в research_record"
+        "Заполненная таблица audit по всем 4 data families с available, common_window_ok, gaps_ok, causality_ok, novelty_ok, usable_now",
+        "Хотя бы одна family с usable_now=true"
       ],
       "allowed_tools": [
         "datasets",
         "datasets_preview",
         "events",
         "features_catalog",
-        "research_record"
+        "research_memory"
       ],
       "evidence_requirements": [
-        "Для каждой candidate family заполнена таблица: available, common_window_ok, gaps_ok, causality_ok, novelty_ok, usable_now",
-        "Результаты записаны в research_record"
+        "Заполненная таблица audit по всем 4 data families с available, common_window_ok, gaps_ok, causality_ok, novelty_ok, usable_now",
+        "Хотя бы одна family с usable_now=true"
       ],
       "policy_tags": [
-        "triage",
+        "data_readiness",
         "cheap_first"
       ],
-      "max_turns": 24,
-      "max_tool_calls": 24,
-      "max_expensive_calls": 2,
+      "max_turns": 36,
+      "max_tool_calls": 30,
+      "max_expensive_calls": 6,
       "parallel_slot": 1,
+      "runtime_profile": "generic_mutation",
+      "required_prerequisite_facts": [
+        "research.baseline_configured",
+        "research.atlas_defined",
+        "research.invariants_recorded",
+        "research.naming_recorded"
+      ],
+      "required_output_facts": [],
+      "finalization_mode": "none",
+      "dependency_unblock_mode": "accepted_only",
+      "watchlist_allows_unblock": false,
+      "requires_mutating_evidence": false,
+      "requires_persisted_artifact": false,
+      "requires_live_handle_validation": false,
+      "acceptance_contract": {
+        "kind": "feature_contract_exploration",
+        "mode": "strict",
+        "required_subjects": "none",
+        "required_predicates": [],
+        "mcp_proof_calls": [],
+        "forbid_contradictions": [],
+        "allow_advisory_unblock": false,
+        "acceptance_requirements": {
+          "slice_id": "compiled_plan_v9_stage_2",
+          "contract_kind": "feature_contract_exploration"
+        }
+      },
+      "acceptance_proof": {},
+      "acceptance_blockers": [],
       "budget_scale_applied": 6,
       "depends_on": [
         "compiled_plan_v9_stage_1"
       ],
       "status": "pending",
+      "acceptance_state": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
       "expensive_call_count": 0,
@@ -116,32 +187,34 @@
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
+      "dependency_blocker_slice_id": "",
+      "dependency_blocker_reason_code": "",
+      "dependency_blocker_class": "",
+      "blocked_retry_count": 0,
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
+      "gate_hint": "",
       "artifacts": [],
-      "facts": {}
+      "facts": {},
+      "verdict": ""
     },
     {
       "slice_id": "compiled_plan_v9_stage_3",
       "title": "Выбор primary family и fallback family",
-      "hypothesis": "Выбрать одну главную data family и одну fallback по пяти критериям оценки, остальные locked.",
-      "objective": "Выбрать одну главную data family и одну fallback по пяти критериям оценки, остальные locked.",
+      "hypothesis": "На основе audit выбрать одну primary и одну fallback data family; остальные формально locked.",
+      "objective": "На основе audit выбрать одну primary и одну fallback data family; остальные формально locked.",
       "success_criteria": [
-        "Primary family выбрана и зафиксирована",
-        "Fallback family выбрана и зафиксирована",
-        "Остальные families locked",
-        "Family choice freeze applied"
+        "Primary и fallback families выбраны и зафиксированы",
+        "Остальные families формально locked с обоснованием"
       ],
       "allowed_tools": [
-        "research_record",
+        "research_memory",
         "research_map"
       ],
       "evidence_requirements": [
-        "Primary family выбрана и зафиксирована",
-        "Fallback family выбрана и зафиксирована",
-        "Остальные families locked",
-        "Family choice freeze applied"
+        "Primary и fallback families выбраны и зафиксированы",
+        "Остальные families формально locked с обоснованием"
       ],
       "policy_tags": [
         "decision",
@@ -149,13 +222,50 @@
       ],
       "max_turns": 24,
       "max_tool_calls": 24,
-      "max_expensive_calls": 2,
+      "max_expensive_calls": 1,
       "parallel_slot": 1,
+      "runtime_profile": "write_result",
+      "required_prerequisite_facts": [
+        "features_catalog.scopes"
+      ],
+      "required_output_facts": [],
+      "finalization_mode": "none",
+      "dependency_unblock_mode": "accepted_only",
+      "watchlist_allows_unblock": false,
+      "requires_mutating_evidence": true,
+      "requires_persisted_artifact": false,
+      "requires_live_handle_validation": false,
+      "acceptance_contract": {
+        "kind": "write_result",
+        "mode": "strict",
+        "required_subjects": "persisted_research_node",
+        "required_predicates": [
+          "mutating_tool_call_present",
+          "research_node_proof_pass"
+        ],
+        "mcp_proof_calls": [
+          {
+            "tool": "research_memory",
+            "arguments": {
+              "action": "prove"
+            }
+          }
+        ],
+        "forbid_contradictions": [],
+        "allow_advisory_unblock": false,
+        "acceptance_requirements": {
+          "slice_id": "compiled_plan_v9_stage_3",
+          "contract_kind": "write_result"
+        }
+      },
+      "acceptance_proof": {},
+      "acceptance_blockers": [],
       "budget_scale_applied": 6,
       "depends_on": [
         "compiled_plan_v9_stage_2"
       ],
       "status": "pending",
+      "acceptance_state": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
       "expensive_call_count": 0,
@@ -166,13 +276,20 @@
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
+      "dependency_blocker_slice_id": "",
+      "dependency_blocker_reason_code": "",
+      "dependency_blocker_class": "",
+      "blocked_retry_count": 0,
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
+      "gate_hint": "",
       "artifacts": [],
-      "facts": {}
+      "facts": {},
+      "verdict": ""
     }
   ],
+  "mcp_catalog_hash": "c306b4054eaf8f466a7e29182863da4e7cd0610551ef83a0611c515c84aa415b",
   "plan_source_kind": "compiled_raw",
   "source_sequence_id": "compiled_plan_v9",
   "source_raw_plan": "raw_plans/plan_v9.md",
@@ -181,6 +298,7 @@
   "source_compile_report_path": "",
   "sequence_batch_index": 1,
   "status": "draft",
-  "created_at": "2026-04-11T11:01:31.894281+00:00",
-  "updated_at": "2026-04-11T11:01:31.894409+00:00"
+  "last_error": "",
+  "created_at": "2026-04-15T18:46:17.064091+00:00",
+  "updated_at": "2026-04-15T18:46:17.064095+00:00"
 }

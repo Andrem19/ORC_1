@@ -96,9 +96,29 @@ class LMStudioConfig:
 
 
 @dataclass
+class MinimaxConfig:
+    """MiniMax OpenAI-compatible API settings."""
+    base_url: str = "https://api.minimax.io"
+    model: str = "MiniMax-M2.7"
+    api_key_env_var: str = "MINIMAX_API"  # env var name holding the API key
+    temperature: float = 1.0  # MiniMax recommended default
+    max_tokens: int = 8192
+
+
+@dataclass
+class SequenceReportConfig:
+    """Adapter and LLM settings for sequence completion narrative generation."""
+    provider: str = "claude_cli"  # claude_cli | lmstudio
+    model: str = "opus"
+    timeout_seconds: int = 120
+    retry_attempts: int = 2
+    retry_backoff_seconds: float = 0.5
+
+
+@dataclass
 class DirectExecutionConfig:
     """Direct model execution settings."""
-    provider: str = "lmstudio"  # lmstudio | qwen_cli | claude_cli
+    provider: str = "lmstudio"  # lmstudio | minimax | qwen_cli | claude_cli
     fallback_1: str = ""  # "qwen_cli" | "claude_cli" | "lmstudio" | "off" | ""
     fallback_2: str = ""  # "qwen_cli" | "claude_cli" | "lmstudio" | "off" | ""
     timeout_seconds: int = 1200
@@ -110,13 +130,20 @@ class DirectExecutionConfig:
     mcp_token_env_var: str = "DEV_SPACE1_MCP_BEARER_TOKEN"
     connect_timeout_seconds: float = 10.0
     read_timeout_seconds: float = 60.0
-    first_action_timeout_seconds: int = 45
+    first_action_timeout_seconds: int = 75
     stalled_action_timeout_seconds: int = 60
     retry_budget: int = 1
     incident_on_unclear_contract: bool = True
     contract_guardrails_enabled: bool = True
     parse_repair_attempts: int = 1
     qwen_tool_registry_preflight: bool = True
+    qwen_preflight_timeout_seconds: int = 60
+    qwen_primary_preflight_enabled: bool = True
+    qwen_primary_preflight_max_attempts: int = 3
+    qwen_primary_preflight_retry_delay_seconds: float = 2.0
+    fallback_skip_repair_on_infra_signal: bool = True
+    repair_tool_call_budget: int = 3
+    primary_retry_budget: int = 1
     safe_exclude_tools: list[str] = field(default_factory=lambda: [
         "run_shell_command",
         "read_file",
@@ -128,6 +155,10 @@ class DirectExecutionConfig:
         "web_fetch",
         "system_reset_space",
     ])
+    # LMStudio tool-call reliability settings
+    lmstudio_zero_tool_retries: int = 2  # nudge retries before fallback
+    lmstudio_first_turn_tool_choice: str = "required"  # "required" | "auto"
+    max_blocked_retries: int = 2  # how many times to retry a blocked-checkpoint slice before abort cascade
 
 
 @dataclass
@@ -179,9 +210,15 @@ class OrchestratorConfig:
 
     # --- Plan source / raw-plan conversion ---
     plan_source: str = "planner"  # planner | compiled_raw
+    start_from: str = ""  # e.g. "v2" — skip compiled plans before plan_v2
     raw_plan_dir: str = "raw_plans"
     compiled_plan_dir: str = "compiled_plans"
     compiled_queue_skip_failures: bool = True
+    # When True, transient infrastructure failures (LM Studio crashes, HTTP
+    # timeouts, gate rejections) do NOT cause the rest of a compiled sequence
+    # to be skipped — next batches still run and flow through the fallback
+    # chain. Only explicit semantic aborts skip remaining batches.
+    infra_failure_never_skip_batches: bool = True
     converter_use_llm: bool = True
 
     # --- Console display ---
@@ -210,7 +247,9 @@ class OrchestratorConfig:
 
     # --- LM Studio (shared connection + translation) ---
     lmstudio: LMStudioConfig = field(default_factory=LMStudioConfig)
+    minimax: MinimaxConfig = field(default_factory=MinimaxConfig)
     direct_execution: DirectExecutionConfig = field(default_factory=DirectExecutionConfig)
+    sequence_report: SequenceReportConfig = field(default_factory=SequenceReportConfig)
 
     plan_dir: str = "plans"
     max_concurrent_plan_tasks: int = 3
@@ -240,8 +279,9 @@ def load_config_from_dict(data: dict[str, Any]) -> OrchestratorConfig:
         "poll_interval_seconds", "max_errors_total", "max_empty_cycles",
         "state_dir", "state_file", "execution_state_file",
         "log_level", "log_dir", "log_file",
-        "plan_source", "raw_plan_dir", "compiled_plan_dir",
-        "compiled_queue_skip_failures", "converter_use_llm",
+        "plan_source", "start_from", "raw_plan_dir", "compiled_plan_dir",
+        "compiled_queue_skip_failures", "infra_failure_never_skip_batches",
+        "converter_use_llm",
         "rich_console", "console_log_level", "console_truncate_length",
         "detect_duplicate_results",
         "research_config",
@@ -286,6 +326,17 @@ def load_config_from_dict(data: dict[str, Any]) -> OrchestratorConfig:
             **{k: v for k, v in lm_data.items()
                if k in ("base_url", "model", "reasoning_effort")},
         )
+
+    # MiniMax: parse API connection config
+    if "minimax" in data:
+        mm_data = dict(data["minimax"])
+        cfg.minimax = MinimaxConfig(
+            **{k: v for k, v in mm_data.items()
+               if k in ("base_url", "model", "api_key_env_var", "temperature", "max_tokens")},
+        )
+
+    if "sequence_report" in data:
+        cfg.sequence_report = SequenceReportConfig(**_filter_dataclass_kwargs(SequenceReportConfig, data["sequence_report"]))
 
     if cfg.startup_mode not in ("resume", "reset", "reset_all"):
         raise ValueError(

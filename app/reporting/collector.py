@@ -189,6 +189,8 @@ class ReportCollector:
             slice_id=slice_obj.slice_id,
             title=slice_obj.title,
             status=slice_obj.status,
+            acceptance_state=str(getattr(slice_obj, "acceptance_state", "") or ""),
+            dependency_unblock_mode=str(getattr(slice_obj, "dependency_unblock_mode", "") or ""),
             verdict=action.verdict or _fallback_slice_verdict(slice_obj),
             summary=action.summary or slice_obj.last_summary or slice_obj.last_error,
             facts=dict(slice_obj.facts),
@@ -201,6 +203,14 @@ class ReportCollector:
             confidence=action.confidence,
             artifacts=list(slice_obj.artifacts),
             last_error=slice_obj.last_error,
+            dependency_blocker_slice_id=str(getattr(slice_obj, "dependency_blocker_slice_id", "") or ""),
+            dependency_blocker_reason_code=str(getattr(slice_obj, "dependency_blocker_reason_code", "") or ""),
+            dependency_blocker_class=str(getattr(slice_obj, "dependency_blocker_class", "") or ""),
+            root_failure_reason=str(slice_obj.facts.get("direct.root_failure_reason") or ""),
+            root_failure_artifact=str(slice_obj.facts.get("direct.root_failure_artifact") or ""),
+            best_failed_attempt_provider=str(slice_obj.facts.get("direct.best_failed_attempt_provider") or ""),
+            best_failed_tool_call_count=int(slice_obj.facts.get("direct.best_failed_tool_call_count") or 0),
+            last_provider_failure=str(slice_obj.facts.get("direct.last_provider_failure") or ""),
             incident_refs=incident_refs,
             report_path=str(report_path) if report_path is not None else "",
         )
@@ -272,10 +282,23 @@ class ReportCollector:
                 for finding in (slice_result.rejected_findings or ([slice_result.summary] if slice_result.status in {"failed", "aborted"} and slice_result.summary else []))
             ),
             failed_branches=_unique_preserve_order(
-                f"{slice_result.slice_id}: {slice_result.summary or slice_result.last_error or slice_result.status}"
+                (
+                    (
+                        f"{slice_result.slice_id}: root {slice_result.root_failure_reason} "
+                        f"({slice_result.best_failed_attempt_provider}, tools={slice_result.best_failed_tool_call_count})"
+                        if slice_result.root_failure_reason
+                        else f"{slice_result.slice_id}: {slice_result.summary or slice_result.last_error or slice_result.status}"
+                    )
+                    if not slice_result.dependency_blocker_slice_id
+                    else (
+                        f"{slice_result.slice_id}: blocked by {slice_result.dependency_blocker_slice_id} "
+                        f"({slice_result.dependency_blocker_class or 'unknown'}:"
+                        f"{slice_result.dependency_blocker_reason_code or slice_result.last_error or 'dependency_blocked'})"
+                    )
+                )
                 for item in plan_reports
                 for slice_result in item.slice_results
-                if slice_result.status in {"failed", "aborted"}
+                if slice_result.status in {"failed", "aborted"} or (slice_result.status == "checkpointed" and slice_result.last_error)
             ),
             key_metrics_rollup=_rollup_key_metrics(plan_reports),
             slice_verdict_rollup=dict(Counter(

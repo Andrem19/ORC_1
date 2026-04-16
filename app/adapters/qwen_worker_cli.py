@@ -95,7 +95,12 @@ class QwenWorkerCli(BaseAdapter):
         cmd.extend(self.extra_flags)
         return cmd
 
-    def preflight_tool_registry(self, *, required_tools: list[str]) -> dict[str, Any]:
+    def preflight_tool_registry(
+        self,
+        *,
+        required_tools: list[str],
+        timeout: int | float = 60,
+    ) -> dict[str, Any]:
         normalized_required = tuple(sorted({str(item).strip() for item in required_tools if str(item).strip()}))
         cached = self._tool_registry_cache.get(normalized_required)
         if cached is not None:
@@ -104,11 +109,14 @@ class QwenWorkerCli(BaseAdapter):
             result = {
                 "available": False,
                 "visible_tools": [],
+                "exact_visible_tools": [],
+                "canonical_to_visible": {},
                 "missing_required_tools": list(normalized_required),
                 "reason": "qwen_cli_unavailable",
             }
             self._tool_registry_cache[normalized_required] = dict(result)
             return result
+        probe_timeout = max(1, int(timeout or 60))
         response = self.invoke(
             (
                 "Return only JSON with shape "
@@ -116,16 +124,30 @@ class QwenWorkerCli(BaseAdapter):
                 " listing the exact currently visible tool names. "
                 "Do not call any tool. Do not explain."
             ),
-            timeout=30,
+            timeout=probe_timeout,
             allow_tool_use=False,
         )
-        visible_tools = _extract_visible_tools(response.raw_output)
+        if not response.success:
+            return {
+                "available": True,
+                "visible_tools": [],
+                "exact_visible_tools": [],
+                "canonical_to_visible": {},
+                "missing_required_tools": [],
+                "reason": _preflight_probe_reason(response),
+                "preflight_inconclusive": True,
+            }
+        exact_visible_tools, canonical_to_visible = _extract_visible_tool_registry(response.raw_output)
+        visible_tools = set(canonical_to_visible)
         missing = [name for name in normalized_required if name not in visible_tools]
         result = {
             "available": not missing,
             "visible_tools": sorted(visible_tools),
+            "exact_visible_tools": exact_visible_tools,
+            "canonical_to_visible": canonical_to_visible,
             "missing_required_tools": missing,
             "reason": "" if not missing else "missing:" + ",".join(missing),
+            "preflight_inconclusive": False,
         }
         self._tool_registry_cache[normalized_required] = dict(result)
         return result
@@ -438,10 +460,10 @@ def _append_limited(existing: str, fragment: str, limit: int) -> str:
     return combined[-limit:]
 
 
-def _extract_visible_tools(raw_output: str) -> set[str]:
+def _extract_visible_tool_registry(raw_output: str) -> tuple[list[str], dict[str, str]]:
     text = str(raw_output or "").strip()
     if not text:
-        return set()
+        return [], {}
     if text.startswith("```"):
         lines = text.splitlines()
         if lines and lines[0].startswith("```"):
@@ -452,16 +474,29 @@ def _extract_visible_tools(raw_output: str) -> set[str]:
     try:
         payload = json.loads(text)
     except json.JSONDecodeError:
-        return set()
+        return [], {}
     values = payload.get("visible_tools") if isinstance(payload, dict) else []
     if not isinstance(values, list):
-        return set()
-    normalized: set[str] = set()
+        return [], {}
+    ordered_exact: list[str] = []
+    canonical_to_visible: dict[str, str] = {}
     for item in values:
-        name = str(item or "").strip()
-        if not name:
+        exact_name = str(item or "").strip()
+        if not exact_name:
             continue
-        if name.startswith("mcp__dev_space1__"):
-            name = name.split("mcp__dev_space1__", 1)[1]
-        normalized.add(name)
-    return normalized
+        if exact_name not in ordered_exact:
+            ordered_exact.append(exact_name)
+        canonical_name = exact_name
+        if canonical_name.startswith("mcp__dev_space1__"):
+            canonical_name = canonical_name.split("mcp__dev_space1__", 1)[1]
+        canonical_to_visible.setdefault(canonical_name, exact_name)
+    return ordered_exact, canonical_to_visible
+
+
+def _preflight_probe_reason(response: AdapterResponse) -> str:
+    if getattr(response, "timed_out", False):
+        return "probe_timeout"
+    error_text = str(getattr(response, "error", "") or "").strip()
+    if error_text:
+        return f"probe_failed:{error_text[:120]}"
+    return "probe_inconclusive"

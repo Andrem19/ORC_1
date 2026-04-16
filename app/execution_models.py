@@ -41,9 +41,22 @@ class PlanSlice:
     max_tool_calls: int
     max_expensive_calls: int
     parallel_slot: int
+    runtime_profile: str = "generic_read"
+    required_prerequisite_facts: list[str] = field(default_factory=list)
+    required_output_facts: list[str] = field(default_factory=list)
+    finalization_mode: str = "generic_salvage"
+    dependency_unblock_mode: str = "accepted_only"
+    watchlist_allows_unblock: bool = False
+    requires_mutating_evidence: bool = False
+    requires_persisted_artifact: bool = False
+    requires_live_handle_validation: bool = False
+    acceptance_contract: dict[str, Any] = field(default_factory=dict)
+    acceptance_proof: dict[str, Any] = field(default_factory=dict)
+    acceptance_blockers: list[str] = field(default_factory=list)
     budget_scale_applied: int = 1
     depends_on: list[str] = field(default_factory=list)
     status: str = "pending"  # pending | running | checkpointed | completed | failed | aborted
+    acceptance_state: str = "pending"  # pending | reported_terminal | accepted_ready | blocked | advisory_only_done
     turn_count: int = 0
     tool_call_count: int = 0
     expensive_call_count: int = 0
@@ -54,11 +67,17 @@ class PlanSlice:
     final_report_turn_id: str = ""
     last_error: str = ""
     last_summary: str = ""
+    dependency_blocker_slice_id: str = ""
+    dependency_blocker_reason_code: str = ""
+    dependency_blocker_class: str = ""
+    blocked_retry_count: int = 0
     active_operation_ref: str = ""
     active_operation_status: str = ""
     active_operation_arguments: dict[str, Any] = field(default_factory=dict)
+    gate_hint: str = ""  # condition text from semantic.json for optional/gated slices
     artifacts: list[str] = field(default_factory=list)
     facts: dict[str, Any] = field(default_factory=dict)
+    verdict: str = ""
 
     @property
     def is_terminal(self) -> bool:
@@ -72,6 +91,7 @@ class ExecutionPlan:
     baseline_ref: BaselineRef
     global_constraints: list[str]
     slices: list[PlanSlice]
+    mcp_catalog_hash: str = ""
     plan_source_kind: str = "planner"
     source_sequence_id: str = ""
     source_raw_plan: str = ""
@@ -80,6 +100,7 @@ class ExecutionPlan:
     source_compile_report_path: str = ""
     sequence_batch_index: int = 0
     status: str = "draft"  # draft | running | completed | failed | stopped
+    last_error: str = ""  # populated on terminal failure/stop with reason code
     created_at: str = field(default_factory=utc_now_iso)
     updated_at: str = field(default_factory=utc_now_iso)
 
@@ -133,6 +154,7 @@ class WorkerAction:
 class DirectAttemptMetadata:
     provider: str = ""
     artifact_path: str = ""
+    mcp_catalog_hash: str = ""
     duration_ms: int = 0
     error: str = ""
     tool_call_count: int = 0

@@ -1,6 +1,6 @@
 {
   "plan_id": "compiled_plan_v5_batch_1",
-  "goal": "Построить и проверить новые custom features, обучить CatBoost long и short модели, прогнать на selection OOS и lockbox OOS, и дать итоговый ответ — дают ли custom-feature + CatBoost модели новый additive layer поверх active-signal-v1.",
+  "goal": "Построить и проверить новые custom features, обучить CatBoost long/short модели, прогнать на selection OOS и lockbox OOS, и ответить: дают ли custom-feature + CatBoost модели новый additive layer поверх active-signal-v1.",
   "baseline_ref": {
     "snapshot_id": "active-signal-v1",
     "version": 1,
@@ -9,37 +9,39 @@
     "execution_timeframe": "5m"
   },
   "global_constraints": [
-    "База active-signal-v1@1 — immutable reference, не меняется ни при каких условиях",
-    "Все custom features должны быть causally correct с фиксированным lookback",
-    "train / selection OOS / lockbox OOS окна замораживаются ДО начала обучения моделей",
-    "Purge gap минимум 24h между train и OOS окнами",
-    "Long и short модели обучаются отдельно",
-    "Thresholds фиксируются до открытия lockbox",
-    "Модель не имеет права быть чёрным ящиком — feature importance и SHAP обязательны",
-    "Итог cycle v5 — бинарное решение: PROMOTE / WATCHLIST / REJECT для каждого sleeve"
+    "База active-signal-v1@1 — immutable reference, никогда не меняется.",
+    "Все custom features строятся causally: lookback зафиксирован, futurity исключена.",
+    "Train / selection OOS / lockbox OOS замораживаются до начала любого обучения.",
+    "Purge gap минимум 24h между train и selection OOS, selection OOS и lockbox.",
+    "Long и short модели обучаются раздельно; общий роутер — только опционально после обеих сторон.",
+    "Threshold выбирается на selection OOS и замораживается до открытия lockbox.",
+    "Базовый снапшот прогоняется на том же OOS окне для matched comparison.",
+    "Обязательны strict additive и permissive integration comparisons на lockbox.",
+    "Каждый model sleeve получает terminal decision: PROMOTE / WATCHLIST / REJECT.",
+    "Финальный отчёт v5 обязателен перед закрытием цикла."
   ],
   "slices": [
     {
       "slice_id": "compiled_plan_v5_stage_1",
       "title": "Старт v5 и фиксация model-research discipline",
-      "hypothesis": "Открыть новый исследовательский цикл v5 и зафиксировать строгую модельную дисциплину, immutable reference и anti-leakage rules.",
-      "objective": "Открыть новый исследовательский цикл v5 и зафиксировать строгую модельную дисциплину, immutable reference и anti-leakage rules.",
+      "hypothesis": "Открыть новый исследовательский цикл v5 и зафиксировать строгую модельную дисциплину: immutable reference, anti-leakage rules, оси research map.",
+      "objective": "Открыть новый исследовательский цикл v5 и зафиксировать строгую модельную дисциплину: immutable reference, anti-leakage rules, оси research map.",
       "success_criteria": [
-        "Создан новый проект v5",
-        "Immutable reference зафиксирован",
-        "Atlas осей заведён в research_map",
-        "Anti-leakage rules записаны в research_record"
+        "Создан проект v5.",
+        "Immutable reference зафиксирован.",
+        "Atlas осей определён в research_map.",
+        "Anti-leakage rules записаны в research_memory."
       ],
       "allowed_tools": [
         "research_project",
-        "research_record",
+        "research_memory",
         "research_map"
       ],
       "evidence_requirements": [
-        "Создан новый проект v5",
-        "Immutable reference зафиксирован",
-        "Atlas осей заведён в research_map",
-        "Anti-leakage rules записаны в research_record"
+        "Создан проект v5.",
+        "Immutable reference зафиксирован.",
+        "Atlas осей определён в research_map.",
+        "Anti-leakage rules записаны в research_memory."
       ],
       "policy_tags": [
         "setup",
@@ -47,11 +49,51 @@
       ],
       "max_turns": 24,
       "max_tool_calls": 24,
-      "max_expensive_calls": 2,
+      "max_expensive_calls": 1,
       "parallel_slot": 1,
+      "runtime_profile": "research_setup",
+      "required_prerequisite_facts": [],
+      "required_output_facts": [
+        "research.baseline_configured",
+        "research.atlas_defined",
+        "research.invariants_recorded",
+        "research.naming_recorded"
+      ],
+      "finalization_mode": "fact_based",
+      "dependency_unblock_mode": "accepted_only",
+      "watchlist_allows_unblock": false,
+      "requires_mutating_evidence": false,
+      "requires_persisted_artifact": false,
+      "requires_live_handle_validation": false,
+      "acceptance_contract": {
+        "kind": "research_setup",
+        "mode": "strict",
+        "required_subjects": "persisted_research_setup_nodes",
+        "required_predicates": [
+          "research_project_present",
+          "research_setup_facts_present"
+        ],
+        "mcp_proof_calls": [
+          {
+            "tool": "research_memory",
+            "arguments": {
+              "action": "prove"
+            }
+          }
+        ],
+        "forbid_contradictions": [],
+        "allow_advisory_unblock": false,
+        "acceptance_requirements": {
+          "slice_id": "compiled_plan_v5_stage_1",
+          "contract_kind": "research_setup"
+        }
+      },
+      "acceptance_proof": {},
+      "acceptance_blockers": [],
       "budget_scale_applied": 6,
       "depends_on": [],
       "status": "pending",
+      "acceptance_state": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
       "expensive_call_count": 0,
@@ -62,96 +104,79 @@
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
+      "dependency_blocker_slice_id": "",
+      "dependency_blocker_reason_code": "",
+      "dependency_blocker_class": "",
+      "blocked_retry_count": 0,
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
+      "gate_hint": "",
       "artifacts": [],
-      "facts": {}
+      "facts": {},
+      "verdict": ""
     },
     {
       "slice_id": "compiled_plan_v5_stage_2",
       "title": "Feature contract для новых custom features",
-      "hypothesis": "Перевести все feature ideas в строгий причинный contract с описанием, raw input, lookback, causality, интерпретацией и side bias.",
-      "objective": "Перевести все feature ideas в строгий причинный contract с описанием, raw input, lookback, causality, интерпретацией и side bias.",
+      "hypothesis": "Перевести все feature ideas в строгий причинный contract: описание, raw input, lookback, causality, интерпретация, side bias для каждой planned custom feature.",
+      "objective": "Перевести все feature ideas в строгий причинный contract: описание, raw input, lookback, causality, интерпретация, side bias для каждой planned custom feature.",
       "success_criteria": [
-        "Полный feature contract по всем planned features записан",
-        "Каждый feature имеет causality_check, lookback, side_bias"
+        "Есть полный feature contract по всем planned features.",
+        "Для каждой feature записаны: описание, raw input, lookback, causality, интерпретация, side bias."
       ],
       "allowed_tools": [
-        "research_record",
-        "features_custom",
-        "features_catalog"
+        "research_memory",
+        "features_catalog",
+        "features_custom"
       ],
       "evidence_requirements": [
-        "Полный feature contract по всем planned features записан",
-        "Каждый feature имеет causality_check, lookback, side_bias"
+        "Есть полный feature contract по всем planned features.",
+        "Для каждой feature записаны: описание, raw input, lookback, causality, интерпретация, side bias."
       ],
       "policy_tags": [
         "contract",
-        "documentation"
-      ],
-      "max_turns": 24,
-      "max_tool_calls": 24,
-      "max_expensive_calls": 2,
-      "parallel_slot": 1,
-      "budget_scale_applied": 6,
-      "depends_on": [
-        "compiled_plan_v5_stage_1"
-      ],
-      "status": "pending",
-      "turn_count": 0,
-      "tool_call_count": 0,
-      "expensive_call_count": 0,
-      "assigned_worker_id": null,
-      "last_checkpoint_turn_id": "",
-      "last_checkpoint_summary": "",
-      "last_checkpoint_status": "",
-      "final_report_turn_id": "",
-      "last_error": "",
-      "last_summary": "",
-      "active_operation_ref": "",
-      "active_operation_status": "",
-      "active_operation_arguments": {},
-      "artifacts": [],
-      "facts": {}
-    },
-    {
-      "slice_id": "compiled_plan_v5_stage_3",
-      "title": "Валидация, публикация и materialization custom features",
-      "hypothesis": "Сделать весь selected feature set реально доступным для моделей: валидация, публикация, materialization, проверка NaN/coverage/leakage, фиксация common_model_window.",
-      "objective": "Сделать весь selected feature set реально доступным для моделей: валидация, публикация, materialization, проверка NaN/coverage/leakage, фиксация common_model_window.",
-      "success_criteria": [
-        "Все selected features materialized",
-        "Общий modeling frame готов",
-        "NaN, coverage, leakage проверки пройдены",
-        "common_model_window зафиксирован"
-      ],
-      "allowed_tools": [
-        "features_custom",
-        "features_dataset",
-        "features_analytics",
-        "features_catalog",
-        "research_record"
-      ],
-      "evidence_requirements": [
-        "Все selected features materialized",
-        "Общий modeling frame готов",
-        "NaN, coverage, leakage проверки пройдены",
-        "common_model_window зафиксирован"
-      ],
-      "policy_tags": [
-        "data_readiness",
-        "validation"
+        "cheap_first"
       ],
       "max_turns": 36,
       "max_tool_calls": 30,
       "max_expensive_calls": 6,
       "parallel_slot": 1,
+      "runtime_profile": "generic_mutation",
+      "required_prerequisite_facts": [
+        "research.baseline_configured",
+        "research.atlas_defined",
+        "research.invariants_recorded",
+        "research.naming_recorded"
+      ],
+      "required_output_facts": [],
+      "finalization_mode": "none",
+      "dependency_unblock_mode": "accepted_only",
+      "watchlist_allows_unblock": false,
+      "requires_mutating_evidence": false,
+      "requires_persisted_artifact": false,
+      "requires_live_handle_validation": false,
+      "acceptance_contract": {
+        "kind": "feature_contract_exploration",
+        "mode": "strict",
+        "required_subjects": "none",
+        "required_predicates": [],
+        "mcp_proof_calls": [],
+        "forbid_contradictions": [],
+        "allow_advisory_unblock": false,
+        "acceptance_requirements": {
+          "slice_id": "compiled_plan_v5_stage_2",
+          "contract_kind": "feature_contract_exploration"
+        }
+      },
+      "acceptance_proof": {},
+      "acceptance_blockers": [],
       "budget_scale_applied": 6,
       "depends_on": [
-        "compiled_plan_v5_stage_2"
+        "compiled_plan_v5_stage_1"
       ],
       "status": "pending",
+      "acceptance_state": "pending",
       "turn_count": 0,
       "tool_call_count": 0,
       "expensive_call_count": 0,
@@ -162,13 +187,104 @@
       "final_report_turn_id": "",
       "last_error": "",
       "last_summary": "",
+      "dependency_blocker_slice_id": "",
+      "dependency_blocker_reason_code": "",
+      "dependency_blocker_class": "",
+      "blocked_retry_count": 0,
       "active_operation_ref": "",
       "active_operation_status": "",
       "active_operation_arguments": {},
+      "gate_hint": "",
       "artifacts": [],
-      "facts": {}
+      "facts": {},
+      "verdict": ""
+    },
+    {
+      "slice_id": "compiled_plan_v5_stage_3",
+      "title": "Валидация, публикация и materialization custom features",
+      "hypothesis": "Сделать feature set реально доступным для моделей: валидация, публикация, materialization, проверка NaN/coverage/leakage, фиксация common_model_window.",
+      "objective": "Сделать feature set реально доступным для моделей: валидация, публикация, materialization, проверка NaN/coverage/leakage, фиксация common_model_window.",
+      "success_criteria": [
+        "Все selected features валидированы и опубликованы.",
+        "Managed feature dataset собран и materialized.",
+        "NaN, coverage и leakage проверки пройдены.",
+        "common_model_window зафиксирован."
+      ],
+      "allowed_tools": [
+        "features_custom",
+        "features_dataset",
+        "features_analytics",
+        "datasets",
+        "research_memory"
+      ],
+      "evidence_requirements": [
+        "Все selected features валидированы и опубликованы.",
+        "Managed feature dataset собран и materialized.",
+        "NaN, coverage и leakage проверки пройдены.",
+        "common_model_window зафиксирован."
+      ],
+      "policy_tags": [
+        "materialization",
+        "blocking"
+      ],
+      "max_turns": 36,
+      "max_tool_calls": 30,
+      "max_expensive_calls": 6,
+      "parallel_slot": 1,
+      "runtime_profile": "generic_mutation",
+      "required_prerequisite_facts": null,
+      "required_output_facts": [],
+      "finalization_mode": "none",
+      "dependency_unblock_mode": "accepted_only",
+      "watchlist_allows_unblock": false,
+      "requires_mutating_evidence": false,
+      "requires_persisted_artifact": false,
+      "requires_live_handle_validation": false,
+      "acceptance_contract": {
+        "kind": "feature_contract_exploration",
+        "mode": "strict",
+        "required_subjects": "none",
+        "required_predicates": [],
+        "mcp_proof_calls": [],
+        "forbid_contradictions": [],
+        "allow_advisory_unblock": false,
+        "acceptance_requirements": {
+          "slice_id": "compiled_plan_v5_stage_3",
+          "contract_kind": "feature_contract_exploration"
+        }
+      },
+      "acceptance_proof": {},
+      "acceptance_blockers": [],
+      "budget_scale_applied": 6,
+      "depends_on": [
+        "compiled_plan_v5_stage_2"
+      ],
+      "status": "pending",
+      "acceptance_state": "pending",
+      "turn_count": 0,
+      "tool_call_count": 0,
+      "expensive_call_count": 0,
+      "assigned_worker_id": null,
+      "last_checkpoint_turn_id": "",
+      "last_checkpoint_summary": "",
+      "last_checkpoint_status": "",
+      "final_report_turn_id": "",
+      "last_error": "",
+      "last_summary": "",
+      "dependency_blocker_slice_id": "",
+      "dependency_blocker_reason_code": "",
+      "dependency_blocker_class": "",
+      "blocked_retry_count": 0,
+      "active_operation_ref": "",
+      "active_operation_status": "",
+      "active_operation_arguments": {},
+      "gate_hint": "",
+      "artifacts": [],
+      "facts": {},
+      "verdict": ""
     }
   ],
+  "mcp_catalog_hash": "c306b4054eaf8f466a7e29182863da4e7cd0610551ef83a0611c515c84aa415b",
   "plan_source_kind": "compiled_raw",
   "source_sequence_id": "compiled_plan_v5",
   "source_raw_plan": "raw_plans/plan_v5.md",
@@ -177,6 +293,7 @@
   "source_compile_report_path": "",
   "sequence_batch_index": 1,
   "status": "draft",
-  "created_at": "2026-04-11T10:51:59.003066+00:00",
-  "updated_at": "2026-04-11T10:51:59.003079+00:00"
+  "last_error": "",
+  "created_at": "2026-04-15T18:40:09.615679+00:00",
+  "updated_at": "2026-04-15T18:40:09.615683+00:00"
 }
