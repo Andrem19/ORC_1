@@ -28,6 +28,12 @@ _BACKTESTS_CONTEXT_MARKERS = (
     "new-entry proof",
     "walk-forward",
     "walkforward",
+    "forensic",
+    "reconstruct",
+    "reproduce",
+    "reproducible",
+    "review",
+    "audit",
 )
 
 
@@ -44,7 +50,7 @@ def is_backtests_context(
     if profile.startswith("backtests_"):
         return True
     tool_set = {str(item).strip() for item in (allowed_tools or []) if str(item).strip()}
-    if not (tool_set & {"backtests_plan", "backtests_runs", "backtests_conditions", "backtests_analysis", "backtests_walkforward"}):
+    if not (tool_set & {"backtests_plan", "backtests_runs", "backtests_conditions", "backtests_analysis", "backtests_walkforward", "backtests_strategy"}):
         return False
     haystack = " ".join(
         str(item or "").strip().lower()
@@ -64,13 +70,19 @@ def augment_allowed_tools_for_backtests(
     success_criteria: list[str] | tuple[str, ...] | None = None,
     policy_tags: list[str] | tuple[str, ...] | None = None,
 ) -> set[str]:
-    """Add cheap read-only planning when a backtests run slice can use it."""
+    """Add cheap read-only tools when a backtests slice can use them.
+
+    1. For any backtests context that already has ``backtests_runs``, add
+       ``backtests_plan`` so the worker can do a cheap preflight before
+       starting a run.
+
+    2. For analysis-only profiles (stability, integration, cannibalization)
+       that have analysis tools but lack ``backtests_runs``, add
+       ``backtests_runs`` so the worker can discover saved runs and pass
+       their run_ids to the analysis tools.
+    """
 
     tools = {str(item).strip() for item in allowed_tools if str(item).strip()}
-    if "backtests_runs" not in tools or "backtests_plan" in tools:
-        return tools
-    if catalog_snapshot is None or not catalog_snapshot.has_tool_name("backtests_plan"):
-        return tools
     if not is_backtests_context(
         runtime_profile=runtime_profile,
         title=title,
@@ -80,7 +92,28 @@ def augment_allowed_tools_for_backtests(
         allowed_tools=tools,
     ):
         return tools
-    tools.add("backtests_plan")
+
+    has_catalog = catalog_snapshot is not None
+
+    # --- Branch A: already has backtests_runs -> add backtests_plan ----------
+    if "backtests_runs" in tools and "backtests_plan" not in tools:
+        if has_catalog and catalog_snapshot.has_tool_name("backtests_plan"):
+            tools.add("backtests_plan")
+
+    # --- Branch B: analysis profile without backtests_runs -> add it ---------
+    profile = str(runtime_profile or "").strip()
+    if (
+        profile in STRICT_BACKTESTS_PROFILES
+        and "backtests_runs" not in tools
+        and (
+            "backtests_analysis" in tools
+            or "backtests_conditions" in tools
+            or "backtests_studies" in tools
+        )
+    ):
+        if has_catalog and catalog_snapshot.has_tool_name("backtests_runs"):
+            tools.add("backtests_runs")
+
     return tools
 
 
@@ -138,6 +171,8 @@ def build_backtests_protocol_lines(
         return []
     lines = ["", "Backtests protocol:"]
     is_standalone = _is_standalone_backtest_slice(slice_payload)
+    runtime_profile = str(slice_payload.get("runtime_profile") or "").strip()
+    is_analysis_profile = runtime_profile in STRICT_BACKTESTS_PROFILES
     if "backtests_plan" in tool_set:
         plan_call = format_backtests_plan_call(baseline_bootstrap=baseline_bootstrap)
         if is_standalone:
@@ -145,7 +180,7 @@ def build_backtests_protocol_lines(
                 [
                     "- First, inspect existing snapshots via `backtests_strategy(action='inspect', view='list')` to find candidate-specific snapshots.",
                     f"- If candidate snapshots exist, plan and run backtests on those. If not, call {plan_call} to check baseline readiness.",
-                    "- If the baseline already has completed runs and no new candidate snapshots can be created, create a `research_memory(action='create', kind='result')` entry recording this finding, then return COMPLETE.",
+                    "- If the baseline already has completed runs and no new candidate snapshots can be created, create a `research_memory(action='create', kind='result')` entry recording this finding, then return COMPLETE (NOT WATCHLIST). Recording the finding in research_memory IS the deliverable.",
                 ]
             )
         else:
@@ -155,6 +190,13 @@ def build_backtests_protocol_lines(
                     "- Start `backtests_runs(action='start', ...)` only after a successful `backtests_plan(...)` or when reusing a known durable run_id.",
                 ]
             )
+    elif "backtests_runs" in tool_set:
+        lines.extend(
+            [
+                "- First, list saved runs with `backtests_runs(action='inspect', view='list', scope='saved')` to discover completed run_ids.",
+                "- Do NOT start new runs in an analysis slice; use only saved/completed run_ids.",
+            ]
+        )
     else:
         lines.extend(
             [
@@ -171,7 +213,15 @@ def build_backtests_protocol_lines(
             "- If the run list has no reusable run_id, do not guess and do not switch to detail/status/events/trades.",
             "- If no reusable run_id or allowed readiness path exists, return a blocked checkpoint with the missing durable handle reason instead of starting a duplicate baseline run.",
             "- Do not return final_report until the transcript contains live backtest planning or run evidence.",
-            "- IMPORTANT: If backtests_runs(action='start') is blocked as a duplicate, do NOT retry with the same arguments. Instead, create a research_memory note with your findings and return COMPLETE or BLOCKED.",
+            (
+                "- IMPORTANT: If backtests_runs(action='start') is blocked as a duplicate, "
+                "pick a completed run_id from the saved_runs list and call "
+                "backtests_conditions(action='run', run_id=<saved_run_id>) or "
+                "backtests_analysis(action='start', run_id=<saved_run_id>) instead. "
+                "Do NOT just create a research note and return without running analysis."
+                if is_analysis_profile
+                else "- IMPORTANT: If backtests_runs(action='start') is blocked as a duplicate, do NOT retry with the same arguments. Instead, create a research_memory(action='create', kind='result') note recording your findings, then return COMPLETE (NOT WATCHLIST). A valid research_memory node IS sufficient evidence even when no new runs were started."
+            ),
             "- When returning evidence_refs, use real IDs from tool responses (snapshot@version, transcript:N:tool_name, node-ids, run-ids). NEVER fabricate refs like 'tool-response-empty'.",
         ]
     )
@@ -244,19 +294,27 @@ def backtests_start_guard_payload(
     if str(arguments.get("action") or "").strip().lower() != "start":
         return None
     transcript_items = list(transcript or [])
+    is_analysis = str(runtime_profile or "").strip() in STRICT_BACKTESTS_PROFILES
     if _has_prior_handle_misuse(transcript_items):
-        return _start_guard_error("backtests_start_blocked_after_handle_misuse", arguments)
+        return _start_guard_error("backtests_start_blocked_after_handle_misuse", arguments, is_analysis=is_analysis)
     if _has_duplicate_saved_run(transcript_items, arguments):
-        return _start_guard_error("duplicate_baseline_start_blocked", arguments)
+        saved_ids = _saved_run_ids_from_transcript(transcript_items, arguments)
+        return _start_guard_error("duplicate_baseline_start_blocked", arguments, is_analysis=is_analysis, saved_run_ids=saved_ids)
     if _is_baseline_rerun_in_strict_profile(arguments=arguments, runtime_profile=runtime_profile, baseline_bootstrap=baseline_bootstrap or {}):
-        return _start_guard_error("duplicate_baseline_start_blocked", arguments)
+        return _start_guard_error("duplicate_baseline_start_blocked", arguments, is_analysis=is_analysis)
     if not _has_successful_backtests_plan(transcript_items):
-        return _start_guard_error("backtests_plan_required_before_start", arguments)
+        return _start_guard_error("backtests_plan_required_before_start", arguments, is_analysis=is_analysis)
     return None
 
 
-def _start_guard_error(reason_code: str, arguments: dict[str, Any]) -> dict[str, Any]:
-    return {
+def _start_guard_error(
+    reason_code: str,
+    arguments: dict[str, Any],
+    *,
+    is_analysis: bool = False,
+    saved_run_ids: list[str] | None = None,
+) -> dict[str, Any]:
+    error: dict[str, Any] = {
         "ok": False,
         "error_class": "agent_contract_misuse",
         "summary": "backtests_runs(action='start') blocked by local backtests start guard.",
@@ -266,6 +324,54 @@ def _start_guard_error(reason_code: str, arguments: dict[str, Any]) -> dict[str,
             "arguments": dict(arguments or {}),
         },
     }
+    if is_analysis and reason_code == "duplicate_baseline_start_blocked":
+        ids_hint = ""
+        if saved_run_ids:
+            sample = saved_run_ids[:3]
+            ids_hint = f" Available saved run_ids (first 3): {sample}."
+        error["remediation"] = (
+            "This is an analysis slice — do NOT start new runs. "
+            "Use an existing saved run_id with backtests_conditions(action='run', run_id=<saved_run_id>) "
+            "or backtests_analysis(action='start', run_id=<saved_run_id>)."
+            + ids_hint
+        )
+    return error
+
+
+def _saved_run_ids_from_transcript(transcript: list[dict[str, Any]], arguments: dict[str, Any]) -> list[str]:
+    """Extract saved run_ids matching the target snapshot/symbol from prior list calls."""
+    target_symbol = str(arguments.get("symbol") or "").strip()
+    target_snapshot = str(arguments.get("snapshot_id") or arguments.get("strategy_snapshot_id") or "").strip()
+    target_version = str(arguments.get("version") or arguments.get("snapshot_version") or "").strip()
+    if not target_symbol or not target_snapshot:
+        return []
+    ids: list[str] = []
+    seen: set[str] = set()
+    for item in transcript:
+        if item.get("kind") != "tool_result" or str(item.get("tool") or "") != "backtests_runs":
+            continue
+        args = item.get("arguments") if isinstance(item.get("arguments"), dict) else {}
+        if str(args.get("view") or "").strip().lower() != "list":
+            continue
+        data = _structured_data(item.get("payload"))
+        saved_runs = data.get("saved_runs") if isinstance(data.get("saved_runs"), list) else []
+        for run in saved_runs:
+            if not isinstance(run, dict):
+                continue
+            if str(run.get("status") or "").strip().lower() != "completed":
+                continue
+            if str(run.get("symbol") or "").strip() != target_symbol:
+                continue
+            if str(run.get("strategy_snapshot_id") or "").strip() != target_snapshot:
+                continue
+            version = str(run.get("strategy_snapshot_version") or "").strip()
+            if target_version and version and target_version != version:
+                continue
+            run_id = str(run.get("run_id") or "").strip()
+            if run_id and run_id not in seen:
+                seen.add(run_id)
+                ids.append(run_id)
+    return ids
 
 
 def _has_successful_backtests_plan(transcript: list[dict[str, Any]]) -> bool:
@@ -376,6 +482,58 @@ def _is_success_payload(payload: Any) -> bool:
     return status not in {"error", "failed"}
 
 
+def coerce_analysis_start_to_existing_run(
+    *,
+    tool_name: str,
+    arguments: dict[str, Any],
+    transcript: list[dict[str, Any]],
+    runtime_profile: str,
+    allowed_tools: set[str] | list[str] | tuple[str, ...],
+) -> tuple[str, dict[str, Any], str] | None:
+    """Coerce a duplicate backtests_runs(start) on an analysis profile to use a saved run.
+
+    When the agent is in an analysis profile (stability, integration, cannibalization)
+    and tries to start a new run against a snapshot that already has completed saved runs,
+    automatically redirect the call to the appropriate analysis tool with the saved run_id.
+
+    Returns (new_tool_name, new_arguments, repair_note) or None if coercion doesn't apply.
+    """
+    if str(tool_name or "").strip() != "backtests_runs":
+        return None
+    if str(arguments.get("action") or "").strip().lower() != "start":
+        return None
+    if str(runtime_profile or "").strip() not in STRICT_BACKTESTS_PROFILES:
+        return None
+    saved_ids = _saved_run_ids_from_transcript(transcript, arguments)
+    if not saved_ids:
+        return None
+    tool_set = {str(t).strip() for t in allowed_tools if str(t).strip()}
+    target_run_id = saved_ids[0]
+    repair_note = (
+        f"Coerced backtests_runs(action='start') to use existing saved run_id={target_run_id} "
+        f"(analysis profile={runtime_profile}). The agent should analyze existing runs, not start duplicates."
+    )
+    if "backtests_conditions" in tool_set:
+        new_args: dict[str, Any] = {
+            "action": "run",
+            "run_id": target_run_id,
+        }
+        for key in ("symbol", "anchor_timeframe", "execution_timeframe", "snapshot_id", "version", "project_id"):
+            if key in arguments:
+                new_args[key] = arguments[key]
+        return ("backtests_conditions", new_args, repair_note)
+    if "backtests_analysis" in tool_set:
+        new_args = {
+            "action": "start",
+            "run_id": target_run_id,
+        }
+        for key in ("project_id",):
+            if key in arguments:
+                new_args[key] = arguments[key]
+        return ("backtests_analysis", new_args, repair_note)
+    return None
+
+
 __all__ = [
     "STRICT_BACKTESTS_PROFILES",
     "augment_allowed_tools_for_backtests",
@@ -383,6 +541,7 @@ __all__ = [
     "build_backtests_first_action_guide",
     "build_backtests_protocol_lines",
     "build_backtests_zero_tool_nudge",
+    "coerce_analysis_start_to_existing_run",
     "format_backtests_plan_call",
     "is_backtests_context",
 ]

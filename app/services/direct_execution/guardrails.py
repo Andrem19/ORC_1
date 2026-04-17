@@ -10,7 +10,7 @@ from typing import Any
 from app.execution_models import PlanSlice, WorkerAction
 from app.services.direct_execution.fact_hydration import hydrate_final_report_facts
 
-REPAIRABLE_PROVIDER_NAMES = {"lmstudio", "qwen_cli", "claude_cli", "glm_cli"}
+REPAIRABLE_PROVIDER_NAMES = {"lmstudio", "minimax", "qwen_cli", "claude_cli", "glm_cli"}
 _RESEARCH_SETUP_TOOLS = frozenset({"research_project", "research_map", "research_memory"})
 _STRICT_RESEARCH_SETUP_FACTS = (
     "research.baseline_configured",
@@ -451,6 +451,8 @@ def should_attempt_contract_repair(*, provider_name: str, result: Any, attempts_
             "dev_space1_tools_unavailable",
             "missing_required_facts",
             "evidence_complete_but_verdict_not_accepted",
+            "auto_salvage_stub_rejected",
+            "direct_error_loop_detected",
         )
     ):
         return True

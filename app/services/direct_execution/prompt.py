@@ -170,6 +170,12 @@ def build_direct_slice_prompt(
                 "- Once the shortlist milestone write succeeds and required facts are present, the terminal verdict MUST be COMPLETE.",
             ]
         )
+    lines.extend(
+        _build_acceptance_proof_protocol_lines(
+            slice_payload=slice_payload,
+            allowed_tools=allowed_tools,
+        )
+    )
     if _looks_like_mixed_domain_context_slice(allowed_tools=allowed_tools):
         lines.extend(
             [
@@ -534,6 +540,12 @@ def _looks_like_backtests_analysis_slice(
         "ownership",
         "new-entry proof",
         "analysis",
+        "forensic",
+        "reconstruct",
+        "reproduce",
+        "reproducible",
+        "review",
+        "audit",
     )
     return any(marker in haystack for marker in markers)
 
@@ -549,6 +561,49 @@ def _model_contract_footer(*, provider: str) -> list[str]:
     return [
         "Success means `final_report` only.",
         "Do not treat partial progress as terminal success.",
+    ]
+
+
+def _build_acceptance_proof_protocol_lines(
+    *,
+    slice_payload: dict[str, Any],
+    allowed_tools: list[str],
+) -> list[str]:
+    """Generate explicit acceptance-proof instructions when the slice's acceptance
+    contract requires a research-memory node proof (research_node_proof_pass).
+
+    This is a universal mechanism: any slice whose acceptance_contract.kind is
+    ``research_shortlist_write`` or ``write_result`` MUST create at least one
+    research-memory node via ``research_memory(action='create')``, because the
+    verifier will call ``research_memory(action='prove')`` to verify the node
+    exists.  Without these instructions, models (especially MiniMax) sometimes
+    return a final_report that references node IDs that were never actually
+    created, causing the acceptance gate to fail on every retry.
+    """
+    tool_set = {str(item).strip() for item in allowed_tools if str(item).strip()}
+    if "research_memory" not in tool_set:
+        return []
+    contract = slice_payload.get("acceptance_contract") or {}
+    if not isinstance(contract, dict):
+        return []
+    kind = str(contract.get("kind") or "").strip()
+    if kind not in {"research_shortlist_write", "write_result"}:
+        return []
+    required_predicates = contract.get("required_predicates") or []
+    if not isinstance(required_predicates, list):
+        required_predicates = []
+    if "research_node_proof_pass" not in required_predicates:
+        return []
+    return [
+        "",
+        "Acceptance proof requirement (mandatory):",
+        "- This slice has an acceptance contract that requires a persisted research-memory node.",
+        "- You MUST call research_memory(action='create', ...) at least once before returning final_report.",
+        "- After the create call succeeds, include the returned node_id in your final_report facts as 'node_id' or in 'direct.created_ids'.",
+        "- The verifier will call research_memory(action='prove') with the node_id to confirm the node actually exists in the store.",
+        "- If you skip the research_memory create call, the acceptance gate will FAIL regardless of any other evidence.",
+        "- If backtests or other tools fail or are blocked, you MUST still create a research_memory node with your findings before returning final_report.",
+        "- Use kind='result' for result nodes or kind='milestone' for milestone/shortlist nodes.",
     ]
 
 

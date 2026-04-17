@@ -31,7 +31,7 @@ from app.services.direct_execution.guardrails import (
 )
 from app.services.direct_execution.managed_invocation import ManagedAdapterInvoker
 from app.services.direct_execution.planner import PlannerDecisionCancelled, PlannerDecisionError, PlannerDecisionService
-from app.services.direct_execution.slice_readiness import dependency_readiness_blocker, downstream_prerequisites_blocker, optional_slice_gate_blocker, required_output_facts_for_slice
+from app.services.direct_execution.slice_readiness import dependency_readiness_blocker, downstream_prerequisites_blocker, optional_slice_gate_blocker, required_output_facts_for_slice, upstream_artifact_gate_blocker
 from app.services.direct_execution.terminal_application import TerminalActionApplicator
 from app.services.mcp_catalog.models import McpCatalogSnapshot
 
@@ -66,6 +66,9 @@ _SOFT_ABORT_REASON_CODES = {
     "direct_model_stalled_before_first_action",
     "direct_model_stalled_between_actions",
     "direct_error_loop_detected",
+    "feature_data_unavailable",
+    "no_features_available",
+    "infrastructure_data_unavailable",
 }
 
 class DirectExecutionService:
@@ -393,6 +396,41 @@ class DirectExecutionService:
                 summary=gate_blocker.summary,
                 reason_code=gate_blocker.reason_code,
             )
+            return True
+        # Check upstream artifact gate: if dependencies produced zero runs
+        # but this slice requires run_set_non_empty, skip it automatically.
+        artifact_blocker = upstream_artifact_gate_blocker(
+            plan,
+            slice_obj,
+            resolve_dependency=lambda dep_id: self._resolve_dependency_slice(plan, dep_id),
+        )
+        if artifact_blocker is not None:
+            slice_obj.status = "completed"
+            slice_obj.acceptance_state = "accepted_ready"
+            slice_obj.verdict = "SKIP"
+            slice_obj.last_summary = artifact_blocker.summary
+            slice_obj.last_error = ""
+            slice_obj.facts["direct.skipped_by_upstream_zero_artifacts"] = True
+            slice_obj.facts["dependency.blocking_slice_ids"] = list(artifact_blocker.blocking_slice_ids)
+            if self.console_controller is not None:
+                self.console_controller.on_slice_completed(
+                    slot=slot_for_slice(slice_obj.parallel_slot),
+                    summary=artifact_blocker.summary,
+                    via="auto_skip",
+                    fallback_level=0,
+                )
+            self.incident_store.record(
+                summary="Slice auto-skipped: upstream produced zero backtest artifacts",
+                metadata={
+                    "plan_id": plan.plan_id,
+                    "slice_id": slice_obj.slice_id,
+                    "slice_title": slice_obj.title,
+                    "blocking_slice_ids": list(artifact_blocker.blocking_slice_ids),
+                },
+                source="direct_runtime",
+                severity="low",
+            )
+            self._persist_plan_snapshot(plan)
             return True
         if slice_obj.turn_count >= slice_obj.max_turns:
             self._checkpoint_blocked(

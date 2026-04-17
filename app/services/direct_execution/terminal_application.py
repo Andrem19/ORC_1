@@ -219,7 +219,8 @@ class TerminalActionApplicator:
         soft_abort_reason_codes: set[str],
     ) -> None:
         action = turn.action
-        if action.reason_code in soft_abort_reason_codes or action.retryable:
+        reason_code = str(action.reason_code or "").strip().lower()
+        if reason_code in soft_abort_reason_codes or action.retryable:
             self.checkpoint_blocked(
                 plan,
                 slice_obj,

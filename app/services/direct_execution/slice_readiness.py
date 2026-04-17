@@ -217,6 +217,110 @@ def _gate_condition_not_met(gate_hint: str, upstream_facts: dict) -> bool:
     return False
 
 
+def upstream_artifact_gate_blocker(
+    plan: ExecutionPlan,
+    slice_obj: PlanSlice,
+    *,
+    resolve_dependency: Callable[[str], PlanSlice | None] | None = None,
+    cross_plan_slices: dict[str, PlanSlice] | None = None,
+) -> ReadinessBlocker | None:
+    """Block a slice whose acceptance contract requires ``run_set_non_empty``
+    when all upstream dependencies completed with zero backtest runs.
+
+    This prevents the orchestrator from burning budget on a slice that can
+    never pass acceptance because its predecessor produced no analysable
+    artifacts.  The slice is auto-completed as SKIP instead.
+
+    This does **not** weaken any acceptance criterion — the slice would have
+    failed ``run_set_non_empty`` regardless.
+    """
+
+    contract = slice_obj.acceptance_contract or {}
+    predicates = contract.get("required_predicates") or []
+    if "run_set_non_empty" not in predicates:
+        return None
+
+    by_id = {item.slice_id: item for item in plan.slices}
+    cross = dict(cross_plan_slices or {})
+
+    def _default_resolver(sid: str) -> PlanSlice | None:
+        return by_id.get(sid) or cross.get(sid)
+
+    resolver = resolve_dependency or _default_resolver
+
+    deps_with_zero_runs: list[str] = []
+    for dep_id in slice_obj.depends_on or []:
+        dep = resolver(dep_id)
+        if dep is None:
+            continue
+        if dep.status not in ("completed",):
+            continue
+
+        if _upstream_has_zero_artifacts(dep.facts):
+            deps_with_zero_runs.append(dep_id)
+
+    if not deps_with_zero_runs:
+        return None
+
+    dep_labels = ", ".join(deps_with_zero_runs)
+    return ReadinessBlocker(
+        summary=(
+            f"Slice '{slice_obj.slice_id}' requires runs but upstream "
+            f"dependencies ({dep_labels}) completed with zero backtest runs. "
+            "Acceptance predicate run_set_non_empty cannot pass."
+        ),
+        reason_code="upstream_zero_artifacts_gate",
+        missing_facts=[],
+        blocking_slice_ids=deps_with_zero_runs,
+    )
+
+
+def _upstream_has_zero_artifacts(facts: dict) -> bool:
+    """Return True when upstream dependency facts indicate zero analysable
+    backtest artifacts — regardless of which exact fact keys the worker used.
+
+    Workers (minimax, claude, etc.) may express "nothing produced" via different
+    fact keys, so we check a broad set of signals.
+    """
+    # Explicit counter facts.
+    runs_found = facts.get("backtest_runs_found")
+    if isinstance(runs_found, int) and runs_found == 0:
+        return True
+    if isinstance(runs_found, str) and runs_found.strip() == "0":
+        return True
+
+    snapshots_found = facts.get("strategy_snapshots_found")
+    if isinstance(snapshots_found, int) and snapshots_found == 0:
+        return True
+    if isinstance(snapshots_found, str) and snapshots_found.strip() == "0":
+        return True
+
+    # Worker-reported reason strings.
+    reason = str(facts.get("reason", "")).lower()
+    if "no_candidate_snapshots" in reason or "no_candidate_runs" in reason:
+        return True
+
+    # Candidate/signal count facts produced by various worker versions.
+    candidates_count = facts.get("standalone_candidates_count")
+    if isinstance(candidates_count, int) and candidates_count == 0:
+        return True
+    if isinstance(candidates_count, str) and candidates_count.strip() == "0":
+        return True
+
+    # Shortlist status — "empty" means no candidates were produced.
+    shortlist = str(facts.get("shortlist_status", "")).strip().lower()
+    if shortlist == "empty":
+        return True
+
+    # Normalized backtests handles — empty dict/list means no candidate runs.
+    for key in ("backtests.candidate_handles", "backtests.integration_handles"):
+        val = facts.get(key)
+        if val is not None and not val:
+            return True
+
+    return False
+
+
 __all__ = [
     "ReadinessBlocker",
     "dependency_readiness_blocker",
@@ -224,4 +328,5 @@ __all__ = [
     "optional_slice_gate_blocker",
     "required_output_facts_for_slice",
     "required_prerequisite_facts_for_slice",
+    "upstream_artifact_gate_blocker",
 ]

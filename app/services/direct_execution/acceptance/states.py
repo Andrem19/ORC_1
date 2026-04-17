@@ -54,8 +54,12 @@ def proof_is_accepted(slice_obj: PlanSlice) -> bool:
 
 
 def accepted_completion_state(*, slice_obj: PlanSlice, verdict: str) -> str:
-    if not verdict_is_accepted(slice_obj, verdict):
-        return "reported_terminal"
+    # Acceptance proof is the canonical strict-acceptance signal; when it passes
+    # the slice is accepted regardless of the agent's self-reported verdict.
+    # Mirrors the override in fallback_executor._is_success that treats a passing
+    # final_report acceptance proof as overriding a non-accepted verdict (e.g.
+    # WATCHLIST), so downstream dependents are unblocked consistently.
+    del verdict  # retained in signature for API stability; proof drives the state
     if not proof_is_accepted(slice_obj):
         return "reported_terminal"
     if normalize_dependency_unblock_mode(getattr(slice_obj, "dependency_unblock_mode", "")) == "advisory_only":

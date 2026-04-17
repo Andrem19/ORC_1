@@ -38,9 +38,19 @@ _STRICT_AUTO_FINALIZE_PROFILES = frozenset({"research_setup", "research_shortlis
 
 def tool_call_signature(tool_name: str, arguments: dict[str, Any]) -> str:
     action = str(arguments.get("action") or "").strip().lower()
-    if not action and not any(key in arguments for key in ("record", "payload", "project", "coordinates")):
+    # Produce a signature when handle fields (project_id, snapshot_id, etc.)
+    # are present even with null action — repeated null-action calls against
+    # the same handle are a common MiniMax loop pattern.
+    has_handles = any(
+        str(arguments.get(f) or "").strip()
+        for f in _HANDLE_FIELDS
+    )
+    if not action and not has_handles and not any(key in arguments for key in ("record", "payload", "project", "coordinates")):
         return ""
-    is_readonly = action and action not in _MUTATING_ACTIONS
+    # Null-action calls are effectively read-only (MCP defaults to
+    # inspect/list), so classify them as read-only for the higher
+    # loop-detection threshold (5 vs 3).
+    is_readonly = not action or (action not in _MUTATING_ACTIONS)
     payload = {"tool": str(tool_name or "").strip(), "action": action}
     for field_name in _HANDLE_FIELDS:
         value = str(arguments.get(field_name) or "").strip()

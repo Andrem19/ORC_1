@@ -158,6 +158,21 @@ def test_preflight_blocks_numeric_backtests_run_id_before_schema_validation() ->
         assert result.local_payload["details"]["field_name"] == "run_id"
 
 
+def test_preflight_blocks_cross_kind_backtests_run_id_without_spending_budget() -> None:
+    snapshot = make_catalog_snapshot()
+
+    result = preflight_direct_tool_call(
+        "backtests_runs",
+        {"action": "detail", "run_id": "analysis-d1b90901b5be-rm-feature-short__feature-long"},
+        catalog_snapshot=snapshot,
+    )
+
+    assert result.charge_budget is False
+    assert result.local_payload is not None
+    assert result.local_payload["details"]["reason_code"] == "suspicious_durable_handle"
+    assert result.local_payload["details"]["field_name"] == "run_id"
+
+
 def test_preflight_allows_valid_backtests_run_id_observe_call() -> None:
     snapshot = make_catalog_snapshot()
 

@@ -71,6 +71,8 @@ class ManagedAdapterInvoker:
         attempts = max(1, int(max_attempts or 1))
         prompt_hash = hashlib.sha1(prompt.encode("utf-8")).hexdigest()[:12]
         prompt_chars = len(prompt)
+        first_action_timeout_seconds = kwargs.pop("first_action_timeout_seconds", None)
+        stalled_action_timeout_seconds = kwargs.pop("stalled_action_timeout_seconds", None)
         for attempt in range(1, attempts + 1):
             started = time.monotonic()
             if callable(on_attempt_start):
@@ -94,6 +96,8 @@ class ManagedAdapterInvoker:
                     adapter=adapter,
                     prompt=prompt,
                     timeout_seconds=timeout_seconds,
+                    first_action_timeout_seconds=first_action_timeout_seconds,
+                    stalled_action_timeout_seconds=stalled_action_timeout_seconds,
                     on_partial_response=on_partial_response,
                     process_owner=process_owner or adapter.name(),
                     plan_id=plan_id,
@@ -203,6 +207,8 @@ class ManagedAdapterInvoker:
         adapter: BaseAdapter,
         prompt: str,
         timeout_seconds: int,
+        first_action_timeout_seconds: float | int | None = None,
+        stalled_action_timeout_seconds: float | int | None = None,
         on_partial_response: Any | None,
         process_owner: str,
         plan_id: str,
@@ -218,11 +224,27 @@ class ManagedAdapterInvoker:
             slice_id=slice_id,
         )
         started = time.monotonic()
+        first_action_timeout = _normalized_timeout(first_action_timeout_seconds)
+        stalled_action_timeout = _normalized_timeout(stalled_action_timeout_seconds)
+        first_action_started = started
+        last_output_progress_started = started
+        last_progress_chars = 0
+        had_stream_progress = False
         try:
             while True:
                 if self.process_registry.is_cancelled(token):
                     adapter.terminate(handle, force=False)
                 _fragment, is_finished = adapter.check(handle)
+                total_progress_chars = len(handle.partial_output or "") + len(handle.partial_error_output or "")
+                if total_progress_chars > last_progress_chars:
+                    had_stream_progress = True
+                    last_progress_chars = total_progress_chars
+                    last_output_progress_started = time.monotonic()
+                first_action_done = _has_meaningful_first_action_progress(
+                    adapter=adapter,
+                    handle=handle,
+                    had_stream_progress=had_stream_progress,
+                )
                 accepted = await _accept_partial_response(
                     on_partial_response=on_partial_response,
                     handle=handle,
@@ -244,6 +266,69 @@ class ManagedAdapterInvoker:
                     if self.process_registry.is_cancelled(token):
                         raise AdapterInvocationCancelled("shutdown_cancelled_inflight")
                     return _response_from_handle(handle)
+                if (
+                    first_action_timeout is not None
+                    and not first_action_done
+                    and time.monotonic() - first_action_started >= first_action_timeout
+                ):
+                    adapter.terminate(handle, force=False)
+                    await asyncio.sleep(min(0.2, self.poll_interval_seconds))
+                    _fragment, stalled_finished = adapter.check(handle)
+                    if not stalled_finished:
+                        adapter.terminate(handle, force=True)
+                        await asyncio.sleep(min(0.2, self.poll_interval_seconds))
+                        adapter.check(handle)
+                    stall_reason = "stalled_before_first_output" if not had_stream_progress else "stalled_before_first_action"
+                    return AdapterResponse(
+                        success=False,
+                        raw_output=handle.partial_output,
+                        exit_code=-1,
+                        error=f"Stalled after {first_action_timeout:.1f}s",
+                        timed_out=True,
+                        duration_seconds=time.monotonic() - started,
+                        finish_reason=stall_reason,
+                        metadata={
+                            "stall_timeout_seconds": first_action_timeout,
+                            "stall_before_first_output": not had_stream_progress,
+                            "stall_before_first_action": bool(had_stream_progress),
+                            "partial_output_chars": len(handle.partial_output or ""),
+                            "partial_error_chars": len(handle.partial_error_output or ""),
+                            "partial_output_present": bool(handle.partial_output),
+                            "partial_error_present": bool(handle.partial_error_output),
+                            **_json_safe_handle_metadata(handle),
+                        },
+                    )
+                if (
+                    stalled_action_timeout is not None
+                    and first_action_done
+                    and time.monotonic() - last_output_progress_started >= stalled_action_timeout
+                ):
+                    adapter.terminate(handle, force=False)
+                    await asyncio.sleep(min(0.2, self.poll_interval_seconds))
+                    _fragment, stalled_finished = adapter.check(handle)
+                    if not stalled_finished:
+                        adapter.terminate(handle, force=True)
+                        await asyncio.sleep(min(0.2, self.poll_interval_seconds))
+                        adapter.check(handle)
+                    return AdapterResponse(
+                        success=False,
+                        raw_output=handle.partial_output,
+                        exit_code=-1,
+                        error=f"Stalled after {stalled_action_timeout:.1f}s",
+                        timed_out=True,
+                        duration_seconds=time.monotonic() - started,
+                        finish_reason="stalled_between_outputs",
+                        metadata={
+                            "stall_timeout_seconds": stalled_action_timeout,
+                            "stall_before_first_output": False,
+                            "stall_before_first_action": False,
+                            "partial_output_chars": len(handle.partial_output or ""),
+                            "partial_error_chars": len(handle.partial_error_output or ""),
+                            "partial_output_present": bool(handle.partial_output),
+                            "partial_error_present": bool(handle.partial_error_output),
+                            **_json_safe_handle_metadata(handle),
+                        },
+                    )
                 if time.monotonic() - started >= timeout_seconds:
                     adapter.terminate(handle, force=False)
                     await asyncio.sleep(min(0.2, self.poll_interval_seconds))
@@ -279,6 +364,36 @@ def _supports_managed_process(adapter: BaseAdapter) -> bool:
         and adapter.__class__.check is not BaseAdapter.check
     )
 
+
+def _normalized_timeout(value: float | int | None) -> float | None:
+    if value is None:
+        return None
+    try:
+        numeric = float(value)
+    except (TypeError, ValueError):
+        return None
+    if numeric <= 0:
+        return None
+    return numeric
+
+
+
+
+def _has_meaningful_first_action_progress(
+    *,
+    adapter: BaseAdapter,
+    handle: ProcessHandle,
+    had_stream_progress: bool,
+) -> bool:
+    del adapter
+    metadata = handle.metadata or {}
+    output_mode = str(metadata.get("output_mode", "")).strip().lower()
+    if output_mode == "stream-json":
+        try:
+            return int(metadata.get("tool_call_count", 0) or 0) > 0
+        except (TypeError, ValueError):
+            return False
+    return had_stream_progress
 
 def _response_from_handle(handle: ProcessHandle) -> AdapterResponse:
     process = handle.process

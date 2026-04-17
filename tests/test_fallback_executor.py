@@ -216,6 +216,79 @@ def test_primary_succeeds_no_fallback() -> None:
     assert len(ct.primary_executor.calls) == 1
 
 
+def test_soft_abort_skips_fallback_chain() -> None:
+    ct = _ChainTest(
+        fallback_providers=["qwen_cli"],
+        primary_results=[
+            DirectExecutionResult(
+                action=WorkerAction(
+                    action_id="act_abort",
+                    action_type="abort",
+                    summary="Feature data is not available yet",
+                    reason_code="FEATURE_DATA_UNAVAILABLE",
+                ),
+                artifact_path="/tmp/artifact.json",
+                raw_output='{"type":"abort","reason_code":"FEATURE_DATA_UNAVAILABLE"}',
+                provider="minimax",
+                duration_ms=25,
+            )
+        ],
+        adapter_map={"qwen_cli": _FakeAdapter("qwen_worker_cli")},
+    )
+
+    result, attempts = asyncio.run(ct.fb.execute_with_fallback(
+        plan_id="plan_1",
+        slice_obj=_make_slice(),
+        baseline_bootstrap={},
+        known_facts={},
+        required_output_facts=[],
+        recent_turn_summaries=[],
+        checkpoint_summary="",
+    ))
+
+    assert result.action is not None
+    assert result.action.action_type == "abort"
+    assert result.action.reason_code == "FEATURE_DATA_UNAVAILABLE"
+    assert len(attempts) == 0
+    assert "qwen_worker_cli" not in ct.fallback_executors
+
+def test_no_features_available_abort_skips_fallback_chain() -> None:
+    ct = _ChainTest(
+        fallback_providers=["qwen_cli"],
+        primary_results=[
+            DirectExecutionResult(
+                action=WorkerAction(
+                    action_id="act_abort",
+                    action_type="abort",
+                    summary="No features were materialized for plausibility triage",
+                    reason_code="NO_FEATURES_AVAILABLE",
+                ),
+                artifact_path="/tmp/artifact.json",
+                raw_output='{"type":"abort","reason_code":"NO_FEATURES_AVAILABLE"}',
+                provider="minimax",
+                duration_ms=25,
+            )
+        ],
+        adapter_map={"qwen_cli": _FakeAdapter("qwen_worker_cli")},
+    )
+
+    result, attempts = asyncio.run(ct.fb.execute_with_fallback(
+        plan_id="plan_1",
+        slice_obj=_make_slice(),
+        baseline_bootstrap={},
+        known_facts={},
+        required_output_facts=[],
+        recent_turn_summaries=[],
+        checkpoint_summary="",
+    ))
+
+    assert result.action is not None
+    assert result.action.action_type == "abort"
+    assert result.action.reason_code == "NO_FEATURES_AVAILABLE"
+    assert len(attempts) == 0
+    assert "qwen_worker_cli" not in ct.fallback_executors
+
+
 def test_fallback_1_succeeds_after_primary_fails() -> None:
     ct = _ChainTest(
         fallback_providers=["qwen_cli"],
@@ -822,6 +895,81 @@ def test_missing_required_facts_triggers_fallback() -> None:
     assert result.provider == "qwen_cli"
 
 
+def test_auto_salvage_repair_reuses_prior_tool_trace_and_avoids_fallback() -> None:
+    auto_salvage_primary = DirectExecutionResult(
+        action=WorkerAction(
+            action_id="act_auto",
+            action_type="final_report",
+            summary="auto-salvage",
+            verdict="WATCHLIST",
+            confidence=0.8,
+            evidence_refs=["transcript:1:research_memory"],
+            facts={
+                "research.project_id": "proj_1",
+                "direct.auto_finalized_from_generic_salvage": True,
+                "direct.supported_evidence_refs": ["transcript:1:research_memory"],
+            },
+        ),
+        artifact_path="/tmp/auto_primary.json",
+        raw_output='{"type":"final_report","summary":"auto"}',
+        provider="minimax",
+        duration_ms=100,
+        tool_call_count=5,
+        transcript=[
+            {
+                "kind": "tool_result",
+                "tool": "research_memory",
+                "arguments": {"action": "search"},
+                "payload": {"ok": True},
+            }
+        ],
+    )
+    repaired_without_new_calls = DirectExecutionResult(
+        action=WorkerAction(
+            action_id="act_repair",
+            action_type="final_report",
+            summary="repair",
+            verdict="COMPLETE",
+            confidence=0.85,
+            evidence_refs=[],
+            facts={"research.project_id": "proj_1"},
+        ),
+        artifact_path="/tmp/auto_repair.json",
+        raw_output='{"type":"final_report","summary":"repair"}',
+        provider="minimax",
+        duration_ms=80,
+        tool_call_count=0,
+        transcript=[],
+    )
+    ct = _ChainTest(
+        fallback_providers=["qwen_cli"],
+        primary_results=[auto_salvage_primary, repaired_without_new_calls],
+        adapter_map={"qwen_cli": _FakeAdapter("qwen_worker_cli")},
+        direct_config=SimpleNamespace(primary_retry_budget=0, parse_repair_attempts=1),
+    )
+
+    result, attempts = asyncio.run(ct.fb.execute_with_fallback(
+        plan_id="plan_1",
+        slice_obj=_make_slice(),
+        baseline_bootstrap={},
+        known_facts={},
+        required_output_facts=["research.project_id"],
+        recent_turn_summaries=[],
+        checkpoint_summary="",
+    ))
+
+    assert result.action is not None
+    assert result.action.action_type == "final_report"
+    assert result.action.verdict == "COMPLETE"
+    assert result.tool_call_count == 5
+    assert result.action.evidence_refs == ["transcript:1:research_memory"]
+    assert result.action.facts.get("direct.repair_reused_prior_tool_trace") is True
+    assert result.action.facts.get("direct.repair_reused_prior_tool_count") == 5
+    assert len(attempts) == 0
+    assert len(ct.primary_executor.calls) == 2
+    assert ct.fallback_executors == {}
+
+
 def test_strict_watchlist_result_gets_acceptance_repair_before_success() -> None:
     watchlist_result = _low_quality_result(
         provider="qwen_cli",
@@ -1342,3 +1490,4 @@ def test_zero_tool_calls_fallback_receives_enforcement_in_prompt() -> None:
     extra = qwen_ex.calls[0]["extra_prompt_section"]
     assert "ZERO tool calls" in extra
     assert "You MUST call at least one tool" in extra
+

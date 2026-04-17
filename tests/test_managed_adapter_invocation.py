@@ -70,6 +70,105 @@ class _SleepyAdapter(BaseAdapter):
         terminate_process_handle(handle, force=force)
 
 
+
+class _NoProgressAdapter(BaseAdapter):
+    def name(self) -> str:
+        return "no_progress"
+
+    def is_available(self) -> bool:
+        return True
+
+    def invoke(self, prompt: str, timeout: int = 120, **kwargs):
+        raise NotImplementedError
+
+    def start(self, prompt: str, **kwargs) -> ProcessHandle:
+        del prompt
+        return ProcessHandle(
+            process=None,
+            task_id=kwargs.get("task_id", ""),
+            worker_id=kwargs.get("worker_id", ""),
+            metadata={"terminated": False},
+        )
+
+    def check(self, handle: ProcessHandle):
+        if handle.metadata.get("terminated"):
+            return "", True
+        return "", False
+
+    def terminate(self, handle: ProcessHandle, *, force: bool = False) -> None:
+        del force
+        handle.metadata["terminated"] = True
+
+
+class _ProgressThenStallAdapter(BaseAdapter):
+    def name(self) -> str:
+        return "progress_then_stall"
+
+    def is_available(self) -> bool:
+        return True
+
+    def invoke(self, prompt: str, timeout: int = 120, **kwargs):
+        raise NotImplementedError
+
+    def start(self, prompt: str, **kwargs) -> ProcessHandle:
+        del prompt
+        return ProcessHandle(
+            process=None,
+            task_id=kwargs.get("task_id", ""),
+            worker_id=kwargs.get("worker_id", ""),
+            metadata={"phase": "initial", "terminated": False},
+        )
+
+    def check(self, handle: ProcessHandle):
+        if handle.metadata.get("terminated"):
+            return "", True
+        if handle.metadata.get("phase") == "initial":
+            handle.metadata["phase"] = "stalled"
+            handle.partial_output += "started\n"
+            return "started\n", False
+        return "", False
+
+    def terminate(self, handle: ProcessHandle, *, force: bool = False) -> None:
+        del force
+        handle.metadata["terminated"] = True
+
+
+
+class _StreamJsonNoToolProgressAdapter(BaseAdapter):
+    def name(self) -> str:
+        return "stream_json_no_tool_progress"
+
+    def is_available(self) -> bool:
+        return True
+
+    def invoke(self, prompt: str, timeout: int = 120, **kwargs):
+        raise NotImplementedError
+
+    def start(self, prompt: str, **kwargs) -> ProcessHandle:
+        del prompt
+        return ProcessHandle(
+            process=None,
+            task_id=kwargs.get("task_id", ""),
+            worker_id=kwargs.get("worker_id", ""),
+            metadata={
+                "phase": "initial",
+                "terminated": False,
+                "output_mode": "stream-json",
+                "tool_call_count": 0,
+            },
+        )
+
+    def check(self, handle: ProcessHandle):
+        if handle.metadata.get("terminated"):
+            return "", True
+        handle.partial_output += "thinking\n"
+        return "thinking\n", False
+
+    def terminate(self, handle: ProcessHandle, *, force: bool = False) -> None:
+        del force
+        handle.metadata["terminated"] = True
+
+
 class _ChunkedJsonAdapter(BaseAdapter):
     def __init__(self) -> None:
         self.fragments = [
@@ -209,3 +308,67 @@ def test_managed_adapter_invoker_returns_json_safe_metadata_for_thread_adapters(
     assert response.metadata["thread"] == "background_thread"
     assert response.metadata["response"]["success"] is True
     json.dumps(response.metadata)
+
+
+def test_managed_adapter_invoker_stalls_before_first_output() -> None:
+    invoker = ManagedAdapterInvoker(process_registry=ProcessRegistry(), poll_interval_seconds=0.01)
+
+    response = asyncio.run(
+        invoker.invoke_with_retries(
+            adapter=_NoProgressAdapter(),
+            prompt="1.0",
+            timeout_seconds=5,
+            first_action_timeout_seconds=0.05,
+            stalled_action_timeout_seconds=0.05,
+            max_attempts=1,
+            base_backoff_seconds=0.01,
+        )
+    )
+
+    assert response.success is False
+    assert response.timed_out is True
+    assert response.finish_reason == "stalled_before_first_output"
+    assert "Stalled after" in response.error
+
+
+
+def test_managed_adapter_invoker_stalls_before_first_action_on_stream_json_no_tool_calls() -> None:
+    invoker = ManagedAdapterInvoker(process_registry=ProcessRegistry(), poll_interval_seconds=0.01)
+
+    response = asyncio.run(
+        invoker.invoke_with_retries(
+            adapter=_StreamJsonNoToolProgressAdapter(),
+            prompt="ignored",
+            timeout_seconds=5,
+            first_action_timeout_seconds=0.05,
+            stalled_action_timeout_seconds=0.5,
+            max_attempts=1,
+            base_backoff_seconds=0.01,
+        )
+    )
+
+    assert response.success is False
+    assert response.timed_out is True
+    assert response.finish_reason == "stalled_before_first_action"
+    assert response.metadata["stall_before_first_action"] is True
+
+
+def test_managed_adapter_invoker_stalls_between_outputs() -> None:
+    invoker = ManagedAdapterInvoker(process_registry=ProcessRegistry(), poll_interval_seconds=0.01)
+
+    response = asyncio.run(
+        invoker.invoke_with_retries(
+            adapter=_ProgressThenStallAdapter(),
+            prompt="ignored",
+            timeout_seconds=5,
+            first_action_timeout_seconds=0.5,
+            stalled_action_timeout_seconds=0.05,
+            max_attempts=1,
+            base_backoff_seconds=0.01,
+        )
+    )
+
+    assert response.success is False
+    assert response.timed_out is True
+    assert response.finish_reason == "stalled_between_outputs"
+    assert "started" in response.raw_output

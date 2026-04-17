@@ -2,11 +2,18 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
+import logging
 from dataclasses import dataclass, field
 from typing import Any
 
 from app.services.direct_execution.mcp_client import DirectMcpClient, DirectMcpConfig, DirectMcpError, _to_jsonable
+
+logger = logging.getLogger("orchestrator.direct.acceptance.proof")
+
+_PROOF_CONNECT_RETRIES = 3
+_PROOF_CONNECT_BASE_DELAY = 0.5
 
 
 class AcceptanceProofInfraError(RuntimeError):
@@ -22,8 +29,45 @@ class ProofClient:
     async def __aenter__(self) -> "ProofClient":
         if self.client is None:
             self.client = DirectMcpClient(self.config)
-        await self.client.open()
+        await self._open_with_retry()
         return self
+
+    async def _open_with_retry(self) -> None:
+        """Open the MCP connection with retries for transient failures.
+
+        The acceptance verifier often runs immediately after the tool loop
+        closes its own MCP connection.  Rapid open/close cycles to the same
+        MCP endpoint can produce transient ``Cancelled via cancel scope``
+        errors from the anyio-backed MCP SDK.  Retrying with a short delay
+        avoids falling back to a full slice re-execution for what is purely
+        a momentary connection hiccup.
+        """
+        assert self.client is not None
+        last_error: Exception | None = None
+        for attempt in range(_PROOF_CONNECT_RETRIES):
+            try:
+                await self.client.open()
+                if attempt > 0:
+                    logger.info(
+                        "Proof MCP connection succeeded on attempt %d/%d",
+                        attempt + 1, _PROOF_CONNECT_RETRIES,
+                    )
+                return
+            except DirectMcpError as exc:
+                last_error = exc
+                if attempt < _PROOF_CONNECT_RETRIES - 1:
+                    delay = min(_PROOF_CONNECT_BASE_DELAY * (2 ** attempt), 4.0)
+                    logger.warning(
+                        "Proof MCP connection failed (attempt %d/%d), retrying in %.1fs: %s",
+                        attempt + 1, _PROOF_CONNECT_RETRIES, delay, exc,
+                    )
+                    await asyncio.sleep(delay)
+                    # Reset client for a clean reconnection attempt
+                    await self.client.close()
+                    self.client = DirectMcpClient(self.config)
+        raise AcceptanceProofInfraError(
+            f"acceptance_mcp_open_failed_after_{_PROOF_CONNECT_RETRIES}_retries: {last_error}"
+        ) from last_error
 
     async def __aexit__(self, exc_type: object, exc: object, tb: object) -> None:
         if self.client is not None:

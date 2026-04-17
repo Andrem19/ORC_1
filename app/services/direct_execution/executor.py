@@ -413,6 +413,8 @@ class DirectSliceExecutor:
                 adapter=self.adapter,
                 prompt=prompt,
                 timeout_seconds=int(self.direct_config.timeout_seconds or 600),
+                first_action_timeout_seconds=getattr(self.direct_config, "first_action_timeout_seconds", None),
+                stalled_action_timeout_seconds=getattr(self.direct_config, "stalled_action_timeout_seconds", None),
                 max_attempts=max(1, int(self.direct_config.max_attempts_per_slice or 1)),
                 base_backoff_seconds=0.25,
                 plan_id=plan_id,
@@ -541,8 +543,22 @@ class DirectSliceExecutor:
         # Transcript synthesis: if LMStudio produced a non-terminal result
         # (checkpoint/abort) but the transcript has enough evidence, attempt
         # to synthesize a valid final_report.
+        # IMPORTANT: Skip synthesis when the model explicitly returned
+        # status="blocked". A blocked checkpoint means the model recognised a
+        # genuine obstacle (missing prerequisite data, no runs to analyse, etc.)
+        # and is honestly reporting that it cannot proceed.  Synthesising a
+        # salvage final_report in that case stamps auto-salvage facts which the
+        # quality gate rejects unconditionally, creating a guaranteed failure
+        # loop: checkpoint → salvage → gate reject → fallback (same obstacle).
+        # Respecting the blocked status lets the orchestrator route the slice
+        # through its normal prerequisite-block detection instead.
+        is_explicit_block = (
+            action.action_type == "checkpoint"
+            and str(action.status or "").strip() == "blocked"
+        )
         if (
             action.action_type in ("checkpoint", "abort")
+            and not is_explicit_block
             and transcript
             and provider in ("lmstudio", "minimax")
         ):

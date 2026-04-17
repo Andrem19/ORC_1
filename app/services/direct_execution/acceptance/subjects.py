@@ -12,11 +12,20 @@ _RUN_ID_RE = re.compile(r"\b\d{8}-\d{6}-[0-9a-f]{8,}\b")
 _NODE_ID_RE = re.compile(r"\b(?:node|note|incident)_[A-Za-z0-9_-]+\b|(?<!-)\bnode-[A-Za-z0-9_-]+\b")
 
 # JSON field names that match _NODE_ID_RE but are NOT real node IDs.
+# Keep in sync with regex group 1: \b(?:node|note|incident)_[A-Za-z0-9_-]+\b
 _NODE_ID_FALSE_POSITIVES = frozenset({
-    "node_id", "node_type", "node_refs", "node-id", "node_ids", "node_count",
-    "note_id", "note_ids", "note_text",
-    "incident_id", "incident_ids",
+    "node_id", "node_type", "node_types", "node_refs", "node-id", "node_ids",
+    "node_count", "node_name", "node_status", "node_parent", "node_children",
+    "node_depth", "node_label", "node_index", "node_key", "node_data",
+    "node_created", "node_updated", "node_deleted",
+    "note_id", "note_ids", "note_text", "note_types", "note_type",
+    "note_name", "note_status", "note_content",
+    "incident_id", "incident_ids", "incident_types", "incident_type",
+    "incident_status", "incident_severity",
 })
+
+
+_MAX_PAYLOAD_RUN_IDS = 3
 
 
 def run_ids_from_action_and_transcript(action: WorkerAction, transcript: list[dict[str, Any]]) -> list[str]:
@@ -37,7 +46,69 @@ def run_ids_from_action_and_transcript(action: WorkerAction, transcript: list[di
             continue
         args = item.get("arguments") if isinstance(item.get("arguments"), dict) else {}
         _append_strings(ids, _values_for_keys(args, {"run_id", "base_run_id", "candidate_run_id"}))
+    # Fallback: when the model did not reference any run_ids in facts or
+    # arguments, extract a small number from tool response payloads.  This
+    # helps weaker models (e.g. minimax) that successfully call
+    # backtests_runs(view=list) but fail to echo run_ids in their output.
+    if not ids:
+        for item in transcript:
+            if not isinstance(item, dict):
+                continue
+            extracted = _run_ids_from_payload(item.get("payload"), max_ids=_MAX_PAYLOAD_RUN_IDS - len(ids))
+            _append_strings(ids, extracted)
+            if len(ids) >= _MAX_PAYLOAD_RUN_IDS:
+                break
     return [item for item in ids if _RUN_ID_RE.fullmatch(item)]
+
+
+def _run_ids_from_payload(payload: Any, *, max_ids: int = 3) -> list[str]:
+    """Extract up to *max_ids* run_id values from a tool response payload."""
+    if not isinstance(payload, dict) or max_ids <= 0:
+        return []
+    ids: list[str] = []
+    # Direct payload with run_id keys (e.g. detail views)
+    _append_strings(ids, _values_for_keys(payload, {"run_id", "base_run_id", "candidate_run_id"}))
+    # Nested MCP response: payload.payload.content[].text → JSON data.saved_runs[].run_id
+    inner = payload.get("payload")
+    if isinstance(inner, dict):
+        content = inner.get("content")
+        if isinstance(content, list):
+            for block in content:
+                if len(ids) >= max_ids:
+                    break
+                if not isinstance(block, dict) or block.get("type") != "text":
+                    continue
+                text = str(block.get("text") or "").strip()
+                if not text.startswith("{"):
+                    continue
+                try:
+                    parsed = json.loads(text)
+                except (json.JSONDecodeError, ValueError):
+                    continue
+                data_part = parsed.get("data")
+                if not isinstance(data_part, dict):
+                    continue
+                for key in ("saved_runs", "active_runs", "runs"):
+                    runs = data_part.get(key)
+                    if not isinstance(runs, list):
+                        continue
+                    for run in runs:
+                        if len(ids) >= max_ids:
+                            break
+                        if isinstance(run, dict):
+                            rid = run.get("run_id")
+                            if isinstance(rid, str) and rid:
+                                ids.append(rid)
+    return ids[:max_ids]
+
+
+def _is_plausible_node_id(candidate: str) -> bool:
+    """Return True if *candidate* looks like a real node/note/incident ID."""
+    if not candidate or not candidate.startswith(("node", "note", "incident")):
+        return False
+    if candidate in _NODE_ID_FALSE_POSITIVES:
+        return False
+    return True
 
 
 def node_ids_from_action_and_transcript(action: WorkerAction, transcript: list[dict[str, Any]]) -> list[str]:
@@ -58,7 +129,7 @@ def node_ids_from_action_and_transcript(action: WorkerAction, transcript: list[d
         payload = item.get("payload") if isinstance(item.get("payload"), dict) else {}
         _append_strings(ids, _values_for_keys(args, {"node_id"}))
         _append_strings(ids, _NODE_ID_RE.findall(str(payload)))
-    return [item for item in ids if item.startswith(("node", "note", "incident")) and item not in _NODE_ID_FALSE_POSITIVES]
+    return [item for item in ids if _is_plausible_node_id(item)]
 
 
 def feature_names_from_action_and_transcript(action: WorkerAction, transcript: list[dict[str, Any]]) -> list[str]:

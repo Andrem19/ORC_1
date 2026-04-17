@@ -258,6 +258,13 @@ _READ_ONLY_ACTIONS = frozenset({
     "prove",
     "find",
     "read",
+    "catalog",
+    "align_preview",
+    "summary",
+    "detail",
+    "raw",
+    "rows",
+    "chart",
 })
 
 
@@ -278,10 +285,12 @@ def is_expensive_tool_call(
     if not arguments or not isinstance(arguments, dict):
         return True
     action = str(arguments.get("action") or "").strip().lower()
-    if not action:
-        # No action specified — default to expensive for safety.
-        return True
-    return action not in _READ_ONLY_ACTIONS
+    if action:
+        return action not in _READ_ONLY_ACTIONS
+    view = str(arguments.get("view") or "").strip().lower()
+    if view:
+        return view not in _READ_ONLY_ACTIONS
+    return True
 
 
 def is_mutating_tool(snapshot: McpCatalogSnapshot, tool_name: str) -> bool:
@@ -302,6 +311,8 @@ def _infer_side_effects(*, name: str, description: str, action_enum: list[str]) 
 
 
 def _infer_cost_class(*, description: str, action_enum: list[str], side_effects: str, async_like: bool) -> str:
+    if side_effects == "read_only":
+        return "cheap"
     lowered = str(description or "").lower()
     if any(action in _EXPENSIVE_ACTIONS for action in action_enum):
         return "expensive"

@@ -19,6 +19,7 @@ from app.services.direct_execution.backtests_protocol import (
     augment_allowed_tools_for_backtests,
     build_backtests_first_action_guide,
     build_backtests_zero_tool_nudge,
+    coerce_analysis_start_to_existing_run,
     is_backtests_context,
 )
 from app.services.direct_execution.feature_contract_runtime import (
@@ -55,7 +56,9 @@ from app.services.direct_execution.semantic_progress import (
 )
 from app.services.direct_execution.lmstudio_connection import LMStudioConnectionPool, _is_cloud_provider
 from app.services.direct_execution.temperature_config import get_adaptive_temperature
+from app.services.direct_execution.failed_handle_tracker import FailedHandleTracker
 from app.services.direct_execution.no_op_coercion import coerce_no_op_terminal_write
+from app.services.direct_execution.null_action_repair import repair_null_action_loop
 from app.services.direct_execution.tool_preflight import preflight_direct_tool_call
 from app.services.direct_execution.transcript_facts import derive_facts_from_transcript
 from app.services.mcp_catalog.classifier import is_expensive_tool, is_expensive_tool_call
@@ -257,6 +260,7 @@ class LmStudioToolLoop:
         self._mixed_domain_nudge_sent = False
         self._mixed_domain_finalize_nudge_sent = False
         self._pending_system_nudge = ""
+        self._failed_handle_tracker = FailedHandleTracker()
 
         # Adaptive temperature for weak providers (cloud providers are not weak)
         _temp_provider = "minimax" if _is_cloud_provider(self.adapter.base_url) else "lmstudio"
@@ -511,8 +515,78 @@ class LmStudioToolLoop:
                             source="direct_runtime",
                             severity="low",
                         )
+                    # Null-action loop repair: detect when a weak provider
+                    # repeatedly sends action=null to the same tool despite
+                    # receiving rich responses with extractable IDs.
+                    _was_null_action_repair = False
+                    null_repaired_args, null_repair_note = repair_null_action_loop(
+                        tool_name=tool_name,
+                        arguments=effective_arguments,
+                        transcript=transcript,
+                    )
+                    if null_repaired_args is not None:
+                        effective_arguments = null_repaired_args
+                        _was_null_action_repair = True
+                        if null_repair_note:
+                            repair_notes.append(null_repair_note)
+                        self.incident_store.record(
+                            summary="Direct runtime repaired repeated null-action loop",
+                            metadata={
+                                "plan_id": plan_id,
+                                "slice_id": slice_id,
+                                "slice_title": self.slice_title,
+                                "tool_name": tool_name,
+                                "original_arguments": arguments,
+                                "repaired_arguments": effective_arguments,
+                            },
+                            source="direct_runtime",
+                            severity="low",
+                        )
+                        if not self._pending_system_nudge:
+                            self._pending_system_nudge = (
+                                f"CRITICAL: Your previous call to {tool_name} had action=null (empty). "
+                                "You MUST include a concrete 'action' parameter in every tool call. "
+                                f"Use action='inspect' to list, or action='detail'/'result' with a specific ID. "
+                                "Do not send another call without an explicit action."
+                            )
+                    # Analysis-profile start coercion: redirect backtests_runs(start)
+                    # to analysis of an existing saved run when the agent is in an
+                    # analysis profile and tries to start a duplicate baseline run.
+                    analysis_coercion = coerce_analysis_start_to_existing_run(
+                        tool_name=tool_name,
+                        arguments=effective_arguments,
+                        transcript=transcript,
+                        runtime_profile=self.runtime_profile,
+                        allowed_tools=self.allowed_tools,
+                    )
+                    if analysis_coercion is not None:
+                        orig_tool, orig_args = tool_name, dict(effective_arguments)
+                        tool_name, effective_arguments, _coercion_note = analysis_coercion
+                        repair_notes.append(_coercion_note)
+                        self.incident_store.record(
+                            summary="Direct runtime coerced analysis-profile duplicate start to existing saved run",
+                            metadata={
+                                "plan_id": plan_id,
+                                "slice_id": slice_id,
+                                "slice_title": self.slice_title,
+                                "original_tool": orig_tool,
+                                "original_arguments": orig_args,
+                                "coerced_tool": tool_name,
+                                "coerced_arguments": effective_arguments,
+                                "runtime_profile": self.runtime_profile,
+                            },
+                            source="direct_runtime",
+                            severity="low",
+                        )
                     if tool_name not in self.allowed_tools or tool_name in self.safe_exclude_tools:
                         result_payload = {"error": f"direct_tool_not_allowed:{tool_name}", "allowed_tools": sorted(self.allowed_tools)}
+                    elif (failed_msg := self._failed_handle_tracker.check_arguments(effective_arguments)) is not None:
+                        result_payload = {
+                            "ok": False,
+                            "error": failed_msg,
+                            "error_class": "agent_contract_misuse",
+                            "details": {"reason_code": "failed_handle_blocked"},
+                        }
                     elif preflight.local_payload is not None:
                         result_payload = preflight.local_payload
                         details = result_payload.get("details") if isinstance(result_payload.get("details"), dict) else {}
@@ -676,8 +750,13 @@ class LmStudioToolLoop:
                                     on_progress("first_tool_call", {"elapsed_ms": timing_marks["first_tool_call"], "tool_name": tool_name})
                             tool_call_count += 1
                             if self.catalog_snapshot is not None and is_expensive_tool_call(self.catalog_snapshot, tool_name, effective_arguments):
-                                expensive_count += 1
+                                if not _was_null_action_repair:
+                                    expensive_count += 1
                         result_payload = await self._call_tool(tool_name=tool_name, arguments=effective_arguments, plan_id=plan_id, slice_id=slice_id)
+                        self._failed_handle_tracker.update_from_result(
+                            result_payload=result_payload,
+                            arguments=effective_arguments,
+                        )
                     feature_contract_identifier_report = build_feature_contract_identifier_report(
                         transcript=transcript,
                         tool_name=tool_name,
@@ -754,8 +833,17 @@ class LmStudioToolLoop:
                             tool_call_count=tool_call_count,
                             expensive_tool_call_count=expensive_count,
                         )
+                    # Null-action-repaired calls produce artificially uniform
+                    # signatures (the repair always picks the first extractable
+                    # ID from the transcript).  Don't count them toward the
+                    # semantic loop — the repair mechanism itself already
+                    # handles the model's inability, and the budget limit is
+                    # the ultimate safety net for unbounded null-action loops.
                     signature = tool_call_signature(tool_name, effective_arguments)
-                    if signature and signature == last_signature:
+                    if _was_null_action_repair:
+                        repeat_count = 0
+                        last_signature = ""
+                    elif signature and signature == last_signature:
                         repeat_count += 1
                     else:
                         repeat_count = 1 if signature else 0
@@ -1549,6 +1637,12 @@ class LmStudioToolLoop:
             "ownership",
             "new-entry proof",
             "analysis",
+            "forensic",
+            "reconstruct",
+            "reproduce",
+            "reproducible",
+            "review",
+            "audit",
         )
         return any(marker in haystack for marker in markers)
 

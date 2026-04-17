@@ -65,12 +65,20 @@ def test_issue_classifier_marks_tools_unavailable_as_infra() -> None:
     assert classify_issue_payload(payload) == "infra_unavailable"
 
 
+
+def test_issue_classifier_marks_auto_salvage_reject_as_contract_misuse() -> None:
+    payload = {"error": "auto_salvage_stub_rejected"}
+    assert classify_issue_payload(payload) == "contract_misuse"
+
+
 # ---------------------------------------------------------------------------
 # Integration: direct_error_loop_detected is a soft abort code
 # ---------------------------------------------------------------------------
 
 def test_direct_error_loop_detected_is_in_soft_abort_reason_codes() -> None:
     assert "direct_error_loop_detected" in _SOFT_ABORT_REASON_CODES
+    assert "feature_data_unavailable" in _SOFT_ABORT_REASON_CODES
+    assert "no_features_available" in _SOFT_ABORT_REASON_CODES
 
 
 # ---------------------------------------------------------------------------

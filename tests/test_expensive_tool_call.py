@@ -2,7 +2,11 @@
 
 from __future__ import annotations
 
-from app.services.mcp_catalog.classifier import is_expensive_tool, is_expensive_tool_call
+from app.services.mcp_catalog.classifier import (
+    _infer_cost_class,
+    is_expensive_tool,
+    is_expensive_tool_call,
+)
 from app.services.mcp_catalog.models import McpCatalogSnapshot, McpToolSpec
 
 
@@ -109,3 +113,77 @@ def test_action_case_insensitive():
     snap = _make_snapshot(("features_custom", "expensive"))
     assert is_expensive_tool_call(snap, "features_custom", {"action": "Inspect"}) is False
     assert is_expensive_tool_call(snap, "features_custom", {"action": "PUBLISH"}) is True
+
+
+# --- view parameter tests ---
+
+
+def test_expensive_tool_with_catalog_view_is_not_expensive():
+    snap = _make_snapshot(("events", "expensive"))
+    assert is_expensive_tool_call(snap, "events", {"view": "catalog"}) is False
+
+
+def test_expensive_tool_with_align_preview_view_is_not_expensive():
+    snap = _make_snapshot(("events", "expensive"))
+    assert is_expensive_tool_call(snap, "events", {"view": "align_preview"}) is False
+
+
+def test_expensive_tool_with_summary_view_is_not_expensive():
+    snap = _make_snapshot(("events", "expensive"))
+    assert is_expensive_tool_call(snap, "events", {"view": "summary"}) is False
+
+
+def test_expensive_tool_with_empty_view_defaults_to_expensive():
+    snap = _make_snapshot(("events", "expensive"))
+    assert is_expensive_tool_call(snap, "events", {"view": ""}) is True
+
+
+def test_view_fallback_when_no_action():
+    snap = _make_snapshot(("events", "expensive"))
+    assert is_expensive_tool_call(snap, "events", {"view": "catalog"}) is False
+    assert is_expensive_tool_call(snap, "events", {"view": "detail"}) is False
+
+
+def test_action_takes_precedence_over_view():
+    snap = _make_snapshot(("features_dataset", "expensive"))
+    assert is_expensive_tool_call(snap, "features_dataset", {"action": "build", "view": "catalog"}) is True
+    assert is_expensive_tool_call(snap, "features_dataset", {"action": "inspect", "view": "catalog"}) is False
+
+
+# --- _infer_cost_class read_only guard ---
+
+
+def test_read_only_tool_is_always_cheap():
+    assert _infer_cost_class(
+        description="Sync one or more local event stores with refresh timestamps",
+        action_enum=["start", "build", "sync"],
+        side_effects="read_only",
+        async_like=True,
+    ) == "cheap"
+
+
+def test_read_only_tool_cheap_despite_expensive_desc_tokens():
+    assert _infer_cost_class(
+        description="Inspect refresh timestamps and sync backfill background data",
+        action_enum=[],
+        side_effects="read_only",
+        async_like=False,
+    ) == "cheap"
+
+
+def test_mutating_tool_with_expensive_action_is_still_expensive():
+    assert _infer_cost_class(
+        description="Build managed datasets",
+        action_enum=["build"],
+        side_effects="mutating",
+        async_like=True,
+    ) == "expensive"
+
+
+def test_mutating_tool_with_expensive_desc_token_is_expensive():
+    assert _infer_cost_class(
+        description="Refresh all data",
+        action_enum=[],
+        side_effects="mutating",
+        async_like=False,
+    ) == "expensive"

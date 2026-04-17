@@ -328,7 +328,11 @@ def test_backtests_prompt_does_not_reference_unavailable_backtests_plan() -> Non
     assert "Backtests protocol:" in prompt
     assert "First live action: call backtests_plan" not in prompt
     assert "backtests_plan(" not in prompt
-    assert "Use only the approved backtests tools listed above" in prompt
+    # When backtests_runs IS available (even without backtests_plan),
+    # the protocol should guide to list saved runs rather than saying
+    # "use only approved tools" (that message is for when NO backtests
+    # discovery tools are available at all).
+    assert "list saved runs" in prompt.lower() or "backtests_runs(action='inspect'" in prompt
 
 
 def test_backtests_allowed_tools_auto_add_read_only_plan_when_live() -> None:
@@ -643,4 +647,148 @@ def test_non_research_setup_prompt_no_metadata_instructions() -> None:
         )
     )
     assert "Research setup protocol:" not in prompt
+
+
+# ---------- Acceptance proof protocol ----------
+
+
+def test_acceptance_proof_protocol_appears_for_research_shortlist_write() -> None:
+    """Slices with research_shortlist_write + research_node_proof_pass must get proof instructions."""
+    prompt = build_direct_slice_prompt(
+        **_base_prompt_kwargs(
+            allowed_tools=["backtests_plan", "backtests_runs", "backtests_strategy", "research_memory"],
+            slice_payload={
+                "slice_id": "stage_5",
+                "title": "Standalone backtests новых сигналов",
+                "hypothesis": "h",
+                "objective": "Проверить standalone прогоны кандидатов.",
+                "success_criteria": ["Есть shortlist standalone-кандидатов."],
+                "evidence_requirements": [],
+                "policy_tags": ["backtesting", "expensive"],
+                "runtime_profile": "generic_mutation",
+                "acceptance_contract": {
+                    "kind": "research_shortlist_write",
+                    "mode": "strict",
+                    "required_predicates": ["mutating_tool_call_present", "research_node_proof_pass"],
+                },
+            },
+        ),
+    )
+
+    assert "Acceptance proof requirement (mandatory):" in prompt
+    assert "research_memory(action='create', ...)" in prompt
+    assert "research_memory(action='prove')" in prompt
+    assert "acceptance gate will FAIL" in prompt
+    assert "MUST still create a research_memory node" in prompt
+
+
+def test_acceptance_proof_protocol_appears_for_write_result() -> None:
+    """Slices with write_result + research_node_proof_pass must get proof instructions."""
+    prompt = build_direct_slice_prompt(
+        **_base_prompt_kwargs(
+            allowed_tools=["backtests_runs", "research_memory"],
+            slice_payload={
+                "slice_id": "stage_6",
+                "title": "Record backtest results",
+                "hypothesis": "h",
+                "objective": "Write results.",
+                "success_criteria": ["Results recorded."],
+                "evidence_requirements": [],
+                "acceptance_contract": {
+                    "kind": "write_result",
+                    "required_predicates": ["mutating_tool_call_present", "research_node_proof_pass"],
+                },
+            },
+        ),
+    )
+
+    assert "Acceptance proof requirement (mandatory):" in prompt
+
+
+def test_acceptance_proof_protocol_absent_without_research_memory_tool() -> None:
+    """Slices without research_memory should not get acceptance proof instructions."""
+    prompt = build_direct_slice_prompt(
+        **_base_prompt_kwargs(
+            allowed_tools=["backtests_runs"],
+            slice_payload={
+                "slice_id": "stage_5",
+                "title": "Backtests only",
+                "hypothesis": "h",
+                "objective": "Run backtests.",
+                "success_criteria": ["Runs complete."],
+                "evidence_requirements": [],
+                "acceptance_contract": {
+                    "kind": "research_shortlist_write",
+                    "required_predicates": ["mutating_tool_call_present", "research_node_proof_pass"],
+                },
+            },
+        ),
+    )
+
+    assert "Acceptance proof requirement (mandatory):" not in prompt
+
+
+def test_acceptance_proof_protocol_absent_for_research_setup() -> None:
+    """research_setup contracts do not require research_node_proof_pass in strict mode."""
+    prompt = build_direct_slice_prompt(
+        **_base_prompt_kwargs(
+            allowed_tools=["research_project", "research_map", "research_memory"],
+            slice_payload={
+                "slice_id": "stage_1",
+                "title": "Research setup",
+                "hypothesis": "h",
+                "objective": "Setup project.",
+                "success_criteria": ["Setup done."],
+                "evidence_requirements": [],
+                "acceptance_contract": {
+                    "kind": "research_setup",
+                    "required_predicates": ["research_project_present", "research_setup_facts_present"],
+                },
+            },
+        ),
+    )
+
+    assert "Acceptance proof requirement (mandatory):" not in prompt
+
+
+def test_acceptance_proof_protocol_absent_without_proof_predicate() -> None:
+    """If required_predicates omits research_node_proof_pass, no proof section."""
+    prompt = build_direct_slice_prompt(
+        **_base_prompt_kwargs(
+            allowed_tools=["research_memory"],
+            slice_payload={
+                "slice_id": "stage_5",
+                "title": "Generic write",
+                "hypothesis": "h",
+                "objective": "Write something.",
+                "success_criteria": ["Written."],
+                "evidence_requirements": [],
+                "acceptance_contract": {
+                    "kind": "research_shortlist_write",
+                    "required_predicates": ["mutating_tool_call_present"],
+                },
+            },
+        ),
+    )
+
+    assert "Acceptance proof requirement (mandatory):" not in prompt
+
+
+def test_acceptance_proof_protocol_absent_without_contract() -> None:
+    """Slices without an acceptance_contract get no proof section."""
+    prompt = build_direct_slice_prompt(
+        **_base_prompt_kwargs(
+            allowed_tools=["research_memory"],
+            slice_payload={
+                "slice_id": "stage_5",
+                "title": "Simple read",
+                "hypothesis": "h",
+                "objective": "Read something.",
+                "success_criteria": ["Read done."],
+                "evidence_requirements": [],
+            },
+        ),
+    )
+
+    assert "Acceptance proof requirement (mandatory):" not in prompt
 

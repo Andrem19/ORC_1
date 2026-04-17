@@ -47,6 +47,46 @@ _PLACEHOLDER_HANDLE_VALUES = frozenset(
 )
 
 _SESSION_HEX_LENGTHS = {24, 32, 40}
+_HANDLE_DISALLOWED_PREFIXES = {
+    # run_id must point to an actual backtest run handle.
+    "run_id": (
+        "analysis-",
+        "cond-",
+        "node-",
+        "note_",
+        "branch-",
+        "job-",
+        "op-",
+        "operation-",
+        "proj-",
+        "project-",
+    ),
+    # job_id must point to async job handles, not run/snapshot/research IDs.
+    "job_id": (
+        "run_",
+        "analysis-",
+        "node-",
+        "note_",
+        "branch-",
+        "proj-",
+        "project-",
+        "snapshot-",
+    ),
+    # operation_id must point to operation handles only.
+    "operation_id": (
+        "run_",
+        "analysis-",
+        "cond-",
+        "node-",
+        "note_",
+        "branch-",
+        "job-",
+        "proj-",
+        "project-",
+        "snapshot-",
+    ),
+}
+
 _STRICT_OBSERVE_ACTIONS = frozenset(
     {
         "detail",
@@ -116,6 +156,10 @@ def is_suspicious_handle_value(value: Any, *, field_name: str) -> bool:
         return True
     if normalized_field == "project_id":
         return False
+    text = str(value or "").strip().lower()
+    disallowed_prefixes = _HANDLE_DISALLOWED_PREFIXES.get(normalized_field, ())
+    if any(text.startswith(prefix) for prefix in disallowed_prefixes):
+        return True
     return looks_like_numeric_identifier(value) or looks_like_session_identifier(value)
 
 

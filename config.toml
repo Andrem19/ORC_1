@@ -3,7 +3,7 @@ goal = "Continuously improve automated trading strategy performance on BTCUSDT v
 # --- Plan source / runtime mode ---
 # "planner"      -> normal mode, planner generates new execution plans
 # "compiled_raw" -> plannerless mode, orchestrator executes plans produced by `python converter.py`
-start_from = "v1"
+start_from = "v2"
 plan_source = "compiled_raw"
 raw_plan_dir = "raw_plans"
 compiled_plan_dir = "compiled_plans"
@@ -208,4 +208,4 @@ base_url = "https://api.minimax.io"
 model = "MiniMax-M2.5"
 api_key_env_var = "MINIMAX_API"  # reads from .env MINIMAX_API
 temperature = 1.0
-max_tokens = 8192
+max_tokens = 16384

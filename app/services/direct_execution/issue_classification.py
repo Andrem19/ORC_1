@@ -20,6 +20,7 @@ _CONTRACT_MISUSE_MARKERS = (
     "not valid under any of the given schemas",
     "unknown research project",
     "direct_contract_blocker",
+    "auto_salvage_stub_rejected",
 )
 _INFRA_UNAVAILABLE_MARKERS = (
     "dev_space1_tools_unavailable",

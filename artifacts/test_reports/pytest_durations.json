@@ -1,709 +1,247 @@
 {
   "all_tests": [
     {
-      "call_seconds": 0.00836,
-      "nodeid": "tests/test_fallback_executor.py::test_all_providers_fail",
-      "setup_seconds": 5.3e-05,
-      "teardown_seconds": 6.5e-05,
-      "total_seconds": 0.008479
-    },
-    {
-      "call_seconds": 0.007432,
-      "nodeid": "tests/test_fallback_executor.py::test_fallback_triggers_on_stalled_watchdog_checkpoint",
-      "setup_seconds": 8e-05,
-      "teardown_seconds": 6.8e-05,
-      "total_seconds": 0.00758
-    },
-    {
-      "call_seconds": 0.007434,
-      "nodeid": "tests/test_fallback_executor.py::test_exhausted_chain_checkpoint_preserves_actionable_qwen_failure_over_rate_limit_tail",
-      "setup_seconds": 8.8e-05,
-      "teardown_seconds": 5e-05,
-      "total_seconds": 0.007572
-    },
-    {
-      "call_seconds": 0.00731,
-      "nodeid": "tests/test_fallback_executor.py::test_fallback_2_succeeds_after_both_fail",
-      "setup_seconds": 5.5e-05,
-      "teardown_seconds": 6.5e-05,
-      "total_seconds": 0.007429
-    },
-    {
-      "call_seconds": 0.002671,
-      "nodeid": "tests/test_direct_prompt.py::test_backtests_allowed_tools_auto_add_read_only_plan_when_live",
-      "setup_seconds": 5.2e-05,
-      "teardown_seconds": 6.1e-05,
-      "total_seconds": 0.002784
-    },
-    {
-      "call_seconds": 0.001741,
-      "nodeid": "tests/test_direct_prompt.py::test_direct_prompt_includes_backtests_analysis_protocol",
-      "setup_seconds": 7.2e-05,
-      "teardown_seconds": 6.3e-05,
-      "total_seconds": 0.001876
-    },
-    {
-      "call_seconds": 0.001754,
-      "nodeid": "tests/test_direct_prompt.py::test_direct_prompt_standalone_backtests_gets_inspect_first",
-      "setup_seconds": 5.7e-05,
-      "teardown_seconds": 6.2e-05,
-      "total_seconds": 0.001874
-    },
-    {
-      "call_seconds": 0.001663,
-      "nodeid": "tests/test_direct_prompt.py::test_non_research_setup_prompt_no_metadata_instructions",
-      "setup_seconds": 8.2e-05,
-      "teardown_seconds": 6.1e-05,
-      "total_seconds": 0.001806
-    },
-    {
-      "call_seconds": 0.001644,
-      "nodeid": "tests/test_direct_prompt.py::test_direct_prompt_includes_bootstrap_hint_when_available",
-      "setup_seconds": 6e-05,
-      "teardown_seconds": 6.7e-05,
-      "total_seconds": 0.001772
-    },
-    {
-      "call_seconds": 0.001559,
-      "nodeid": "tests/test_direct_prompt.py::test_known_facts_are_compacted_without_recursive_prefix_chains",
-      "setup_seconds": 6.2e-05,
-      "teardown_seconds": 6.2e-05,
-      "total_seconds": 0.001683
-    },
-    {
-      "call_seconds": 0.001545,
-      "nodeid": "tests/test_direct_prompt.py::test_direct_prompt_prioritizes_dependency_backtests_handoff_facts_over_low_signal_telemetry",
-      "setup_seconds": 6.2e-05,
-      "teardown_seconds": 7.2e-05,
-      "total_seconds": 0.001679
-    },
-    {
-      "call_seconds": 0.001495,
-      "nodeid": "tests/test_direct_prompt.py::test_backtests_protocol_includes_layer_compare_line_when_analysis_available",
-      "setup_seconds": 9.4e-05,
-      "teardown_seconds": 6.2e-05,
-      "total_seconds": 0.001652
-    },
-    {
-      "call_seconds": 0.001545,
-      "nodeid": "tests/test_direct_prompt.py::test_prompt_no_downstream_section_when_not_missing",
-      "setup_seconds": 5.9e-05,
-      "teardown_seconds": 4.7e-05,
-      "total_seconds": 0.001651
-    },
-    {
-      "call_seconds": 0.001512,
-      "nodeid": "tests/test_direct_prompt.py::test_direct_prompt_includes_policy_locked_field_description",
-      "setup_seconds": 7.2e-05,
-      "teardown_seconds": 6e-05,
-      "total_seconds": 0.001645
-    },
-    {
-      "call_seconds": 0.001524,
-      "nodeid": "tests/test_direct_prompt.py::test_backtests_prompt_does_not_reference_unavailable_backtests_plan",
-      "setup_seconds": 6.3e-05,
-      "teardown_seconds": 5.3e-05,
-      "total_seconds": 0.00164
-    },
-    {
-      "call_seconds": 0.001521,
-      "nodeid": "tests/test_direct_prompt.py::test_direct_prompt_includes_feature_contract_protocol",
-      "setup_seconds": 6.1e-05,
-      "teardown_seconds": 5.4e-05,
-      "total_seconds": 0.001636
-    },
-    {
-      "call_seconds": 0.001511,
-      "nodeid": "tests/test_direct_prompt.py::test_backtests_analysis_protocol_includes_run_id_guidance_when_conditions_present",
-      "setup_seconds": 6e-05,
-      "teardown_seconds": 6.2e-05,
-      "total_seconds": 0.001633
-    },
-    {
-      "call_seconds": 0.001487,
-      "nodeid": "tests/test_direct_prompt.py::test_direct_prompt_includes_research_setup_protocol",
-      "setup_seconds": 5.8e-05,
-      "teardown_seconds": 6.3e-05,
-      "total_seconds": 0.001608
-    },
-    {
-      "call_seconds": 0.001489,
-      "nodeid": "tests/test_direct_prompt.py::test_direct_prompt_includes_feature_contract_exploration_protocol",
-      "setup_seconds": 5.1e-05,
-      "teardown_seconds": 6e-05,
-      "total_seconds": 0.001599
-    },
-    {
-      "call_seconds": 0.001458,
-      "nodeid": "tests/test_direct_prompt.py::test_backtests_analysis_protocol_omits_run_id_guidance_without_conditions",
-      "setup_seconds": 6e-05,
-      "teardown_seconds": 5.9e-05,
-      "total_seconds": 0.001577
-    },
-    {
-      "call_seconds": 0.001468,
-      "nodeid": "tests/test_direct_prompt.py::test_direct_prompt_includes_research_shortlist_protocol",
-      "setup_seconds": 5.8e-05,
-      "teardown_seconds": 4.8e-05,
-      "total_seconds": 0.001573
-    },
-    {
-      "call_seconds": 0.001465,
-      "nodeid": "tests/test_direct_prompt.py::test_direct_prompt_includes_generated_required_field_hints",
-      "setup_seconds": 5.5e-05,
-      "teardown_seconds": 5.1e-05,
-      "total_seconds": 0.001571
-    },
-    {
-      "call_seconds": 0.001425,
-      "nodeid": "tests/test_direct_prompt.py::test_direct_prompt_includes_backtests_protocol",
-      "setup_seconds": 8.3e-05,
-      "teardown_seconds": 5.8e-05,
-      "total_seconds": 0.001566
-    },
-    {
-      "call_seconds": 0.00143,
-      "nodeid": "tests/test_direct_prompt.py::test_backtests_analysis_prompt_includes_layer_compare_recovery_guidance",
-      "setup_seconds": 6.5e-05,
-      "teardown_seconds": 5.9e-05,
-      "total_seconds": 0.001555
-    },
-    {
-      "call_seconds": 0.001433,
-      "nodeid": "tests/test_direct_prompt.py::test_prompt_surfaces_missing_downstream_prerequisites",
-      "setup_seconds": 5.6e-05,
-      "teardown_seconds": 5.2e-05,
-      "total_seconds": 0.001541
-    },
-    {
-      "call_seconds": 0.001415,
-      "nodeid": "tests/test_direct_prompt.py::test_direct_prompt_strict_acceptance_requires_complete_example",
-      "setup_seconds": 6.1e-05,
-      "teardown_seconds": 5.8e-05,
-      "total_seconds": 0.001534
-    },
-    {
-      "call_seconds": 0.001406,
-      "nodeid": "tests/test_direct_prompt.py::test_backtests_protocol_excludes_layer_compare_when_analysis_missing",
-      "setup_seconds": 5.7e-05,
-      "teardown_seconds": 6.1e-05,
-      "total_seconds": 0.001523
-    },
-    {
-      "call_seconds": 0.0014,
-      "nodeid": "tests/test_direct_prompt.py::test_research_setup_prompt_includes_metadata_fields",
-      "setup_seconds": 5.7e-05,
-      "teardown_seconds": 6.2e-05,
-      "total_seconds": 0.001519
-    },
-    {
-      "call_seconds": 0.001321,
-      "nodeid": "tests/test_direct_prompt.py::test_direct_prompt_includes_generic_mixed_domain_protocol_for_read_only_probe",
-      "setup_seconds": 5.9e-05,
-      "teardown_seconds": 5.9e-05,
-      "total_seconds": 0.00144
-    },
-    {
-      "call_seconds": 0.001277,
-      "nodeid": "tests/test_direct_prompt.py::test_direct_prompt_includes_enum_hints",
-      "setup_seconds": 5e-05,
-      "teardown_seconds": 5.2e-05,
-      "total_seconds": 0.001379
-    },
-    {
-      "call_seconds": 0.000842,
-      "nodeid": "tests/test_fallback_executor.py::test_zero_tool_calls_triggers_fallback",
-      "setup_seconds": 0.000135,
-      "teardown_seconds": 0.0001,
-      "total_seconds": 0.001077
-    },
-    {
-      "call_seconds": 0.000773,
-      "nodeid": "tests/test_fallback_executor.py::test_strict_watchlist_result_does_not_count_as_success_without_repair",
-      "setup_seconds": 5.8e-05,
-      "teardown_seconds": 6.3e-05,
-      "total_seconds": 0.000895
-    },
-    {
-      "call_seconds": 0.000672,
-      "nodeid": "tests/test_fallback_executor.py::test_glm_repair_prompt_allows_small_new_tool_budget",
-      "setup_seconds": 6e-05,
-      "teardown_seconds": 5.5e-05,
-      "total_seconds": 0.000787
-    },
-    {
-      "call_seconds": 0.000639,
-      "nodeid": "tests/test_fallback_executor.py::test_all_providers_fail_with_upstream_marker_preserves_last_action",
-      "setup_seconds": 8e-05,
-      "teardown_seconds": 5.9e-05,
-      "total_seconds": 0.000778
-    },
-    {
-      "call_seconds": 0.000616,
-      "nodeid": "tests/test_fallback_executor.py::test_all_quality_failures_exhaust_fallbacks",
-      "setup_seconds": 5.7e-05,
-      "teardown_seconds": 5.2e-05,
-      "total_seconds": 0.000725
-    },
-    {
-      "call_seconds": 0.00056,
-      "nodeid": "tests/test_fallback_executor.py::test_zero_tool_calls_fallback_receives_enforcement_in_prompt",
-      "setup_seconds": 5.3e-05,
-      "teardown_seconds": 5.6e-05,
-      "total_seconds": 0.000669
-    },
-    {
-      "call_seconds": 0.00054,
-      "nodeid": "tests/test_fallback_executor.py::test_empty_evidence_refs_triggers_fallback",
-      "setup_seconds": 7e-05,
-      "teardown_seconds": 5.3e-05,
-      "total_seconds": 0.000663
-    },
-    {
-      "call_seconds": 0.000531,
-      "nodeid": "tests/test_fallback_executor.py::test_missing_required_facts_triggers_fallback",
-      "setup_seconds": 6e-05,
-      "teardown_seconds": 5.7e-05,
-      "total_seconds": 0.000648
-    },
-    {
-      "call_seconds": 0.000505,
-      "nodeid": "tests/test_fallback_executor.py::test_fallback_receives_error_context_in_prompt",
-      "setup_seconds": 8.5e-05,
-      "teardown_seconds": 5.8e-05,
-      "total_seconds": 0.000647
-    },
-    {
-      "call_seconds": 0.0005,
-      "nodeid": "tests/test_fallback_executor.py::test_checkpoint_partial_still_falls_back",
-      "setup_seconds": 8.5e-05,
-      "teardown_seconds": 6e-05,
-      "total_seconds": 0.000644
-    },
-    {
-      "call_seconds": 0.00051,
-      "nodeid": "tests/test_fallback_executor.py::test_qwen_preflight_failure_does_not_disable_tools",
-      "setup_seconds": 8.1e-05,
-      "teardown_seconds": 4.6e-05,
-      "total_seconds": 0.000638
-    },
-    {
-      "call_seconds": 0.000525,
-      "nodeid": "tests/test_fallback_executor.py::test_incomplete_verdict_triggers_fallback",
-      "setup_seconds": 5.7e-05,
-      "teardown_seconds": 5.6e-05,
-      "total_seconds": 0.000638
-    },
-    {
-      "call_seconds": 0.000516,
-      "nodeid": "tests/test_fallback_executor.py::test_low_confidence_triggers_fallback",
-      "setup_seconds": 6.2e-05,
-      "teardown_seconds": 5.6e-05,
-      "total_seconds": 0.000634
-    },
-    {
-      "call_seconds": 0.000518,
-      "nodeid": "tests/test_fallback_executor.py::test_fallback_1_succeeds_after_primary_fails",
-      "setup_seconds": 4.8e-05,
-      "teardown_seconds": 5.3e-05,
-      "total_seconds": 0.000619
-    },
-    {
-      "call_seconds": 0.000504,
-      "nodeid": "tests/test_fallback_executor.py::test_empty_fallback_provider_strings_are_filtered",
-      "setup_seconds": 5.4e-05,
-      "teardown_seconds": 5.7e-05,
-      "total_seconds": 0.000615
-    },
-    {
-      "call_seconds": 0.000493,
-      "nodeid": "tests/test_fallback_executor.py::test_primary_retry_uses_prior_attempt_context_before_fallback",
-      "setup_seconds": 5.6e-05,
-      "teardown_seconds": 5.2e-05,
-      "total_seconds": 0.000601
-    },
-    {
-      "call_seconds": 0.000481,
-      "nodeid": "tests/test_fallback_executor.py::test_primary_succeeds_no_fallback",
-      "setup_seconds": 6.4e-05,
-      "teardown_seconds": 5.5e-05,
-      "total_seconds": 0.0006
-    },
-    {
-      "call_seconds": 0.000455,
-      "nodeid": "tests/test_fallback_executor.py::test_fallback_triggers_on_blocked_checkpoint",
-      "setup_seconds": 6e-05,
-      "teardown_seconds": 5.6e-05,
-      "total_seconds": 0.000571
-    },
-    {
-      "call_seconds": 0.000448,
-      "nodeid": "tests/test_fallback_executor.py::test_adapter_factory_returns_none_skips_fallback",
-      "setup_seconds": 5.9e-05,
-      "teardown_seconds": 5.5e-05,
-      "total_seconds": 0.000562
-    },
-    {
-      "call_seconds": 0.00044,
-      "nodeid": "tests/test_fallback_executor.py::test_tool_not_in_allowlist_gets_one_repair_before_next_provider",
-      "setup_seconds": 5.8e-05,
-      "teardown_seconds": 6.2e-05,
-      "total_seconds": 0.00056
-    },
-    {
-      "call_seconds": 0.000435,
-      "nodeid": "tests/test_fallback_executor.py::test_contract_misuse_does_not_escalate_to_fallback_provider",
-      "setup_seconds": 7e-05,
-      "teardown_seconds": 5.3e-05,
-      "total_seconds": 0.000558
-    },
-    {
-      "call_seconds": 0.000442,
-      "nodeid": "tests/test_fallback_executor.py::test_strict_watchlist_result_gets_acceptance_repair_before_success",
-      "setup_seconds": 6e-05,
-      "teardown_seconds": 5e-05,
-      "total_seconds": 0.000553
-    },
-    {
-      "call_seconds": 0.000442,
-      "nodeid": "tests/test_fallback_executor.py::test_qwen_legacy_backtests_integration_facts_are_canonicalized_before_claude",
-      "setup_seconds": 5.9e-05,
-      "teardown_seconds": 5.1e-05,
-      "total_seconds": 0.000552
-    },
-    {
-      "call_seconds": 0.000427,
-      "nodeid": "tests/test_fallback_executor.py::test_upstream_marker_with_skip_verdict_preserves_for_terminal",
-      "setup_seconds": 5.8e-05,
-      "teardown_seconds": 5.6e-05,
-      "total_seconds": 0.000541
-    },
-    {
-      "call_seconds": 0.000417,
-      "nodeid": "tests/test_fallback_executor.py::test_qwen_registry_mapping_is_injected_into_fallback_and_repair_prompts",
-      "setup_seconds": 6.8e-05,
-      "teardown_seconds": 4.9e-05,
-      "total_seconds": 0.000534
-    },
-    {
-      "call_seconds": 0.000155,
-      "nodeid": "tests/test_direct_semantic_progress.py::test_compact_tool_result_message_is_small_and_actionable",
-      "setup_seconds": 0.000298,
-      "teardown_seconds": 5.9e-05,
-      "total_seconds": 0.000512
-    },
-    {
-      "call_seconds": 0.000134,
-      "nodeid": "tests/test_direct_semantic_progress.py::test_tool_call_signature_matches_same_research_record_write",
-      "setup_seconds": 0.00031,
-      "teardown_seconds": 5.5e-05,
-      "total_seconds": 0.000499
-    },
-    {
-      "call_seconds": 0.000133,
-      "nodeid": "tests/test_direct_semantic_progress.py::test_derive_research_write_facts_extracts_shortlist_completion_contract",
+      "call_seconds": 0.003393,
+      "nodeid": "tests/test_direct_tool_preflight.py::test_preflight_blocks_missing_required_field_without_spending_budget",
       "setup_seconds": 0.000265,
-      "teardown_seconds": 5.9e-05,
-      "total_seconds": 0.000457
+      "teardown_seconds": 8.1e-05,
+      "total_seconds": 0.003739
     },
     {
-      "call_seconds": 0.000309,
-      "nodeid": "tests/test_fallback_executor.py::test_infra_unavailable_does_not_blindly_escalate_to_fallback_provider",
-      "setup_seconds": 6.8e-05,
-      "teardown_seconds": 5.2e-05,
-      "total_seconds": 0.000429
+      "call_seconds": 0.002696,
+      "nodeid": "tests/test_direct_tool_preflight.py::test_preflight_blocks_wrong_type",
+      "setup_seconds": 0.000277,
+      "teardown_seconds": 7.7e-05,
+      "total_seconds": 0.00305
     },
     {
-      "call_seconds": 0.000288,
-      "nodeid": "tests/test_fallback_executor.py::test_high_quality_final_report_passes_gate",
-      "setup_seconds": 8.4e-05,
-      "teardown_seconds": 5e-05,
-      "total_seconds": 0.000421
+      "call_seconds": 0.002732,
+      "nodeid": "tests/test_direct_tool_preflight.py::test_preflight_blocks_features_analytics_without_feature_name",
+      "setup_seconds": 0.000228,
+      "teardown_seconds": 7.1e-05,
+      "total_seconds": 0.00303
     },
     {
-      "call_seconds": 0.000111,
-      "nodeid": "tests/test_direct_semantic_progress.py::test_extract_ids_finds_project_id_in_nested_data_project",
-      "setup_seconds": 0.000233,
+      "call_seconds": 0.002683,
+      "nodeid": "tests/test_direct_tool_preflight.py::test_preflight_allows_valid_call",
+      "setup_seconds": 7.8e-05,
+      "teardown_seconds": 6.7e-05,
+      "total_seconds": 0.002828
+    },
+    {
+      "call_seconds": 0.002586,
+      "nodeid": "tests/test_direct_tool_preflight.py::test_backtests_start_after_successful_plan_is_allowed",
+      "setup_seconds": 5.8e-05,
+      "teardown_seconds": 7.1e-05,
+      "total_seconds": 0.002715
+    },
+    {
+      "call_seconds": 0.002279,
+      "nodeid": "tests/test_direct_tool_preflight.py::test_preflight_blocks_unknown_field_when_additional_properties_false",
+      "setup_seconds": 6.9e-05,
+      "teardown_seconds": 6.1e-05,
+      "total_seconds": 0.002409
+    },
+    {
+      "call_seconds": 0.002223,
+      "nodeid": "tests/test_direct_tool_preflight.py::test_preflight_blocks_wrong_enum_with_allowed_values",
+      "setup_seconds": 8.7e-05,
+      "teardown_seconds": 7.5e-05,
+      "total_seconds": 0.002385
+    },
+    {
+      "call_seconds": 0.002227,
+      "nodeid": "tests/test_direct_tool_preflight.py::test_preflight_blocks_features_custom_detail_without_name",
+      "setup_seconds": 8.8e-05,
       "teardown_seconds": 6e-05,
-      "total_seconds": 0.000405
+      "total_seconds": 0.002375
     },
     {
-      "call_seconds": 0.000272,
-      "nodeid": "tests/test_fallback_executor.py::test_checkpoint_complete_counts_as_success_without_claude",
+      "call_seconds": 0.002183,
+      "nodeid": "tests/test_direct_tool_preflight.py::test_backtests_start_requires_successful_plan_in_current_attempt",
+      "setup_seconds": 6e-05,
+      "teardown_seconds": 6.8e-05,
+      "total_seconds": 0.002311
+    },
+    {
+      "call_seconds": 0.00219,
+      "nodeid": "tests/test_direct_tool_preflight.py::test_preflight_allows_valid_backtests_run_id_observe_call",
+      "setup_seconds": 5.5e-05,
+      "teardown_seconds": 6.3e-05,
+      "total_seconds": 0.002308
+    },
+    {
+      "call_seconds": 0.001475,
+      "nodeid": "tests/test_direct_tool_preflight.py::test_preflight_blocks_unknown_tool_against_live_catalog",
+      "setup_seconds": 0.000245,
+      "teardown_seconds": 7.1e-05,
+      "total_seconds": 0.001791
+    },
+    {
+      "call_seconds": 0.001417,
+      "nodeid": "tests/test_direct_tool_preflight.py::test_preflight_blocks_numeric_backtests_run_id_before_schema_validation",
+      "setup_seconds": 8e-05,
+      "teardown_seconds": 6.2e-05,
+      "total_seconds": 0.001558
+    },
+    {
+      "call_seconds": 0.00141,
+      "nodeid": "tests/test_direct_tool_preflight.py::test_preflight_blocks_suspicious_backtests_run_id_without_spending_budget",
+      "setup_seconds": 8.1e-05,
+      "teardown_seconds": 5.4e-05,
+      "total_seconds": 0.001545
+    },
+    {
+      "call_seconds": 0.001383,
+      "nodeid": "tests/test_direct_tool_preflight.py::test_preflight_blocks_cross_kind_backtests_run_id_without_spending_budget",
+      "setup_seconds": 6.7e-05,
+      "teardown_seconds": 5.4e-05,
+      "total_seconds": 0.001504
+    },
+    {
+      "call_seconds": 9.8e-05,
+      "nodeid": "tests/test_direct_tool_preflight.py::test_duplicate_baseline_start_is_blocked_from_saved_run_list",
+      "setup_seconds": 9.3e-05,
+      "teardown_seconds": 9.7e-05,
+      "total_seconds": 0.000288
+    },
+    {
+      "call_seconds": 0.000141,
+      "nodeid": "tests/test_direct_tool_preflight.py::test_normalize_plan_budgets_scales_by_six_for_direct_runtime",
       "setup_seconds": 6e-05,
       "teardown_seconds": 5.3e-05,
-      "total_seconds": 0.000385
+      "total_seconds": 0.000254
     },
     {
-      "call_seconds": 0.000251,
-      "nodeid": "tests/test_fallback_executor.py::test_no_fallback_providers_configured",
-      "setup_seconds": 6e-05,
-      "teardown_seconds": 5.4e-05,
-      "total_seconds": 0.000365
-    },
-    {
-      "call_seconds": 0.000222,
-      "nodeid": "tests/test_fallback_executor.py::test_infra_signal_skips_primary_repair_and_jumps_to_fallback",
-      "setup_seconds": 5.7e-05,
-      "teardown_seconds": 5.4e-05,
-      "total_seconds": 0.000333
-    },
-    {
-      "call_seconds": 0.000117,
-      "nodeid": "tests/test_direct_semantic_progress.py::test_derive_research_write_facts_extracts_downstream_ready_fields",
-      "setup_seconds": 9.3e-05,
-      "teardown_seconds": 5.9e-05,
-      "total_seconds": 0.000269
-    },
-    {
-      "call_seconds": 0.000129,
-      "nodeid": "tests/test_direct_semantic_progress.py::test_should_auto_finalize_research_shortlist_only_when_all_required_facts_exist",
-      "setup_seconds": 5.6e-05,
-      "teardown_seconds": 5.6e-05,
-      "total_seconds": 0.00024
-    },
-    {
-      "call_seconds": 0.0001,
-      "nodeid": "tests/test_direct_semantic_progress.py::test_should_auto_finalize_on_terminal_evidence_marker_without_exact_criteria_match",
-      "setup_seconds": 7.8e-05,
-      "teardown_seconds": 5.8e-05,
-      "total_seconds": 0.000237
-    },
-    {
-      "call_seconds": 0.000122,
-      "nodeid": "tests/test_direct_semantic_progress.py::test_should_auto_finalize_research_slice_on_success_marker",
-      "setup_seconds": 5.3e-05,
-      "teardown_seconds": 5.5e-05,
-      "total_seconds": 0.00023
-    },
-    {
-      "call_seconds": 0.000119,
-      "nodeid": "tests/test_direct_semantic_progress.py::test_compact_tool_result_message_guides_mixed_domain_slice_away_from_repeated_research_reads",
-      "setup_seconds": 5.5e-05,
-      "teardown_seconds": 5.2e-05,
-      "total_seconds": 0.000226
-    },
-    {
-      "call_seconds": 0.000111,
-      "nodeid": "tests/test_direct_semantic_progress.py::test_build_auto_final_report_returns_terminal_final_report_json",
-      "setup_seconds": 4.5e-05,
-      "teardown_seconds": 4.6e-05,
-      "total_seconds": 0.000203
-    },
-    {
-      "call_seconds": 9.1e-05,
-      "nodeid": "tests/test_direct_semantic_progress.py::test_extract_ids_finds_operation_id_in_nested_data_record",
-      "setup_seconds": 5e-05,
-      "teardown_seconds": 5.5e-05,
-      "total_seconds": 0.000197
-    },
-    {
-      "call_seconds": 7.3e-05,
-      "nodeid": "tests/test_direct_prompt.py::test_backtests_zero_tool_nudge_is_allowed_tool_aware",
-      "setup_seconds": 7.2e-05,
-      "teardown_seconds": 4.7e-05,
-      "total_seconds": 0.000191
-    },
-    {
-      "call_seconds": 9.3e-05,
-      "nodeid": "tests/test_direct_semantic_progress.py::test_compact_tool_result_message_guides_mixed_domain_slice_to_finalize_after_domain_probe",
-      "setup_seconds": 5.2e-05,
-      "teardown_seconds": 4.1e-05,
-      "total_seconds": 0.000186
-    },
-    {
-      "call_seconds": 7.2e-05,
-      "nodeid": "tests/test_fallback_executor.py::test_fallback_prompt_contains_zero_tool_call_enforcement",
-      "setup_seconds": 6.1e-05,
-      "teardown_seconds": 4.8e-05,
-      "total_seconds": 0.000182
-    },
-    {
-      "call_seconds": 9.1e-05,
-      "nodeid": "tests/test_direct_semantic_progress.py::test_should_auto_finalize_even_after_prior_contract_issue_when_success_marker_present",
-      "setup_seconds": 4.8e-05,
-      "teardown_seconds": 4.2e-05,
-      "total_seconds": 0.000181
-    },
-    {
-      "call_seconds": 7.9e-05,
-      "nodeid": "tests/test_direct_semantic_progress.py::test_build_watchdog_checkpoint_returns_blocked_checkpoint",
-      "setup_seconds": 5.5e-05,
-      "teardown_seconds": 4.6e-05,
-      "total_seconds": 0.00018
-    },
-    {
-      "call_seconds": 6.6e-05,
-      "nodeid": "tests/test_fallback_executor.py::test_fallback_prompt_omits_enforcement_for_other_errors",
-      "setup_seconds": 5.8e-05,
-      "teardown_seconds": 4.8e-05,
-      "total_seconds": 0.000172
-    },
-    {
-      "call_seconds": 6.7e-05,
-      "nodeid": "tests/test_direct_semantic_progress.py::test_should_not_auto_finalize_mixed_feature_contract_write_result",
-      "setup_seconds": 5.5e-05,
-      "teardown_seconds": 4.8e-05,
-      "total_seconds": 0.000169
-    },
-    {
-      "call_seconds": 7.1e-05,
-      "nodeid": "tests/test_direct_semantic_progress.py::test_build_semantic_loop_abort_returns_soft_abort_payload",
-      "setup_seconds": 4.4e-05,
-      "teardown_seconds": 4.7e-05,
-      "total_seconds": 0.000163
-    },
-    {
-      "call_seconds": 6.4e-05,
-      "nodeid": "tests/test_direct_semantic_progress.py::test_should_not_auto_finalize_without_required_output_facts",
-      "setup_seconds": 5.9e-05,
-      "teardown_seconds": 3.9e-05,
-      "total_seconds": 0.000161
+      "call_seconds": 8.2e-05,
+      "nodeid": "tests/test_direct_tool_preflight.py::test_backtests_start_after_handle_misuse_is_blocked_even_after_plan",
+      "setup_seconds": 8.4e-05,
+      "teardown_seconds": 5.1e-05,
+      "total_seconds": 0.000217
     }
   ],
-  "session_total_seconds": 0.6246967440000049,
-  "test_count": 80,
+  "session_total_seconds": 0.5472713830022258,
+  "test_count": 17,
   "top_limit": 20,
   "top_slowest": [
     {
-      "call_seconds": 0.00836,
-      "nodeid": "tests/test_fallback_executor.py::test_all_providers_fail",
-      "setup_seconds": 5.3e-05,
-      "teardown_seconds": 6.5e-05,
-      "total_seconds": 0.008479
+      "call_seconds": 0.003393,
+      "nodeid": "tests/test_direct_tool_preflight.py::test_preflight_blocks_missing_required_field_without_spending_budget",
+      "setup_seconds": 0.000265,
+      "teardown_seconds": 8.1e-05,
+      "total_seconds": 0.003739
     },
     {
-      "call_seconds": 0.007432,
-      "nodeid": "tests/test_fallback_executor.py::test_fallback_triggers_on_stalled_watchdog_checkpoint",
-      "setup_seconds": 8e-05,
-      "teardown_seconds": 6.8e-05,
-      "total_seconds": 0.00758
+      "call_seconds": 0.002696,
+      "nodeid": "tests/test_direct_tool_preflight.py::test_preflight_blocks_wrong_type",
+      "setup_seconds": 0.000277,
+      "teardown_seconds": 7.7e-05,
+      "total_seconds": 0.00305
     },
     {
-      "call_seconds": 0.007434,
-      "nodeid": "tests/test_fallback_executor.py::test_exhausted_chain_checkpoint_preserves_actionable_qwen_failure_over_rate_limit_tail",
-      "setup_seconds": 8.8e-05,
-      "teardown_seconds": 5e-05,
-      "total_seconds": 0.007572
+      "call_seconds": 0.002732,
+      "nodeid": "tests/test_direct_tool_preflight.py::test_preflight_blocks_features_analytics_without_feature_name",
+      "setup_seconds": 0.000228,
+      "teardown_seconds": 7.1e-05,
+      "total_seconds": 0.00303
     },
     {
-      "call_seconds": 0.00731,
-      "nodeid": "tests/test_fallback_executor.py::test_fallback_2_succeeds_after_both_fail",
-      "setup_seconds": 5.5e-05,
-      "teardown_seconds": 6.5e-05,
-      "total_seconds": 0.007429
-    },
-    {
-      "call_seconds": 0.002671,
-      "nodeid": "tests/test_direct_prompt.py::test_backtests_allowed_tools_auto_add_read_only_plan_when_live",
-      "setup_seconds": 5.2e-05,
-      "teardown_seconds": 6.1e-05,
-      "total_seconds": 0.002784
-    },
-    {
-      "call_seconds": 0.001741,
-      "nodeid": "tests/test_direct_prompt.py::test_direct_prompt_includes_backtests_analysis_protocol",
-      "setup_seconds": 7.2e-05,
-      "teardown_seconds": 6.3e-05,
-      "total_seconds": 0.001876
-    },
-    {
-      "call_seconds": 0.001754,
-      "nodeid": "tests/test_direct_prompt.py::test_direct_prompt_standalone_backtests_gets_inspect_first",
-      "setup_seconds": 5.7e-05,
-      "teardown_seconds": 6.2e-05,
-      "total_seconds": 0.001874
-    },
-    {
-      "call_seconds": 0.001663,
-      "nodeid": "tests/test_direct_prompt.py::test_non_research_setup_prompt_no_metadata_instructions",
-      "setup_seconds": 8.2e-05,
-      "teardown_seconds": 6.1e-05,
-      "total_seconds": 0.001806
-    },
-    {
-      "call_seconds": 0.001644,
-      "nodeid": "tests/test_direct_prompt.py::test_direct_prompt_includes_bootstrap_hint_when_available",
-      "setup_seconds": 6e-05,
+      "call_seconds": 0.002683,
+      "nodeid": "tests/test_direct_tool_preflight.py::test_preflight_allows_valid_call",
+      "setup_seconds": 7.8e-05,
       "teardown_seconds": 6.7e-05,
-      "total_seconds": 0.001772
+      "total_seconds": 0.002828
     },
     {
-      "call_seconds": 0.001559,
-      "nodeid": "tests/test_direct_prompt.py::test_known_facts_are_compacted_without_recursive_prefix_chains",
-      "setup_seconds": 6.2e-05,
-      "teardown_seconds": 6.2e-05,
-      "total_seconds": 0.001683
-    },
-    {
-      "call_seconds": 0.001545,
-      "nodeid": "tests/test_direct_prompt.py::test_direct_prompt_prioritizes_dependency_backtests_handoff_facts_over_low_signal_telemetry",
-      "setup_seconds": 6.2e-05,
-      "teardown_seconds": 7.2e-05,
-      "total_seconds": 0.001679
-    },
-    {
-      "call_seconds": 0.001495,
-      "nodeid": "tests/test_direct_prompt.py::test_backtests_protocol_includes_layer_compare_line_when_analysis_available",
-      "setup_seconds": 9.4e-05,
-      "teardown_seconds": 6.2e-05,
-      "total_seconds": 0.001652
-    },
-    {
-      "call_seconds": 0.001545,
-      "nodeid": "tests/test_direct_prompt.py::test_prompt_no_downstream_section_when_not_missing",
-      "setup_seconds": 5.9e-05,
-      "teardown_seconds": 4.7e-05,
-      "total_seconds": 0.001651
-    },
-    {
-      "call_seconds": 0.001512,
-      "nodeid": "tests/test_direct_prompt.py::test_direct_prompt_includes_policy_locked_field_description",
-      "setup_seconds": 7.2e-05,
-      "teardown_seconds": 6e-05,
-      "total_seconds": 0.001645
-    },
-    {
-      "call_seconds": 0.001524,
-      "nodeid": "tests/test_direct_prompt.py::test_backtests_prompt_does_not_reference_unavailable_backtests_plan",
-      "setup_seconds": 6.3e-05,
-      "teardown_seconds": 5.3e-05,
-      "total_seconds": 0.00164
-    },
-    {
-      "call_seconds": 0.001521,
-      "nodeid": "tests/test_direct_prompt.py::test_direct_prompt_includes_feature_contract_protocol",
-      "setup_seconds": 6.1e-05,
-      "teardown_seconds": 5.4e-05,
-      "total_seconds": 0.001636
-    },
-    {
-      "call_seconds": 0.001511,
-      "nodeid": "tests/test_direct_prompt.py::test_backtests_analysis_protocol_includes_run_id_guidance_when_conditions_present",
-      "setup_seconds": 6e-05,
-      "teardown_seconds": 6.2e-05,
-      "total_seconds": 0.001633
-    },
-    {
-      "call_seconds": 0.001487,
-      "nodeid": "tests/test_direct_prompt.py::test_direct_prompt_includes_research_setup_protocol",
+      "call_seconds": 0.002586,
+      "nodeid": "tests/test_direct_tool_preflight.py::test_backtests_start_after_successful_plan_is_allowed",
       "setup_seconds": 5.8e-05,
-      "teardown_seconds": 6.3e-05,
-      "total_seconds": 0.001608
+      "teardown_seconds": 7.1e-05,
+      "total_seconds": 0.002715
     },
     {
-      "call_seconds": 0.001489,
-      "nodeid": "tests/test_direct_prompt.py::test_direct_prompt_includes_feature_contract_exploration_protocol",
-      "setup_seconds": 5.1e-05,
+      "call_seconds": 0.002279,
+      "nodeid": "tests/test_direct_tool_preflight.py::test_preflight_blocks_unknown_field_when_additional_properties_false",
+      "setup_seconds": 6.9e-05,
+      "teardown_seconds": 6.1e-05,
+      "total_seconds": 0.002409
+    },
+    {
+      "call_seconds": 0.002223,
+      "nodeid": "tests/test_direct_tool_preflight.py::test_preflight_blocks_wrong_enum_with_allowed_values",
+      "setup_seconds": 8.7e-05,
+      "teardown_seconds": 7.5e-05,
+      "total_seconds": 0.002385
+    },
+    {
+      "call_seconds": 0.002227,
+      "nodeid": "tests/test_direct_tool_preflight.py::test_preflight_blocks_features_custom_detail_without_name",
+      "setup_seconds": 8.8e-05,
       "teardown_seconds": 6e-05,
-      "total_seconds": 0.001599
+      "total_seconds": 0.002375
     },
     {
-      "call_seconds": 0.001458,
-      "nodeid": "tests/test_direct_prompt.py::test_backtests_analysis_protocol_omits_run_id_guidance_without_conditions",
+      "call_seconds": 0.002183,
+      "nodeid": "tests/test_direct_tool_preflight.py::test_backtests_start_requires_successful_plan_in_current_attempt",
       "setup_seconds": 6e-05,
-      "teardown_seconds": 5.9e-05,
-      "total_seconds": 0.001577
+      "teardown_seconds": 6.8e-05,
+      "total_seconds": 0.002311
+    },
+    {
+      "call_seconds": 0.00219,
+      "nodeid": "tests/test_direct_tool_preflight.py::test_preflight_allows_valid_backtests_run_id_observe_call",
+      "setup_seconds": 5.5e-05,
+      "teardown_seconds": 6.3e-05,
+      "total_seconds": 0.002308
+    },
+    {
+      "call_seconds": 0.001475,
+      "nodeid": "tests/test_direct_tool_preflight.py::test_preflight_blocks_unknown_tool_against_live_catalog",
+      "setup_seconds": 0.000245,
+      "teardown_seconds": 7.1e-05,
+      "total_seconds": 0.001791
+    },
+    {
+      "call_seconds": 0.001417,
+      "nodeid": "tests/test_direct_tool_preflight.py::test_preflight_blocks_numeric_backtests_run_id_before_schema_validation",
+      "setup_seconds": 8e-05,
+      "teardown_seconds": 6.2e-05,
+      "total_seconds": 0.001558
+    },
+    {
+      "call_seconds": 0.00141,
+      "nodeid": "tests/test_direct_tool_preflight.py::test_preflight_blocks_suspicious_backtests_run_id_without_spending_budget",
+      "setup_seconds": 8.1e-05,
+      "teardown_seconds": 5.4e-05,
+      "total_seconds": 0.001545
+    },
+    {
+      "call_seconds": 0.001383,
+      "nodeid": "tests/test_direct_tool_preflight.py::test_preflight_blocks_cross_kind_backtests_run_id_without_spending_budget",
+      "setup_seconds": 6.7e-05,
+      "teardown_seconds": 5.4e-05,
+      "total_seconds": 0.001504
+    },
+    {
+      "call_seconds": 9.8e-05,
+      "nodeid": "tests/test_direct_tool_preflight.py::test_duplicate_baseline_start_is_blocked_from_saved_run_list",
+      "setup_seconds": 9.3e-05,
+      "teardown_seconds": 9.7e-05,
+      "total_seconds": 0.000288
+    },
+    {
+      "call_seconds": 0.000141,
+      "nodeid": "tests/test_direct_tool_preflight.py::test_normalize_plan_budgets_scales_by_six_for_direct_runtime",
+      "setup_seconds": 6e-05,
+      "teardown_seconds": 5.3e-05,
+      "total_seconds": 0.000254
+    },
+    {
+      "call_seconds": 8.2e-05,
+      "nodeid": "tests/test_direct_tool_preflight.py::test_backtests_start_after_handle_misuse_is_blocked_even_after_plan",
+      "setup_seconds": 8.4e-05,
+      "teardown_seconds": 5.1e-05,
+      "total_seconds": 0.000217
     }
   ]
 }

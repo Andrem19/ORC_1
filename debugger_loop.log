@@ -1,0 +1,24 @@
+loop_1: slice=unknown | recoverable_blocked | verdict=3 orchestrator fix, Claude repaired
+loop_1: slice=compiled_plan_v1_stage_6 | fallback | verdict=UNKNOWN, restarting without whitelist
+loop_2: slice=compiled_plan_v2_stage_2 | fallback | verdict=3 orchestrator fix, Claude repaired
+loop_3: slice=compiled_plan_v1_stage_9 | fallback | verdict=3 orchestrator fix, Claude repaired
+loop_4: slice=compiled_plan_v1_stage_5 | fallback | verdict=UNKNOWN, restarting without whitelist
+loop_5: slice=compiled_plan_v1_stage_9 | fallback | verdict=UNKNOWN, restarting without whitelist
+loop_6: slice=compiled_plan_v1_stage_7 | fallback | verdict=3 orchestrator fix, Claude repaired
+loop_1: slice=compiled_plan_v2_stage_1 | fallback | verdict=UNKNOWN, restarting without whitelist
+loop_1: slice=compiled_plan_v2_stage_5 | fallback | verdict=3 orchestrator fix, Claude repaired
+loop_2: slice=compiled_plan_v2_stage_8 | fallback | verdict=3 orchestrator fix, Claude repaired
+loop_3: slice=compiled_plan_v2_stage_5 | fallback | verdict=3 orchestrator fix, Claude repaired
+loop_4: slice=compiled_plan_v2_stage_5 | fallback | verdict=3 orchestrator fix, Claude repaired
+loop_5: slice=compiled_plan_v2_stage_3 | fallback | verdict=3 orchestrator fix, Claude repaired
+loop_6: slice=compiled_plan_v2_stage_5 | fallback | verdict=3 orchestrator fix, Claude repaired
+loop_7: slice=compiled_plan_v2_stage_8 | fallback | verdict=3 orchestrator fix, Claude repaired
+loop_8: slice=compiled_plan_v2_stage_5 | fallback | verdict=3 orchestrator fix, Claude repaired
+loop_1: plan_v2 fully completed — bumped start_from v2 → v3
+loop_1: plan_v2 fully completed — bumped start_from v2 → v3
+loop_9: slice=compiled_plan_v2_stage_5 | fallback | verdict=3 orchestrator fix, Claude repaired
+loop_10: slice=compiled_plan_v2_stage_8 | fallback | verdict=3 orchestrator fix, Claude repaired
+loop_11: slice=compiled_plan_v2_stage_7 | fallback | verdict=3 orchestrator fix, Claude repaired
+loop_12: slice=compiled_plan_v2_stage_2 | fallback | verdict=3 orchestrator fix, Claude repaired
+loop_13: slice=compiled_plan_v2_stage_5 | fallback | verdict=3 orchestrator fix, Claude repaired
+loop_14: slice=compiled_plan_v2_stage_7 | fallback | verdict=3 orchestrator fix, Claude repaired

@@ -7,7 +7,9 @@ import json
 from app.execution_models import WorkerAction
 from app.services.direct_execution.acceptance.subjects import (
     _extract_cf_names_from_payload,
+    _is_plausible_node_id,
     feature_names_from_action_and_transcript,
+    node_ids_from_action_and_transcript,
     run_ids_from_action_and_transcript,
 )
 
@@ -264,10 +266,9 @@ def test_run_ids_extracts_from_arguments() -> None:
     assert result == ["20260416-021356-efed0832"]
 
 
-def test_run_ids_does_not_extract_from_response_payloads() -> None:
-    """Response payloads (e.g., list views with 100 saved runs) must NOT
-    inject historical run_ids into the acceptance verification set.
-    Only facts and arguments should be sources."""
+def test_run_ids_does_not_pollute_when_facts_present() -> None:
+    """When run_ids are available in facts, response payloads must NOT inject
+    additional historical run_ids into the acceptance verification set."""
     action = WorkerAction(
         action_id="a1",
         action_type="final_report",
@@ -328,3 +329,287 @@ def test_run_ids_extracts_from_string_values_in_facts() -> None:
     )
     result = run_ids_from_action_and_transcript(action, [])
     assert "20260416-021356-abc12345" in result
+
+
+def test_run_ids_fallback_to_payload_when_facts_empty() -> None:
+    """When no run_ids in facts or arguments, extract a limited number from
+    tool response payloads.  This helps weaker models (e.g. minimax) that
+    successfully call backtests_runs(view=list) but do not echo run_ids in
+    their output facts."""
+    action = WorkerAction(
+        action_id="a1",
+        action_type="final_report",
+        summary="done",
+        facts={},
+    )
+    runs_text = json.dumps({
+        "status": "ok",
+        "data": {
+            "saved_runs": [
+                {"run_id": "20260416-021356-efed0832", "status": "completed"},
+                {"run_id": "20260416-021400-aabbccdd", "status": "completed"},
+                {"run_id": "20260416-021500-11223344", "status": "completed"},
+                {"run_id": "20260416-021600-55667788", "status": "completed"},
+            ],
+            "active_runs": [],
+        },
+    })
+    transcript = [
+        {
+            "kind": "tool_result",
+            "tool": "backtests_runs",
+            "arguments": {"action": "inspect", "view": "list"},
+            "payload": {
+                "ok": True,
+                "payload": {
+                    "content": [{"type": "text", "text": runs_text}],
+                },
+            },
+        },
+    ]
+    result = run_ids_from_action_and_transcript(action, transcript)
+    # Should extract up to 3 run_ids from the payload as fallback
+    assert len(result) <= 3
+    assert len(result) >= 1
+    # All extracted IDs must match the expected format
+    for rid in result:
+        assert rid.startswith("2026")
+
+
+def test_run_ids_fallback_capped_at_max() -> None:
+    """Payload fallback must not extract more than 3 run_ids total."""
+    action = WorkerAction(
+        action_id="a1",
+        action_type="final_report",
+        summary="done",
+        facts={},
+    )
+    runs_text = json.dumps({
+        "status": "ok",
+        "data": {
+            "saved_runs": [
+                {"run_id": f"20260401-120000-{i:08x}", "status": "completed"}
+                for i in range(100)
+            ],
+            "active_runs": [],
+        },
+    })
+    transcript = [
+        {
+            "kind": "tool_result",
+            "tool": "backtests_runs",
+            "arguments": {"action": "inspect", "view": "list"},
+            "payload": {
+                "ok": True,
+                "payload": {
+                    "content": [{"type": "text", "text": runs_text}],
+                },
+            },
+        },
+    ]
+    result = run_ids_from_action_and_transcript(action, transcript)
+    assert len(result) <= 3
+    assert len(result) >= 1
+
+
+def test_run_ids_fallback_not_used_when_facts_present() -> None:
+    """Payload extraction is a fallback only; facts/arguments take priority."""
+    action = WorkerAction(
+        action_id="a1",
+        action_type="final_report",
+        summary="done",
+        facts={"run_id": "20260416-021356-efed0832"},
+    )
+    runs_text = json.dumps({
+        "status": "ok",
+        "data": {
+            "saved_runs": [
+                {"run_id": "20260415-120000-oldrun01", "status": "completed"},
+            ],
+            "active_runs": [],
+        },
+    })
+    transcript = [
+        {
+            "kind": "tool_result",
+            "tool": "backtests_runs",
+            "arguments": {"action": "inspect", "view": "list"},
+            "payload": {
+                "ok": True,
+                "payload": {
+                    "content": [{"type": "text", "text": runs_text}],
+                },
+            },
+        },
+    ]
+    result = run_ids_from_action_and_transcript(action, transcript)
+    # Should ONLY have the run_id from facts, not the one from payload
+    assert result == ["20260416-021356-efed0832"]
+
+
+def test_run_ids_fallback_from_direct_payload_run_id() -> None:
+    """Payload fallback also works for direct payload with run_id key."""
+    action = WorkerAction(
+        action_id="a1",
+        action_type="final_report",
+        summary="done",
+        facts={},
+    )
+    transcript = [
+        {
+            "kind": "tool_result",
+            "tool": "backtests_runs",
+            "arguments": {"action": "inspect", "view": "detail"},
+            "payload": {"run_id": "20260416-183638-1c9ca540"},
+        },
+    ]
+    result = run_ids_from_action_and_transcript(action, transcript)
+    assert "20260416-183638-1c9ca540" in result
+
+
+# ---------- node_ids_from_action_and_transcript: node_types false positive ----------
+
+
+def test_node_types_not_extracted_as_node_id() -> None:
+    """Regression: 'node_types' from research_memory search arguments or
+    assistant reasoning payloads must NOT appear in extracted node IDs.
+
+    Root cause of slice compiled_plan_v1_stage_2 fallback failure:
+    the regex ``\\b(?:node|note|incident)_[A-Za-z0-9_-]+\\b`` matched
+    ``node_types`` from the stringified transcript payload.  The MCP
+    prove endpoint then failed for ``node_id="node_types"`` because no
+    such node exists, causing ``research_node_proof_pass`` to report
+    FAIL and triggering an unnecessary fallback.
+    """
+    action = WorkerAction(
+        action_id="a1",
+        action_type="final_report",
+        summary="done",
+        facts={
+            "research.memory_node_id": "node-c89611cb87e243afbd507831afb06f39",
+            "research.hypothesis_refs": ["node-c89611cb87e243afbd507831afb06f39"],
+            "project_id": "cycle-invariants-v1-31651827",
+        },
+        evidence_refs=["node-c89611cb87e243afbd507831afb06f39"],
+    )
+    # Simulate a realistic transcript with node_types in search arguments
+    # and assistant reasoning.
+    transcript = [
+        {
+            "kind": "tool_result",
+            "tool": "research_memory",
+            "arguments": {
+                "action": "search",
+                "node_types": ["note", "hypothesis", "result"],
+                "project_id": "cycle-invariants-v1-31651827",
+            },
+            "payload": {
+                "ok": True,
+                "payload": {
+                    "content": [{"type": "text", "text": '{"status":"ok","data":{}}'}],
+                },
+            },
+        },
+        {
+            "kind": "assistant_response",
+            "payload": {
+                "choices": [
+                    {
+                        "message": {
+                            "content": "I will search with node_types to find relevant nodes.",
+                        },
+                    },
+                ],
+            },
+        },
+    ]
+    ids = node_ids_from_action_and_transcript(action, transcript)
+    assert "node_types" not in ids, f"node_types should not be in extracted IDs: {ids}"
+    assert "node-c89611cb87e243afbd507831afb06f39" in ids
+
+
+def test_node_types_in_created_ids_transcript_payload() -> None:
+    """Even when node_types appears inside a deeply nested MCP response
+    payload (from research_memory create), it must not be treated as a
+    node ID."""
+    action = WorkerAction(
+        action_id="a1",
+        action_type="final_report",
+        summary="done",
+        facts={
+            "research.memory_node_id": "node-abc123",
+        },
+    )
+    # MCP response with node_types in the response data
+    response_data = json.dumps({
+        "status": "ok",
+        "data": {
+            "action": "create",
+            "node_id": "node-abc123",
+            "node_types": ["milestone"],
+            "record": {"node_type": "milestone"},
+        },
+    })
+    transcript = [
+        {
+            "kind": "tool_result",
+            "tool": "research_memory",
+            "arguments": {"action": "create", "node_id": "node-abc123"},
+            "payload": {
+                "ok": True,
+                "payload": {
+                    "content": [{"type": "text", "text": response_data}],
+                },
+            },
+        },
+    ]
+    ids = node_ids_from_action_and_transcript(action, transcript)
+    assert "node_types" not in ids
+    assert "node-abc123" in ids
+
+
+# ---------- _is_plausible_node_id ----------
+
+
+def test_plausible_node_id_accepts_dash_format() -> None:
+    assert _is_plausible_node_id("node-c89611cb87e243afbd507831afb06f39") is True
+
+
+def test_plausible_node_id_rejects_node_types() -> None:
+    assert _is_plausible_node_id("node_types") is False
+
+
+def test_plausible_node_id_rejects_node_id() -> None:
+    assert _is_plausible_node_id("node_id") is False
+
+
+def test_plausible_node_id_accepts_short_underscore_format() -> None:
+    """Short underscore-format IDs from structured extraction are accepted."""
+    assert _is_plausible_node_id("node_abc123") is True
+    assert _is_plausible_node_id("node_correct") is True
+
+
+def test_plausible_node_id_rejects_note_types() -> None:
+    assert _is_plausible_node_id("note_types") is False
+    assert _is_plausible_node_id("note_type") is False
+
+
+def test_plausible_node_id_rejects_incident_variants() -> None:
+    assert _is_plausible_node_id("incident_types") is False
+    assert _is_plausible_node_id("incident_severity") is False
+
+
+def test_plausible_node_id_rejects_node_created() -> None:
+    """Regression: minimax models report facts with key 'node_created' which
+    matches the node ID regex but is a dict key, not a real node ID.
+    The MCP prove endpoint fails for node_id='node_created' causing
+    research_node_proof_pass to report FAIL."""
+    assert _is_plausible_node_id("node_created") is False
+    assert _is_plausible_node_id("node_updated") is False
+    assert _is_plausible_node_id("node_deleted") is False
+
+
+def test_plausible_node_id_rejects_empty_and_non_prefixed() -> None:
+    assert _is_plausible_node_id("") is False
+    assert _is_plausible_node_id("project-abc") is False
+    assert _is_plausible_node_id("branch-xyz") is False

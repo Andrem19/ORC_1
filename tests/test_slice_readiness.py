@@ -6,6 +6,7 @@ from app.services.direct_execution.slice_readiness import (
     downstream_prerequisites_blocker,
     required_output_facts_for_slice,
     required_prerequisite_facts_for_slice,
+    upstream_artifact_gate_blocker,
 )
 
 
@@ -578,3 +579,348 @@ def test_downstream_blocker_uses_resolve_dependency_for_cross_batch() -> None:
         hydrated_facts={},
     )
     assert blocker is None
+
+
+# --- upstream_artifact_gate_blocker tests ---
+
+
+def _stability_slice(
+    *,
+    slice_id: str = "stage_6",
+    depends_on: list[str] | None = None,
+    acceptance_predicates: list[str] | None = None,
+) -> PlanSlice:
+    """Build a slice that mimics compiled_plan_v1_stage_6."""
+    return PlanSlice(
+        slice_id=slice_id,
+        title="Stability and condition analysis",
+        hypothesis="h",
+        objective="o",
+        success_criteria=[],
+        allowed_tools=["backtests_conditions", "backtests_analysis", "backtests_runs", "research_memory"],
+        evidence_requirements=[],
+        policy_tags=["stability", "expensive"],
+        max_turns=48,
+        max_tool_calls=36,
+        max_expensive_calls=12,
+        parallel_slot=1,
+        runtime_profile="backtests_stability_analysis",
+        depends_on=depends_on or ["stage_5"],
+        acceptance_contract={
+            "kind": "condition_stability_analysis",
+            "mode": "strict",
+            "required_predicates": acceptance_predicates or ["run_set_non_empty", "each_run_proof_pass"],
+        },
+    )
+
+
+def _upstream_with_zero_runs(
+    *,
+    slice_id: str = "stage_5",
+    backtest_runs_found: int = 0,
+    strategy_snapshots_found: int = 0,
+    reason: str = "no_candidate_snapshots",
+) -> PlanSlice:
+    """Build an upstream slice that completed with zero backtest artifacts."""
+    return PlanSlice(
+        slice_id=slice_id,
+        title="Standalone backtests",
+        hypothesis="h",
+        objective="o",
+        success_criteria=[],
+        allowed_tools=["backtests_runs", "backtests_strategy", "research_memory"],
+        evidence_requirements=[],
+        policy_tags=[],
+        max_turns=48,
+        max_tool_calls=36,
+        max_expensive_calls=12,
+        parallel_slot=1,
+        status="completed",
+        facts={
+            "backtest_runs_found": backtest_runs_found,
+            "strategy_snapshots_found": strategy_snapshots_found,
+            "reason": reason,
+        },
+    )
+
+
+def test_upstream_artifact_gate_blocks_when_dependency_has_zero_runs() -> None:
+    upstream = _upstream_with_zero_runs()
+    downstream = _stability_slice()
+    blocker = upstream_artifact_gate_blocker(_plan(upstream, downstream), downstream)
+    assert blocker is not None
+    assert blocker.reason_code == "upstream_zero_artifacts_gate"
+    assert "stage_5" in blocker.blocking_slice_ids
+
+
+def test_upstream_artifact_gate_blocks_when_dependency_has_zero_snapshots() -> None:
+    upstream = PlanSlice(
+        slice_id="stage_5",
+        title="Standalone backtests",
+        hypothesis="h",
+        objective="o",
+        success_criteria=[],
+        allowed_tools=["backtests_runs"],
+        evidence_requirements=[],
+        policy_tags=[],
+        max_turns=1,
+        max_tool_calls=1,
+        max_expensive_calls=0,
+        parallel_slot=1,
+        status="completed",
+        facts={
+            "backtest_runs_found": 3,
+            "strategy_snapshots_found": 0,
+        },
+    )
+    downstream = _stability_slice()
+    blocker = upstream_artifact_gate_blocker(_plan(upstream, downstream), downstream)
+    assert blocker is not None
+    assert blocker.reason_code == "upstream_zero_artifacts_gate"
+
+
+def test_upstream_artifact_gate_allows_when_dependency_has_runs() -> None:
+    upstream = PlanSlice(
+        slice_id="stage_5",
+        title="Standalone backtests",
+        hypothesis="h",
+        objective="o",
+        success_criteria=[],
+        allowed_tools=["backtests_runs"],
+        evidence_requirements=[],
+        policy_tags=[],
+        max_turns=1,
+        max_tool_calls=1,
+        max_expensive_calls=0,
+        parallel_slot=1,
+        status="completed",
+        facts={
+            "backtest_runs_found": 2,
+            "strategy_snapshots_found": 1,
+        },
+    )
+    downstream = _stability_slice()
+    blocker = upstream_artifact_gate_blocker(_plan(upstream, downstream), downstream)
+    assert blocker is None
+
+
+def test_upstream_artifact_gate_allows_when_no_run_set_non_empty_predicate() -> None:
+    upstream = _upstream_with_zero_runs()
+    downstream = PlanSlice(
+        slice_id="stage_6",
+        title="Summary",
+        hypothesis="h",
+        objective="o",
+        success_criteria=[],
+        allowed_tools=["research_memory"],
+        evidence_requirements=[],
+        policy_tags=[],
+        max_turns=1,
+        max_tool_calls=1,
+        max_expensive_calls=0,
+        parallel_slot=1,
+        depends_on=["stage_5"],
+        acceptance_contract={
+            "kind": "generic",
+            "required_predicates": [],
+        },
+    )
+    blocker = upstream_artifact_gate_blocker(_plan(upstream, downstream), downstream)
+    assert blocker is None
+
+
+def test_upstream_artifact_gate_allows_when_no_acceptance_contract() -> None:
+    upstream = _upstream_with_zero_runs()
+    downstream = PlanSlice(
+        slice_id="stage_6",
+        title="Summary",
+        hypothesis="h",
+        objective="o",
+        success_criteria=[],
+        allowed_tools=["research_memory"],
+        evidence_requirements=[],
+        policy_tags=[],
+        max_turns=1,
+        max_tool_calls=1,
+        max_expensive_calls=0,
+        parallel_slot=1,
+        depends_on=["stage_5"],
+    )
+    blocker = upstream_artifact_gate_blocker(_plan(upstream, downstream), downstream)
+    assert blocker is None
+
+
+def test_upstream_artifact_gate_allows_when_dependency_not_completed() -> None:
+    upstream = PlanSlice(
+        slice_id="stage_5",
+        title="Standalone backtests",
+        hypothesis="h",
+        objective="o",
+        success_criteria=[],
+        allowed_tools=["backtests_runs"],
+        evidence_requirements=[],
+        policy_tags=[],
+        max_turns=1,
+        max_tool_calls=1,
+        max_expensive_calls=0,
+        parallel_slot=1,
+        status="running",
+        facts={
+            "backtest_runs_found": 0,
+            "strategy_snapshots_found": 0,
+        },
+    )
+    downstream = _stability_slice()
+    blocker = upstream_artifact_gate_blocker(_plan(upstream, downstream), downstream)
+    assert blocker is None
+
+
+def test_upstream_artifact_gate_allows_when_no_dependencies() -> None:
+    downstream = _stability_slice(depends_on=[])
+    blocker = upstream_artifact_gate_blocker(_plan(downstream), downstream)
+    assert blocker is None
+
+
+def test_upstream_artifact_gate_uses_cross_plan_resolver() -> None:
+    upstream = _upstream_with_zero_runs(slice_id="prev_stage_5")
+    downstream = _stability_slice(depends_on=["prev_stage_5"])
+    blocker = upstream_artifact_gate_blocker(
+        _plan(downstream),
+        downstream,
+        resolve_dependency=lambda dep_id: upstream if dep_id == "prev_stage_5" else None,
+    )
+    assert blocker is not None
+    assert "prev_stage_5" in blocker.blocking_slice_ids
+
+
+def test_upstream_artifact_gate_blocks_on_reason_no_candidate_snapshots() -> None:
+    upstream = PlanSlice(
+        slice_id="stage_5",
+        title="Standalone backtests",
+        hypothesis="h",
+        objective="o",
+        success_criteria=[],
+        allowed_tools=["backtests_runs"],
+        evidence_requirements=[],
+        policy_tags=[],
+        max_turns=1,
+        max_tool_calls=1,
+        max_expensive_calls=0,
+        parallel_slot=1,
+        status="completed",
+        facts={
+            "reason": "no_candidate_snapshots",
+        },
+    )
+    downstream = _stability_slice()
+    blocker = upstream_artifact_gate_blocker(_plan(upstream, downstream), downstream)
+    assert blocker is not None
+    assert blocker.reason_code == "upstream_zero_artifacts_gate"
+
+
+def test_upstream_artifact_gate_blocks_on_standalone_candidates_count_zero() -> None:
+    """Worker reports standalone_candidates_count=0 (minimax-style facts)."""
+    upstream = PlanSlice(
+        slice_id="stage_5",
+        title="Standalone backtests",
+        hypothesis="h",
+        objective="o",
+        success_criteria=[],
+        allowed_tools=["backtests_runs"],
+        evidence_requirements=[],
+        policy_tags=[],
+        max_turns=1,
+        max_tool_calls=1,
+        max_expensive_calls=0,
+        parallel_slot=1,
+        status="completed",
+        facts={
+            "standalone_candidates_count": 0,
+            "shortlist_status": "empty",
+            "snapshot_id": "active-signal-v1",
+        },
+    )
+    downstream = _stability_slice()
+    blocker = upstream_artifact_gate_blocker(_plan(upstream, downstream), downstream)
+    assert blocker is not None
+    assert blocker.reason_code == "upstream_zero_artifacts_gate"
+    assert "stage_5" in blocker.blocking_slice_ids
+
+
+def test_upstream_artifact_gate_blocks_on_shortlist_status_empty() -> None:
+    """Worker reports shortlist_status=empty without explicit run count."""
+    upstream = PlanSlice(
+        slice_id="stage_5",
+        title="Standalone backtests",
+        hypothesis="h",
+        objective="o",
+        success_criteria=[],
+        allowed_tools=["backtests_runs"],
+        evidence_requirements=[],
+        policy_tags=[],
+        max_turns=1,
+        max_tool_calls=1,
+        max_expensive_calls=0,
+        parallel_slot=1,
+        status="completed",
+        facts={
+            "shortlist_status": "empty",
+        },
+    )
+    downstream = _stability_slice()
+    blocker = upstream_artifact_gate_blocker(_plan(upstream, downstream), downstream)
+    assert blocker is not None
+    assert blocker.reason_code == "upstream_zero_artifacts_gate"
+
+
+def test_upstream_artifact_gate_allows_when_candidates_exist() -> None:
+    """Worker reports standalone_candidates_count > 0 — should NOT block."""
+    upstream = PlanSlice(
+        slice_id="stage_5",
+        title="Standalone backtests",
+        hypothesis="h",
+        objective="o",
+        success_criteria=[],
+        allowed_tools=["backtests_runs"],
+        evidence_requirements=[],
+        policy_tags=[],
+        max_turns=1,
+        max_tool_calls=1,
+        max_expensive_calls=0,
+        parallel_slot=1,
+        status="completed",
+        facts={
+            "standalone_candidates_count": 3,
+            "shortlist_status": "populated",
+            "backtest_runs_found": 2,
+        },
+    )
+    downstream = _stability_slice()
+    blocker = upstream_artifact_gate_blocker(_plan(upstream, downstream), downstream)
+    assert blocker is None
+
+
+def test_upstream_artifact_gate_blocks_on_empty_candidate_handles() -> None:
+    """Normalized backtests.candidate_handles is empty dict."""
+    upstream = PlanSlice(
+        slice_id="stage_5",
+        title="Standalone backtests",
+        hypothesis="h",
+        objective="o",
+        success_criteria=[],
+        allowed_tools=["backtests_runs"],
+        evidence_requirements=[],
+        policy_tags=[],
+        max_turns=1,
+        max_tool_calls=1,
+        max_expensive_calls=0,
+        parallel_slot=1,
+        status="completed",
+        facts={
+            "backtests.candidate_handles": {},
+        },
+    )
+    downstream = _stability_slice()
+    blocker = upstream_artifact_gate_blocker(_plan(upstream, downstream), downstream)
+    assert blocker is not None
+    assert blocker.reason_code == "upstream_zero_artifacts_gate"

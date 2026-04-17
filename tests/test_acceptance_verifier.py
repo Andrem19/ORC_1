@@ -97,6 +97,53 @@ def test_accepted_ready_requires_passed_acceptance_proof() -> None:
     assert dependency_unblocked_by(sl) is True
 
 
+def test_passed_proof_overrides_watchlist_verdict_under_strict_mode() -> None:
+    # Regression: a strict-acceptance slice whose agent emitted WATCHLIST but
+    # whose acceptance proof PASSED must still unblock downstream dependents.
+    # Previously the state machine returned "reported_terminal" for WATCHLIST
+    # even when the formal proof passed, blocking the entire downstream batch.
+    sl = _slice(
+        status="completed",
+        verdict="WATCHLIST",
+        dependency_unblock_mode="accepted_only",
+        watchlist_allows_unblock=False,
+    )
+    sl.acceptance_proof = {"status": "pass", "blocking_reasons": []}
+
+    state = accepted_completion_state(slice_obj=sl, verdict="WATCHLIST")
+    sl.acceptance_state = state
+
+    assert state == "accepted_ready"
+    assert dependency_unblocked_by(sl) is True
+
+
+def test_failed_proof_keeps_reported_terminal_even_with_complete_verdict() -> None:
+    sl = _slice(status="completed", verdict="COMPLETE")
+    sl.acceptance_proof = {"status": "fail", "blocking_reasons": ["missing_evidence"]}
+
+    state = accepted_completion_state(slice_obj=sl, verdict="COMPLETE")
+
+    assert state == "reported_terminal"
+    sl.acceptance_state = state
+    assert dependency_unblocked_by(sl) is False
+
+
+def test_passed_proof_yields_advisory_only_done_under_advisory_mode() -> None:
+    sl = _slice(
+        status="completed",
+        verdict="WATCHLIST",
+        dependency_unblock_mode="advisory_only",
+        watchlist_allows_unblock=False,
+    )
+    sl.acceptance_proof = {"status": "pass"}
+
+    state = accepted_completion_state(slice_obj=sl, verdict="WATCHLIST")
+
+    assert state == "advisory_only_done"
+    sl.acceptance_state = state
+    assert dependency_unblocked_by(sl) is True
+
+
 def test_standalone_backtests_accepts_only_mcp_proof_pass() -> None:
     client = _FakeProofClient(
         {

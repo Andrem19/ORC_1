@@ -22,6 +22,11 @@ from app.services.direct_execution.acceptance import (
 from app.services.direct_execution.executor import DirectExecutionResult, DirectSliceExecutor
 from app.services.direct_execution.fallback_failures import build_actionable_failure_checkpoint, is_provider_rate_limit
 from app.services.direct_execution.fact_hydration import hydrate_final_report_facts
+from app.services.direct_execution.abort_validation import (
+    abort_claims_empty_results,
+    build_transcript_correction_prompt,
+    transcript_has_successful_tool_data,
+)
 from app.services.direct_execution.guardrails import (
     REPAIRABLE_PROVIDER_NAMES,
     attempt_verdict_repair,
@@ -42,6 +47,22 @@ _REPAIR_SKIP_INFRA_SIGNALS = frozenset({
 })
 _REPAIR_ALLOWED_NEW_TOOL_CALL_PROVIDERS = frozenset({
     "glm_cli",
+})
+_SOFT_ABORT_REASON_CODES = frozenset({
+    "dependency_blocked",
+    "infra_contract_blocker",
+    "tool_selection_ambiguous",
+    "branch_project_contract_blocker",
+    "direct_contract_blocker",
+    "direct_output_parse_failed",
+    "direct_semantic_loop_detected",
+    "direct_slice_missing_prerequisite_facts",
+    "direct_model_stalled_before_first_action",
+    "direct_model_stalled_between_actions",
+    "direct_error_loop_detected",
+    "feature_data_unavailable",
+    "no_features_available",
+    "infrastructure_data_unavailable",
 })
 
 
@@ -129,6 +150,9 @@ class FallbackExecutor:
         action = result.action
         if action is None:
             return False
+        if action.action_type == "abort":
+            reason_code = str(action.reason_code or "").strip().lower()
+            return bool(action.retryable) or reason_code in _SOFT_ABORT_REASON_CODES
         if action.action_type == "final_report":
             passes, reason = final_report_passes_quality_gate(
                 tool_call_count=result.tool_call_count,
@@ -149,9 +173,8 @@ class FallbackExecutor:
                     len(action.evidence_refs or []),
                 )
                 return False
-            if verdict_is_accepted(slice_obj, action.verdict):
-                if self.acceptance_verifier is None:
-                    return True
+            verdict_ok = verdict_is_accepted(slice_obj, action.verdict)
+            if self.acceptance_verifier is not None:
                 acceptance = await self.acceptance_verifier.verify(
                     plan=None,  # verifier does not depend on plan internals
                     slice_obj=slice_obj,
@@ -162,13 +185,23 @@ class FallbackExecutor:
                 )
                 result.acceptance_result.update(acceptance.to_dict())
                 if acceptance.passed:
+                    if not verdict_ok:
+                        logger.info(
+                            "final_report acceptance proof PASSED for slice %s — "
+                            "overriding non-accepted verdict %s",
+                            slice_obj.slice_id,
+                            action.verdict,
+                        )
                     return True
-                logger.warning(
-                    "final_report acceptance verifier FAILED for slice %s: %s",
-                    slice_obj.slice_id,
-                    ",".join(acceptance.blocking_reasons[:5]) or acceptance.status,
-                )
-                return False
+                if verdict_ok:
+                    logger.warning(
+                        "final_report acceptance verifier FAILED for slice %s: %s",
+                        slice_obj.slice_id,
+                        ",".join(acceptance.blocking_reasons[:5]) or acceptance.status,
+                    )
+                    return False
+            elif verdict_ok:
+                return True
             logger.warning(
                 "final_report acceptance gate FAILED for slice %s: %s "
                 "(verdict=%s confidence=%.2f tool_calls=%d evidence_refs=%d)",
@@ -390,6 +423,21 @@ class FallbackExecutor:
                     "```",
                 ]
             )
+        # Transcript-validated correction: when the model aborted claiming
+        # empty results but the transcript shows successful tool data, inject
+        # a strong correction so the retry model does not repeat the same
+        # hallucination.
+        action = result.action
+        transcript = list(result.transcript or [])
+        if action is not None and transcript:
+            reason_code = str(getattr(action, "reason_code", "") or "")
+            summary = str(getattr(action, "summary", "") or "")
+            if abort_claims_empty_results(reason_code, summary, raw_output):
+                if transcript_has_successful_tool_data(transcript):
+                    correction = build_transcript_correction_prompt(transcript)
+                    if correction.strip():
+                        lines.append("")
+                        lines.append(correction)
         return "\n".join(lines)
 
     def _record_qwen_namespace_incident(
@@ -1011,7 +1059,10 @@ class FallbackExecutor:
         failure_reason = normalize_incomplete_reason(prior_result)
         is_missing_facts = "missing_required_facts" in failure_reason.lower()
         strict_acceptance_required = (
-            "evidence_complete_but_verdict_not_accepted" in failure_reason.lower()
+            (
+                "evidence_complete_but_verdict_not_accepted" in failure_reason.lower()
+                or "auto_salvage_stub_rejected" in failure_reason.lower()
+            )
             and slice_requires_strict_acceptance(slice_obj)
         )
         is_research_setup = _RESEARCH_SETUP_TOOLS.issubset(set(allowed_tools))
@@ -1059,18 +1110,48 @@ class FallbackExecutor:
             attempt_label=attempt_label,
             adapter_invoke_kwargs=adapter_invoke_kwargs,
         )
+        repaired_action = repaired.action
+        repaired_tool_call_count = int(repaired.tool_call_count or 0)
+        repaired_expensive_count = int(repaired.expensive_tool_call_count or 0)
+        repaired_transcript = list(repaired.transcript or [])
+
+        # Repair prompts often forbid new tool calls and only request a fixed
+        # terminal JSON from already collected evidence. Preserve prior proven
+        # tool telemetry so quality-gate checks evaluate real work instead of
+        # failing with zero_tool_calls on a rewrite-only repair response.
+        if (
+            repaired_action is not None
+            and repaired_action.action_type == "final_report"
+            and repaired_tool_call_count <= 0
+            and int(prior_result.tool_call_count or 0) > 0
+        ):
+            repaired_tool_call_count = int(prior_result.tool_call_count or 0)
+            if repaired_expensive_count <= 0:
+                repaired_expensive_count = int(prior_result.expensive_tool_call_count or 0)
+            if not repaired_transcript and prior_result.transcript:
+                repaired_transcript = list(prior_result.transcript or [])
+            prior_action = prior_result.action
+            if (
+                not list(repaired_action.evidence_refs or [])
+                and prior_action is not None
+                and list(prior_action.evidence_refs or [])
+            ):
+                repaired_action.evidence_refs = list(prior_action.evidence_refs or [])
+            repaired_action.facts.setdefault("direct.repair_reused_prior_tool_trace", True)
+            repaired_action.facts.setdefault("direct.repair_reused_prior_tool_count", repaired_tool_call_count)
+
         return DirectExecutionResult(
-            action=repaired.action,
+            action=repaired_action,
             artifact_path=repaired.artifact_path,
             raw_output=repaired.raw_output,
             error=normalize_incomplete_reason(repaired),
             provider=provider_name,
             duration_ms=repaired.duration_ms,
-            tool_call_count=repaired.tool_call_count,
-            expensive_tool_call_count=repaired.expensive_tool_call_count,
+            tool_call_count=repaired_tool_call_count,
+            expensive_tool_call_count=repaired_expensive_count,
             parse_retry_count=repaired.parse_retry_count + 1,
             fallback_provider_index=repaired.fallback_provider_index or prior_result.fallback_provider_index,
-            transcript=list(repaired.transcript or []),
+            transcript=repaired_transcript,
             acceptance_result=dict(repaired.acceptance_result or {}),
         )
 
