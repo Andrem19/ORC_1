@@ -1,0 +1,63 @@
+goal = "Coordinate planner and worker agents for a local research workflow."
+
+start_from = "v1"
+plan_source = "planner"
+raw_plan_dir = "raw_plans"
+compiled_plan_dir = "compiled_plans"
+compiled_queue_skip_failures = true
+infra_failure_never_skip_batches = true
+max_consecutive_failed_plans = 3
+converter_use_llm = false
+
+operator_directives = "Write concise, concrete plans that workers can execute independently."
+worker_system_prompt = "Execute the assigned plan and return one structured JSON report."
+
+poll_interval_seconds = 30
+max_errors_total = 10
+max_empty_cycles = 6
+plan_task_timeout_seconds = 1200
+
+state_dir = "state"
+state_file = "orchestrator_state.json"
+startup_mode = "reset"
+log_level = "INFO"
+log_dir = "logs"
+log_file = "orchestrator.log"
+
+rich_console = true
+console_truncate_length = 300
+
+plan_dir = "plans"
+max_concurrent_plan_tasks = 3
+
+planner_prompt_template = "Write a short markdown plan for Plan v$plan_version."
+
+[[workers]]
+worker_id = "worker-1"
+role = "executor"
+system_prompt = "Primary research executor."
+
+[[workers]]
+worker_id = "worker-2"
+role = "executor"
+system_prompt = "Primary research executor."
+
+[[workers]]
+worker_id = "worker-3"
+role = "executor"
+system_prompt = "Primary research executor."
+
+[planner_adapter]
+name = "fake_planner"
+
+[worker_adapter]
+name = "fake_worker"
+
+[direct_execution]
+provider = "off"
+fallback_1 = "off"
+fallback_2 = "off"
+timeout_seconds = 300
+max_attempts_per_slice = 1
+max_tool_calls_per_slice = 12
+max_expensive_tool_calls_per_slice = 3

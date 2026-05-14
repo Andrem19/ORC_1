@@ -1,0 +1,82 @@
+# ============================================================
+# Python
+# ============================================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# ============================================================
+# Testing
+# ============================================================
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# ============================================================
+# IDE / Editor
+# ============================================================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+
+# ============================================================
+# OS files
+# ============================================================
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# ============================================================
+# Project-specific: runtime state and logs
+# (these are regenerated on each run — don't commit them)
+# ============================================================
+state/
+logs/
+models/
+/artifacts/
+/fixes/
+/raw_plans/
+/compiled_plans/
+/plans/
+*.log
+next_action.json
+tmp_*.txt
+
+# ============================================================
+# Secrets / environment
+# ============================================================
+.env
+.env.*
+config.toml
+*.pem
+*.key
+credentials.json
+
+# ============================================================
+# Claude Code / local tooling
+# ============================================================
+.claude/
+.codex
+.qwen/
+.mcp.json
+
+# Test runtime reports
+/tests/artifacts/

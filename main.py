@@ -1,0 +1,699 @@
+"""
+Entry point for the orchestrator.
+
+Usage:
+    python main.py              # Production mode (reads config.toml)
+    python main.py --demo       # Demo mode with fake adapters
+"""
+
+from __future__ import annotations
+
+import atexit
+import asyncio
+import logging
+import os
+import signal
+import sys
+import time
+from pathlib import Path
+from typing import Any
+
+# Load .env file if present (secrets like API keys, tokens)
+_env_path = Path(__file__).parent / ".env"
+if _env_path.exists():
+    for line in _env_path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, _, value = line.partition("=")
+        key, value = key.strip(), value.strip()
+        if key and key not in os.environ:
+            os.environ[key] = value
+
+from app.config import OrchestratorConfig, load_config_from_dict
+from app.execution_store import ExecutionStateStore
+from app.logging_setup import setup_logging
+from app.logging_runtime import clear_log_root
+from app.models import StopReason
+from app.orchestrator import Orchestrator
+from app.runtime_incidents import LocalIncidentStore
+from app.runtime_factory import (
+    create_planner_adapter,
+    create_worker_adapter,
+)
+from app.run_context import ensure_current_run, generate_run_id, read_current_run_id
+from app.services.direct_execution.mcp_client import DirectMcpConfig
+from app.services.mcp_catalog import McpCatalogRefreshService, McpCatalogStore, McpCatalogUnavailableError
+from app.services.notification_service import NotificationService
+
+logger = logging.getLogger("orchestrator")
+
+
+def build_live_validation_config(config: OrchestratorConfig) -> OrchestratorConfig:
+    """Return an isolated config profile for safe live validation runs."""
+    live = load_config_from_dict(config.to_dict())
+    live.state_dir = str(Path(config.state_dir) / "live_validation")
+    live.plan_dir = str(Path(config.plan_dir) / "live_validation")
+    live.log_file = "live_validation.log"
+    live.startup_mode = "reset_all"
+    live.rich_console = False
+    live.console_log_level = "WARNING"
+    live.poll_interval_seconds = min(int(config.poll_interval_seconds or 10), 10)
+    return live
+
+
+def _is_vscode_terminal() -> bool:
+    term_program = str(os.environ.get("TERM_PROGRAM", "")).lower()
+    if term_program == "vscode":
+        return True
+    return any(
+        key in os.environ
+        for key in ("VSCODE_PID", "VSCODE_IPC_HOOK_CLI", "VSCODE_GIT_IPC_HANDLE")
+    )
+
+
+def _apply_terminal_safety_defaults(config: OrchestratorConfig, *, live_validate: bool, detach: bool) -> tuple[OrchestratorConfig, list[str]]:
+    notes: list[str] = []
+    if _is_vscode_terminal() and not detach:
+        if int(config.console_truncate_length or 300) > 160:
+            config.console_truncate_length = 160
+            notes.append("reduced_console_truncate_length")
+    if live_validate and not detach and str(config.console_log_level or "INFO").upper() != "WARNING":
+        config.console_log_level = "WARNING"
+        notes.append("raised_console_log_level_for_live_validation")
+    return config, notes
+
+
+def _should_force_detach(config: OrchestratorConfig, *, live_validate: bool, detach: bool) -> bool:
+    del config, live_validate, detach
+    return False
+
+
+def _resolve_run_id(config: OrchestratorConfig) -> str:
+    if config.current_run_id:
+        return config.current_run_id
+    if config.startup_mode == "resume":
+        existing = read_current_run_id(config.state_dir) or read_current_run_id(config.plan_dir) or read_current_run_id(config.log_dir)
+        if existing:
+            config.current_run_id = existing
+            return existing
+    run_id = generate_run_id()
+    config.current_run_id = run_id
+    for root in (config.state_dir, config.plan_dir, config.log_dir):
+        ensure_current_run(root, run_id)
+    return run_id
+
+
+def _reset_logging_before_reconfigure(log_dir: str) -> None:
+    root_logger = logging.getLogger("orchestrator")
+    for handler in list(root_logger.handlers):
+        try:
+            handler.flush()
+            handler.close()
+        finally:
+            root_logger.removeHandler(handler)
+    logging.shutdown()
+    clear_log_root(log_dir)
+
+
+def _stop_running_orchestrator(config: OrchestratorConfig) -> int:
+    pid_path = Path(config.state_dir) / "orchestrator.pid"
+    if not pid_path.exists():
+        print(f"No running orchestrator PID file found at {pid_path}")
+        return 0
+    try:
+        pid = int(pid_path.read_text(encoding="utf-8").strip())
+    except Exception:
+        print(f"Could not parse PID file: {pid_path}")
+        return 1
+
+    try:
+        os.kill(pid, signal.SIGTERM)
+    except ProcessLookupError:
+        print(f"No live process for PID {pid}; stale PID file was left at {pid_path}")
+        return 0
+    except OSError as exc:
+        print(f"Failed to stop PID {pid}: {exc}")
+        return 1
+
+    deadline = time.monotonic() + 10.0
+    while time.monotonic() < deadline:
+        try:
+            os.kill(pid, 0)
+        except ProcessLookupError:
+            print(f"Stopped orchestrator PID {pid}")
+            return 0
+        except OSError:
+            print(f"Stopped orchestrator PID {pid}")
+            return 0
+        time.sleep(0.25)
+
+    try:
+        os.kill(pid, signal.SIGKILL)
+    except ProcessLookupError:
+        print(f"Stopped orchestrator PID {pid}")
+        return 0
+    except OSError as exc:
+        print(f"Failed to force-stop PID {pid}: {exc}")
+        return 1
+    print(f"Force-stopped orchestrator PID {pid}")
+    return 0
+
+
+def _print_orchestrator_status(config: OrchestratorConfig) -> int:
+    pid_path = Path(config.state_dir) / "orchestrator.pid"
+    state_path = Path(config.execution_state_path)
+    log_path = Path(config.log_dir) / config.log_file
+
+    pid_text = ""
+    pid: int | None = None
+    if pid_path.exists():
+        pid_text = pid_path.read_text(encoding="utf-8").strip()
+        try:
+            pid = int(pid_text)
+        except ValueError:
+            pid = None
+
+    running = False
+    if pid is not None:
+        try:
+            os.kill(pid, 0)
+            running = True
+        except ProcessLookupError:
+            running = False
+        except OSError:
+            running = False
+
+    profile = "live_validation" if str(config.state_dir).endswith("live_validation") else "default"
+    print(f"profile: {profile}")
+    print(f"running: {'yes' if running else 'no'}")
+    print(f"pid_file: {pid_path}")
+    print(f"pid: {pid if pid is not None else (pid_text or 'none')}")
+    print(f"state_path: {state_path}")
+    print(f"log_path: {log_path}")
+    return 0
+
+
+def _validate_runtime_startup(orch: Orchestrator) -> str:
+    """Return a startup error when required planner/worker adapters are unavailable."""
+    planner_adapter = getattr(orch, "planner_adapter", None)
+    worker_adapter = getattr(orch, "worker_adapter", None)
+    planner_available = bool(planner_adapter and planner_adapter.is_available())
+    worker_available = bool(worker_adapter and worker_adapter.is_available())
+    if orch.config.plan_source == "compiled_raw":
+        return "" if worker_available else "Plannerless runtime requires available worker CLI before startup: worker CLI."
+    if planner_available and worker_available:
+        return ""
+    missing: list[str] = []
+    if not planner_available:
+        missing.append("planner CLI")
+    if not worker_available:
+        missing.append("worker CLI")
+    return f"Planner-worker runtime requires available adapters before startup: {', '.join(missing)}."
+
+
+def _log_plan_source_startup(config: OrchestratorConfig) -> None:
+    """Log the selected runtime plan source and obvious mismatches."""
+    logger.info(
+        "Runtime plan source: %s (raw_plan_dir=%s, compiled_plan_dir=%s)",
+        config.plan_source,
+        config.raw_plan_dir,
+        config.compiled_plan_dir,
+    )
+    compiled_root = Path(config.compiled_plan_dir)
+    raw_root = Path(config.raw_plan_dir)
+    compiled_manifests = list(compiled_root.glob("*/manifest.json")) if compiled_root.exists() else []
+    raw_files = list(raw_root.glob("*.md")) if raw_root.exists() else []
+    if config.plan_source == "planner" and compiled_manifests:
+        logger.warning(
+            "Compiled plan artifacts exist (%d manifests), but plan_source=planner so runtime will invoke the planner CLI.",
+            len(compiled_manifests),
+        )
+    if config.plan_source == "compiled_raw":
+        if not raw_files:
+            logger.warning("plan_source=compiled_raw but no raw plan files were found in %s", raw_root)
+        if not compiled_manifests:
+            logger.warning(
+                "plan_source=compiled_raw but no compiled manifests were found in %s. Run `python converter.py` first.",
+                compiled_root,
+            )
+
+
+def _make_signal_handler(orch: Orchestrator, *, hard_exit: Any = os._exit):
+    import signal as _signal
+    import time as _time
+
+    stop_phase = 0
+    last_signal_time = 0.0
+
+    def _cancel_running_tasks() -> None:
+        """Cancel all running asyncio tasks to break out of blocked awaits."""
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            return
+        for task in asyncio.all_tasks(loop):
+            if not task.done():
+                task.cancel()
+
+    def _signal_handler(signum: int, _frame: Any) -> None:
+        nonlocal stop_phase, last_signal_time
+        sig_name = _signal.Signals(signum).name
+        now = _time.monotonic()
+        suppressed = (now - last_signal_time) < 2.0
+        last_signal_time = now
+        if stop_phase == 0:
+            stop_phase = 1
+            logger.warning(
+                "Received %s, entering drain mode (waiting for running tasks to finish)...",
+                sig_name,
+            )
+            logger.warning("Press Ctrl+C again to force immediate stop.")
+            orch.request_drain()
+            return
+        if stop_phase == 1:
+            stop_phase = 2
+            if not suppressed:
+                logger.warning("Received second %s, forcing immediate shutdown!", sig_name)
+            orch.request_stop_now()
+            _cancel_running_tasks()
+            return
+        if stop_phase >= 3:
+            return
+        stop_phase = 3
+        if not suppressed:
+            logger.warning("Received third %s, forcing hard exit!", sig_name)
+        try:
+            orch.terminate_runtime_processes(force=True)
+        finally:
+            logging.shutdown()
+            hard_exit(130)
+
+    return _signal_handler
+
+
+def create_real_orchestrator(config: OrchestratorConfig) -> Orchestrator:
+    """Create an orchestrator with real CLI adapters."""
+    planner_adapter = create_planner_adapter(config)
+    worker_adapter = create_worker_adapter(config)
+
+    # Check adapter availability before starting
+    planner_ok = planner_adapter.is_available()
+    worker_ok = worker_adapter.is_available()
+    if config.plan_source == "planner" and not planner_ok:
+        logger.error(
+            "Planner adapter '%s' is NOT available (cli_path='%s')",
+            planner_adapter.name(), config.planner_adapter.cli_path,
+        )
+    elif planner_ok:
+        logger.info("Planner adapter '%s' available (cli_path='%s')", planner_adapter.name(), config.planner_adapter.cli_path)
+        runtime = planner_adapter.runtime_summary()
+        logger.info(
+            "Planner runtime: mode=%s bare=%s no_session_persistence=%s resolved_model=%s",
+            runtime.get("mode"),
+            runtime.get("use_bare"),
+            runtime.get("no_session_persistence"),
+            runtime.get("resolved_model"),
+        )
+        if runtime.get("has_custom_backend") or runtime.get("has_model_remap"):
+            logger.warning(
+                "Planner is using custom backend/model mapping: base_url=%s configured_model=%s resolved_model=%s",
+                runtime.get("custom_base_url") or "<default>",
+                runtime.get("configured_model"),
+                runtime.get("resolved_model"),
+            )
+    else:
+        logger.warning(
+            "Planner adapter '%s' is unavailable, but plan_source=%s so startup may still continue.",
+            planner_adapter.name(),
+            config.plan_source,
+        )
+
+    if not worker_ok:
+        logger.error(
+            "Worker adapter '%s' is NOT available (endpoint='%s')",
+            worker_adapter.name(), getattr(worker_adapter, 'base_url', '') or config.worker_adapter.cli_path or config.worker_adapter.base_url,
+        )
+    else:
+        logger.info("Worker adapter '%s' available (endpoint='%s')", worker_adapter.name(), getattr(worker_adapter, 'base_url', '') or config.worker_adapter.cli_path or config.worker_adapter.base_url)
+    logger.info("Direct execution provider: %s", config.direct_execution.provider)
+
+    notification_service = NotificationService(
+        config.notifications,
+        lmstudio_base_url=config.lmstudio.base_url,
+        lmstudio_model=config.lmstudio.model,
+        lmstudio_reasoning_effort=config.lmstudio.reasoning_effort,
+    )
+
+    console_controller = None
+    if config.rich_console:
+        from app.rich_handler import ProgressManager
+
+        console_controller = ProgressManager.get().controller
+
+    return Orchestrator(
+        config=config,
+        planner_adapter=planner_adapter,
+        worker_adapter=worker_adapter,
+        notification_service=notification_service,
+        console_controller=console_controller,
+    )
+
+
+def _build_direct_mcp_config(config: OrchestratorConfig) -> DirectMcpConfig:
+    direct = config.direct_execution
+    return DirectMcpConfig(
+        endpoint_url=str(direct.mcp_endpoint_url or "").strip(),
+        auth_mode=str(direct.mcp_auth_mode or "none"),
+        token_env_var=str(direct.mcp_token_env_var or "DEV_SPACE1_MCP_BEARER_TOKEN"),
+        connect_timeout_seconds=float(direct.connect_timeout_seconds or 10.0),
+        read_timeout_seconds=float(direct.read_timeout_seconds or 60.0),
+        retry_budget=int(direct.retry_budget or 1),
+    )
+
+
+async def _refresh_startup_mcp_catalog(orch: Orchestrator) -> None:
+    refresh_service = McpCatalogRefreshService(
+        mcp_config=_build_direct_mcp_config(orch.config),
+        store=McpCatalogStore(orch.config.state_dir, run_id=orch.config.current_run_id),
+        artifact_root=str(orch.artifact_store.active_root),
+    )
+    try:
+        result = await refresh_service.refresh()
+    except McpCatalogUnavailableError as exc:
+        await _handle_catalog_startup_failure(orch, refresh_service=refresh_service, error=exc)
+        raise
+    orch.mcp_catalog_snapshot = result.snapshot
+    orch.mcp_catalog_diff = result.diff
+    orch.mcp_catalog_saved_paths = {key: str(path) for key, path in result.saved_paths.items()}
+    if result.diff.previous_hash and not result.diff.unchanged:
+        message = (
+            f"MCP catalog drift detected: {result.diff.summary} "
+            f"(prev={result.diff.previous_hash[:12]} current={result.diff.current_hash[:12]})."
+        )
+        logger.warning(message)
+        orch.notification_service.send_lifecycle("mcp_catalog_diff", message)
+    logger.info(
+        "MCP catalog ready: tools=%d hash=%s latest=%s",
+        len(result.snapshot.tools),
+        result.snapshot.schema_hash[:12],
+        orch.mcp_catalog_saved_paths.get("latest", ""),
+    )
+
+
+async def _handle_catalog_startup_failure(
+    orch: Orchestrator,
+    *,
+    refresh_service: McpCatalogRefreshService,
+    error: Exception,
+) -> None:
+    reason_code = "mcp_catalog_unavailable"
+    metadata = {
+        "reason_code": reason_code,
+        "error": str(error),
+        "endpoint_url": orch.config.direct_execution.mcp_endpoint_url,
+        "run_id": orch.config.current_run_id,
+    }
+    incident_path = LocalIncidentStore(
+        orch.config.state_dir,
+        run_id=orch.config.current_run_id,
+    ).record(
+        summary="Startup blocked: live MCP catalog unavailable",
+        metadata=metadata,
+        source="startup",
+        severity="high",
+    )
+    metadata["local_incident_path"] = str(incident_path)
+    try:
+        await refresh_service.capture_remote_incident(
+            summary="Startup blocked: live MCP catalog unavailable",
+            metadata=metadata,
+        )
+    except Exception:
+        pass
+    orch.state.status = "finished"
+    orch.state.stop_reason = StopReason.MCP_UNHEALTHY
+    orch.execution_state.status = "finished"
+    orch.execution_state.stop_reason = StopReason.MCP_UNHEALTHY.value
+    orch.execution_state.touch()
+    orch.state.updated_at = orch.execution_state.updated_at
+    orch.execution_store.save(orch.execution_state)
+    logger.error("Startup blocked with %s: %s", reason_code, error)
+    orch.notification_service.send_lifecycle("startup_blocked", f"{reason_code}: {error}")
+
+
+def run_demo() -> None:
+    """Run with fake adapters for demonstration."""
+    from app.adapters.fake_planner import FakePlanner
+    from app.adapters.fake_worker import FakeWorker
+
+    config = OrchestratorConfig(
+        goal="Build a simple REST API with user authentication",
+        poll_interval_seconds=1,
+        max_empty_cycles=5,
+    )
+
+    planner_responses = [
+        {
+            "plan_id": "plan_demo",
+            "goal": "Build a REST API",
+            "baseline_ref": {
+                "snapshot_id": "active-signal-v1",
+                "version": 1,
+                "symbol": "BTCUSDT",
+                "anchor_timeframe": "1h",
+                "execution_timeframe": "5m",
+            },
+            "global_constraints": ["produce one bounded demo slice"],
+            "slices": [
+                {
+                    "slice_id": "slice_demo",
+                    "title": "Demo final report",
+                    "hypothesis": "the fake worker can close a slice",
+                    "objective": "emit one final report action",
+                    "success_criteria": ["one final report returned"],
+                    "allowed_tools": ["system_health"],
+                    "evidence_requirements": ["demo completion summary"],
+                    "policy_tags": ["demo"],
+                    "max_turns": 1,
+                    "max_tool_calls": 0,
+                    "max_expensive_calls": 0,
+                    "parallel_slot": 1,
+                }
+            ],
+        }
+    ]
+
+    worker_responses = [
+        {
+            "type": "final_report",
+            "summary": "Created project structure, auth routes, and validation handlers.",
+            "facts": {"files": 1},
+            "artifacts": ["app.py"],
+            "key_metrics": {"files": 1},
+            "verdict": "PROMOTE",
+            "confidence": 0.95,
+            "reportable_issues": [],
+        },
+    ]
+
+    planner = FakePlanner(responses=planner_responses, delay=0.01)
+    worker = FakeWorker(responses=worker_responses, delay=0.01)
+
+    state_dir = Path("state")
+    state_dir.mkdir(exist_ok=True)
+    orch = Orchestrator(
+        config=config,
+        planner_adapter=planner,
+        worker_adapter=worker,
+    )
+
+    logger.info("=== DEMO START ===")
+    reason = orch.run()
+    logger.info("=== DEMO END: %s ===", reason.value)
+
+
+def main() -> None:
+    """Main entry point."""
+    live_validate = "--live-validate" in sys.argv
+    detach = "--detach" in sys.argv
+    stop = "--stop" in sys.argv
+    status = "--status" in sys.argv
+    if "--demo" in sys.argv:
+        setup_logging(log_level="DEBUG", log_dir="logs", log_file="demo.log", rich_console=True)
+        # Start Rich progress display for demo
+        if True:
+            from app.rich_handler import ProgressManager
+
+            ProgressManager.get().start()
+        try:
+            run_demo()
+        finally:
+            if True:
+                from app.rich_handler import ProgressManager
+
+                ProgressManager.get().stop()
+        return
+
+    # Production mode: initial logging before config is loaded
+    setup_logging(log_level="INFO")
+    logger.info("Orchestrator starting...")
+
+    # Load config
+    if sys.version_info >= (3, 11):
+        import tomllib
+    else:
+        import tomli as tomllib
+
+    config_path = Path(__file__).parent / "config.toml"
+    if config_path.exists():
+        with open(config_path, "rb") as f:
+            config_data = tomllib.load(f)
+        config = load_config_from_dict(config_data)
+        logger.info("Config loaded from config.toml")
+    else:
+        config = OrchestratorConfig()
+        logger.info("Using default config (no config.toml found)")
+
+    if live_validate:
+        config = build_live_validation_config(config)
+    if stop:
+        raise SystemExit(_stop_running_orchestrator(config))
+    if status:
+        raise SystemExit(_print_orchestrator_status(config))
+    config, safety_notes = _apply_terminal_safety_defaults(config, live_validate=live_validate, detach=detach)
+
+    _reset_logging_before_reconfigure(config.log_dir)
+    run_id = _resolve_run_id(config)
+
+    # Reconfigure logging with config values (log_level, log_dir, log_file)
+    setup_logging(
+        log_level=config.log_level,
+        log_dir=config.log_dir,
+        log_file=config.log_file,
+        rich_console=config.rich_console,
+        console_log_level=config.console_log_level,
+        truncate_length=config.console_truncate_length,
+        run_id=run_id,
+    )
+    logger.info("Logging configured: level=%s, dir=%s, file=%s, run_id=%s", config.log_level, config.log_dir, config.log_file, run_id)
+    if safety_notes:
+        logger.warning("Terminal safety mode applied: %s", ", ".join(safety_notes))
+    resolved_log_path = getattr(logger, "orchestrator_log_path", "")
+    if resolved_log_path:
+        logger.info("Log file path: %s", resolved_log_path)
+        if not Path(resolved_log_path).exists():
+            logger.error("Configured log file was not created: %s", resolved_log_path)
+    if detach:
+        logger.warning("--detach is ignored; orchestrator now always runs in the foreground.")
+    _log_plan_source_startup(config)
+
+    # Start Rich progress display if enabled
+    if config.rich_console:
+        from app.rich_handler import ProgressManager
+        ProgressManager.get().start()
+
+    # Acquire PID lock — prevent concurrent instances
+    from app.pid_lock import PidLock
+
+    pid_lock = PidLock(Path(config.state_dir) / "orchestrator.pid")
+    if not pid_lock.acquire():
+        logger.critical("Aborting: another orchestrator instance holds the lock")
+        sys.exit(1)
+
+    orch: Orchestrator | None = None
+
+    def _atexit_force_cleanup() -> None:
+        """Safety net: force-kill any remaining subprocesses on interpreter exit."""
+        if orch is not None:
+            try:
+                orch.terminate_runtime_processes(force=True)
+            except Exception:
+                pass
+
+    atexit.register(_atexit_force_cleanup)
+
+    try:
+        # Handle startup_mode: reset state before creating orchestrator
+        if config.startup_mode in ("reset", "reset_all"):
+            from app.plan_store import PlanStore
+            from app.reset_manager import ResetManager
+            from app.state_store import StateStore
+
+            logger.info("startup_mode=%s — performing reset", config.startup_mode)
+            plan_store = PlanStore(config.plan_dir)
+            state_store = StateStore(config.state_path, run_id=config.current_run_id)
+            ResetManager(config.state_dir, state_store, plan_store).perform_reset(config.startup_mode)
+            ExecutionStateStore(config.execution_state_path, run_id=config.current_run_id).clear()
+            config.startup_mode = "resume"  # in-memory revert to prevent double-reset
+            logger.info("Reset done — orchestrator will start from clean state")
+
+        orch = create_real_orchestrator(config)
+        if live_validate:
+            logger.warning("Running live validation profile with isolated dirs.")
+
+        startup_issue = _validate_runtime_startup(orch)
+        if startup_issue:
+            orch.state.status = "finished"
+            orch.state.stop_reason = StopReason.SUBPROCESS_ERROR
+            orch.save_state()
+            logger.error(startup_issue)
+            logger.info("Orchestrator stopped: %s", StopReason.SUBPROCESS_ERROR.value)
+            return
+
+        try:
+            asyncio.run(_refresh_startup_mcp_catalog(orch))
+        except McpCatalogUnavailableError:
+            # Retry once — the MCP streamable-http handshake can fail on first
+            # attempt due to transient network or TLS timing issues.
+            logger.warning("MCP catalog refresh failed on first attempt, retrying...")
+            import time as _time
+            _time.sleep(1.0)
+            try:
+                asyncio.run(_refresh_startup_mcp_catalog(orch))
+            except McpCatalogUnavailableError:
+                logger.info("Orchestrator stopped: %s", StopReason.MCP_UNHEALTHY.value)
+                return
+
+        Path(config.plan_dir).mkdir(parents=True, exist_ok=True)
+        logger.info("Plans directory: %s", config.plan_dir)
+
+        # Restore state from previous run if available
+        orch.load_state()
+
+        # Load research context if MCP integration is configured
+        if config.research_config:
+            orch.load_research_context()
+
+        # Graceful shutdown on SIGTERM / SIGINT / SIGHUP
+        import signal as _signal
+        _signal_handler = _make_signal_handler(orch)
+        _signal.signal(_signal.SIGTERM, _signal_handler)
+        _signal.signal(_signal.SIGINT, _signal_handler)
+        if hasattr(_signal, "SIGHUP"):
+            _signal.signal(_signal.SIGHUP, _signal_handler)
+
+        _finish_called = False
+        try:
+            reason = orch.run()
+            logger.info("Orchestrator stopped: %s", reason.value)
+        except (KeyboardInterrupt, asyncio.CancelledError):
+            if not _finish_called:
+                _finish_called = True
+                logger.warning("Interrupted by user — shutting down immediately")
+                orch.request_stop_now()
+                orch._finish(StopReason.GRACEFUL_STOP, "Interrupted by user (Ctrl+C)")
+    finally:
+        atexit.unregister(_atexit_force_cleanup)
+        if orch is not None:
+            orch.terminate_runtime_processes(force=True)
+        # Stop Rich progress display
+        if config.rich_console:
+            from app.rich_handler import ProgressManager
+            ProgressManager.get().stop()
+        pid_lock.release()
+        logging.shutdown()
+
+
+if __name__ == "__main__":
+    main()
